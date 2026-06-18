@@ -1,0 +1,11 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: delaysteer-ha
+    volumes:
+      - ./config:/config
+    ports:
+      - "8123:8123"
+    environment:
+      - TZ=America/New_York
+    restart: unless-stopped

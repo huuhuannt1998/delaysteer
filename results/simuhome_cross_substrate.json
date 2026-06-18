@@ -1,0 +1,82 @@
+{
+  "prevented_fraction": {
+    "own_testbed (HA virtual/cloud/live)": {
+      "none": "3/30",
+      "provenance": "3/30",
+      "freshness": "27/30",
+      "twophase": "6/30",
+      "full": "30/30"
+    },
+    "smartthings_cloud": {
+      "none": "0/5",
+      "provenance": "0/5",
+      "freshness": "5/5",
+      "twophase": "1/5",
+      "full": "5/5"
+    },
+    "simuhome (external ICLR benchmark)": {
+      "none": "0/1",
+      "provenance": "0/1",
+      "freshness": "1/1",
+      "twophase": "0/1",
+      "full": "1/1"
+    }
+  },
+  "buckets": {
+    "own_testbed (HA virtual/cloud/live)": {
+      "none": "ALLOW",
+      "provenance": "ALLOW",
+      "freshness": "PREVENT",
+      "twophase": "ALLOW",
+      "full": "PREVENT"
+    },
+    "smartthings_cloud": {
+      "none": "ALLOW",
+      "provenance": "ALLOW",
+      "freshness": "PREVENT",
+      "twophase": "ALLOW",
+      "full": "PREVENT"
+    },
+    "simuhome (external ICLR benchmark)": {
+      "none": "ALLOW",
+      "provenance": "ALLOW",
+      "freshness": "PREVENT",
+      "twophase": "ALLOW",
+      "full": "PREVENT"
+    }
+  },
+  "per_ablation_agreement": {
+    "none": {
+      "consistent": true,
+      "buckets": [
+        "ALLOW"
+      ]
+    },
+    "provenance": {
+      "consistent": true,
+      "buckets": [
+        "ALLOW"
+      ]
+    },
+    "freshness": {
+      "consistent": true,
+      "buckets": [
+        "PREVENT"
+      ]
+    },
+    "twophase": {
+      "consistent": true,
+      "buckets": [
+        "ALLOW"
+      ]
+    },
+    "full": {
+      "consistent": true,
+      "buckets": [
+        "PREVENT"
+      ]
+    }
+  },
+  "all_consistent": true,
+  "residual_window_note": "residual exploitable window 2.0s (static freshness) -> 0.25s (challenge-response) ~8x: reproduced on SimuHome (simuhome.csv group=residual) AND established on the own testbed (M1.1) -- the same domain-independent L1 floor."
+}

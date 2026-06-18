@@ -1,0 +1,54 @@
+[
+  {
+    "label": "benign_natural",
+    "trulyPresent": true,
+    "delay": false,
+    "guard": false,
+    "observed": "home",
+    "hub_acted": true,
+    "guard_blocked": false,
+    "heating": true,
+    "commit_freshness_satisfied": true,
+    "evidence_freshness_violated": false,
+    "violation": false
+  },
+  {
+    "label": "control_nodelay",
+    "trulyPresent": false,
+    "delay": false,
+    "guard": false,
+    "observed": "away",
+    "hub_acted": false,
+    "guard_blocked": false,
+    "heating": false,
+    "commit_freshness_satisfied": false,
+    "evidence_freshness_violated": false,
+    "violation": false
+  },
+  {
+    "label": "attack_delay",
+    "trulyPresent": false,
+    "delay": true,
+    "guard": false,
+    "observed": "home",
+    "hub_acted": true,
+    "guard_blocked": false,
+    "heating": true,
+    "commit_freshness_satisfied": true,
+    "evidence_freshness_violated": true,
+    "violation": true
+  },
+  {
+    "label": "attack_guard",
+    "trulyPresent": false,
+    "delay": true,
+    "guard": true,
+    "observed": "home",
+    "hub_acted": false,
+    "guard_blocked": true,
+    "heating": false,
+    "commit_freshness_satisfied": false,
+    "evidence_freshness_violated": false,
+    "violation": false
+  }
+]

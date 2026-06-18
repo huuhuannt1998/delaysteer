@@ -1,0 +1,10 @@
+AUDIT BUNDLE MANIFEST — 2026-06-11T02:08:49Z
+(repo is NOT git; checksums are the artifact fingerprints)
+
+af1cc0410b2e2cd65b4ff1b32cfa773a       388 bytes  audit/01_reproduction_check.txt
+ed035a084a53a0e26930c96b4e6fc3da      2787 bytes  audit/02_adaptive_run.txt
+a15efbfd6395f09a9b023a188521c998       415 bytes  audit/03_tests.txt
+d5582d186b6707038105ed10ae73b1b2      1208 bytes  audit/04_heartbeat_config_proof.txt
+61de581eda4a27c75208db29d16f8a94      2112 bytes  audit/m2_metrics_singleshot_SUPERSEDED.csv
+6cd5b9cb555f45c942c8aefe584fde14      1134 bytes  audit/m2_rates_crossmodel.csv
+e787eb4c9e45e1919a818a6a65868e59     21457 bytes  audit/metrics.csv

@@ -1,0 +1,6 @@
+# REPRODUCTION CHECK — executed 2026-06-11T02:08:49Z
+pre  md5(results/metrics.csv) = e787eb4c9e45e1919a818a6a65868e59
+COMMAND: python3 -m delaysteer.run_experiments --homes virtual,cloud  (exit 0)
+deterministic virtual+cloud rows compared: 90
+BIT-EXACT: 90/90   differing: 0
+post md5(results/metrics.csv) = e787eb4c9e45e1919a818a6a65868e59  (restored; identical => canonical untouched)

@@ -1,0 +1,5 @@
+label,trulyPresent,delay,guard,observed,hub_acted,guard_blocked,heating,commit_freshness_satisfied,evidence_freshness_violated,violation
+benign_natural,true,false,false,home,true,false,true,true,false,false
+control_nodelay,false,false,false,away,false,false,false,false,false,false
+attack_delay,false,true,false,home,true,false,true,true,true,true
+attack_guard,false,true,true,home,false,true,false,false,false,false

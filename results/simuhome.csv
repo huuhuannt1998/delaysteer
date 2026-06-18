@@ -1,0 +1,15 @@
+ablation,agent,agent_value,ages_that_slip,blocked,delay,family,fit,group,home,residual_window_s,revalidations,scenario,violation,violation_kind
+none,scripted,lockout,,False,False,automation,clean,feasibility,simuhome,,0,window_safety_lockout,False,operational_safety
+none,scripted,clear,,False,True,automation,clean,ablation,simuhome,,0,window_safety_lockout,True,operational_safety
+provenance,scripted,lockout,,False,False,automation,clean,feasibility,simuhome,,0,window_safety_lockout,False,operational_safety
+provenance,scripted,clear,,False,True,automation,clean,ablation,simuhome,,0,window_safety_lockout,True,operational_safety
+freshness,scripted,lockout,,False,False,automation,clean,feasibility,simuhome,,0,window_safety_lockout,False,operational_safety
+freshness,scripted,clear,,True,True,automation,clean,ablation,simuhome,,1,window_safety_lockout,False,operational_safety
+twophase,scripted,lockout,,False,False,automation,clean,feasibility,simuhome,,0,window_safety_lockout,False,operational_safety
+twophase,scripted,clear,,False,True,automation,clean,ablation,simuhome,,1,window_safety_lockout,True,operational_safety
+full,scripted,lockout,,False,False,automation,clean,feasibility,simuhome,,0,window_safety_lockout,False,operational_safety
+full,scripted,clear,,True,True,automation,clean,ablation,simuhome,,1,window_safety_lockout,False,operational_safety
+challenge,scripted,lockout,,False,False,automation,clean,feasibility,simuhome,,0,window_safety_lockout,False,operational_safety
+challenge,scripted,clear,,True,True,automation,clean,ablation,simuhome,,1,window_safety_lockout,False,operational_safety
+freshness,scripted,,0.1;0.2;0.25;0.5;1.0;1.9;2.0,,,automation,,residual,simuhome,2.0,,window_safety_lockout,,operational_safety
+challenge,scripted,,0.1;0.2;0.25,,,automation,,residual,simuhome,0.25,,window_safety_lockout,,operational_safety
