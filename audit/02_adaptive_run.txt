@@ -1,0 +1,54 @@
+
+=== M1: Adaptive adversary vs TemporalGuard (door ACTUALLY open) ===
+freshness budget = 2.0s; secure report is gated on contact=closed
+
+[sanity] no guard, age 1.0s: secure=True violation=True
+
+--- Strategy A: under-budget pacing (agent_age = reval_age = a), FULL guard ---
+stale age a   secure?  blocked  outcome
+--------------------------------------------------
+0.5           Y        0        FAIL (guard slipped)
+1.0           Y        0        FAIL (guard slipped)
+1.5           Y        0        FAIL (guard slipped)
+1.9           Y        0        FAIL (guard slipped)
+2.1           n        1        prevented
+2.5           n        1        prevented
+3.0           n        1        prevented
+
+--- Strategy B: target the guard re-read (agent_age=1.0 < budget; vary reval_age) ---
+reval age     secure?  blocked  outcome
+--------------------------------------------------
+1.0           Y        0        FAIL (guard slipped)
+1.9           Y        0        FAIL (guard slipped)
+2.1           n        1        prevented
+6.0           n        1        prevented
+
+--- Method (M1.1): CHALLENGE-RESPONSE freshness guard (heartbeat 0.25s) ---
+(require each critical fact affirmed AFTER the action is proposed)
+stale age a   secure?  blocked  outcome
+--------------------------------------------------
+0.1           Y        0        FAIL (guard slipped)
+0.2           Y        0        FAIL (guard slipped)
+0.5           n        1        prevented
+1.0           n        1        prevented
+1.5           n        1        prevented
+1.9           n        1        prevented
+3.0           n        1        prevented
+
+[benign] challenge guard, no attack, door closed: secure=True violation=False false_blocks=0
+
+=== Findings ===
+Strategy A slips (violation under FULL guard) at ages: [0.5, 1.0, 1.5, 1.9]
+Strategy A caught (prevented) at ages: [2.1, 2.5, 3.0]
+Static full guard: catches the attack iff stale age >= ~2.1s (the freshness budget 2.0s) -> residual window ~2.0s.
+Challenge guard (M1.1): still slips only at ages <= heartbeat; slips at [0.1, 0.2]
+  -> residual window shrinks from the budget (2.0s) to the heartbeat (0.25s), ~8x.
+Strategy B: delaying the guard re-read only makes it staler -> guard blocks;
+targeting the re-read does not help (delay-only cannot make a value fresher).
+
+METHOD (contribution): the static budget conflates transport-latency tolerance
+with staleness tolerance; challenge-response freshness separates them, requiring
+each critical fact to be affirmed AFTER the action is proposed (tolerance = sensor
+heartbeat). A delay-only adversary cannot replay a stale value with a post-challenge
+affirmation, so the residual attack window collapses to the sensor heartbeat -- a
+hard physical floor, not the (tunable, usability-costly) freshness budget.

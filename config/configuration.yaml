@@ -1,0 +1,103 @@
+# DelaySteer Home Assistant testbed — VIRTUAL / lab-safe devices only.
+# Safety constraint (mission mis_01KSTTRBFAJVXG3X445T1RQZGK): never a live lock/alarm.
+#
+# Devices are backed by helper entities (input_boolean / template) so they respond
+# to the same real HA services the planner calls (lock.lock, alarm_control_panel.*),
+# making the HAWebSocketAdapter a faithful drop-in for the virtual home.
+
+default_config:
+
+homeassistant:
+  name: DelaySteer
+  unit_system: metric
+  time_zone: America/New_York
+
+# --- backing helper state ---
+input_boolean:
+  front_door_lock_engaged:
+    name: Front door lock engaged
+  front_door_open:
+    name: Front door open
+  hallway_motion:
+    name: Hallway motion
+  kitchen_leak:
+    name: Kitchen leak
+  hallway_light_on:
+    name: Hallway light on
+  bedroom_heater:
+    name: Bedroom heater
+  front_porch_camera_motion:
+    name: Front porch camera motion
+
+# --- sensors / binary sensors ---
+template:
+  - binary_sensor:
+      - name: "Front Door Contact"
+        device_class: door
+        state: "{{ is_state('input_boolean.front_door_open', 'on') }}"
+      - name: "Hallway Motion"
+        device_class: motion
+        state: "{{ is_state('input_boolean.hallway_motion', 'on') }}"
+      - name: "Kitchen Leak"
+        device_class: moisture
+        state: "{{ is_state('input_boolean.kitchen_leak', 'on') }}"
+      # Camera event source (proposal §10): camera-detected motion at the porch.
+      - name: "Front Porch Camera Motion"
+        device_class: motion
+        state: "{{ is_state('input_boolean.front_porch_camera_motion', 'on') }}"
+  - sensor:
+      - name: "Bedroom Temperature"
+        unit_of_measurement: "°C"
+        state: "20.0"
+
+# --- smart lock (template, backed by helper) ---
+lock:
+  - platform: template
+    name: Front Door
+    value_template: "{{ is_state('input_boolean.front_door_lock_engaged', 'on') }}"
+    lock:
+      service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.front_door_lock_engaged
+    unlock:
+      service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.front_door_lock_engaged
+
+# --- alarm panel (manual platform; no code required for arming) ---
+alarm_control_panel:
+  - platform: manual
+    name: Home Alarm
+    code_arm_required: false
+    arming_time: 0
+    delay_time: 0
+    trigger_time: 5
+    armed_night:
+      arming_time: 0
+      delay_time: 0
+
+# --- hallway light (template, backed by helper) ---
+light:
+  - platform: template
+    lights:
+      hallway:
+        friendly_name: Hallway
+        value_template: "{{ is_state('input_boolean.hallway_light_on', 'on') }}"
+        turn_on:
+          service: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.hallway_light_on
+        turn_off:
+          service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.hallway_light_on
+
+# --- thermostat ---
+climate:
+  - platform: generic_thermostat
+    name: Bedroom
+    heater: input_boolean.bedroom_heater
+    target_sensor: sensor.bedroom_temperature
+    min_temp: 7
+    max_temp: 28
+    target_temp: 20

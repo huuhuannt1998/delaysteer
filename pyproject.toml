@@ -1,0 +1,30 @@
+[project]
+name = "delaysteer"
+version = "0.1.0"
+description = "DelaySteer: delay-only decision-steering testbed for AI-agent smart homes (Phase 1 — Home Assistant artifact)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+# Heavy/optional deps are lazily imported so the deterministic benign baseline
+# runs with zero network dependencies.
+ha = ["websockets>=12.0", "httpx>=0.27"]   # real Home Assistant WebSocket/REST adapter
+llm = ["httpx>=0.27"]                       # Ollama / hosted LLM backbones
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+delaysteer-benign = "delaysteer.run_benign:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["delaysteer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

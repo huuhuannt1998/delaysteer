@@ -1,0 +1,5 @@
+label,trulySmoke,delay,guard,observed,alert_fired,guard_blocked,commit_freshness_satisfied,evidence_freshness_violated,violation
+benign_natural,false,false,false,clear,false,false,true,false,false
+control_nodelay,true,false,false,detected,true,false,true,false,false
+attack_delay,true,true,false,clear,false,false,true,true,true
+attack_guard,true,true,true,clear,true,true,true,false,false

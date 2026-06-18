@@ -1,0 +1,13 @@
+{
+  "n_runs": 5,
+  "identical": true,
+  "signature": "benign_natural:0:0:0|control_nodelay:0:1:0|attack_delay:1:0:0|attack_guard:0:1:1",
+  "all_signatures": [
+    "benign_natural:0:0:0|control_nodelay:0:1:0|attack_delay:1:0:0|attack_guard:0:1:1",
+    "benign_natural:0:0:0|control_nodelay:0:1:0|attack_delay:1:0:0|attack_guard:0:1:1",
+    "benign_natural:0:0:0|control_nodelay:0:1:0|attack_delay:1:0:0|attack_guard:0:1:1",
+    "benign_natural:0:0:0|control_nodelay:0:1:0|attack_delay:1:0:0|attack_guard:0:1:1",
+    "benign_natural:0:0:0|control_nodelay:0:1:0|attack_delay:1:0:0|attack_guard:0:1:1"
+  ],
+  "by_construction": "scripted hub + deterministic relays + fixed 30s stale schedule + fixed heartbeat => identical outcome each run"
+}

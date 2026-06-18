@@ -1,0 +1,17 @@
+== config.py ==
+36:    temperature: float = 0.0  # determinism for causal replay (A5)
+72:    # i.e. value-age (now - generation) <= heartbeat tolerance, separating staleness
+74:    # residual window shrinks from the freshness budget to the sensor heartbeat.
+75:    guard_challenge: bool = False
+76:    heartbeat_s: float = 0.25        # sensor affirmation cadence / challenge tolerance
+== temporal_guard.py (challenge check) ==
+43:                      guard_freshness=True, guard_two_phase=True, guard_challenge=True),
+93:        t_challenge = self.adapter.clock.now()  # the nonce: facts must be affirmed >= here
+99:        challenge = getattr(self.config, "guard_challenge", False)
+100:        heartbeat = getattr(self.config, "heartbeat_s", 0.25)
+111:            # at/after the challenge time (tolerance = sensor heartbeat). A delay-only
+113:            # so this defeats the under-budget replay; residual window = heartbeat.
+115:                value_age = t_challenge - obs.generation_time
+116:                if value_age > heartbeat:
+118:                        f"{key} REPLAYED (value-age {value_age:.2f}s > heartbeat "
+119:                        f"{heartbeat:.2f}s; not affirmed post-challenge)")

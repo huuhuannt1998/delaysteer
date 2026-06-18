@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# OS
+.DS_Store
+
+# Home Assistant container runtime + SECRETS.
+# Only configuration.yaml is source; everything else (ha_credentials.json with the
+# refresh token, .storage auth, the HA database, logs) must never be committed.
+config/*
+!config/configuration.yaml
+
+# Regenerable run traces (deterministic ones reproduce from the harness)
+traces/
+
+# LaTeX build artifacts
+*.aux
+*.lof
+*.lot
+*.toc
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+manuscripts/**/*.log
+
+# Local credentials (e.g. SMARTTHINGS_TOKEN) - never commit
+.env
+.env.*
+*.env
+
+# Unpublished manuscript and paper-content/strategy docs.
+# These are kept local-only (see the archive/full-with-manuscript branch) and are
+# deliberately NOT published to GitHub.
+manuscripts/
+PROJECT_DOSSIER.md
+AUDIT_EVIDENCE.md
+MA5_SIMUHOME_RESULT.md
