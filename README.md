@@ -14,7 +14,9 @@ This repository is the research artifact: a reproducible testbed, the attack
 families, the formal-model-backed defense (**TemporalGuard**), and the experiment
 harness that produces every reported result.
 
-> The manuscript is not included in this repository.
+> The manuscript is not included in this repository. This README is a **reproduction
+> guide**: clone the repo, install, run the experiments, and compare your output
+> against the released files in [`results/`](results/).
 
 ---
 
@@ -45,6 +47,154 @@ Headline numbers and per-cell results live in [`results/`](results/).
 
 ---
 
+## Prerequisites
+
+You only need the pieces for the experiments you intend to run. The **core** results
+need nothing but Python.
+
+| To run | You need |
+|---|---|
+| Core results + all tests | **Python 3.11+** and [`uv`](https://github.com/astral-sh/uv) (3.13 was used for the released runs) |
+| Language-model agent rows | a local [**Ollama**](https://ollama.com) with the models pulled (below) |
+| Live Home Assistant rows | **Docker** (the official HA container in `docker-compose.yml`) |
+| SmartThings rows | a SmartThings **developer token** in a gitignored `.env` (`SMARTTHINGS_TOKEN=...`) |
+| Multi-agent (HearthNet) rows | **Node.js 18+** and the HearthNet clone (see [External substrates](#external-substrates)) |
+| SimuHome rows | the SimuHome clone + server (see [`SIMUHOME_REPRODUCE.md`](SIMUHOME_REPRODUCE.md)) |
+
+Pull the Ollama models used in the paper (only what you plan to run):
+
+```bash
+ollama pull qwen3:14b                 # agent of record (the core LLM rows)
+ollama pull mistral:7b                # cross-model study
+ollama pull deepseek-coder-v2:16b     # cross-model study (resistant looping outlier)
+
+# Small-model TOCTOU sweep (nine models, 0.6B–14B) — only for the TOCTOU experiment:
+ollama pull qwen3:0.6b qwen3:1.7b qwen3:4b qwen3:8b qwen2.5:7b llama3.1:8b
+```
+
+---
+
+## Setup
+
+```bash
+git clone https://github.com/huuhuannt1998/delaysteer.git
+cd delaysteer
+
+uv venv --python 3.13                  # 3.11+ works; 3.13 used for the released runs
+uv pip install -e ".[dev,llm,ha]"      # core + Ollama/LLM + Home Assistant adapters
+```
+
+(Plain `pip install -e ".[dev,llm,ha]"` inside a virtualenv works too.)
+
+---
+
+## Reproduce the results
+
+There are two kinds of rows, and they reproduce differently:
+
+- **Deterministic rows** — the scripted agentic reference, the attack/defense matrix,
+  the adaptive analysis, and the test suite — reproduce **bit-for-bit**. No Ollama needed.
+- **Language-model rows** are reported as **rates over repeated sampled runs**. With a
+  local model at temperature 0.7 you should see the **same verdict and approximately
+  the same rate**, not identical per-run cells.
+
+Every command writes (or overwrites) a file in [`results/`](results/); the table in
+each step lists the output file and the headline it supports.
+
+### Step 1 — Core matrix, defense, and tests (no external services)
+
+```bash
+# Headline attack/baseline/ablation/usability matrix  →  results/metrics.csv
+uv run python -m delaysteer.run_experiments
+
+# Adaptive adversary + challenge-response floor (the 8x window)  →  results/adaptive.csv
+uv run python -m delaysteer.run_adaptive
+
+# TemporalGuard ablation (which mechanism does the work)
+uv run python -m delaysteer.run_defense
+
+# The full automated test suite (74 tests)
+uv run pytest -q
+```
+
+| Output | Supports |
+|---|---|
+| `results/metrics.csv` | the core attack/defense matrix (deterministic agentic reference) |
+| `results/adaptive.csv` | the static-budget-only-bounds result and the ~8x challenge-response reduction (2.0 s → 0.25 s) |
+| `pytest` (74 passing) | the artifact's correctness checks |
+
+### Step 2 — Language-model agent rows (needs Ollama + the models)
+
+```bash
+# The same matrix driven by the LLM agent of record:
+uv run python -m delaysteer.run_experiments --llm qwen3:14b
+
+# Cross-model rate study (qwen3:14b, mistral:7b, deepseek-coder-v2:16b)  →  results/m2_rates.csv
+uv run python -m delaysteer.run_m2_rates
+```
+
+| Output | Supports |
+|---|---|
+| `results/m2_rates.csv` | the cross-agent "different doors" finding (qwen3/mistral con 3/3, lock-timeout 0/3; deepseek loops) |
+
+### Step 3 — Generalization studies
+
+| Study | Command | Output | Needs |
+|---|---|---|---|
+| SmartThings (deterministic) | `uv run python -m delaysteer.run_smartthings` | `results/smartthings.csv` | `SMARTTHINGS_TOKEN` in `.env` |
+| SmartThings (cross-model) | `uv run python -m delaysteer.run_smartthings_llm_rates` | `results/smartthings_llm_rates.csv` | token + Ollama |
+| SimuHome (external benchmark) | `uv run python -m delaysteer.run_simuhome` | `results/simuhome.csv` | SimuHome clone + server (`SIMUHOME_REPRODUCE.md`) |
+| TOCTOU small-model sweep | `python scripts/sh_toctou_eval.py --model qwen2.5:7b --out results/toctou.csv` | `results/toctou.csv` | Ollama (sweep models) |
+| TOCTOU defense comparison | `python scripts/sh_toctou_eval.py --model qwen2.5:7b --defense temporalguard --out results/toctou_defenses.csv` | `results/toctou_defenses.csv` | Ollama |
+| Multi-agent (HearthNet) | `node scripts/hn_multiagent.js` | `results/multiagent*.csv` | Node.js + HearthNet clone |
+
+The TOCTOU defense comparison runs once per defense; `--defense` accepts
+`none`, `temporalguard`, `toolfuser`, `sim`, `promptrewrite`, `generic_gate`
+(append each to the same `--out` file or use separate files, then plot with
+`scripts/plot_toctou_defenses.py`).
+
+### Step 4 — Live Home Assistant + the rich-home / Hermes studies (extra setup)
+
+The live-HA matrix and the appendix generalization studies need the running HA
+container:
+
+```bash
+docker compose up -d                          # official Home Assistant container
+uv run python scripts/ha_bootstrap.py         # onboard + save config/ha_credentials.json (gitignored)
+uv run python -m delaysteer.run_experiments --homes ha --llm qwen3:14b
+```
+
+`config/configuration.yaml` defines **lab-safe virtual devices only** (template lock,
+manual alarm panel, template binary sensors) — no physical lock or alarm is ever
+controlled.
+
+> **Note on the rich-home and Hermes (production-framework) studies.** These two
+> appendix studies (`scripts/run_richhome_matrix.sh`, `scripts/hermes_ha_attack.py`)
+> additionally require a local checkout of the [Hermes agent
+> framework](https://github.com/NousResearch/hermes-agent) and a `qwen3-14b-64k`
+> Ollama alias (a `qwen3:14b` Modelfile with a 64k context window).
+> `scripts/run_richhome_matrix.sh` hardcodes a local Python path at the top
+> (`PY=.../hermes-agent/.venv/bin/python`) — **edit that line** to point at your own
+> Hermes virtualenv before running. These rows are additive; the core results above
+> do not depend on them.
+
+### Verify you reproduced the same results
+
+The released `results/` files are the reference. The frozen core matrix ships at a
+fixed checksum:
+
+```bash
+md5 results/metrics.csv        # macOS  → e787eb4c9e45e1919a818a6a65868e59
+md5sum results/metrics.csv     # Linux  → e787eb4c9e45e1919a818a6a65868e59
+```
+
+- **Deterministic rows** (the scripted reference, the matrix, the adaptive analysis)
+  reproduce the released verdicts exactly.
+- **Language-model rows** are stochastic: a run matches if the **violated/prevented
+  verdict** agrees and the **rate is within one sampled run** of the released cell.
+
+---
+
 ## Repository layout
 
 ```
@@ -57,15 +207,21 @@ delaysteer/                 core Python package
   provenance/               temporal provenance monitor (replayable traces)
   tools/                    the tool registry, router, and gate seam
   simuhome/                 SimuHome external-benchmark integration (client + adapter + harness)
-  run_benign.py             the benign secure-house baseline
-  run_attack.py             the delay-only attack (lock-timeout, contact-contradiction, ...)
-  run_defense.py            the TemporalGuard ablation matrix
-  run_repair.py / run_confirm.py / run_automation.py / run_adaptive.py   the other families
-  run_experiments.py        the full attack / baseline / ablation / usability matrix
-  run_simuhome.py           the SimuHome generalization matrix
-scripts/                    setup + probes (HA bootstrap, SmartThings, SimuHome proxy, HearthNet drivers)
-results/                    released result files (metrics.csv, smartthings.csv, simuhome*.csv, multiagent*.csv)
-tests/                      the automated test suite
+  run_experiments.py        the full attack / baseline / ablation / usability matrix  → metrics.csv
+  run_adaptive.py           adaptive adversary + challenge-response floor             → adaptive.csv
+  run_m2_rates.py           cross-model LLM rate study                                → m2_rates.csv
+  run_smartthings*.py       SmartThings deterministic + cross-model                   → smartthings*.csv
+  run_simuhome.py           the SimuHome generalization matrix                        → simuhome.csv
+  run_benign.py / run_attack.py / run_defense.py   single-stage entry points used by the matrix
+scripts/                    setup + probes + additive studies
+  ha_bootstrap.py           onboard the live Home Assistant container
+  sh_toctou_eval.py         small-model TOCTOU sweep + defense comparison             → toctou*.csv
+  run_richhome_matrix.sh    rich multi-room home generalization (needs Hermes)        → richhome*.csv
+  hermes_ha_attack.py       production-framework (Hermes) stack                       → hermes_ha_rates.csv
+  hn_multiagent.js          HearthNet multi-agent driver (Node)                       → multiagent*.csv
+  st_*.py                   SmartThings registration / probes
+results/                    released result files (compare your runs against these)
+tests/                      the automated test suite (74 tests)
 config/configuration.yaml   the Home Assistant testbed configuration (lab-safe virtual devices)
 docker-compose.yml          the live Home Assistant container
 SIMUHOME_REPRODUCE.md       how to clone + run the external SimuHome substrate
@@ -73,67 +229,24 @@ SIMUHOME_REPRODUCE.md       how to clone + run the external SimuHome substrate
 
 ---
 
-## Quick start
+## External substrates
 
-Requires Python 3.13 and [`uv`](https://github.com/astral-sh/uv) (or plain `pip`).
+Two external systems are used as additional substrates and are **not** included here;
+they are wrapped at runtime and cloned **next to** this repo (never inside it):
 
-```bash
-uv venv --python 3.13
-uv pip install -e ".[dev,llm]"
-
-# Deterministic baseline (no LLM, no external deps):
-uv run python -m delaysteer.run_benign --backbone scripted
-
-# The delay-only attack on the virtual home:
-uv run python -m delaysteer.run_attack --scenario both
-
-# The TemporalGuard ablation:
-uv run python -m delaysteer.run_defense
-
-# The full matrix (attack / baseline / ablation / usability):
-uv run python -m delaysteer.run_experiments
-
-# Test suite:
-uv run pytest -q
-```
-
-Add the language-model agent of record with `--backbone ollama --model qwen3:14b`
-(requires a local [Ollama](https://ollama.com) with the model pulled). Deterministic
-rows reproduce bit-for-bit; language-model rows are reported as rates over repeated
-sampled runs. Results are written to [`results/`](results/) and replayable traces to
-`traces/`.
-
-### Live Home Assistant (optional)
-
-```bash
-docker compose up -d                              # official HA container
-uv run python scripts/ha_bootstrap.py             # onboard + save config/ha_credentials.json
-uv run python -m delaysteer.run_attack --home ha --scenario both
-```
-
-`config/configuration.yaml` defines **lab-safe virtual devices only** (template lock,
-manual alarm panel, template binary sensors) — no physical lock or alarm is ever
-controlled.
-
----
-
-## External substrates (cloned separately, not vendored)
-
-Two external systems are used as additional substrates and are **not** included
-here; they are wrapped at runtime as dependencies and cloned next to this repo:
-
-- **SimuHome** (ICLR 2026, `github.com/holi-lab/SimuHome`, CC BY-NC-ND) — an external
-  time-evolving smart-home benchmark. See [`SIMUHOME_REPRODUCE.md`](SIMUHOME_REPRODUCE.md)
-  for the clone + run steps. Runtime evaluation against an unmodified clone only.
-- **HearthNet** (`github.com/zhonghaozhan/hearthnet`, MIT) — a freshness-aware
-  hub-and-subagent protocol. The multi-agent drivers in `scripts/hn_*.js` drive its
-  released protocol implementation; results are in `results/multiagent*`.
+- **SimuHome** (ICLR 2026, [`github.com/holi-lab/SimuHome`](https://github.com/holi-lab/SimuHome),
+  CC BY-NC-ND) — an external time-evolving smart-home benchmark. See
+  [`SIMUHOME_REPRODUCE.md`](SIMUHOME_REPRODUCE.md) for the clone + server steps. Runtime
+  evaluation against an unmodified clone only; we never fork or redistribute it.
+- **HearthNet** ([`github.com/zhonghaozhan/hearthnet`](https://github.com/zhonghaozhan/hearthnet),
+  MIT) — a freshness-aware hub-and-subagent protocol. The drivers in `scripts/hn_*.js`
+  drive its released protocol implementation; results land in `results/multiagent*`.
 
 ---
 
 ## Credentials and safety
 
-- No real secrets are committed. The platform token is read at runtime from a
+- No real secrets are committed. The SmartThings token is read at runtime from a
   gitignored `.env` (`SMARTTHINGS_TOKEN=...`); the Home Assistant container runtime
   and `config/ha_credentials.json` are gitignored.
 - The Home Assistant bootstrap uses a **throwaway local lab account** on

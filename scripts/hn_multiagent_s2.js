@@ -24,7 +24,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const HN = '/Users/huanbui/Desktop/hearthnet-ext';
+const HN = process.env.HEARTHNET_HOME || require('os').homedir() + '/hearthnet-ext';
 const { createClient, msg, send, sleep, getHEAD, issueLease } = require(path.join(HN, 'demo/demo-common'));
 const DEVICES = path.join(HN, 'groundplane-state', 'state', 'devices.json');
 const SPK = 'speakers';                 // existing device, authorized for jeeves
@@ -175,7 +175,7 @@ async function guardBenignCost(n = 20) {
 }
 
 async function main() {
-  const out = '/Users/huanbui/Desktop/DelaySteer/results';
+  const out = path.join(__dirname, '..', 'results');
   // Item 1 + Item 3: run the lattice N=5 for determinism
   const runs = [];
   for (let r = 0; r < 5; r++) runs.push(await lattice());

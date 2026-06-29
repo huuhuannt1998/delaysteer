@@ -26,7 +26,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const HN = '/Users/huanbui/Desktop/hearthnet-ext';
+const HN = process.env.HEARTHNET_HOME || require('os').homedir() + '/hearthnet-ext';
 const { createClient, msg, send, sleep, getHEAD, issueLease } = require(path.join(HN, 'demo/demo-common'));
 const DEVICES = path.join(HN, 'groundplane-state', 'state', 'devices.json');
 const DEV = 'thermostat';            // authorized for jeeves (policy: set_state)
@@ -127,7 +127,7 @@ async function main() {
     console.log(`[${r.label}] truly_present=${r.trulyPresent} delay=${r.delay} guard=${r.guard} -> observed=${r.observed} ` +
       `heating=${r.heating} commit_fresh=${r.commit_freshness_satisfied} VIOLATION=${r.violation}${r.guard_blocked?' [guard blocked obs]':''}`);
 
-  const out = '/Users/huanbui/Desktop/DelaySteer/results';
+  const out = path.join(__dirname, '..', 'results');
   fs.writeFileSync(path.join(out, 'multiagent.csv'),
     [cols.join(',')].concat(rows.map(r => cols.map(c => r[c]).join(','))).join('\n') + '\n');
   fs.writeFileSync(path.join(out, 'multiagent.json'), JSON.stringify(rows, null, 2));
