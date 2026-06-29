@@ -42,6 +42,11 @@ def _inner_for(home_kind, cfg):
         inner.call_service("lock", "unlock", {"entity_id": ENTITIES["lock"]})
         inner.call_service("input_boolean", "turn_off", {"entity_id": "input_boolean.front_door_open"})
         return None, inner
+    if home_kind == "smartthings":
+        from .home.smartthings_adapter import SmartThingsAdapter
+        inner = SmartThingsAdapter.from_env()
+        inner.reset()  # benign pre-bedtime: unlocked, disarmed, door closed, no leak/motion
+        return None, inner
     home = VirtualHome(ManualClock())
     return home, VirtualHomeAdapter(home, base_latency_s=cfg.base_latency_s)
 
@@ -58,6 +63,8 @@ def run_cell(model, scenario, ablation, hold, label, home_kind="virtual",
     if scenario == "contact_contradiction":
         if home is not None:
             home.open_door()  # door actually open (virtual)
+        elif home_kind == "smartthings":
+            inner.open_door()  # set the virtual contact device OPEN on the real cloud
         else:
             inner.call_service("input_boolean", "turn_on", {"entity_id": "input_boolean.front_door_open"})
         specs = [DelaySpec("contact_state", LateArrivingContradiction("off", hold=hold, stale_age=30.0),
