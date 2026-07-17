@@ -178,6 +178,40 @@ controlled.
 > Hermes virtualenv before running. These rows are additive; the core results above
 > do not depend on them.
 
+### Watch the attack live (interactive dashboard)
+
+A browser dashboard that **shows and explains the attack in real time** — the real door
+state beside what the agent reads through the delay proxy, a live stage rail, and the
+verdict. Needs only the Home Assistant container from Step 4; **no LLM, no cloud, no tokens.**
+
+```bash
+docker compose up -d                 # Home Assistant on :8123 (once)
+scripts/launch_demo.sh               # starts the delay proxy (:8125) + the monitor (:9120)
+# open http://localhost:9120
+```
+
+Use the dashboard's one-click **RUN** buttons, or the driver directly — a deterministic
+"secure the house for bedtime" routine (no LLM needed):
+
+```bash
+python scripts/demo_attack.py --mode attack     # -> VIOLATION: arms an OPEN door on a stale read
+python scripts/demo_attack.py --mode guard      # -> TemporalGuard BLOCK (409 on the arm)
+python scripts/demo_attack.py --clear           # reset;  scripts/launch_demo.sh stop  tears it down
+```
+
+Watch `:9120`: **Ground Truth** (`OPEN`) and **Agent Belief** (`CLOSED`) diverge, the stage
+rail walks `PROXY ARMED → DOOR OPENS → TOOL-CALL DELAYED → OUTCOME`, and the banner shows
+**VIOLATION** or **TEMPORALGUARD BLOCKED** (staying on the outcome until you clear).
+
+To drive a **real LLM agent** instead of the deterministic routine, install the Hermes
+framework (as in the note above) with Ollama, point its Home Assistant tool at the proxy
+(`HASS_URL=http://localhost:8125`, so its tool calls cross the delay), arm the delay
+(`python scripts/demo_attack.py --mode attack --prep-only`), and in the agent chat send a
+prompt that makes it **read the door before arming** — call `ha_get_state` on
+`binary_sensor.front_door_contact` first, then `ha_call_service` to arm
+`alarm_control_panel.home_alarm` only if it reads `off` (closed). A ready-made CLI version
+(no chat) is `scripts/hermes_ha_native_demo.py` (set `HERMES_HOME`).
+
 ### Verify you reproduced the same results
 
 The released `results/` files are the reference. The frozen core matrix ships at a
