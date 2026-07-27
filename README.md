@@ -182,13 +182,43 @@ controlled.
 
 A browser dashboard that **shows and explains the attack in real time** — the real door
 state beside what the agent reads through the delay proxy, a live stage rail, and the
-verdict. Needs only the Home Assistant container from Step 4; **no LLM, no cloud, no tokens.**
+verdict. Needs only the Home Assistant container from Step 4 — **no LLM, no cloud** — plus a
+one-time local Home Assistant token (below).
 
 ```bash
 docker compose up -d                 # Home Assistant on :8123 (once)
+# --- one-time: put a Home Assistant token in .env (see "Home Assistant token" below) ---
 scripts/launch_demo.sh               # starts the delay proxy (:8125) + the monitor (:9120)
 # open http://localhost:9120
 ```
+
+#### Home Assistant token (`.env`)
+
+The dashboard, the delay proxy (`:8125`), and `scripts/demo_attack.py` read the Home
+Assistant API, which requires a token. Create one once and put it in a `.env` at the repo
+root:
+
+1. Open `http://localhost:8123` and finish first-run onboarding (create a local user).
+2. In the HA UI, click your **profile** (bottom of the left sidebar) -> scroll to
+   **Long-Lived Access Tokens** -> **Create Token**, name it (e.g. `delaysteer`), and copy it.
+3. Create/edit `.env` at the repo root (it is **gitignored -- never commit it**):
+   ```bash
+   HASS_TOKEN=<paste the long-lived token>
+   HASS_URL=http://localhost:8125   # only used by the real-LLM tier (routes reads via the proxy)
+   ```
+4. **Restart the demo services after any `.env` change** -- the proxy and monitor read the
+   token once at startup, so a new token is not picked up until they restart:
+   ```bash
+   scripts/launch_demo.sh stop && scripts/launch_demo.sh
+   ```
+
+**If the dashboard shows `OFFLINE` / "Home Assistant offline"** (or `demo_attack.py` prints
+`cannot read Home Assistant on :8123 (token/entity)`), the token is missing or expired:
+regenerate it (step 2), update `.env`, and restart the services (step 4). Long-lived tokens
+last ~10 years, so this is normally a one-time setup. The experiment runners under
+`delaysteer/` authenticate separately via `config/ha_credentials.json` (written by
+`scripts/ha_bootstrap.py`, a refresh-token flow that renews automatically), so they are
+unaffected by the `.env` token.
 
 Use the dashboard's one-click **RUN** buttons, or the driver directly — a deterministic
 "secure the house for bedtime" routine (no LLM needed):
