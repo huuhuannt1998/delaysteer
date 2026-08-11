@@ -77,7 +77,7 @@ ollama pull qwen3:0.6b qwen3:1.7b qwen3:4b qwen3:8b qwen2.5:7b llama3.1:8b
 ## Setup
 
 ```bash
-git clone https://github.com/huuhuannt1998/delaysteer.git
+git clone <this repository's URL>      # e.g. the address in your browser's location bar
 cd delaysteer
 
 uv venv --python 3.13                  # 3.11+ works; 3.13 used for the released runs
