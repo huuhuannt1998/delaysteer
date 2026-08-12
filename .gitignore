@@ -14,6 +14,12 @@ __pycache__/
 # refresh token, .storage auth, the HA database, logs) must never be committed.
 config/*
 !config/configuration.yaml
+# The Lovelace dashboard is source too: it defines the operator-facing view used to
+# verify the demo against ground truth. Entity ids and labels only -- no credentials.
+# Re-listed explicitly because `config/*` stops git descending into the subdirectory.
+!config/dashboards/
+config/dashboards/*
+!config/dashboards/rooms.yaml
 
 # Regenerable run traces (deterministic ones reproduce from the harness)
 traces/

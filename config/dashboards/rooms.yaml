@@ -1,0 +1,130 @@
+# Room-grouped dashboard for the DelaySteer virtual smart home.
+# Registered as a YAML dashboard via `lovelace:` in configuration.yaml.
+title: My Home
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    cards:
+      - type: entities
+        title: Living Room
+        icon: mdi:sofa
+        entities:
+          - light.living_room_ceiling
+          - light.living_room_lamp
+          - switch.living_room_tv
+          - fan.living_room_fan
+          - cover.living_room_blinds
+          - climate.living_room
+          - binary_sensor.living_room_motion
+          - sensor.living_room_temperature
+          - sensor.living_room_humidity
+      - type: entities
+        title: Kitchen
+        icon: mdi:fridge
+        entities:
+          - light.kitchen
+          - switch.coffee_maker
+          - switch.dishwasher
+          - binary_sensor.kitchen_motion
+          - binary_sensor.kitchen_window
+          - binary_sensor.kitchen_leak
+          - sensor.kitchen_temperature
+      - type: entities
+        title: Master Bedroom
+        icon: mdi:bed
+        entities:
+          - light.bedroom_ceiling
+          - light.bedroom_lamp
+          - fan.bedroom_fan
+          - cover.bedroom_blinds
+          - climate.bedroom
+          - binary_sensor.bedroom_motion
+          - binary_sensor.bedroom_window
+          - sensor.bedroom_temperature
+          - sensor.bedroom_humidity
+      - type: entities
+        title: Kids Room
+        icon: mdi:teddy-bear
+        entities:
+          - light.kids_room
+      - type: entities
+        title: Bathroom
+        icon: mdi:shower
+        entities:
+          - light.bathroom
+          - fan.bathroom_fan
+          - binary_sensor.bathroom_leak
+      - type: entities
+        title: Hallway & Entry
+        icon: mdi:door
+        entities:
+          - light.hallway
+          - binary_sensor.hallway_motion
+          # THE PHYSICAL DOORS. These input_booleans ARE the door position -- flipping one
+          # is what "someone opens the door" means in this testbed, and the contact sensors
+          # below are template mirrors of them. They were absent from every card, so there
+          # was no way to open or close a door from Home Assistant: the only mover was the
+          # :9120 run buttons, which made the demo look one-directional. With these here,
+          # the operator can drive reality from HA and watch :9120 follow.
+          - type: section
+            label: Physical door — toggle to open / close it
+          - entity: input_boolean.front_door_open
+            name: Front Door — open the door
+          - entity: input_boolean.back_door_open
+            name: Back Door — open the door
+          # What the AGENT reads. Read-only template sensors: they cannot be clicked, they
+          # only report the toggles above. Compare these against the :9120 panels.
+          - type: section
+            label: Contact sensor — what the agent reads (read-only)
+          - entity: binary_sensor.front_door_contact
+            name: Front Door Contact
+          - entity: binary_sensor.back_door_contact
+            name: Back Door Contact
+          # Door LOCKS -- separate entities from the contacts above. An entities-card row
+          # for a lock shows the ACTION available, so a locked door reads "Unlock". Named
+          # explicitly as locks so that is not mistaken for the door's open/closed state.
+          - type: section
+            label: Locks (independent of whether the door is open)
+          - entity: lock.front_door
+            name: Front Door Lock
+          - entity: lock.back_door
+            name: Back Door Lock
+      - type: entities
+        title: Garage
+        icon: mdi:garage
+        entities:
+          - light.garage
+          - cover.garage_door
+          - lock.garage_side_door
+          - binary_sensor.garage_motion
+          - binary_sensor.garage_door_contact
+          - sensor.garage_temperature
+      - type: entities
+        title: Outdoor
+        icon: mdi:tree
+        entities:
+          - light.front_porch
+          - light.backyard
+          - switch.garden_sprinkler
+          - binary_sensor.front_porch_camera_motion
+          - sensor.outdoor_temperature
+          - sensor.outdoor_humidity
+      - type: alarm-panel
+        name: Home Alarm
+        entity: alarm_control_panel.home_alarm
+        states:
+          - arm_home
+          - arm_away
+          - arm_night
+      - type: entities
+        title: SmartThings (real cloud)
+        icon: mdi:cloud
+        entities:
+          - switch.st_lock
+          - switch.st_alarm
+          - switch.st_light
+          - binary_sensor.st_contact
+          - binary_sensor.st_leak
+          - binary_sensor.st_motion
+          - binary_sensor.st_arrival
