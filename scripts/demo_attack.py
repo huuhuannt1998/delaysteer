@@ -262,7 +262,7 @@ def main() -> int:
     # leave ground truth visible for a moment, then disarm the attack (not the alarm state)
     if not args.fast:
         time.sleep(1.5)
-    proxy_ctl("reset_ctl")
+    proxy_ctl("reset_ctl", reason="end-of-run")
     return 0
 
 

@@ -68,7 +68,12 @@ def _state_of(body: bytes) -> str:
 
 
 def _logev(event: str, path: str = "", note: str = ""):
-    ts = time.strftime("%Y-%m-%dT%H:%M:%S")
+    # Millisecond precision matters for the monitor's merged feed: Home Assistant events
+    # carry sub-second timestamps, so a whole-second stamp here would sort every proxy
+    # event ahead of any home event in the same second and show the stale re-serve
+    # BEFORE the door change that explains it -- reversing the causal story.
+    now = time.time()
+    ts = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(now)) + f".{int(now % 1 * 1000):03d}"
     line = f"{ts}  {event:<13} {path}"
     if note:
         line += f"  {note}"
@@ -190,7 +195,15 @@ class Handler(BaseHTTPRequestHandler):
                 with self.P.lock:
                     self.P.armed.clear()
                 self.P.guard = None
-                _logev("RESET", "", "proxy disarmed (attack + guard cleared)")
+                # Two callers, same effect, different meaning. `--clear` resets the demo
+                # to a clean slate; the tail of a one-shot run disarms the proxy but
+                # deliberately leaves the OUTCOME standing ("not the alarm state"). The
+                # monitor treats RESET as an episode boundary, so emitting it for both
+                # made a completed run erase its own verdict from the analysis panel.
+                if arg.get("reason") == "end-of-run":
+                    _logev("DISARM", "", "run finished; proxy disarmed, outcome left standing")
+                else:
+                    _logev("RESET", "", "proxy disarmed (attack + guard cleared)")
             return self._send(200, json.dumps({"ok": True}))
         # guarded high-impact command? revalidate fresh, block if unsafe.
         # Match an exact cmd_path OR a cmd_path_prefix, so the guard covers a

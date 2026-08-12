@@ -19,9 +19,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import threading
 import subprocess
 import sys
 import time
+from collections import deque
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -158,7 +161,9 @@ def _recent(events: list[str], marker: str, window: float = 12.0) -> bool:
     for line in reversed(events):
         if marker in line:
             try:
-                t = time.mktime(time.strptime(line.split()[0], "%Y-%m-%dT%H:%M:%S"))
+                # The proxy log carries millisecond precision, which strptime("%S")
+                # cannot parse -- so parse with fromisoformat and keep the fraction.
+                t = datetime.fromisoformat(line.split()[0]).timestamp()
                 return (time.time() - t) <= window
             except Exception:
                 return False
@@ -201,6 +206,181 @@ def _run_analysis(events: list[str], phase: str) -> dict:
         "defense_held": defense_held, "defense_ts": _ts(block_i) if defense_held else None,
         "violation": violation, "verdict": verdict, "label": label,
     }
+
+
+# --------------------------------------------------------------------- system feed
+#
+# The dashboard shows two panels of *state*, but a demo is a sequence of *events*, and
+# until now the only event source on the page was the proxy's own log -- so the smart
+# home itself (lights, locks, the alarm, the door) was invisible. The rail merges two
+# streams into one chronological feed:
+#
+#   Home Assistant  state_changed over the websocket API -- everything the home does
+#   Delay proxy     results/attack_proxy.log -- what the adversary and the guard do
+#
+# Together they answer the question the demo is actually about: what did the home do,
+# what did the agent get told, and which of those two diverged.
+
+# How far back "what is happening now" reaches. The proxy log is persistent, so without
+# a window the verdict would keep reporting attacks from previous runs forever.
+RECENT_WINDOW_S = 120
+
+_FEED: "deque[dict]" = deque(maxlen=400)
+_FEED_LOCK = threading.Lock()
+_HA_WS_STATE = {"connected": False, "error": ""}
+
+# Entities that matter to the narrative get promoted; everything else is ambient noise
+# that still belongs in the feed (it is a *system* log) but is drawn dimmer.
+_KEY_ENTITIES = {
+    "binary_sensor.front_door_contact": "front door",
+    "binary_sensor.back_door_contact": "back door",
+    "alarm_control_panel.home_alarm": "alarm",
+    "lock.front_door": "front lock",
+    "lock.back_door": "back lock",
+}
+
+
+def _push(kind: str, what: str, detail: str, ts: float | None = None, key: bool = False) -> None:
+    with _FEED_LOCK:
+        _FEED.append({"ts": ts if ts is not None else time.time(),
+                      "kind": kind, "what": what, "detail": detail, "key": key})
+
+
+def _ha_listener() -> None:
+    """Subscribe to Home Assistant state_changed and mirror it into the feed.
+
+    Runs in a daemon thread with its own event loop. Home Assistant restarting, or not
+    being up yet, must never take the dashboard down -- so every failure just marks the
+    connection down and retries. The monitor degrades to proxy-only events, which is
+    exactly what it showed before this existed.
+    """
+    import asyncio
+
+    async def pump() -> None:
+        import websockets  # imported here so the monitor still starts without it
+        tok = _env("HASS_TOKEN")
+        url = HA.replace("http://", "ws://").replace("https://", "wss://") + "/api/websocket"
+        async with websockets.connect(url, max_size=4 * 1024 * 1024,
+                                      ping_interval=20, close_timeout=5) as ws:
+            await ws.recv()
+            await ws.send(json.dumps({"type": "auth", "access_token": tok}))
+            if json.loads(await ws.recv()).get("type") != "auth_ok":
+                raise RuntimeError("home assistant rejected the token")
+            await ws.send(json.dumps({"id": 1, "type": "subscribe_events",
+                                      "event_type": "state_changed"}))
+            await ws.recv()
+            _HA_WS_STATE.update(connected=True, error="")
+            while True:
+                msg = json.loads(await ws.recv())
+                data = (msg.get("event") or {}).get("data") or {}
+                ent = data.get("entity_id")
+                new, old = data.get("new_state") or {}, data.get("old_state") or {}
+                if not ent or new.get("state") == old.get("state"):
+                    continue          # attribute-only churn is not a state change
+                # The helper and its template mirror always fire as a pair; keep the
+                # sensor the agent actually reads and drop the helper, or every door
+                # move would appear twice in the feed.
+                if ent.startswith("input_boolean."):
+                    continue
+                _push("system", _KEY_ENTITIES.get(ent, ent),
+                      f"{old.get('state','?')} → {new.get('state','?')}",
+                      key=ent in _KEY_ENTITIES)
+
+    while True:
+        try:
+            asyncio.new_event_loop().run_until_complete(pump())
+        except Exception as e:  # noqa: BLE001
+            _HA_WS_STATE.update(connected=False, error=f"{type(e).__name__}")
+        time.sleep(3)
+
+
+# Proxy-log line -> (kind, human subject). The proxy speaks in its own vocabulary;
+# the rail translates it into attack / defense so a viewer does not have to learn it.
+_PROXY_KIND = {
+    "CAPTURE":       ("attack",  "adversary", "captured a truthful reading to replay"),
+    "ARM":           ("attack",  "adversary", "delay armed — stale re-serve ON"),
+    "STALE-RESERVE": ("attack",  "adversary", "served the agent a STALE value"),
+    "GUARD-ARM":     ("defense", "TemporalGuard", "armed on the commit action"),
+    "GUARD-BLOCK":   ("defense", "TemporalGuard", "BLOCKED the commit (409) — evidence was stale"),
+    "RESET":         ("control", "operator", "proxy disarmed / reset"),
+}
+
+
+def _proxy_events(lines: list[str]) -> list[dict]:
+    out = []
+    for line in lines:
+        parts = line.split(None, 2)
+        if len(parts) < 2:
+            continue
+        stamp, ev = parts[0], parts[1]
+        kind, who, detail = _PROXY_KIND.get(ev, ("control", ev.lower(), parts[2] if len(parts) > 2 else ""))
+        try:
+            ts = datetime.fromisoformat(stamp).timestamp()
+        except Exception:
+            ts = 0.0
+        # Carry the raw event name. The analysis must key off THIS, not off the prose:
+        # matching the substring "STALE" in `detail` also hit ARM's own description
+        # ("delay armed -- stale re-serve ON") and reported a landed attack from merely
+        # arming one.
+        out.append({"ts": ts, "kind": kind, "what": who, "detail": detail, "ev": ev,
+                    "key": ev in ("STALE-RESERVE", "GUARD-BLOCK")})
+    return out
+
+
+def _analyse(feed: list[dict], real: str | None, agent: str | None, alarm: str | None) -> list[dict]:
+    """Say, in words, where the attack is and where the defense is.
+
+    Reading a raw event stream and spotting the decisive line is exactly the work a
+    viewer should not have to do during a demo, so this names the moments outright
+    rather than leaving them to be inferred from timestamps.
+    """
+    out: list[dict] = []
+    # results/attack_proxy.log is persistent and spans every past run, so counting over
+    # the whole feed reported "Attack landed x7" on a freshly cleared stack -- events from
+    # runs minutes or hours earlier. The episode boundary is the proxy RESET, which is
+    # exactly what --clear and the start of every run emit; older lines stay visible in
+    # the feed but stop driving the verdict. The time window is a backstop for a stack
+    # that has been sitting armed since before the feed buffer filled.
+    last_reset = max((i for i, e in enumerate(feed) if e.get("ev") == "RESET"), default=-1)
+    cutoff = time.time() - RECENT_WINDOW_S
+    live = [e for e in feed[last_reset + 1:] if e["ts"] >= cutoff]
+    stale = [e for e in live if e.get("ev") == "STALE-RESERVE"]
+    block = [e for e in live if e.get("ev") == "GUARD-BLOCK"]
+    armed_ev = [e for e in live if e["what"] == "alarm" and "armed" in e["detail"]]
+
+    if stale:
+        out.append({"tone": "bad", "head": f"Attack landed ×{len(stale)}",
+                    "body": "The proxy answered the agent's door read with an older, truthful "
+                            "value. Nothing was forged — only its arrival was delayed."})
+    if real == "on" and agent == "off":
+        out.append({"tone": "bad", "head": "Belief split open now",
+                    "body": "The home reports the door OPEN; the agent is being told CLOSED. "
+                            "Any commit it makes from here rests on stale evidence."})
+    elif real == "off" and agent == "on":
+        out.append({"tone": "warn", "head": "Reverse split open now",
+                    "body": "The door is really CLOSED but the agent still reads OPEN, so it will "
+                            "refuse to secure a house that is already safe — availability, not a breach."})
+    if armed_ev and real == "on":
+        out.append({"tone": "bad", "head": "VIOLATION — alarm armed on an open door",
+                    "body": "The commit went through on stale evidence. The alarm is genuinely "
+                            "armed and the door is genuinely open."})
+    if block:
+        out.append({"tone": "good", "head": f"Defense held ×{len(block)}",
+                    "body": "TemporalGuard revalidated the fact at the commit point, saw the "
+                            "evidence was too old, and refused with a 409."})
+    elif stale and not armed_ev and real == "off":
+        # Mirror direction: a stale OPEN was served, nothing was armed, and the door is in
+        # fact shut. Reported separately from a guard block -- nothing defended here, the
+        # agent simply declined -- and deliberately not as a violation.
+        out.append({"tone": "warn", "head": "False refusal — house left unarmed",
+                    "body": "The agent was served a stale OPEN and declined to secure a house "
+                            "that is actually shut. No invariant is broken: the cost is the task "
+                            "never completing. Availability, not a breach."})
+    if not out:
+        out.append({"tone": "idle", "head": "Nothing to report",
+                    "body": "Both panels agree and no delay is armed. Arm the attack from the "
+                            "LAUNCH SEQUENCE to start."})
+    return out
 
 
 def _token_health() -> dict:
@@ -265,6 +445,15 @@ def snapshot() -> dict:
         events = LOG_PATH.read_text().splitlines()[-24:]
     except Exception:
         pass
+    # One chronological system feed: what the home did (websocket) interleaved with what
+    # the adversary and guard did (proxy log). Sorted by real timestamp so causality reads
+    # correctly -- the door opening must appear before the stale value it explains.
+    with _FEED_LOCK:
+        ha_events = list(_FEED)
+    feed = sorted(ha_events + _proxy_events(events), key=lambda e: e["ts"])[-60:]
+    for e in feed:
+        e["t"] = time.strftime("%H:%M:%S", time.localtime(e["ts"])) if e["ts"] else "--:--:--"
+
     blocked_active = _blocked_active(events)       # persists until the next RESET
     stale_recent = _recent(events, "STALE-RESERVE")
     # Deception is any disagreement between ground truth and what the agent is served, in
@@ -286,6 +475,8 @@ def snapshot() -> dict:
         "events": events[-16:], "run": _run_analysis(events, phase),
         "real_back": real_back, "agent_back": agent_back,
         "tokens": _token_health(),
+        "feed": feed, "analysis": _analyse(feed, real, agent, alarm),
+        "ha_ws": dict(_HA_WS_STATE),
     }
 
 
@@ -309,7 +500,7 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
     background-size:34px 34px,34px 34px,100% 100%;
     padding:22px; min-height:100vh; letter-spacing:.02em;
   }
-  .wrap{max-width:1180px;margin:0 auto}
+  .wrap{max-width:1620px;margin:0 auto}
   header{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:20px}
   .brand{font-weight:700;font-size:15px;letter-spacing:.22em;text-transform:uppercase}
   .brand b{color:var(--danger)}
@@ -340,6 +531,69 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
     font-size:12.4px;color:var(--dim)}
   .howto b.r{color:var(--danger)} .howto b.g{color:var(--safe)}
   .howto b.b{color:var(--guard)} .howto b.a{color:var(--amber)}
+
+  /* ---- two-column shell: the demo on the left, a live system log pinned right ----
+     The dashboard shows STATE; a demo is a sequence of EVENTS. Keeping the feed on
+     screen at all times means the operator never has to scroll away from the panels to
+     find out what just happened. It sticks and scrolls independently. */
+  .shell{display:grid;grid-template-columns:minmax(0,1fr) 386px;gap:20px;align-items:start}
+  .colmain{min-width:0}
+  .colrail{position:sticky;top:14px;height:calc(100vh - 28px)}
+  .railbox{display:flex;flex-direction:column;height:100%;border:1px solid var(--line);
+    background:var(--panel);border-radius:12px;overflow:hidden}
+  .railhead{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--line);
+    font-size:11px;letter-spacing:.14em;color:var(--dim);background:#0b0f18}
+  .railhead b{color:var(--danger);letter-spacing:.14em}
+  .wsdot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .wsdot.up{background:var(--safe);box-shadow:0 0 8px var(--safe)}
+  .wsdot.down{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+  .railsec{padding:11px 13px;border-bottom:1px solid var(--line)}
+  .railsec.grow{flex:1;min-height:0;display:flex;flex-direction:column;border-bottom:0}
+  .rlab{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);
+    margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .filters{margin-left:auto;display:flex;gap:3px}
+  .filters .f{font:inherit;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:20px;
+    padding:2px 8px;cursor:pointer}
+  .filters .f.on{border-color:var(--guard);color:var(--guard)}
+  /* analysis cards: the point of the rail -- they name the decisive moment in words
+     rather than leaving a viewer to spot it in the timestamps */
+  .an{border-left:2px solid var(--line);padding:6px 0 6px 10px;margin-bottom:8px;font-size:12px}
+  .an:last-child{margin-bottom:0}
+  .an .h{font-weight:700;font-size:11.5px;letter-spacing:.02em}
+  .an .b{color:var(--dim);line-height:1.5;margin-top:2px}
+  .an.bad{border-left-color:var(--danger)}  .an.bad .h{color:var(--danger)}
+  .an.good{border-left-color:var(--guard)}  .an.good .h{color:var(--guard)}
+  .an.warn{border-left-color:var(--amber)}  .an.warn .h{color:var(--amber)}
+  .an.idle .h{color:var(--dim)}
+  /* the feed itself */
+  #feed{flex:1;min-height:0;overflow-y:auto;font-family:var(--mono);font-size:11.4px;line-height:1.5}
+  #feed::-webkit-scrollbar{width:7px} #feed::-webkit-scrollbar-thumb{background:#1e2534;border-radius:4px}
+  .fe{display:flex;gap:8px;padding:3px 2px;border-bottom:1px solid #12161f}
+  .fe .ft{color:#3a4152;flex-shrink:0}
+  .fe .fk{width:3px;border-radius:2px;flex-shrink:0;background:var(--dim)}
+  .fe .fb{min-width:0}
+  .fe .fw{color:var(--text)} .fe .fd{color:var(--dim)}
+  .fe.system .fk{background:#3a4a63} .fe.system.key .fk{background:var(--safe)}
+  .fe.system.key .fw{color:var(--safe)}
+  .fe.attack .fk{background:var(--danger)} .fe.attack .fw{color:var(--danger)}
+  .fe.attack.key{background:rgba(255,45,85,.07)}
+  .fe.defense .fk{background:var(--guard)} .fe.defense .fw{color:var(--guard)}
+  .fe.defense.key{background:rgba(61,155,255,.09)}
+  .fe.control .fk{background:#2a3140} .fe.control .fw{color:var(--dim)}
+  .raillegend{padding:9px 13px;border-top:1px solid var(--line);background:#0b0f18;
+    display:flex;flex-direction:column;gap:3px;font-size:10.2px;color:var(--dim)}
+  .raillegend i{display:inline-block;width:9px;height:3px;border-radius:2px;margin-right:6px;
+    vertical-align:middle}
+  .raillegend i.system{background:#3a4a63} .raillegend i.attack{background:var(--danger)}
+  .raillegend i.defense{background:var(--guard)} .raillegend i.control{background:#2a3140}
+  /* Below ~1180px the rail would squeeze the door panels, which are the primary
+     comparison -- so it unpins and drops underneath rather than shrinking them. */
+  @media (max-width:1180px){
+    .shell{grid-template-columns:1fr}
+    .colrail{position:static;height:auto}
+    #feed{max-height:340px}
+  }
   .conn span.down::before{background:var(--danger);box-shadow:0 0 8px var(--danger)}
 
   /* verdict banner */
@@ -531,7 +785,7 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
   .foot code{color:var(--text)}
 </style></head>
 <body><div class="wrap">
-  <header>
+  <header id="pagehead">
     <div class="brand"><b>DELAY</b>STEER</div>
     <div class="sub">Temporal Breach Monitor</div>
     <div class="conn">
@@ -539,6 +793,9 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
       <span id="c-proxy">Delay Proxy :8125</span>
     </div>
   </header>
+
+  <div class="shell">
+  <div class="colmain">
 
   <div class="explain howto" id="howto">
     <div class="bar" onclick="document.getElementById('howto').classList.toggle('closed')">
@@ -726,11 +983,6 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
     </div>
   </div>
 
-  <div class="logwrap">
-    <div class="bar"><b>◉ LIVE</b> on-path event stream — <code>results/attack_proxy.log</code></div>
-    <div id="log"></div>
-  </div>
-
   <div class="explain" id="proof" style="margin-top:16px">
     <div class="bar" onclick="this.parentNode.classList.toggle('closed')">
       <b>◆ Reading the log</b> — how these events prove the attack landed and the defense held
@@ -761,13 +1013,48 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
     </div>
   </div>
 
+  </div><!-- /colmain -->
+
+  <aside class="colrail" id="colrail">
+    <div class="railbox">
+      <div class="railhead">
+        <b>◉ LIVE SYSTEM LOG</b>
+        <span class="wsdot" id="ws-dot" title="Home Assistant event stream"></span>
+      </div>
+
+      <div class="railsec">
+        <div class="rlab">Analysis — where is the attack, where is the defense</div>
+        <div id="analysis"></div>
+      </div>
+
+      <div class="railsec grow">
+        <div class="rlab">
+          Everything the system is doing
+          <span class="filters">
+            <button class="f on" data-f="all">all</button><button class="f" data-f="system">home</button
+            ><button class="f" data-f="attack">attack</button><button class="f" data-f="defense">defense</button>
+          </span>
+        </div>
+        <div id="feed"></div>
+      </div>
+
+      <div class="raillegend">
+        <span><i class="k system"></i>home — a real device changed</span>
+        <span><i class="k attack"></i>adversary — delay armed / stale served</span>
+        <span><i class="k defense"></i>TemporalGuard — armed / blocked</span>
+        <span><i class="k control"></i>operator — reset</span>
+      </div>
+    </div>
+  </aside>
+  </div><!-- /shell -->
+
   <div class="foot">watching <code>binary_sensor.front_door_contact</code> · commands in the LAUNCH SEQUENCE above · this panel peeks passively — the counters reflect the agent's reads, not the monitor's</div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 const DOOR={on:"OPEN",off:"CLOSED"};
-let lastLogKey="";
+let lastLogKey="",lastAnKey="",lastFeedKey="";
 function evClass(line){
   const t=line.match(/\s([A-Z-]+)\s/); const e=(t?t[1]:"").toUpperCase();
   if(e.includes("STALE"))return"stale"; if(e==="ARM")return"arm";
@@ -852,20 +1139,62 @@ function render(d){
     const c=$("creds");
     c.className="creds"+(d.tokens.ok?(d.tokens.warn?" warn":""):" bad");
   }
-  // log (append only new lines, keep scroll pinned)
-  const key=(d.events||[]).join("|");
-  if(key!==lastLogKey){
-    lastLogKey=key; const box=$("log"); box.innerHTML="";
-    (d.events||[]).forEach(line=>{
-      const div=document.createElement("div"); div.className="ln "+evClass(line);
-      const m=line.match(/^(\S+)\s+([A-Z-]+)\s*(.*)$/);
-      if(m){div.innerHTML=`<span style="color:#3a4152">${m[1].slice(11)}</span> <span class="ev">${m[2]}</span>${m[3].replace(/</g,"&lt;")}`;}
-      else div.textContent=line;
-      box.appendChild(div);
-    });
-    box.scrollTop=box.scrollHeight;
+  // ---- live system rail: home-assistant events merged with adversary/guard events ----
+  const ws=$("ws-dot");
+  if(ws){ const c=(d.ha_ws||{}).connected; ws.className="wsdot "+(c?"up":"down");
+    ws.title=c?"Home Assistant event stream: connected":"Home Assistant event stream: disconnected"; }
+
+  // analysis first -- it names the decisive moment so nobody has to read timestamps
+  const an=$("analysis");
+  if(an){
+    const key=JSON.stringify(d.analysis||[]);
+    if(key!==lastAnKey){
+      lastAnKey=key; an.innerHTML="";
+      (d.analysis||[]).forEach(a=>{
+        const el=document.createElement("div"); el.className="an "+(a.tone||"idle");
+        el.innerHTML='<div class="h"></div><div class="b"></div>';
+        el.querySelector(".h").textContent=a.head; el.querySelector(".b").textContent=a.body;
+        an.appendChild(el);
+      });
+    }
+  }
+
+  const box=$("feed");
+  if(box){
+    const fkey=(d.feed||[]).map(e=>e.t+e.what+e.detail).join("|");
+    if(fkey!==lastFeedKey){
+      // only auto-scroll when already pinned to the bottom, so reading history is not
+      // yanked away every 1.2s poll
+      const pinned = box.scrollHeight-box.scrollTop-box.clientHeight < 40;
+      lastFeedKey=fkey; box.innerHTML="";
+      (d.feed||[]).forEach(e=>{
+        const row=document.createElement("div");
+        row.className="fe "+e.kind+(e.key?" key":"");
+        row.dataset.kind=e.kind;
+        row.innerHTML='<span class="ft"></span><span class="fk"></span>'
+                     +'<span class="fb"><span class="fw"></span> <span class="fd"></span></span>';
+        row.querySelector(".ft").textContent=e.t;
+        row.querySelector(".fw").textContent=e.what;
+        row.querySelector(".fd").textContent=e.detail;
+        box.appendChild(row);
+      });
+      applyFilter();
+      if(pinned) box.scrollTop=box.scrollHeight;
+    }
   }
 }
+let feedFilter="all";
+function applyFilter(){
+  document.querySelectorAll("#feed .fe").forEach(r=>{
+    r.style.display=(feedFilter==="all"||r.dataset.kind===feedFilter)?"":"none";
+  });
+}
+document.querySelectorAll(".filters .f").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll(".filters .f").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); feedFilter=b.dataset.f; applyFilter();
+  });
+});
 async function tick(){ try{const r=await fetch("/data",{cache:"no-store"});render(await r.json());}catch(e){} }
 tick(); setInterval(tick,1200);
 // copy-to-clipboard for the launch-sequence commands
@@ -944,6 +1273,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=9120)
     args = ap.parse_args()
+    # Live smart-home feed. Daemon so it never holds the process open, and it retries
+    # internally, so the dashboard still works (proxy events only) if HA is down.
+    threading.Thread(target=_ha_listener, daemon=True, name="ha-events").start()
     srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     print(f"DelaySteer attack monitor -> http://localhost:{args.port}  "
           f"(HA {HA}, proxy {PROXY}, log {LOG_PATH.name})", flush=True)
