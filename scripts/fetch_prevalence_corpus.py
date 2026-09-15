@@ -18,10 +18,10 @@ Read-only GETs, one at a time, with a delay between requests.
 import json, urllib.request, urllib.error, re, time, html, os, sys, hashlib
 
 # The User-Agent names the study rather than a person. A contact address is the polite
-# convention for a research crawler, but this repository is public and the paper it
-# supports is under double-anonymous review, so an institutional address here would
-# identify the authors to any reviewer who found the repository. Restore a contact
-# address after the review embargo lifts if the convention matters to you.
+# convention for a research crawler, but this file is published on the public repository
+# and the anonymized review mirror is served from it, so an institutional address here
+# identifies the authors to any reviewer who opens the mirror. Restore a contact address
+# after the double-anonymous review embargo lifts.
 UA = {"User-Agent": "DelaySteer-research/1.0 (academic study of public automation blueprints)"}
 BASE = "https://community.home-assistant.io"
 CACHE = "results/prevalence_cache"

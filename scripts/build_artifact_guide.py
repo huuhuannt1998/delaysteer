@@ -36,6 +36,7 @@ import hashlib
 import re
 import subprocess
 from datetime import date
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -43,8 +44,29 @@ MANIFEST = ROOT / "results" / "MANIFEST_ma9.md"
 RESULTS = ROOT / "results"
 OUT = ROOT / "docs" / "artifact_guide.html"
 
-# Public: TDSC is single-anonymous, so the guide links the real repository.
-REPO_URL = "https://anonymous.4open.science/r/delaysteer"
+# The repository URL is DERIVED, not hard-coded, and that is an anonymity requirement
+# rather than a style preference.
+#
+# The comment this replaces read "TDSC is single-anonymous, so the guide links the real
+# repository." That reasoning expired when the venue changed to ACM TIOT, which is
+# double-anonymous. This file is published on the public repository, and the anonymized
+# review mirror is served FROM that repository -- so a hard-coded owner URL here is
+# readable by any reviewer who opens the mirror, and de-anonymizes the submission in one
+# click. Derive it from the checkout instead, and fall back to the anonymized mirror so a
+# build from an exported tarball cannot reintroduce the handle.
+def _repo_url() -> str:
+    import subprocess
+    try:
+        url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=ROOT,
+                             capture_output=True, text=True, timeout=5).stdout.strip()
+        if url:
+            return url[:-4] if url.endswith(".git") else url
+    except Exception:
+        pass
+    return os.environ.get("DELAYSTEER_REPO_URL", "https://anonymous.4open.science/r/delaysteer")
+
+
+REPO_URL = _repo_url()
 
 # The datasets under an additive-only freeze: byte-identical to the pre-hardening
 # release, never rewritten, every later experiment writing a NEW file instead.

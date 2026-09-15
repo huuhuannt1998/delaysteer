@@ -64,3 +64,6 @@ OPTIONS-FOR-ADVISOR.md
 # A standalone summary of the paper for an advisor -- it carries the manuscript's title
 # and argument, so it is paper content that happens to sit under results/.
 results/advisor_summary.*
+# Generated artifact guide: it embeds the repository URL, so a stale copy built before
+# the URL was derived would republish the owner handle the generator no longer contains.
+docs/artifact_guide.html
