@@ -1,0 +1,68 @@
+blueprint:
+  name: cctvQL — PTZ to Preset on Motion
+  domain: automation
+  author: arunrajiah
+  homeassistant:
+    min_version: "2024.1.0"
+  input:
+    motion_sensor:
+      name: Motion Sensor
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: [motion, occupancy]
+    camera_id:
+      name: Camera ID
+      selector: {text: {}}
+    ptz_action:
+      name: PTZ Action
+      selector:
+        select:
+          options: [preset, home, left, right, up, down, zoom_in, zoom_out]
+      default: preset
+    preset_id:
+      name: Preset ID
+      selector:
+        number: {min: 1, max: 255}
+      default: 1
+    ptz_speed:
+      name: Speed
+      selector:
+        number: {min: 1, max: 100}
+      default: 50
+    return_home_delay:
+      name: Return to Home After (seconds, 0 = disabled)
+      selector:
+        number: {min: 0, max: 300, unit_of_measurement: s}
+      default: 30
+variables:
+  camera_id: !input camera_id
+  ptz_action: !input ptz_action
+  preset_id: !input preset_id
+  ptz_speed: !input ptz_speed
+  return_home_delay: !input return_home_delay
+trigger:
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "on"
+action:
+  - service: cctvql.ptz
+    data:
+      camera_id: "{{ camera_id }}"
+      action: "{{ ptz_action }}"
+      preset_id: "{{ preset_id | int }}"
+      speed: "{{ ptz_speed | int }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ return_home_delay | int > 0 }}"
+        sequence:
+          - delay:
+              seconds: "{{ return_home_delay | int }}"
+          - service: cctvql.ptz
+            data:
+              camera_id: "{{ camera_id }}"
+              action: home
+              speed: 50
+mode: single
+max_exceeded: silent

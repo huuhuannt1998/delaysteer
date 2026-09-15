@@ -1,0 +1,218 @@
+blueprint:
+  name: Zero feed-in mode for PV systems
+  description: >-
+    ## Zero feed-in / Export / Injection for PV Systems 
+
+    Tested with OpenDTU and Hoymiles inverters
+
+    ## Summary
+
+    This automation reacts to changes in power imported from or exported to the grid.<br>
+    It adjusts photovoltaic production limits to prevent feeding energy into the grid.<br>
+    **Supports multiple inverters, but all must be of the same type and capacity.**<br>
+    **To avoid excessive flash memory writes**, please use **non-persistent absolute** number entities to set the limit.
+
+    ## Credits
+
+    Based on the work of AndreBott83:<br>
+    `https://github.com/AndreBott83/HA_Zero_PV_Grid_Feed_in`<br>
+    Algorithm and concept from:<br>
+    `https://selbstbau-pv.de/blogs/nulleinspeisung/nulleinspeisung-hoymiles-hm-1500-mit-opendtu-python-steuerung`
+
+  domain: automation
+  homeassistant:
+    min_version: 2024.8.0
+  input:
+    general_settings:
+      name: General settings
+      icon: mdi:cog
+      input:
+        ModeSelector:
+          name: Export Limitation Mode
+          description: Choose between a smooth adjustment or a hard cut to zero export.
+          default: "smooth"
+          selector:
+            select:
+              mode: list
+              options:
+                - label: "Smooth decrease"
+                  value: "smooth"
+                - label: "Hard cut to zero"
+                  value: "hard"
+        TriggerInterval:
+          name: Trigger Interval
+          description: Frequency (in seconds) at which the automation will recalculate the power limit.
+          default: 15
+          selector:
+            number:
+              min: 5
+              max: 120
+              unit_of_measurement: "s"
+              step: 5
+    grid_prod_settings:
+      name: Grid and production settings
+      icon: mdi:cog
+      input:
+        AllowedFeedIn:
+          name: Allowed Grid Export (W)
+          description: The automation activates only when the grid export exceeds this value.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 5000
+              unit_of_measurement: "W"
+              mode: box
+              step: 1
+        GridPowerMeters:
+          name: Grid Import/Export Power Sensors (W)
+          description: Select all sensors measuring grid import/export (e.g., for L1, L2, L3). Their values will be summed.
+          selector:
+            entity:
+              filter:
+                - device_class: power
+                  domain:
+                    - sensor
+              multiple: true
+        PVPowerMeters:
+          name: PV Production Sensors (W)
+          description: Select the sensors measuring current photovoltaic production. Their values will be summed.
+          selector:
+            entity:
+              filter:
+                - device_class: power
+                  domain:
+                    - sensor
+              multiple: true
+    inverters_settings:
+      name: Inverter(s) settings
+      icon: mdi:cog
+      input:
+        MaxInverterPower:
+          name: Maximum Power per Inverter (W)
+          description: Define the maximum power that each inverter can produce.
+          default: 1600
+          selector:
+            number:
+              min: 0
+              max: 5000
+              unit_of_measurement: "W"
+              mode: box
+              step: 1
+        MinInverterPower:
+          name: Minimum Power per Inverter (W)
+          description: Define the minimum power each inverter should produce.
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 5000
+              unit_of_measurement: "W"
+              mode: box
+              step: 1
+        NonPersistentLimit:
+          name: NON PERSISTENT ABSOLUTE Limit Entities (W)
+          description: Select entities that receive the calculated production limit per inverter.
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - number
+              multiple: true
+        InverterOnlineStatus:
+          name: Inverter Online Status Sensors
+          description: Select the entities indicating whether each inverter is producing or reachable.
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                    - switch
+              multiple: true
+    misc:
+      name: Misc
+      icon: mdi:cog
+      collapsed: true
+      input:
+        Debug:
+          name: Debug Mode
+          description: If enabled, automation logs will be written to the logbook.
+          default: "disable"
+          selector:
+            select:
+              mode: list
+              options:
+                - label: "Enable"
+                  value: "enable"
+                - label: "Disable"
+                  value: "disable"
+
+mode: single
+max_exceeded: silent
+
+variables:
+  trigger_interval: !input TriggerInterval
+  lower_limit: !input MinInverterPower
+  upper_limit: !input MaxInverterPower
+  ctlr_mode: !input ModeSelector
+  grid_power_meters_entities: !input GridPowerMeters
+  grid_sum: "{{ expand(grid_power_meters_entities) | map(attribute='state') | map('float', default=0) | sum }}"
+  pv_power_meters_entities: !input PVPowerMeters
+  pv_generation: "{{ expand(pv_power_meters_entities) | map(attribute='state') | map('float', default=0) | sum }}"
+  non_persistent_limit_entities: !input NonPersistentLimit
+  number_of_inverters: "{{ non_persistent_limit_entities | count }}"
+  current_limit: "{{ expand(non_persistent_limit_entities) | map(attribute='state') | map('float', default=0) | sum }}"
+  modifier: !input AllowedFeedIn
+  debug: !input Debug
+  modifier_setpoint: >-
+    {% if grid_sum < 0 %}
+      {{ modifier|round(0) }}
+    {% else %}
+      {{ 0 }}
+    {% endif %}
+  new_setpoint: >-
+    {% if ctlr_mode == 'smooth' %}
+      {% set setpoint = (grid_sum + modifier_setpoint + current_limit - 5)/number_of_inverters %}
+    {% elif ctlr_mode == 'hard' %}
+      {% set setpoint = (grid_sum + modifier_setpoint + pv_generation + 5)/number_of_inverters %}
+    {%- endif %}
+    {% if setpoint > upper_limit -%}
+      {% set setpoint = upper_limit %}
+    {% elif setpoint < lower_limit %}
+      {% set setpoint = lower_limit %}
+    {%- endif %}
+    {{ setpoint|round(0) }}
+
+triggers:
+  - trigger: state
+    entity_id: !input GridPowerMeters
+
+conditions:
+  - condition: state
+    entity_id: !input InverterOnlineStatus
+    state: "on"
+  - condition: template
+    value_template: "{{ (new_setpoint - (current_limit/number_of_inverters))|abs > 5 }}"
+  - condition: template
+    value_template: >-
+      {%- set last = state_attr(this.entity_id, 'last_triggered') %}
+      {{ last is none or (last is not none and (now() - last) > timedelta(seconds=trigger_interval)) }}
+
+actions:
+  - if:
+      - "{{ debug == 'enable' }}"
+    then:
+      - action: logbook.log
+        data_template:
+          name: "Zero Feed-in:"
+          message: >
+            Grid: {{ grid_sum|round(0) }}W,
+            Production: {{ pv_generation|round(0) }}W,
+            Consumption: {{ (grid_sum + pv_generation)|round(0)|abs }}W,
+            Old setpoint: {{ (current_limit/number_of_inverters)|round(0) }}W,
+            New setpoint: {{ new_setpoint }}W
+  - action: number.set_value
+    target:
+      entity_id: !input NonPersistentLimit
+    data:
+      value: "{{ new_setpoint|round(0) }}"

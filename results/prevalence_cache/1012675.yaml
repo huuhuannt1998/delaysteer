@@ -1,0 +1,20 @@
+blueprint:
+  name: "Light Gradient Controller (from 3 to 10 Bulbs)"
+  description: "Creates directional gradients across multiple bulbs. Last updated 26.06.03"
+  domain: automation
+  input:
+    warmup_delay:
+      name: Initial Warm-up Delay
+      description: "How long (in seconds) to wait before reading the trigger bulbs' states. Allows attributes to settle when triggered simultaneously by scenes/voice."
+      default: 0.25
+      selector:
+        number:
+          min: 0
+          max: 2
+          step: 0.05
+          unit_of_measurement: "s"
+          mode: slider
+    transition_time:
+      name: Bulb Transition Time
+      description: "How long (in seconds) the bulbs locally fade their color/brightness."
+      default: 2

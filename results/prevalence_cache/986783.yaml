@@ -1,0 +1,20 @@
+blueprint:
+  name: Smart Ventilation v2 (Sensor Triggered)
+  description: AH-based ventilation with sensor triggers instead of polling
+  domain: automation
+  input:
+    # Room Configuration
+    room_name:
+      name: Room Name
+      selector:
+        text:
+
+    # Sensors - Indoor
+    temp_inside:
+      name: Indoor Temperature Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+
+    rh_inside:

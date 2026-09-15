@@ -1,0 +1,638 @@
+blueprint:
+  name: "🌧️ Weather Condition Alert"
+  description: |
+    ## 🌦️ Description
+
+    This blueprint monitors the **hourly weather forecast** for the next _N_ hours
+    and raises an alert when selected conditions (rain, snow, hail, exceptional, etc.)
+    are expected for at least a minimum number of hours within that window.
+
+    Instead of hard-coding notifications, it:
+
+    - Toggles an **input_boolean** helper ON/OFF to indicate whether an alert is active.
+    - Writes a **human-friendly message** into an **input_text** helper, for example:
+      - `Snow expected between 10:00 PM and 11:00 PM in the next 6 hours (~4.2 mm).`
+      - `Rain expected around 3:00 PM in the next 12 hours (~0.8 mm).`
+      - For **exceptional** conditions, it will tell you to check your local weather alerts.
+
+    Optionally, it can also:
+
+    - Track **total expected precipitation** (mm) in the lookahead window
+      and store it in an `input_number` helper for dashboard display.
+    - Send a **mobile notification** to Home Assistant companion app devices,
+      with quiet hours and basic spam protection (only on state change).
+    - Log helpful debug messages so you can see exactly what it did.
+
+    <details><summary><b>How it works</b> ⛈️</summary>
+    <p></p>
+    <ol>
+      <li>Runs on a schedule you choose (e.g. every 15 / 30 / 60 minutes, up to 12 hours).</li>
+      <li>Calls <code>weather.get_forecasts</code> with <code>type: hourly</code> for your
+          selected weather entity (for example <code>weather.home</code>).</li>
+      <li>Looks ahead for the next <strong>N hours</strong> and filters hours whose
+          <code>condition</code> matches any of your selected types, such as:
+          <code>snowy</code>, <code>snowy-rainy</code>, <code>rainy</code>,
+          <code>pouring</code>, <code>hail</code>, <code>exceptional</code>, etc.</li>
+      <li>Counts how many of those matching hours are found:
+        <ul>
+          <li>If the count is <strong>at least the minimum threshold</strong> you configured:
+            <ul>
+              <li>Turns the boolean helper <strong>ON</strong>.</li>
+              <li>Writes a message into the text helper describing what is expected and
+                  roughly <strong>between which local times</strong> it occurs.</li>
+              <li>Updates the precipitation helper with the total expected mm.</li>
+              <li>(If mobile alerts are enabled and it's not quiet hours) sends a notification.</li>
+            </ul>
+          </li>
+          <li>If no hours match:
+            <ul>
+              <li>Turns the boolean helper <strong>OFF</strong>.</li>
+              <li>Clears the text helper.</li>
+              <li>Sets the precipitation helper to 0.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ol>
+    </details>
+
+    <details><summary><b>Recommended use cases</b> 🌧️</summary>
+    <p></p>
+    <ul>
+      <li>Showing a <strong>"Snow / Rain Alert" card</strong> on a dashboard using:
+        <ul>
+          <li><code>input_boolean</code> for visibility / state</li>
+          <li><code>input_text</code> for the message body</li>
+          <li><code>input_number</code> for total expected precipitation</li>
+        </ul>
+      </li>
+      <li>Triggering other automations when precipitation is expected, for example:
+        <ul>
+          <li>TTS or speaker announcements</li>
+          <li>Adjusting heating / blinds / exterior lighting</li>
+        </ul>
+      </li>
+      <li>Getting <strong>phone alerts</strong> for incoming snow, rain, hail, or
+          exceptional conditions while still respecting quiet hours.</li>
+      <li>Using the boolean as a simple condition in other
+          <strong>weather-aware</strong> automations.</li>
+    </ul>
+    </details>
+
+    <details><summary><b>Debugging tips</b> 🛠️</summary>
+    <p></p>
+    <ul>
+      <li>Turn <strong>Debug logging</strong> to "On" in the blueprint inputs.</li>
+      <li>Use <strong>Logbook</strong> and filter by:
+        <ul>
+          <li>Your weather entity (e.g. <code>weather.home</code>), or</li>
+          <li>Text like <code>Weather Condition Alert</code>.</li>
+        </ul>
+      </li>
+      <li>Look for messages such as:
+        <ul>
+          <li><code>Alert ACTIVE: found X matching hour(s)…</code></li>
+          <li><code>Alert CLEARED: no matching hours in lookahead window.</code></li>
+          <li><code>Interval check skipped: current time does not align with selected frequency.</code></li>
+        </ul>
+      </li>
+      <li>Use <strong>Settings → Automations &amp; Scenes → [this automation] → Trace</strong> to inspect:
+        <ul>
+          <li>The forecast data used for that run.</li>
+          <li>Which hours matched your selected conditions.</li>
+          <li>Why the boolean/message did or did not change.</li>
+        </ul>
+      </li>
+    </ul>
+    </details>
+
+    ---
+
+    **Author:** CraveVox  
+    **Last updated:** 2026-03-07
+
+  domain: automation
+  source_url: https://github.com/cravevox/homeassistant/blob/main/blueprints/automation/weather-condition-alert.yaml
+  author: CraveVox
+  homeassistant:
+    min_version: "2024.6.0"
+
+  input:
+    weather_section:
+      name: Weather source & window
+      icon: mdi:weather-cloudy-clock
+      input:
+        weather_entity:
+          name: Weather entity
+          description: >
+            The weather entity to use for the hourly forecast (e.g. weather.home).
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: weather
+
+        hours_to_check:
+          name: Hours to check ahead
+          description: >
+            Number of hours ahead to scan in the hourly forecast. If your weather
+            provider returns fewer hours than this, only the available hours will
+            be used.
+          default: 12
+          selector:
+            number:
+              min: 1
+              max: 48
+              step: 1
+              mode: slider
+
+        include_horizon_suffix:
+          name: Include "in the next N hours" in message
+          description: >
+            When enabled, the alert message will end with "in the next N hours".
+          default: true
+          selector:
+            boolean: {}
+
+    conditions_section:
+      name: Conditions & threshold
+      icon: mdi:weather-pouring
+      input:
+        weather_conditions:
+          name: Conditions to alert on
+          description: >
+            Select one or more weather conditions that should trigger an alert.
+            Common examples: rainy, pouring, lightning-rainy, snowy, snowy-rainy.
+            The "exceptional" condition is used by some integrations for severe
+            or unusual events that don't fit standard conditions.
+          default:
+            - rainy
+            - pouring
+            - lightning-rainy
+            - snowy
+            - snowy-rainy
+          selector:
+            select:
+              multiple: true
+              mode: dropdown
+              options:
+                - sunny
+                - partlycloudy
+                - cloudy
+                - rainy
+                - pouring
+                - lightning
+                - lightning-rainy
+                - snowy
+                - snowy-rainy
+                - hail
+                - fog
+                - windy
+                - windy-variant
+                - exceptional
+
+        min_matching_hours:
+          name: Minimum matching hours to alert
+          description: >
+            Minimum number of hours within the window that must match the selected
+            conditions before an alert is raised. Hours do not need to be consecutive.
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 48
+              step: 1
+              mode: slider
+
+    helpers_section:
+      name: Alert helpers
+      icon: mdi:alarm-light-outline
+      description: >
+        These helpers drive your dashboards. The boolean turns on when an alert
+        is active and off when it clears. The text holds the human-readable
+        alert message. If you create multiple automations from this blueprint,
+        use separate helpers for each instance.
+      input:
+        alert_boolean:
+          name: Alert boolean helper
+          description: >
+            Input boolean that will be turned on when matching conditions are
+            detected and turned off when they clear.
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_boolean
+
+        alert_message:
+          name: Alert message helper
+          description: >
+            Input text that will contain the generated alert message
+            (e.g. "Snow Notice! Snow expected between 3:00 PM and 6:00 PM in the
+            next 12 hours.").
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_text
+
+    precipitation_section:
+      name: 🌧️ Precipitation amount tracking (optional)
+      icon: mdi:weather-rainy
+      collapsed: true
+      description: >
+        Optionally track the total expected precipitation (in mm) across all
+        hours in the lookahead window. The precipitation total is always
+        included in the alert text message, but enabling this writes the raw
+        number to a separate input_number helper. This is useful for dashboard
+        gauges, badges, history graphs, or as a condition in other automations
+        (e.g. "if expected precipitation > 20 mm, close the garage door").
+        If you only need the text message, you can leave this off.
+      input:
+        track_precipitation:
+          name: Track precipitation amount
+          description: >
+            If enabled, the total expected precipitation (mm) from all hours in
+            the lookahead window will be written to the input_number helper
+            below. Note: the precipitation total is always included in the
+            alert text message when precipitation is expected, regardless of
+            this setting. This toggle only controls whether the raw number is
+            also stored in a separate helper for use in gauges, graphs, or
+            other automations.
+          default: false
+          selector:
+            boolean: {}
+
+        precipitation_helper:
+          name: Precipitation amount helper (input_number)
+          description: >
+            An input_number helper to store the total expected precipitation
+            in mm as a standalone value. Only used if "Track precipitation
+            amount" is enabled above. To create one: go to Settings → Devices
+            & Services → Helpers → Create Helper → Number, and set min=0,
+            max=500, step=0.1, unit of measurement="mm".
+          default: {}
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_number
+
+    schedule_section:
+      name: Check frequency
+      icon: mdi:clock-outline
+      input:
+        check_interval:
+          name: Check interval
+          description: >
+            How often to actually run the forecast check. The automation wakes
+            every 15 minutes but only does the real work at the interval you
+            select here.
+          default: "30"
+          selector:
+            select:
+              options:
+                - label: Every 15 minutes
+                  value: "15"
+                - label: Every 30 minutes
+                  value: "30"
+                - label: Every 1 hour
+                  value: "60"
+                - label: Every 2 hours
+                  value: "120"
+                - label: Every 3 hours
+                  value: "180"
+                - label: Every 4 hours
+                  value: "240"
+                - label: Every 5 hours
+                  value: "300"
+                - label: Every 6 hours
+                  value: "360"
+                - label: Every 12 hours
+                  value: "720"
+
+    mobile_section:
+      name: 📱 Mobile notifications (optional)
+      icon: mdi:cellphone
+      collapsed: true
+      description: >
+        Optional push notifications via the Home Assistant Companion app.
+        Notifications are only sent when the alert changes from off to on, and
+        only within the configured notification time window below.
+      input:
+        send_mobile_notifications:
+          name: Send mobile notifications
+          description: >
+            If enabled, a notification will be sent to the selected mobile_app
+            devices whenever an alert is raised (on state change from off to on).
+          default: false
+          selector:
+            boolean: {}
+
+        notification_title:
+          name: Notification title
+          description: >
+            Title used for mobile notifications. Default is "Weather Alert".
+          default: Weather Alert
+          selector:
+            text: {}
+
+        mobile_devices:
+          name: Mobile devices (optional)
+          description: >
+            One or more Home Assistant Companion app devices (mobile_app
+            integration) to send alerts to. Only used if "Send mobile
+            notifications" is enabled.
+          default: []
+          selector:
+            device:
+              multiple: true
+              filter:
+                - integration: mobile_app
+
+        notify_start_time:
+          name: Earliest notification time
+          description: >
+            Earliest time of day when mobile notifications are allowed
+            (local time). Outside this window, helpers still update but no
+            notifications are sent.
+          default: "07:00:00"
+          selector:
+            time: {}
+
+        notify_end_time:
+          name: Latest notification time
+          description: >
+            Latest time of day when mobile notifications are allowed
+            (local time). If the end time is earlier than the start time, the
+            window is treated as wrapping over midnight.
+          default: "22:00:00"
+          selector:
+            time: {}
+
+    debug_section:
+      name: 🧪 Debug (optional)
+      icon: mdi:bug
+      collapsed: true
+      input:
+        enable_debug:
+          name: Enable debug logging
+          description: >
+            If enabled, writes summary entries to the Logbook for each relevant
+            run, indicating whether the alert was triggered, cleared, skipped
+            due to interval, or skipped due to missing forecast data.
+          default: false
+          selector:
+            boolean: {}
+
+mode: single
+
+triggers:
+  - trigger: time_pattern
+    minutes: "/15"
+
+conditions: []
+
+actions:
+  - variables:
+      check_interval: !input check_interval
+      interval_minutes: "{{ check_interval | int }}"
+      debug_enabled: !input enable_debug
+      minutes_since_midnight: "{{ now().hour * 60 + now().minute }}"
+      run_this_cycle: >-
+        {% if interval_minutes <= 0 %}
+          false
+        {% else %}
+          {{ (minutes_since_midnight % interval_minutes) == 0 }}
+        {% endif %}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ run_this_cycle }}"
+        sequence:
+          # Only runs when we're on a matching interval
+          - action: weather.get_forecasts
+            target:
+              entity_id: !input weather_entity
+            data:
+              type: hourly
+            response_variable: forecasts
+
+          - variables:
+              conds: !input weather_conditions
+              hours_to_check: !input hours_to_check
+              min_matching_hours: !input min_matching_hours
+              include_horizon_suffix: !input include_horizon_suffix
+              alert_boolean_entity: !input alert_boolean
+              alert_message_entity: !input alert_message
+              send_mobile: !input send_mobile_notifications
+              mobile_devices_var: !input mobile_devices
+              notify_start_time: !input notify_start_time
+              notify_end_time: !input notify_end_time
+              track_precip: !input track_precipitation
+              precip_helper_entity: !input precipitation_helper
+
+              merged: "{{ merge_response(forecasts) }}"
+              hourly: >
+                {% set h = merged %}
+                {{ h[:hours_to_check] if h is not none else [] }}
+
+              matching_hours: >
+                {{ hourly | selectattr('condition', 'in', conds) | list }}
+
+              matching_count: "{{ matching_hours | length }}"
+
+              first_match: "{{ matching_hours[0] if matching_count|int > 0 else none }}"
+              last_match: "{{ matching_hours[-1] if matching_count|int > 1 else first_match }}"
+
+              total_precipitation: >-
+                {% set ns = namespace(total=0) %}
+                {% for h in hourly %}
+                  {% set ns.total = ns.total + (h.precipitation | float(0)) %}
+                {% endfor %}
+                {{ ns.total | round(1) }}
+
+              alert_current_state: >
+                {{ states(alert_boolean_entity) if alert_boolean_entity is not none else 'unknown' }}
+
+          - choose:
+              # 1) Forecast data present AND enough matching hours → ACTIVATE alert
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ (hourly | length > 0) and (matching_count | int >= min_matching_hours | int) }}
+                sequence:
+                  # Build the alert message text
+                  - variables:
+                      alert_message_text: >-
+                        {% if first_match %}
+                          {% set cond = first_match.condition %}
+                          {% set dt_start = as_datetime(first_match.datetime) | as_local %}
+                          {% set dt_end = as_datetime(last_match.datetime) | as_local %}
+                          {% set start_time = dt_start.strftime('%-I:%M %p') %}
+                          {% set end_time = dt_end.strftime('%-I:%M %p') %}
+                          {% if cond == 'exceptional' %}
+                            {% set kind = 'Exceptional weather' %}
+                          {% elif 'snow' in cond and 'rain' in cond %}
+                            {% set kind = 'Snow and rain' %}
+                          {% elif 'snow' in cond %}
+                            {% set kind = 'Snow' %}
+                          {% elif 'rain' in cond %}
+                            {% set kind = 'Rain' %}
+                          {% elif cond == 'hail' %}
+                            {% set kind = 'Hail' %}
+                          {% else %}
+                            {% set kind = 'Precipitation' %}
+                          {% endif %}
+                          {% if include_horizon_suffix %}
+                            {% set suffix = ' in the next ' ~ hours_to_check ~ ' hours' %}
+                          {% else %}
+                            {% set suffix = '' %}
+                          {% endif %}
+                          {% set precip_info = '' %}
+                          {% if total_precipitation | float > 0 %}
+                            {% set precip_info = ' (~' ~ total_precipitation ~ ' mm)' %}
+                          {% endif %}
+                          {% if cond == 'exceptional' %}
+                            {% if matching_count|int == 1 %}
+                              Exceptional conditions expected around {{ start_time }}{{ suffix }}{{ precip_info }}. Check your local weather alerts for more details.
+                            {% else %}
+                              Exceptional conditions expected between {{ start_time }} and {{ end_time }}{{ suffix }}{{ precip_info }}. Check your local weather alerts for more details.
+                            {% endif %}
+                          {% else %}
+                            {% if matching_count|int == 1 %}
+                              {{ kind }} expected around {{ start_time }}{{ suffix }}{{ precip_info }}.
+                            {% else %}
+                              {{ kind }} expected between {{ start_time }} and {{ end_time }}{{ suffix }}{{ precip_info }}.
+                            {% endif %}
+                          {% endif %}
+                        {% else %}
+                          {{ '' }}
+                        {% endif %}
+
+                  # Turn on boolean and set message
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: !input alert_boolean
+
+                  - action: input_text.set_value
+                    target:
+                      entity_id: !input alert_message
+                    data:
+                      value: "{{ alert_message_text }}"
+
+                  # Update precipitation helper if enabled
+                  - if:
+                      - condition: template
+                        value_template: "{{ track_precip and precip_helper_entity is not none }}"
+                    then:
+                      - action: input_number.set_value
+                        target:
+                          entity_id: !input precipitation_helper
+                        data:
+                          value: "{{ total_precipitation }}"
+
+                  # Debug log for active alert (wrapped in if/then so it doesn't block the sequence)
+                  - if:
+                      - condition: template
+                        value_template: "{{ debug_enabled }}"
+                    then:
+                      - action: logbook.log
+                        data:
+                          name: Weather Condition Alert
+                          message: >-
+                            Alert ACTIVE: {{ matching_count }} matching hour(s) in the next
+                            {{ hours_to_check }} hour(s) for conditions {{ conds }}.
+                            Total precipitation: {{ total_precipitation }} mm.
+                          entity_id: !input weather_entity
+
+                  # Mobile notifications: only on state change (off -> on) and within time window
+                  - condition: template
+                    value_template: >
+                      {{ send_mobile and (mobile_devices_var | length > 0) and alert_current_state != 'on' }}
+                  - condition: template
+                    value_template: >-
+                      {% set now_time = now().time() %}
+                      {% set start = strptime(notify_start_time, '%H:%M:%S').time() %}
+                      {% set end = strptime(notify_end_time, '%H:%M:%S').time() %}
+                      {% if start <= end %}
+                        {{ start <= now_time <= end }}
+                      {% else %}
+                        {{ now_time >= start or now_time <= end }}
+                      {% endif %}
+                  - repeat:
+                      for_each: "{{ mobile_devices_var }}"
+                      sequence:
+                        - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                          data:
+                            title: !input notification_title
+                            message: "{{ alert_message_text }}"
+                          continue_on_error: true
+
+
+              # 2) Forecast data present BUT below threshold → CLEAR alert
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ (hourly | length > 0) and (matching_count | int < min_matching_hours | int) }}
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: !input alert_boolean
+
+                  - action: input_text.set_value
+                    target:
+                      entity_id: !input alert_message
+                    data:
+                      value: ""
+
+                  # Reset precipitation helper if enabled
+                  - if:
+                      - condition: template
+                        value_template: "{{ track_precip and precip_helper_entity is not none }}"
+                    then:
+                      - action: input_number.set_value
+                        target:
+                          entity_id: !input precipitation_helper
+                        data:
+                          value: 0
+
+                  # Debug log for cleared/below-threshold alert
+                  - if:
+                      - condition: template
+                        value_template: "{{ debug_enabled }}"
+                    then:
+                      - action: logbook.log
+                        data:
+                          name: Weather Condition Alert
+                          message: >-
+                            Alert CLEARED or below threshold: {{ matching_count }} matching
+                            hour(s) in the next {{ hours_to_check }} hour(s) for conditions {{ conds }}.
+                          entity_id: !input weather_entity
+
+            # 3) Default: no hourly forecast data -> do nothing to helpers, optional debug
+            default:
+              - if:
+                  - condition: template
+                    value_template: "{{ debug_enabled }}"
+                then:
+                  - action: logbook.log
+                    data:
+                      name: Weather Condition Alert
+                      message: >
+                        No hourly forecast data available; alert state left unchanged.
+                      entity_id: !input weather_entity
+
+    # Default branch of top-level choose: not our interval -> skip, optional debug
+    default:
+      - if:
+          - condition: template
+            value_template: "{{ debug_enabled }}"
+        then:
+          - action: logbook.log
+            data:
+              name: Weather Condition Alert
+              message: >
+                Interval check skipped this run (current interval setting does not match).
+              entity_id: !input weather_entity

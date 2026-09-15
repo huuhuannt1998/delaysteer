@@ -1,0 +1,185 @@
+blueprint:
+  name: Outdoor Lights — Sunset Fade-in / Overnight Fade-out
+  description: >
+    Drives a light or light group through a daily sunset-to-midnight cycle:
+    fade in at sunset, fade out at a configurable late-evening time, hard-off
+    at a configurable post-fade time. Configurable color, brightness, durations,
+    sunset offset, and an optional sun-elevation gate so high-summer evenings
+    don't kick the lights on while it's still bright outside.
+  domain: automation
+  source_url: https://magikh0e.pl/pubHomeAutomation/blueprints/outdoorLightsSunsetFade.yaml.txt
+  input:
+
+    light_section:
+      name: Light
+      icon: mdi:lightbulb-on-outline
+      input:
+        light_entity:
+          name: Light or light group
+          description: >
+            Single light entity, or a `light: - platform: group` that combines
+            multiple bulbs into one logical entity.
+          selector:
+            entity:
+              filter:
+                - domain: light
+        rgb_color:
+          name: Color (RGB)
+          description: >
+            Color used throughout the cycle. Default 255,147,41 = warm amber.
+          default: [255, 147, 41]
+          selector:
+            color_rgb:
+        target_brightness_pct:
+          name: Target brightness (%)
+          description: Brightness reached at the end of the fade-in.
+          default: 50
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: slider
+
+    fade_in_section:
+      name: Sunset fade-in
+      icon: mdi:weather-sunset-down
+      input:
+        sunset_offset:
+          name: Sunset trigger offset
+          description: "Negative = earlier, positive = later. Format HH:MM:SS."
+          default: "00:00:00"
+          selector:
+            text:
+        fade_in_seconds:
+          name: Fade-in duration (seconds)
+          description: "Ramp time from 1% to target. Default 1800 = 30 min."
+          default: 1800
+          selector:
+            number:
+              min: 1
+              max: 3600
+              step: 1
+              unit_of_measurement: "s"
+              mode: box
+        require_dark:
+          name: Skip when the sky is still bright
+          description: >
+            Optional gate: only run the fade-in if the sun's elevation is below
+            the threshold below.
+          default: false
+          selector:
+            boolean:
+        dark_elevation:
+          name: Dark-sky elevation threshold (degrees)
+          description: "Default 3°. Lower (-3° to 0°) waits for proper darkness."
+          default: 3
+          selector:
+            number:
+              min: -20
+              max: 20
+              step: 0.5
+              unit_of_measurement: "°"
+              mode: slider
+
+    fade_out_section:
+      name: Late-evening fade-out
+      icon: mdi:weather-night
+      input:
+        fade_out_time:
+          name: Fade-out start time
+          description: "When the lights start dimming down. Default 23:30."
+          default: "23:30:00"
+          selector:
+            time:
+        fade_out_seconds:
+          name: Fade-out duration (seconds)
+          description: "Ramp time back down to 1%. Default 1800 = 30 min."
+          default: 1800
+          selector:
+            number:
+              min: 1
+              max: 3600
+              step: 1
+              unit_of_measurement: "s"
+              mode: box
+        turn_off_time:
+          name: Hard-off time
+          description: >
+            Issues a hard light.turn_off after the fade-out. Default 00:00.
+            Set to fade-out time + duration, or slightly later.
+          default: "00:00:00"
+          selector:
+            time:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: sun
+    event: sunset
+    offset: !input sunset_offset
+    id: sunset_fade_in
+  - platform: time
+    at: !input fade_out_time
+    id: fade_out_start
+  - platform: time
+    at: !input turn_off_time
+    id: turn_off
+
+variables:
+  require_dark: !input require_dark
+  dark_elevation: !input dark_elevation
+
+action:
+  - choose:
+      # Branch 1: SUNSET FADE-IN
+      - conditions:
+          - condition: trigger
+            id: sunset_fade_in
+          - condition: template
+            value_template: >-
+              {{ not require_dark
+                 or is_state('sun.sun', 'below_horizon')
+                 or (state_attr('sun.sun', 'elevation') | float(99) < dark_elevation) }}
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: 1
+              rgb_color: !input rgb_color
+          - delay:
+              seconds: 5
+          - action: light.turn_on
+            target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: !input target_brightness_pct
+              rgb_color: !input rgb_color
+              transition: !input fade_in_seconds
+
+      # Branch 2: LATE-EVENING FADE-OUT
+      - conditions:
+          - condition: trigger
+            id: fade_out_start
+          - condition: state
+            entity_id: !input light_entity
+            state: "on"
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: 1
+              transition: !input fade_out_seconds
+
+      # Branch 3: HARD-OFF AFTER FADE-OUT
+      - conditions:
+          - condition: trigger
+            id: turn_off
+        sequence:
+          - action: light.turn_off
+            target:
+              entity_id: !input light_entity

@@ -1,0 +1,13 @@
+{
+  "tier": "tier0_synthetic",
+  "status": "OPEN -- not measurable in Scenario 4",
+  "outcome_counts": {
+    "zone_disarmed": 19,
+    "unreachable_windows_open": 0,
+    "none": 74
+  },
+  "reason": "Scenario 4 exposes ONE reachable target. The intended second target (windows left open, via holding the vent timer) is unreachable because it requires the agent to report, which is downstream of the timer: holding the timer STARVES the episode rather than steering it, and starvation is a different primitive (Scenario 3). An outcome reached by stalling the agent is not a target the adversary selected.",
+  "what_a_real_result_needs": "a scenario with two outcomes each reachable by a COMPLETING episode",
+  "load_bearing": false,
+  "why_not": "target-selectivity is a Thrust B (composition) deliverable and the gate resolved to exit 3, under which the chain/steering narrative is dropped"
+}

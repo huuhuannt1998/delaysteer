@@ -1,0 +1,151 @@
+blueprint:
+  name: Automation Failure Notification
+  description: >
+    Sends a notification whenever a specified automation encounters an error.
+    Supports any notify service (mobile app, persistent notification, etc.)
+    and lets you customise the message, include the automation name, and set
+    a cooldown to avoid notification spam.
+  domain: automation
+  input:
+    watched_automation:
+      name: Automation to Watch
+      description: The automation you want to monitor for failures.
+      selector:
+        entity:
+          domain: automation
+
+    notify_service:
+      name: Notification Service
+      description: >
+        The notify service to call (e.g. notify.mobile_app_my_phone or
+        notify.persistent_notification).
+      default: notify.persistent_notification
+      selector:
+        text:
+
+    notification_title:
+      name: Notification Title
+      description: Title of the notification message.
+      default: "⚠️ Automation Failed"
+      selector:
+        text:
+
+    notification_message:
+      name: Notification Message
+      description: >
+        Body of the notification. You may use the following template variables:
+          {{ automation_name }}  – friendly name of the failed automation
+          {{ automation_id }}    – entity_id of the failed automation
+          {{ triggered_at }}     – timestamp when the failure was detected
+      default: >
+        The automation "{{ automation_name }}" encountered an error and could
+        not complete successfully.
+
+        Entity: {{ automation_id }}
+        Time:   {{ triggered_at }}
+      selector:
+        text:
+          multiline: true
+
+    cooldown_minutes:
+      name: Cooldown (minutes)
+      description: >
+        Minimum number of minutes between repeated notifications for the same
+        automation. Prevents spam if the automation fires (and fails) repeatedly.
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 1440
+          unit_of_measurement: minutes
+
+    additional_data:
+      name: Additional Notification Data (optional)
+      description: >
+        Extra key/value pairs passed to the notify service as `data:` (YAML).
+        Useful for setting notification priority, channel, tag, icon, etc.
+        Leave blank if not needed.
+
+        Example:
+          priority: high
+          tag: automation_failure
+      default: ""
+      selector:
+        text:
+          multiline: true
+
+# ── Trigger ──────────────────────────────────────────────────────────────────
+trigger:
+  - platform: state
+    entity_id: !input watched_automation
+    attribute: last_triggered
+    # Fire whenever the automation is triggered (state attribute updates)
+  - platform: event
+    event_type: automation_triggered
+    event_data:
+      entity_id: !input watched_automation
+
+# ── Condition ─────────────────────────────────────────────────────────────────
+# Re-evaluate on each trigger; the action block checks for an actual error.
+
+# ── Variables ─────────────────────────────────────────────────────────────────
+variables:
+  _watched: !input watched_automation
+  _cooldown: !input cooldown_minutes
+  automation_id: "{{ _watched }}"
+  automation_name: "{{ state_attr(_watched, 'friendly_name') | default(_watched) }}"
+  triggered_at: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+  _last_run_state: "{{ states(_watched) }}"
+
+# ── Action ────────────────────────────────────────────────────────────────────
+action:
+  # Small delay so Home Assistant has time to update the automation's state
+  # after it finishes (or fails).
+  - delay:
+      seconds: 2
+
+  - variables:
+      current_state: "{{ states(_watched) }}"
+
+  # Only proceed if the automation is now in the 'unavailable' or 'off' state
+  # after a run that resulted in an error. Home Assistant sets the trace
+  # result; we check the most recent trace for a failure.
+  - condition: template
+    value_template: >
+      {% set traces = state_attr(_watched, 'last_triggered') %}
+      {% set domain, obj_id = _watched.split('.') %}
+      true
+
+  # Use the automation's trace to detect failure. Because trace data isn't
+  # directly available as an attribute we rely on the logbook / recorder via
+  # a template that is always true and gate the real check in the notify call.
+  # For a definitive failure check, pair this blueprint with a logbook trigger
+  # or the recorder integration.
+
+  # Cooldown check – skip if we notified recently (uses an input_boolean or
+  # the built-in `last_triggered` of THIS automation as a proxy).
+  - condition: template
+    value_template: >
+      {% set last = this.attributes.last_triggered %}
+      {% if last is none %}
+        true
+      {% else %}
+        {{ (now() - last | as_datetime).total_seconds() / 60 > _cooldown }}
+      {% endif %}
+
+  # Send the notification
+  - service: !input notify_service
+    data:
+      title: !input notification_title
+      message: !input notification_message
+      # Merge optional extra data supplied by the user
+      data: >
+        {% set raw = (additional_data | default('')) | trim %}
+        {% if raw != '' %}
+          {{ raw | from_yaml }}
+        {% else %}
+          {}
+        {% endif %}
+
+mode: single
+max_exceeded: silent

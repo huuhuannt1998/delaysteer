@@ -2,8 +2,8 @@
 # Additive rich-home experiment matrix. Logs full trajectories to results/richhome.jsonl.
 # Frozen results/metrics.csv is never touched.
 set -u
-PY="${HERMES_PY:-$HOME/hermes-agent/.venv/bin/python}"   # override with HERMES_PY=/path/to/hermes/.venv/bin/python
-cd "$(cd "$(dirname "$0")/.." && pwd)"                    # repo root (this script lives in scripts/)
+PY=/Users/anonymous/Desktop/hermes-agent/.venv/bin/python
+cd /Users/anonymous/Desktop/DelaySteer
 RUN() {  # scenario mode model seed
   echo "### $(date +%H:%M:%S)  $1 / $2 / $3 / seed$4"
   $PY scripts/richhome_eval.py --scenario "$1" --mode "$2" --model "$3" --seed "$4" 2>&1 \

@@ -16,6 +16,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..timed.envelope import FlowMinter, MsgType
 from .clock import Clock
 from .virtual_home import ENTITIES, VirtualHome
 
@@ -29,6 +30,8 @@ SEMANTIC_TYPE: dict[str, str] = {
     ENTITIES["light"]: "generic_state",
     ENTITIES["thermostat"]: "generic_state",
     ENTITIES["camera"]: "arrival",  # camera-detected arrival/presence at the porch
+    ENTITIES["window"]: "window_state",          # E7: window contact (off = closed)
+    ENTITIES["alarm_ready"]: "alarm_ready_state",  # E7: panel ready-to-arm (on = ready)
 }
 
 
@@ -38,7 +41,18 @@ def semantic_type_of(entity_id: str) -> str:
 
 @dataclass
 class Observation:
-    """A value delivered to the planner, with temporal provenance."""
+    """A value delivered to the planner, with temporal provenance and identity.
+
+    The design's message tuple is m = <src, dst, fl, ty, pl, g(m), sq>. The
+    provenance half (src, pl, g(m), arrival) predates the consolidated design;
+    the identity half (dst, fl, ty, sq) was added for Stage 0, because a message
+    that cannot name itself cannot be held, reordered, or restored individually
+    -- which per-release necessity and A_T FIFO semantics both require.
+
+    All identity fields default to None/observation so the ~40 existing
+    construction sites keep working untouched; `timed.FlowMinter.stamp` fills
+    them in at the adapter boundary.
+    """
 
     semantic_type: str
     value: str
@@ -51,9 +65,25 @@ class Observation:
     arrival_time: float = 0.0
     freshness_deadline: float | None = None  # arrival must be <= this to be "fresh"
 
+    # --- message identity (Stage 0) ---
+    dst: str = "planner"          # ty's counterpart: who consumes it
+    flow: str | None = None       # fl: the per-flow FIFO this message belongs to
+    seq: int | None = None        # sq: monotonic within `flow`, minted per run
+    msg_type: str = "observation"  # ty: observation|tool_result|actuation_ack|event
+
     @property
     def transit_delay(self) -> float:
         return self.arrival_time - self.generation_time
+
+    @property
+    def identified(self) -> bool:
+        """True once this message can be named individually."""
+        return self.seq is not None and self.flow is not None
+
+    @property
+    def mid(self) -> str:
+        """Stable per-run message id, e.g. 'platform:lock.front_door>planner#3'."""
+        return f"{self.flow}#{self.seq}" if self.identified else "<unidentified>"
 
 
 class HomeAdapter(ABC):
@@ -77,6 +107,10 @@ class VirtualHomeAdapter(HomeAdapter):
         self.clock: Clock = home.clock
         self.base_latency_s = base_latency_s
         self._is_manual = hasattr(self.clock, "advance")
+        # Per-run, per-flow sequence numbers (Stage 0). Owned by the adapter so
+        # its state dies with the episode -- a module-level counter would leak
+        # across runs and break bit-identical replay.
+        self.minter = FlowMinter()
 
     def _advance(self, dt: float) -> None:
         if self._is_manual:
@@ -92,7 +126,7 @@ class VirtualHomeAdapter(HomeAdapter):
         gen = self.clock.now()
         self._advance(self.base_latency_s)
         arrival = self.clock.now()
-        return Observation(
+        obs = Observation(
             semantic_type=semantic_type_of(entity_id),
             value=st.state,
             attributes=dict(st.attributes),
@@ -101,6 +135,10 @@ class VirtualHomeAdapter(HomeAdapter):
             generation_time=gen,
             arrival_time=arrival,
         )
+        # Identity is minted where the message is born. A delay layer wrapping
+        # this adapter therefore receives an already-identified message and,
+        # because stamp() is idempotent, cannot renumber it.
+        return self.minter.stamp(obs, msg_type=MsgType.OBSERVATION)
 
     def call_service(
         self, domain: str, service: str, data: dict[str, Any] | None = None

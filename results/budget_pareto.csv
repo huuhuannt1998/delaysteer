@@ -1,0 +1,7 @@
+budget_s,benign_completion,false_block_rate,static_residual_window_s,heartbeat_residual_s,shrink_factor_static_over_hb,static_slips_under_budget,static_blocks_over_budget
+0.1,1.0,0.0,0.1,0.25,0.4,True,True
+0.25,1.0,0.0,0.25,0.25,1.0,True,True
+0.5,1.0,0.0,0.5,0.25,2.0,True,True
+1.0,1.0,0.0,1.0,0.25,4.0,True,True
+2.0,1.0,0.0,2.0,0.25,8.0,True,True
+5.0,1.0,0.0,5.0,0.25,20.0,True,True

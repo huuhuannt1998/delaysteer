@@ -1,0 +1,108 @@
+blueprint:
+  name: "Grocy: Sync Meal Plan to Calendar / Speiseplan Kalender-Sync"
+  description: >
+    (EN): Automatically synchronizes your Grocy meal plan to a calendar with formatted recipe instructions.
+    
+    (DE): Synchronisiert den Grocy-Speiseplan automatisch mit einem Kalender inklusive formatierter Zubereitung.
+
+  source_url: https://raw.githubusercontent.com/Barneybaer84/HA-Grocy-meal-calendar-sync/refs/heads/main/grocy-meal-calendar_sync.yaml
+
+  domain: automation
+  input:
+    calendar_entity:
+      name: "Calendar / Kalender"
+      description: "Target calendar / Ziel-Kalender"
+      selector:
+        entity:
+          filter:
+            domain: calendar
+    grocy_sensor:
+      name: "Grocy Sensor"
+      description: "Meal plan sensor / Speiseplan-Sensor"
+      default: sensor.grocy_meal_plan
+      selector:
+        entity:
+          filter:
+            domain: sensor
+    execution_time:
+      name: "Execution Time / Ausführungszeit"
+      description: "Daily sync time / Täglich um..."
+      default: "02:00:00"
+      selector:
+        time: {}
+    event_prefix:
+      name: "Prefix / Präfix"
+      description: "Prefix for entries / Präfix für Einträge (e.g. 'Meal: ')"
+      default: "Meal: "
+      selector:
+        text: {}
+
+mode: single
+
+trigger:
+  - platform: time
+    at: !input execution_time
+
+action:
+  - variables:
+      target_calendar: !input calendar_entity
+      meal_sensor: !input grocy_sensor
+      prefix: !input event_prefix
+
+  - target:
+      entity_id: "{{ target_calendar }}"
+    data:
+      duration:
+        hours: 168
+    response_variable: future_events
+    action: calendar.get_events
+
+  - variables:
+      grocy_meals: >
+        {% set meals = state_attr(meal_sensor, 'meals') | default([]) %}
+        {{ meals }}
+
+  - repeat:
+      for_each: "{{ grocy_meals }}"
+      sequence:
+        - variables:
+            target_summary: "{{ prefix }}{{ repeat.item.recipe.name }}"
+            target_date: "{{ repeat.item.day.split('T')[0] }}"
+            
+            # Logic for clean line breaks & Null-Check
+            recipe_description: >
+              {% set desc = repeat.item.recipe.description %}
+              {% if desc == none or desc | trim | length == 0 %}
+                {{ "No instructions provided / Keine Zubereitung hinterlegt" }}
+              {% else %}
+                {% set items = desc | replace('<li>', 'LINESTART- ') | replace('</li>', 'LINEEND') 
+                                    | replace('<p>', 'LINESTART') | replace('</p>', 'LINEEND') 
+                                    | replace('<br>', 'LINEENDLINESTART') | striptags %}
+                {% set ns = namespace(final_desc="") %}
+                {% for line in items.split('LINEEND') %}
+                  {% if line | trim | length > 0 %}
+                    {% set line_clean = line | replace('LINESTART', '') | trim %}
+                    {% set ns.final_desc = ns.final_desc ~ line_clean ~ '\n' %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.final_desc | trim }}
+              {% endif %}
+            
+            existing_on_that_day: >
+              {% set events = future_events[target_calendar].events %}
+              {{ events | selectattr('start', 'search', target_date) 
+                        | selectattr('summary', '==', target_summary) | list }}
+        
+        - condition: template
+          value_template: "{{ existing_on_that_day | length == 0 }}"
+
+        - target:
+            entity_id: "{{ target_calendar }}"
+          data:
+            start_date: "{{ target_date }}"
+            end_date: >-
+              {{ (as_datetime(repeat.item.day) +
+              timedelta(days=1)).strftime("%Y-%m-%d") }}
+            summary: "{{ target_summary }}"
+            description: "{{ recipe_description }}"
+          action: calendar.create_event

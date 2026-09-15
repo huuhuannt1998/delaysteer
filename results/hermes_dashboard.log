@@ -1,0 +1,4 @@
+→ Skipping web UI build (--skip-build); using dist at /Users/anonymous/Desktop/hermes-agent/hermes_cli/web_dist
+HERMES_DASHBOARD_READY port=9119
+Installing TUI dependencies…
+⚠️  Context file AGENTS.md TRUNCATED: 69356 chars exceeds limit of 20000 — trim the file, pin a larger context_file_max_chars, or use a larger-context model!

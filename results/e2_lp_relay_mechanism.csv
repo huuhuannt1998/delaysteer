@@ -1,0 +1,9 @@
+run_id,condition,action,n_source_messages,n_relay_attempts,broker_accepted,broker_acl_denied,delivered_at_hub,accepted_at_hub,rejected_at_hub,reject_reasons,bytes_equal_to_source,duplicates_at_hub,exactly_once,latency_median_s,latency_p95_s,latency_max_s,added_latency_median_s,hold_s,notes
+20260910T204632,forward,forward,50,50,50,0,50,50,0,,50,0,True,0.0021,0.0032,0.0038,0.0,0.0,bytes forwarded unchanged
+20260910T204632,hold_2s,forward,50,50,50,0,50,50,0,,50,0,True,2.0051,2.0076,2.0097,2.003,2.0,"bytes forwarded unchanged, FIFO delay line 2.0s"
+20260910T204632,hold_5s,forward,50,50,50,0,50,50,0,,50,0,True,5.0056,5.008,5.0096,5.0035,5.0,"bytes forwarded unchanged, FIFO delay line 5.0s"
+20260910T204632,hold_15s,forward,50,50,50,0,50,50,0,,50,0,True,15.0056,15.0084,15.0108,15.0035,15.0,"bytes forwarded unchanged, FIFO delay line 15.0s"
+20260910T204632,modify,modify,50,50,50,0,50,0,50,bad_mac=50,0,0,True,,,,,0.0,value flipped (closed<->open); MAC no longer matches
+20260910T204632,originate,originate,0,50,50,0,50,0,50,bad_mac=50,0,0,True,,,,,0.0,fresh message signed with a key the relay made up
+20260910T204632,replay,replay,50,50,50,0,50,0,50,seq_regression=50,50,50,True,,,,,0.0,byte-identical re-send of an already-delivered message (seq regression)
+20260910T204632,publish_to_dev,publish_to_dev,0,50,0,50,0,0,0,,0,0,True,,,,,0.0,PUBACK reason from broker; 0 echoes received on dev/# (0 = not delivered)

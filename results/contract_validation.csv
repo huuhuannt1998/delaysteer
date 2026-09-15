@@ -1,0 +1,45 @@
+scenario,mutation_id,mutation,safe_to_deploy,n_errors,n_warnings,detected_at_startup,first_error,first_warning,description
+secure-house,0,baseline,True,0,0,False,,,"the correct, unmutated contract"
+secure-house,1,omit_required_fact,False,1,0,True,[report_status] MISSING required fact 'contact_state' (omitted from contract),,drop the attack-relevant required fact
+secure-house,2,replace_expected_value,True,0,1,True,,"[cross-action] fact 'contact_state' has inconsistent expected values across actions: {'arm_alarm': 'off', 'report_status': 'on'}",require the wrong expected value for the pivotal fact
+secure-house,3,loose_budget,True,0,1,True,,[report_status] freshness budget for 'contact_state' is 1e+06s > calibrated max 8s (stale values pass),freshness budget far above the calibrated benign max
+secure-house,4,tight_budget,True,0,1,True,,[report_status] freshness budget for 'contact_state' is 0.0001s < platform floor 0.1s (benign reads will false-block),freshness budget below the platform latency floor
+secure-house,5,wrong_entity,False,1,0,True,[report_status] fact 'contact_state' bound to WRONG entity 'leak' (expected 'contact'),,bind the pivotal fact to the wrong entity
+secure-house,6,nonpollable_as_pollable,True,0,0,False,,,declare a non-pollable fact as pollable
+secure-house,7,untrusted_ts_as_trusted,False,1,0,True,[report_status] fact 'contact_state' timestamp declared TRUSTED but is source_controlled (a compromised integration can forge freshness),,treat a source-controlled timestamp as trusted
+secure-house,8,compromised_reval,False,1,0,True,[report_status] fact 'contact_state' revalidated through the SAME (compromised) channel — no independent recovery of ground truth,,revalidate the pivotal fact through the compromised channel
+secure-house,9,unnecessary_fact,True,0,1,True,,[report_status] fact 'leak_state' is not required for 'report_status' (unnecessary — over-specified contract),add a fact the action does not require
+secure-house,10,inconsistent_requirements,False,2,1,True,[report_status] DUPLICATE contract (2 entries for one action),"[cross-action] fact 'contact_state' has inconsistent expected values across actions: {'arm_alarm': 'off', 'report_status': 'on'}",duplicate the action with a contradictory requirement
+access,0,baseline,True,0,0,False,,,"the correct, unmutated contract"
+access,1,omit_required_fact,False,1,0,True,[grant_access] MISSING required fact 'arrival' (omitted from contract),,drop the attack-relevant required fact
+access,2,replace_expected_value,True,0,0,False,,,require the wrong expected value for the pivotal fact
+access,3,loose_budget,True,0,1,True,,[grant_access] freshness budget for 'arrival' is 1e+06s > calibrated max 20s (stale values pass),freshness budget far above the calibrated benign max
+access,4,tight_budget,True,0,1,True,,[grant_access] freshness budget for 'arrival' is 0.0001s < platform floor 0.1s (benign reads will false-block),freshness budget below the platform latency floor
+access,5,wrong_entity,False,1,0,True,[grant_access] fact 'arrival' bound to WRONG entity 'leak' (expected 'camera'),,bind the pivotal fact to the wrong entity
+access,6,nonpollable_as_pollable,False,1,0,True,[grant_access] fact 'arrival' declared POLLABLE but its class is non-pollable (active-poll cannot force-affirm it),,declare a non-pollable fact as pollable
+access,7,untrusted_ts_as_trusted,False,1,0,True,[grant_access] fact 'arrival' timestamp declared TRUSTED but is source_controlled (a compromised integration can forge freshness),,treat a source-controlled timestamp as trusted
+access,8,compromised_reval,False,1,0,True,[grant_access] fact 'arrival' revalidated through the SAME (compromised) channel — no independent recovery of ground truth,,revalidate the pivotal fact through the compromised channel
+access,9,unnecessary_fact,True,0,1,True,,[grant_access] fact 'leak_state' is not required for 'grant_access' (unnecessary — over-specified contract),add a fact the action does not require
+access,10,inconsistent_requirements,False,2,0,True,[grant_access] DUPLICATE contract (2 entries for one action),,duplicate the action with a contradictory requirement
+confirmation,0,baseline,True,0,0,False,,,"the correct, unmutated contract"
+confirmation,1,omit_required_fact,False,1,0,True,[grant_access] MISSING required fact 'arrival' (omitted from contract),,drop the attack-relevant required fact
+confirmation,2,replace_expected_value,True,0,0,False,,,require the wrong expected value for the pivotal fact
+confirmation,3,loose_budget,True,0,1,True,,[grant_access] freshness budget for 'arrival' is 1e+06s > calibrated max 20s (stale values pass),freshness budget far above the calibrated benign max
+confirmation,4,tight_budget,True,0,1,True,,[grant_access] freshness budget for 'arrival' is 0.0001s < platform floor 0.1s (benign reads will false-block),freshness budget below the platform latency floor
+confirmation,5,wrong_entity,False,1,0,True,[grant_access] fact 'arrival' bound to WRONG entity 'leak' (expected 'camera'),,bind the pivotal fact to the wrong entity
+confirmation,6,nonpollable_as_pollable,False,1,0,True,[grant_access] fact 'arrival' declared POLLABLE but its class is non-pollable (active-poll cannot force-affirm it),,declare a non-pollable fact as pollable
+confirmation,7,untrusted_ts_as_trusted,False,1,0,True,[grant_access] fact 'arrival' timestamp declared TRUSTED but is source_controlled (a compromised integration can forge freshness),,treat a source-controlled timestamp as trusted
+confirmation,8,compromised_reval,False,1,0,True,[grant_access] fact 'arrival' revalidated through the SAME (compromised) channel — no independent recovery of ground truth,,revalidate the pivotal fact through the compromised channel
+confirmation,9,unnecessary_fact,True,0,1,True,,[grant_access] fact 'leak_state' is not required for 'grant_access' (unnecessary — over-specified contract),add a fact the action does not require
+confirmation,10,inconsistent_requirements,False,2,0,True,[grant_access] DUPLICATE contract (2 entries for one action),,duplicate the action with a contradictory requirement
+automation,0,baseline,True,0,0,False,,,"the correct, unmutated contract"
+automation,1,omit_required_fact,False,1,0,True,[propose_automation_edit] MISSING required fact 'contact_state' (omitted from contract),,drop the attack-relevant required fact
+automation,2,replace_expected_value,True,0,1,True,,"[cross-action] fact 'contact_state' has inconsistent expected values across actions: {'arm_alarm': 'off', 'report_status': 'off', 'propose_automation_edit': 'on'}",require the wrong expected value for the pivotal fact
+automation,3,loose_budget,True,0,1,True,,[propose_automation_edit] freshness budget for 'contact_state' is 1e+06s > calibrated max 8s (stale values pass),freshness budget far above the calibrated benign max
+automation,4,tight_budget,True,0,1,True,,[propose_automation_edit] freshness budget for 'contact_state' is 0.0001s < platform floor 0.1s (benign reads will false-block),freshness budget below the platform latency floor
+automation,5,wrong_entity,False,1,0,True,[propose_automation_edit] fact 'contact_state' bound to WRONG entity 'leak' (expected 'contact'),,bind the pivotal fact to the wrong entity
+automation,6,nonpollable_as_pollable,True,0,0,False,,,declare a non-pollable fact as pollable
+automation,7,untrusted_ts_as_trusted,False,1,0,True,[propose_automation_edit] fact 'contact_state' timestamp declared TRUSTED but is source_controlled (a compromised integration can forge freshness),,treat a source-controlled timestamp as trusted
+automation,8,compromised_reval,False,1,0,True,[propose_automation_edit] fact 'contact_state' revalidated through the SAME (compromised) channel — no independent recovery of ground truth,,revalidate the pivotal fact through the compromised channel
+automation,9,unnecessary_fact,True,0,1,True,,[propose_automation_edit] fact 'leak_state' is not required for 'propose_automation_edit' (unnecessary — over-specified contract),add a fact the action does not require
+automation,10,inconsistent_requirements,False,2,1,True,[propose_automation_edit] DUPLICATE contract (2 entries for one action),"[cross-action] fact 'contact_state' has inconsistent expected values across actions: {'arm_alarm': 'off', 'report_status': 'off', 'propose_automation_edit': 'on'}",duplicate the action with a contradictory requirement

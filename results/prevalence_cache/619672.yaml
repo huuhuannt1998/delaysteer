@@ -1,0 +1,268 @@
+blueprint:
+  name: Energy Disaggregation
+  description: Approximate power usage of an appliance
+  domain: automation
+  input:
+    power_helper:
+      name: Input helper to store the approximate power usage
+      description: in W
+      selector:
+        entity:
+          filter:
+            - domain: input_number
+    timer_helper:
+      name: Timer to reset power to 0W
+      description: Needed in case we miss the current decrease when appliance isn't under load
+      selector:
+        entity:
+          filter:
+            - domain: timer
+    l1_current_derivative:
+      name: L1 current derivative
+      description: (You first need to create a derivative sensor of your L1 current sensor)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              integration: derivative
+    l2_current_derivative:
+      name: L2 current derivative
+      description: (You first need to create a derivative sensor of your L2 current sensor)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              integration: derivative
+    l3_current_derivative:
+      name: L3 current derivative
+      description: (You first need to create a derivative sensor of your L3 current sensor)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              integration: derivative
+    l1_voltage:
+      name: L1 voltage
+      description: in V
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: voltage
+    l2_voltage:
+      name: L2 voltage
+      description: in V
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: voltage
+    l3_voltage:
+      name: L3 voltage
+      description: in V
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: voltage
+    current_derivative_factor:
+      name: Current derivative factor
+      description: Factor to multiple the derivatives to get A. E.g. if derivatives are in A/s over 10s, multiply by 10
+      default: 1
+      selector:
+        number:
+          min: 0.1
+          max: 100.0
+          step: 0.1
+          mode: box
+    l1_lower_bound:
+      name: Lower bound for L1 current derivative
+      description: Assume appliance started if L1 current increased by at least this
+      default: 19
+      selector:
+        number:
+          min: -100
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: A
+          mode: box
+    l1_upper_bound:
+      name: Upper bound for L1 current derivative
+      description: Assume appliance started if L1 current increased by at most this
+      default: 24
+      selector:
+        number:
+          min: -100
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: A
+          mode: box
+    l2_lower_bound:
+      name: Lower bound for L2 current derivative
+      description: Assume appliance started if L2 current increased by at least this
+      default: 19
+      selector:
+        number:
+          min: -100
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: A
+          mode: box
+    l2_upper_bound:
+      name: Upper bound for L2 current derivative
+      description: Assume appliance started if L2 current increased by at most this
+      default: 24
+      selector:
+        number:
+          min: -100
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: A
+          mode: box
+    l3_lower_bound:
+      name: Lower bound for L3 current derivative
+      description: Assume appliance started if L3 current increased by at least this
+      default: 19
+      selector:
+        number:
+          min: -100
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: A
+          mode: box
+    l3_upper_bound:
+      name: Upper bound for L3 current derivative
+      description: Assume appliance started if L3 current increased by at most this
+      default: 24
+      selector:
+        number:
+          min: -100
+          max: 100.0
+          step: 0.1
+          unit_of_measurement: A
+          mode: box
+    delay:
+      name: Delay
+      description: Time duration the current increase/decrease has to stay within the above limits
+      default:
+        seconds: 5
+      selector:
+        duration: {}
+trigger_variables:
+  current_derivative_factor: !input current_derivative_factor
+trigger:
+- platform: numeric_state
+  entity_id: !input l1_current_derivative
+  value_template: "{{ state.state | float() * current_derivative_factor }}"
+  above: !input l1_lower_bound
+  below: !input l1_upper_bound
+  for: !input delay
+- platform: numeric_state
+  entity_id: !input l2_current_derivative
+  value_template: "{{ state.state | float() * current_derivative_factor }}"
+  above: !input l2_lower_bound
+  below: !input l2_upper_bound
+  for: !input delay
+- platform: numeric_state
+  entity_id: !input l3_current_derivative
+  value_template: "{{ state.state | float() * current_derivative_factor }}"
+  above: !input l3_lower_bound
+  below: !input l3_upper_bound
+  for: !input delay
+- platform: numeric_state
+  entity_id: !input l1_current_derivative
+  value_template: "{{ state.state | float() * -1 * current_derivative_factor }}"
+  above: !input l1_lower_bound
+  below: !input l1_upper_bound
+  for: !input delay
+- platform: numeric_state
+  entity_id: !input l2_current_derivative
+  value_template: "{{ state.state | float() * -1 * current_derivative_factor }}"
+  above: !input l2_lower_bound
+  below: !input l2_upper_bound
+  for: !input delay
+- platform: numeric_state
+  entity_id: !input l3_current_derivative
+  value_template: "{{ state.state | float() * -1 * current_derivative_factor }}"
+  above: !input l3_lower_bound
+  below: !input l3_upper_bound
+  for: !input delay
+- platform: event
+  event_type: timer.finished
+  event_data:
+    entity_id: !input timer_helper
+  id: timer-finished
+variables:
+  l1_current_derivative: !input l1_current_derivative
+  l2_current_derivative: !input l2_current_derivative
+  l3_current_derivative: !input l3_current_derivative
+  current_derivative_factor: !input current_derivative_factor
+  l1_voltage: !input l1_voltage
+  l2_voltage: !input l2_voltage
+  l3_voltage: !input l3_voltage
+condition: []
+action:
+- choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - timer-finished
+      sequence:
+        - service: input_number.set_value
+          data:
+            value: 0
+          target:
+            entity_id: !input power_helper
+    - conditions:
+        - condition: numeric_state
+          entity_id: !input l1_current_derivative
+          value_template: "{{ state.state | float() * current_derivative_factor }}"
+          above: !input l1_lower_bound
+          below: !input l1_upper_bound
+        - condition: numeric_state
+          entity_id: !input l2_current_derivative
+          value_template: "{{ state.state | float() * current_derivative_factor }}"
+          above: !input l2_lower_bound
+          below: !input l2_upper_bound
+        - condition: numeric_state
+          entity_id: !input l3_current_derivative
+          value_template: "{{ state.state | float() * current_derivative_factor }}"
+          above: !input l3_lower_bound
+          below: !input l3_upper_bound
+      sequence:
+        - service: input_number.set_value
+          data:
+            value: >-
+              {{ states(l1_current_derivative) | float * current_derivative_factor * states(l1_voltage) | float +
+                 states(l2_current_derivative) | float * current_derivative_factor * states(l2_voltage) | float +
+                 states(l3_current_derivative) | float * current_derivative_factor * states(l3_voltage) | float }}
+          target:
+            entity_id: !input power_helper
+        - service: timer.start
+          data: {}
+          target:
+            entity_id: !input timer_helper
+    - conditions:
+        - condition: numeric_state
+          entity_id: !input l1_current_derivative
+          value_template: "{{ state.state | float() * current_derivative_factor * -1 }}"
+          above: !input l1_lower_bound
+          below: !input l1_upper_bound
+        - condition: numeric_state
+          entity_id: !input l2_current_derivative
+          value_template: "{{ state.state | float() * current_derivative_factor * -1 }}"
+          above: !input l2_lower_bound
+          below: !input l2_upper_bound
+        - condition: numeric_state
+          entity_id: !input l3_current_derivative
+          value_template: "{{ state.state | float() * current_derivative_factor * -1 }}"
+          above: !input l3_lower_bound
+          below: !input l3_upper_bound
+      sequence:
+        - service: input_number.set_value
+          data:
+            value: 0
+          target:
+            entity_id: !input power_helper
+mode: single
+max_exceeded: silent

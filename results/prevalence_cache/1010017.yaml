@@ -1,0 +1,1227 @@
+blueprint:
+  name: Ring Keypad V2 with Alarmo & Environmentals & Actionable Notifications
+  author: Ryckie
+  source_url: https://github.com/Ryckie/Ring-Keypad-V2-Advanced-Blueprint/blob/main/ring_keypad_v2_advanced.yaml
+  description: >
+    Synchronizes a Ring Keypad V2 with Alarmo. Includes custom functionality to 
+    trigger the keypad's fire/smoke alarm, CO alarm, flash the medical warning 
+    light if the burglar alarm was triggered while you were away, map custom 
+    actions to physical buttons, and protect against brute-force code guessing.
+
+    <details>
+      <summary><b>📱 Menu: Mobile Notifications, Modes & Platform Differences (Click to expand)</b></summary>
+      
+      **Alarm Modes & Android Notification Channels:**
+      *   **Triggered:** Intrusion detected. Uses the `Alarm Triggered` channel.
+      *   **Arming:** Exit delay countdown. Uses the `Alarm Armed` channel.
+      *   **Armed:** System is fully secured (Home, Away, Night, Vacation). Uses the `Alarm Armed` channel.
+      *   **Pending:** Entry delay countdown. Uses the `Alarm Armed` channel.
+      *   **Disarmed:** System is turned off. Uses the `Alarm Disarmed` channel.
+      *   **Open Sensors:** Arming failed due to open sensors. Uses the `Alarm Open Sensors` channel.
+
+      **What is a Channel? (Android Only)**
+      *   A **channel** is a category of notifications. Android allows you to customize the behavior of each channel individually. 
+      *   By navigating to your phone's system settings (**Settings > Apps > Home Assistant > Notifications**), you can manually change the sound, vibration pattern, lock screen visibility, and priority for each specific channel, or disable a specific channel entirely without affecting the others.
+      
+      **Persistent Resend Feature:**
+      *   If a user forcefully dismisses (swipes away) the notification, Home Assistant will detect the clear event and immediately resend the notification to all selected devices.
+      *   *Note: Android reliably reports clear events. iOS is highly restrictive and may occasionally block background apps from reporting notification dismissals.*
+      
+      **Platform Compatibility:**
+      *   **Android:** Fully supports Custom Channels, UI Colors, dynamic Status Icons, and custom Vibration Patterns. Action buttons display instantly beneath the notification.
+      *   **iOS:** Apple ignores Android-specific visual parameters (colors, icons, vibrations). iOS uses `thread-id` and `apns-collapse-id` to group and replace notifications. **Note:** On iOS, you must long-press or pull down the notification to reveal the action buttons.
+    </details>
+  domain: automation
+  input:
+    # --- Keypad Setup ---
+    keypad:
+      name: Ring Keypad Device
+      description: The Z-Wave device for your Ring Keypad V2. (MUST be paired with S2 Security!)
+      selector:
+        device:
+          integration: zwave_js
+    keypad_arm_home_mapping:
+      name: 'Ring Keypad: "Arm Home" button'
+      description: The <a href="https://github.com/nielsfaber/alarmo#arm-modes">Alarmo mode</a> this keypad button maps to.
+      selector:
+        select:
+          options:
+            - label: Home
+              value: home
+            - label: Away
+              value: away
+            - label: Night
+              value: night
+            - label: Vacation
+              value: vacation
+            - label: Custom
+              value: custom
+    keypad_arm_away_mapping:
+      name: 'Ring Keypad: "Arm Away" button'
+      description: The <a href="https://github.com/nielsfaber/alarmo#arm-modes">Alarmo mode</a> this keypad button maps to.
+      selector:
+        select:
+          options:
+            - label: Home
+              value: home
+            - label: Away
+              value: away
+            - label: Night
+              value: night
+            - label: Vacation
+              value: vacation
+            - label: Custom
+              value: custom
+    alarm:
+      name: Alarmo Entity
+      description: Your Alarmo control panel entity.
+      selector:
+        entity:
+          domain: alarm_control_panel
+    environmental_sensors:
+      name: Environmental Sensors (Optional)
+      description: Select your smoke, carbon monoxide, moisture/water, gas, or heat detectors. If any of these trigger, the keypad will sound the loud fire alarm.
+      default: []
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class:
+            - smoke
+            - carbon_monoxide
+            - moisture
+            - gas
+            - heat
+          multiple: true
+
+    # --- Mobile App Notification Setup ---
+    notify_devices:
+      name: Mobile Devices to Notify (Optional)
+      description: Select one or more mobile app notify entities to receive actionable notifications. Leave empty to disable notifications.
+      default: []
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: notify
+    mobile_alarm_code:
+      name: Mobile Action Disarm Code (Optional)
+      description: The PIN code required to disarm the alarm via the mobile notification action. Leave empty if not required.
+      default: ""
+      selector:
+        text:
+          type: password
+
+    # --- Security Setup ---
+    brute_force_toggle:
+      name: Brute Force Protection (Invalid Codes)
+      description: Trigger the burglar alarm if too many incorrect codes are entered while the system is Armed.
+      default: false
+      selector:
+        boolean: {}
+    failed_code_counter:
+      name: Failed Code Counter Helper
+      description: Create a Helper (Settings > Devices & Services > Helpers > Create Helper > Counter) and select it here. Required if Brute Force Protection is on.
+      default: ""
+      selector:
+        entity:
+          domain: counter
+    max_failed_attempts:
+      name: Max Failed Attempts
+      description: How many wrong codes before the alarm triggers?
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 10
+          step: 1
+
+    # --- Auto Force Arm Setup ---
+    auto_force_arm_toggle:
+      name: Auto Force Arm on Open Sensors
+      description: Automatically bypass open sensors and force arm the system if left unresolved.
+      default: false
+      selector:
+        boolean: {}
+    auto_force_arm_delay:
+      name: Auto Force Arm Delay
+      description: How many minutes to wait before automatically force arming? (Only active if toggle above is true)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          unit_of_measurement: minutes
+
+    # --- Workaround for Z-Wave JS S2 collision issue #4 ---
+    s2_collision_delay:
+      name: S2 Security Collision Delay (Disarm)
+      description: >
+        If your keypad flashes the red network symbol and fails to update its status when disarming. Adding a delay (1-3 seconds) allows the keypad's S2 security handshake to finish first. 0 disables the delay.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3
+          step: 1
+          unit_of_measurement: seconds
+
+    # --- Fire Button Setup ---
+    fire_button_local_alarm:
+      name: Local Siren for Fire Button
+      description: Toggle to activate the keypad's internal loud Fire siren when the Fire button is held.
+      default: false
+      selector:
+        boolean: {}
+    fire_button_action:
+      name: Fire Button Action
+      description: Custom Home Assistant actions to run when the Fire button is held.
+      default: []
+      selector:
+        action: {}
+
+    # --- Police Button Setup ---
+    police_button_local_alarm:
+      name: Local Siren for Police Button
+      description: Toggle to activate the keypad's internal loud Burglar siren when the Police button is held.
+      default: false
+      selector:
+        boolean: {}
+    police_button_action:
+      name: Police Button Action
+      description: Custom Home Assistant actions to run when the Police button is held.
+      default: []
+      selector:
+        action: {}
+
+    # --- Medical Button Setup ---
+    medical_button_local_alarm:
+      name: Local Flashing for Medical Button
+      description: Toggle to activate the keypad's internal Medical flashing light when the Medical button is held.
+      default: false
+      selector:
+        boolean: {}
+    medical_button_action:
+      name: Medical Button Action
+      description: Custom Home Assistant actions to run when the Medical button is held.
+      default: []
+      selector:
+        action: {}
+
+mode: parallel
+max: 10
+trace:
+  stored_traces: 0
+
+variables:
+  keypad_arm_home_mapping: !input keypad_arm_home_mapping
+  keypad_arm_away_mapping: !input keypad_arm_away_mapping
+  alarm_entity: !input alarm
+  environmental_entities: !input environmental_sensors
+  notify_devices: !input notify_devices
+  auto_force_arm: !input auto_force_arm_toggle
+  auto_force_arm_delay: !input auto_force_arm_delay
+  fire_local: !input fire_button_local_alarm
+  police_local: !input police_button_local_alarm
+  medical_local: !input medical_button_local_alarm
+  brute_force: !input brute_force_toggle
+  counter_entity: !input failed_code_counter
+  max_attempts: !input max_failed_attempts
+  collision_delay: !input s2_collision_delay
+  formatted_delay: >
+    {% set delay = state_attr(alarm_entity, 'delay') %} 
+    {% set total_seconds = delay if delay is not none else 0 %} 
+    {% set minutes = total_seconds // 60 %} 
+    {% set seconds = total_seconds % 60 %} 
+    {{ minutes }}m{{ seconds }}s
+
+triggers:
+  # --- Keypad Triggers ---
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 2
+    id: code_entered
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 3
+    id: keypad_disarm
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 5
+    id: keypad_arm_away
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 6
+    id: keypad_arm_home
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 16
+    id: keypad_fire
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 17
+    id: keypad_police
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      command_class: 111
+      device_id: !input keypad
+      event_type: 19
+    id: keypad_medical
+  - trigger: event
+    event_type: alarmo_failed_to_arm
+    event_data:
+      reason: invalid_code
+    id: invalid_code
+  - trigger: event
+    event_type: alarmo_failed_to_arm
+    event_data:
+      reason: open_sensors
+    id: need_bypass
+  - trigger: state
+    entity_id: !input alarm
+    to:
+      - disarmed
+      - arming
+      - pending
+      - armed_home
+      - armed_away
+      - armed_night
+      - armed_vacation
+      - armed_custom_bypass
+      - triggered
+    id: alarmo_state_change
+  - trigger: template
+    value_template: >
+      {{ expand(environmental_entities) | selectattr('state', 'eq', 'on') | list | length > 0 if environmental_entities else false }}
+    id: environmental_triggered
+
+  # --- Mobile App Notification Triggers ---
+  - trigger: event
+    event_type: mobile_app_notification_cleared
+    event_data:
+      tag: alarm_status
+    id: notification_cleared
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: DISARM_ALARM
+    id: action_disarm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: ARM_ALARM_AWAY
+    id: action_arm_away
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: ARM_ALARM_HOME
+    id: action_arm_home
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: CANCEL_ARM
+    id: action_cancel_arm
+
+  # Force Arm Dynamic Actions
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_AWAY
+    id: action_force_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_HOME
+    id: action_force_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_NIGHT
+    id: action_force_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_VACATION
+    id: action_force_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: FORCE_ARM_CUSTOM_BYPASS
+    id: action_force_arm
+
+  # Retry Arm Dynamic Actions
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: RETRY_ARM_AWAY
+    id: action_retry_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: RETRY_ARM_HOME
+    id: action_retry_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: RETRY_ARM_NIGHT
+    id: action_retry_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: RETRY_ARM_VACATION
+    id: action_retry_arm
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: RETRY_ARM_CUSTOM_BYPASS
+    id: action_retry_arm
+
+conditions:
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.platform == 'event' }}"
+      - condition: and
+        conditions:
+          - condition: template
+            value_template: "{{ trigger.platform == 'state' }}"
+          - condition: template
+            value_template: "{{ trigger.from_state is defined and trigger.to_state is defined }}"
+          - condition: template
+            value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+          - condition: template
+            value_template: "{{ trigger.from_state.state != 'unknown' }}"
+
+actions:
+  # ==========================================
+  # BLOCK 1: KEYPAD Z-WAVE & ALARM SYNC LOGIC
+  # ==========================================
+  - choose:
+      # --- Code Entered / Keypad Disarm pressed ---
+      - conditions:
+          - condition: trigger
+            id:
+              - code_entered
+              - keypad_disarm
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: !input alarm
+                    state: "disarmed"
+                sequence:
+                  - action: zwave_js.set_value
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      property: "2"
+                      property_key: "1"
+                      value: 99
+          - action: alarmo.disarm
+            target:
+              entity_id: !input alarm
+            data:
+              code: |
+                {% if trigger.event.data.event_data != none %}
+                  {{ trigger.event.data.event_data }}
+                {% endif %}
+
+      # --- Keypad Arm pressed ---
+      - conditions:
+          - condition: and
+            conditions:
+              - condition: or
+                conditions:
+                  - condition: trigger
+                    id: keypad_arm_away
+                  - condition: trigger
+                    id: keypad_arm_home
+              - condition: state
+                entity_id: !input alarm
+                state: disarmed
+        sequence:
+          - action: alarmo.arm
+            target:
+              entity_id: !input alarm
+            data:
+              mode: '{{ iif(trigger.id == "keypad_arm_home", keypad_arm_home_mapping, keypad_arm_away_mapping) }}'
+              force: false
+              code: |
+                {% if trigger.event.data.event_data != none %}
+                  {{ trigger.event.data.event_data }}
+                {% endif %}
+          - wait_for_trigger:
+              - trigger: event
+                event_type: zwave_js_notification
+                event_data:
+                  command_class: 111
+                  device_id: !input keypad
+                  event_type: 2
+                  event_data: null
+            timeout: "5"
+            continue_on_timeout: false
+          - action: alarmo.arm
+            target:
+              entity_id: !input alarm
+            data:
+              mode: '{{ iif(trigger.id == "keypad_arm_home", keypad_arm_home_mapping, keypad_arm_away_mapping) }}'
+              force: true
+              code: |
+                {% if trigger.event.data.event_data != none %}
+                  {{ trigger.event.data.event_data }}
+                {% endif %}
+
+      # --- Invalid Code ---
+      - conditions:
+          - condition: trigger
+            id: invalid_code
+        sequence:
+          # Flash Red Warning Light
+          - action: zwave_js.set_value
+            target:
+              device_id: !input keypad
+            data:
+              command_class: "135"
+              endpoint: "0"
+              property: "9"
+              property_key: "1"
+              value: 99
+          # Evaluate Brute Force Counter
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ brute_force and trigger.event.data.command == 'disarm' and counter_entity != none and counter_entity != '' }}
+                sequence:
+                  - action: counter.increment
+                    target:
+                      entity_id: "{{ counter_entity }}"
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ states(counter_entity) | int(0) >= max_attempts | int(3) }}"
+                        sequence:
+                          - action: alarm_control_panel.alarm_trigger
+                            target:
+                              entity_id: !input alarm
+                          - action: counter.reset
+                            target:
+                              entity_id: "{{ counter_entity }}"
+
+      # --- Sensors require bypass ---
+      - conditions:
+          - condition: trigger
+            id: need_bypass
+        sequence:
+          - action: zwave_js.set_value
+            target:
+              device_id: !input keypad
+            data:
+              command_class: "135"
+              endpoint: "0"
+              property: "16"
+              property_key: "1"
+              value: 99
+
+      # --- Alarmo State Change ---
+      - conditions:
+          - condition: trigger
+            id: alarmo_state_change
+        sequence:
+          # --- Reset the Brute Force Counter on any successful arm/disarm ---
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ brute_force and counter_entity != none and counter_entity != '' and trigger.to_state.state in ['disarmed', 'armed_home', 'armed_away', 'armed_night', 'armed_vacation', 'armed_custom_bypass'] }}
+                sequence:
+                  - action: counter.reset
+                    target:
+                      entity_id: "{{ counter_entity }}"
+
+          - choose:
+              # Disarmed
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.to_state.state == 'disarmed' }}"
+                sequence:
+                  - delay:
+                      seconds: "{{ collision_delay | int(0) }}"
+                  - action: zwave_js.set_value
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      property: "2"
+                      property_key: "1"
+                      value: 99
+
+              # Armed Home or Armed Away (based on mapping)
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.to_state.state in ['armed_home', 'armed_away', 'armed_night', 'armed_vacation', 'armed_custom_bypass'] and trigger.to_state.state.split('_')[1] in [keypad_arm_home_mapping, keypad_arm_away_mapping] }}"
+                sequence:
+                  - variables:
+                      property_home_away: "{{ iif(trigger.to_state.state.split('_')[1] == keypad_arm_home_mapping, 10, 11) }}"
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ trigger.from_state is defined and trigger.from_state.state == 'triggered' }}"
+                        sequence:
+                          - action: zwave_js.set_value
+                            target:
+                              device_id: !input keypad
+                            data:
+                              command_class: "135"
+                              endpoint: "0"
+                              property: "{{ property_home_away }}"
+                              property_key: "1"
+                              value: 99
+                          - delay:
+                              seconds: 6
+                          - action: zwave_js.invoke_cc_api
+                            target:
+                              device_id: !input keypad
+                            data:
+                              command_class: "135"
+                              endpoint: "0"
+                              method_name: set
+                              parameters:
+                                - - indicatorId: 19
+                                    propertyId: 1
+                                    value: 255
+                    default:
+                      - action: zwave_js.set_value
+                        target:
+                          device_id: !input keypad
+                        data:
+                          command_class: "135"
+                          endpoint: "0"
+                          property: "{{ property_home_away }}"
+                          property_key: "1"
+                          value: 99
+
+              # Arming
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.to_state.state == 'arming' }}"
+                sequence:
+                  - action: zwave_js.set_value
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      property: "18"
+                      property_key: timeout
+                      value: "{{ formatted_delay }}"
+
+              # Pending
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.to_state.state == 'pending' }}"
+                sequence:
+                  - action: zwave_js.set_value
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      property: "17"
+                      property_key: timeout
+                      value: "{{ formatted_delay }}"
+
+              # Triggered (Burglar mode)
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.to_state.state == 'triggered' }}"
+                  - condition: template
+                    value_template: >
+                      {{ expand(environmental_entities) | selectattr('state', 'eq', 'on') | list | length == 0 if environmental_entities else true }}
+                sequence:
+                  - action: zwave_js.invoke_cc_api
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      method_name: set
+                      parameters:
+                        - - indicatorId: 13
+                            propertyId: 1
+                            value: 255
+
+      # --- Environmental Alarms ---
+      - conditions:
+          - condition: trigger
+            id: environmental_triggered
+        sequence:
+          - action: zwave_js.invoke_cc_api
+            target:
+              device_id: !input keypad
+            data:
+              command_class: "135"
+              endpoint: "0"
+              method_name: set
+              parameters:
+                - - indicatorId: 14
+                    propertyId: 1
+                    value: 255
+
+      # --- Physical Emergency Buttons ---
+
+      # FIRE BUTTON
+      - conditions:
+          - condition: trigger
+            id: keypad_fire
+          - condition: template
+            value_template: >
+              {{ states(alarm_entity) not in ['pending', 'triggered'] }}
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ fire_local }}"
+                sequence:
+                  - action: zwave_js.invoke_cc_api
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      method_name: set
+                      parameters:
+                        - - indicatorId: 14
+                            propertyId: 1
+                            value: 255
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "true"
+                sequence: !input fire_button_action
+
+      # POLICE BUTTON
+      - conditions:
+          - condition: trigger
+            id: keypad_police
+          - condition: template
+            value_template: >
+              {{ states(alarm_entity) not in ['pending', 'triggered'] }}
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ police_local }}"
+                sequence:
+                  - action: zwave_js.invoke_cc_api
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      method_name: set
+                      parameters:
+                        - - indicatorId: 13
+                            propertyId: 1
+                            value: 255
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "true"
+                sequence: !input police_button_action
+
+      # MEDICAL BUTTON
+      - conditions:
+          - condition: trigger
+            id: keypad_medical
+          - condition: template
+            value_template: >
+              {{ states(alarm_entity) not in ['pending', 'triggered'] }}
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ medical_local }}"
+                sequence:
+                  - action: zwave_js.invoke_cc_api
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: "135"
+                      endpoint: "0"
+                      method_name: set
+                      parameters:
+                        - - indicatorId: 19
+                            propertyId: 1
+                            value: 255
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "true"
+                sequence: !input medical_button_action
+
+  # ==========================================
+  # BLOCK 2: MOBILE APP NOTIFICATIONS & ACTIONS
+  # ==========================================
+  - choose:
+      # --- OPEN SENSORS FAIL TO ARM ---
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_devices is iterable and notify_devices | length > 0 }}"
+          - condition: trigger
+            id:
+              - need_bypass
+              - notification_cleared
+          - condition: template
+            value_template: >-
+              {{ 
+                trigger.id == 'need_bypass' 
+                or 
+                (trigger.id == 'notification_cleared' and 'FORCE_ARM' in trigger.event.data.get('action_1_key', '')) 
+              }}
+        sequence:
+          - repeat:
+              for_each: !input notify_devices
+              sequence:
+                - variables:
+                    cmd: >-
+                      {% if trigger.id == 'need_bypass' %}
+                        {{ trigger.event.data.command | default('arm_away') | replace('arm_', '') | upper }}
+                      {% elif trigger.id == 'notification_cleared' and 'action_1_key' in trigger.event.data %}
+                        {{ trigger.event.data.action_1_key | replace('FORCE_ARM_', '') }}
+                      {% else %}
+                        AWAY
+                      {% endif %}
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    title: "CANNOT ARM: OPEN SENSORS"
+                    message: >
+                      {% if trigger.id == 'notification_cleared' %}
+                        {{ trigger.event.data.message | default('The alarm failed to arm because sensors were open.') }}
+                      {% else %}
+                        {% set sensors = state_attr(alarm_entity, 'open_sensors') %}
+                        {% if sensors %}
+                          The alarm failed to arm because the following sensors are open:
+                          {% if sensors is mapping %}
+                            {% for s in sensors.keys() %}
+                              - {{ state_attr(s, 'friendly_name') | default(s) }}
+                            {% endfor %}
+                          {% elif sensors is iterable and sensors | length > 0 %}
+                            {% for s in sensors %}
+                              - {{ state_attr(s, 'friendly_name') | default(s) }}
+                            {% endfor %}
+                          {% endif %}
+                        {% else %}
+                          The alarm failed to arm because sensors were open.
+                        {% endif %}
+                      {% endif %}
+                    data:
+                      tag: alarm_status
+                      sticky: true
+                      importance: high
+                      priority: high
+                      ttl: 0
+                      actions:
+                        - action: "FORCE_ARM_{{ cmd }}"
+                          title: "Force Arm"
+                        - action: "RETRY_ARM_{{ cmd }}"
+                          title: "Retry"
+                        - action: CANCEL_ARM
+                          title: "Cancel"
+                      channel: Alarm Open Sensors
+                      color: "#FF9800"
+                      notification_icon: mdi:alert-circle
+                      push:
+                        thread-id: "alarm_status"
+                        apns-collapse-id: "alarm_status"
+
+      # --- ALARM PENDING (ENTRY DELAY) ---
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_devices is iterable and notify_devices | length > 0 }}"
+          - condition: trigger
+            id:
+              - alarmo_state_change
+              - notification_cleared
+          - condition: state
+            entity_id: !input alarm
+            state: pending
+        sequence:
+          - repeat:
+              for_each: !input notify_devices
+              sequence:
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    title: "ALARM ENTRY DELAY"
+                    message: "The alarm is pending. Please disarm."
+                    data:
+                      tag: alarm_status
+                      sticky: true
+                      importance: high
+                      priority: high
+                      ttl: 0
+                      actions:
+                        - action: DISARM_ALARM
+                          title: "Disarm"
+                      channel: Alarm Armed
+                      color: "#FF9800"
+                      notification_icon: mdi:shield-sync
+                      push:
+                        thread-id: "alarm_status"
+                        apns-collapse-id: "alarm_status"
+
+      # --- ALARM TRIGGERED ---
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_devices is iterable and notify_devices | length > 0 }}"
+          - condition: trigger
+            id:
+              - alarmo_state_change
+              - notification_cleared
+          - condition: state
+            entity_id: !input alarm
+            state: triggered
+        sequence:
+          - repeat:
+              for_each: !input notify_devices
+              sequence:
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    title: "ALARM TRIGGERED"
+                    message: "Detection: {{ state_attr(alarm_entity, 'changed_by') | default('Unknown') }}"
+                    data:
+                      tag: alarm_status
+                      sticky: true
+                      importance: high
+                      priority: high
+                      ttl: 0
+                      actions:
+                        - action: DISARM_ALARM
+                          title: "Disarm"
+                      channel: Alarm Triggered
+                      color: "#F44336"
+                      notification_icon: mdi:alarm-light
+                      vibrationPattern: "200, 1000, 200, 1000, 200, 1000, 200, 1000"
+                      push:
+                        thread-id: "alarm_status"
+                        apns-collapse-id: "alarm_status"
+                        sound:
+                          name: default
+                          critical: 1
+                          volume: 1.0
+
+      # --- ALARM ARMING ---
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_devices is iterable and notify_devices | length > 0 }}"
+          - condition: trigger
+            id:
+              - alarmo_state_change
+              - notification_cleared
+          - condition: state
+            entity_id: !input alarm
+            state: arming
+        sequence:
+          - repeat:
+              for_each: !input notify_devices
+              sequence:
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    title: "ALARM ARMING"
+                    message: "The alarm is arming..."
+                    data:
+                      tag: alarm_status
+                      sticky: true
+                      importance: high
+                      priority: high
+                      ttl: 0
+                      actions:
+                        - action: DISARM_ALARM
+                          title: "Cancel"
+                      channel: Alarm Armed
+                      color: "#FF9800"
+                      notification_icon: mdi:shield-sync
+                      push:
+                        thread-id: "alarm_status"
+                        apns-collapse-id: "alarm_status"
+
+      # --- ALARM ARMED ---
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_devices is iterable and notify_devices | length > 0 }}"
+          - condition: trigger
+            id:
+              - alarmo_state_change
+              - notification_cleared
+          - condition: state
+            entity_id: !input alarm
+            state:
+              - armed_home
+              - armed_away
+              - armed_night
+              - armed_vacation
+              - armed_custom_bypass
+        sequence:
+          - repeat:
+              for_each: !input notify_devices
+              sequence:
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    title: >-
+                      ALARM {{ states(alarm_entity) | replace('_', ' ') | upper }}
+                      {%- if state_attr(alarm_entity, 'bypassed_sensors') %} (BYPASSED){% endif %}
+                    message: >-
+                      Mode: {{ state_attr(alarm_entity, 'arm_mode') | default(states(alarm_entity)) | replace('_', ' ') | title }}
+                      {%- set bypassed = state_attr(alarm_entity, 'bypassed_sensors') %}
+                      {%- if bypassed %}
+
+                      Bypassed Sensors:
+                      {%- if bypassed is mapping %}
+                        {%- for s in bypassed.keys() %}
+                      - {{ state_attr(s, 'friendly_name') | default(s) }}
+                        {%- endfor %}
+                      {%- elif bypassed is iterable and bypassed | length > 0 %}
+                        {%- for s in bypassed %}
+                      - {{ state_attr(s, 'friendly_name') | default(s) }}
+                        {%- endfor %}
+                      {%- endif %}
+                      {%- endif %}
+                    data:
+                      tag: alarm_status
+                      sticky: true
+                      importance: high
+                      priority: high
+                      ttl: 0
+                      actions:
+                        - action: DISARM_ALARM
+                          title: "Disarm"
+                      channel: Alarm Armed
+                      color: >-
+                        {{ '#FFEB3B' if state_attr(alarm_entity, 'bypassed_sensors') else '#4CAF50' }}
+                      notification_icon: >-
+                        {% if is_state(alarm_entity, 'armed_home') %}
+                          mdi:shield-home
+                        {% elif is_state(alarm_entity, 'armed_away') %}
+                          mdi:shield-lock
+                        {% else %}
+                          mdi:shield
+                        {% endif %}
+                      push:
+                        thread-id: "alarm_status"
+                        apns-collapse-id: "alarm_status"
+
+      # --- ALARM DISARMED ---
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_devices is iterable and notify_devices | length > 0 }}"
+          - condition: trigger
+            id:
+              - alarmo_state_change
+              - notification_cleared
+              - action_cancel_arm
+          - condition: state
+            entity_id: !input alarm
+            state: disarmed
+          - condition: template
+            value_template: >-
+              {{ 
+                trigger.id in ['alarmo_state_change', 'action_cancel_arm'] 
+                or 
+                (trigger.id == 'notification_cleared' and 'FORCE_ARM' not in trigger.event.data.get('action_1_key', '')) 
+              }}
+          - condition: template
+            value_template: >-
+              {{ 
+                trigger.id == 'action_cancel_arm' 
+                or 
+                state_attr(alarm_entity, 'open_sensors') == none 
+                or 
+                state_attr(alarm_entity, 'open_sensors') | length == 0 
+              }}
+        sequence:
+          - repeat:
+              for_each: !input notify_devices
+              sequence:
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    message: "clear_notification"
+                    data:
+                      tag: alarm_status
+                - action: >-
+                    {% if repeat.item.startswith('notify.mobile_app_') %}
+                      {{ repeat.item }}
+                    {% else %}
+                      notify.mobile_app_{{ repeat.item.split('.')[1] }}
+                    {% endif %}
+                  data:
+                    title: "ALARM DISARMED"
+                    message: "The alarm is currently turned off."
+                    data:
+                      tag: alarm_status
+                      sticky: false
+                      importance: high
+                      priority: high
+                      ttl: 0
+                      actions:
+                        - action: ARM_ALARM_HOME
+                          title: "Arm {{ keypad_arm_home_mapping | title }}"
+                        - action: ARM_ALARM_AWAY
+                          title: "Arm {{ keypad_arm_away_mapping | title }}"
+                      channel: Alarm Disarmed
+                      color: "#2196F3"
+                      notification_icon: mdi:shield-off
+                      push:
+                        thread-id: "alarm_status"
+                        apns-collapse-id: "alarm_status"
+
+      # --- ACTION: DISARM ALARM ---
+      - conditions:
+          - condition: trigger
+            id: action_disarm
+        sequence:
+          - action: alarm_control_panel.alarm_disarm
+            target:
+              entity_id: !input alarm
+            data:
+              code: !input mobile_alarm_code
+
+      # --- ACTION: ARM AWAY (MAPPED) ---
+      - conditions:
+          - condition: trigger
+            id: action_arm_away
+        sequence:
+          - action: alarmo.arm
+            target:
+              entity_id: !input alarm
+            data:
+              mode: "{{ keypad_arm_away_mapping }}"
+
+      # --- ACTION: ARM HOME (MAPPED) ---
+      - conditions:
+          - condition: trigger
+            id: action_arm_home
+        sequence:
+          - action: alarmo.arm
+            target:
+              entity_id: !input alarm
+            data:
+              mode: "{{ keypad_arm_home_mapping }}"
+
+      # --- ACTION: FORCE ARM ---
+      - conditions:
+          - condition: trigger
+            id: action_force_arm
+        sequence:
+          - action: alarmo.arm
+            target:
+              entity_id: !input alarm
+            data:
+              mode: "{{ trigger.event.data.action | replace('FORCE_ARM_', '') | lower }}"
+              force: true
+              skip_delay: true
+
+      # --- ACTION: RETRY ARM ---
+      - conditions:
+          - condition: trigger
+            id: action_retry_arm
+        sequence:
+          - action: alarmo.arm
+            target:
+              entity_id: !input alarm
+            data:
+              mode: "{{ trigger.event.data.action | replace('RETRY_ARM_', '') | lower }}"
+              force: false
+              skip_delay: false
+
+  # ==========================================
+  # BLOCK 3: AUTO FORCE ARM LOGIC
+  # ==========================================
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: need_bypass
+          - condition: template
+            value_template: "{{ auto_force_arm }}"
+        sequence:
+          - wait_for_trigger:
+              - trigger: state
+                entity_id: !input alarm
+                from: disarmed
+              - trigger: event
+                event_type: mobile_app_notification_action
+                event_data:
+                  action: CANCEL_ARM
+              - trigger: event
+                event_type: alarmo_failed_to_arm
+              - trigger: event
+                event_type: zwave_js_notification
+                event_data:
+                  command_class: 111
+                  device_id: !input keypad
+                  event_type: 3
+            timeout:
+              minutes: "{{ auto_force_arm_delay | int(5) }}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ wait.trigger == none and is_state(alarm_entity, 'disarmed') }}"
+                sequence:
+                  - action: alarmo.arm
+                    target:
+                      entity_id: !input alarm
+                    data:
+                      mode: "{{ trigger.event.data.command | default('arm_away') | replace('arm_', '') | lower }}"
+                      force: true
+                      skip_delay: true

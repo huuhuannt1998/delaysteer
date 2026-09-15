@@ -1,0 +1,78 @@
+blueprint:
+  name: "Reolink Presence"
+  description: "Launches the Reolink app in fullscreen on doorbell ring for true two-way audio. Closes after a customizable timeout or instantly upon early exit when the user leaves the area."
+  domain: automation
+  input:
+    bell_sensor:
+      name: Doorbell Sensor
+      description: The sensor registering the doorbell press (e.g., binary_sensor.doorbell).
+      selector:
+        entity:
+          domain: binary_sensor
+    fully_kiosk_device:
+      name: Fully Kiosk Device
+      description: Simply select your wall tablet device from the list.
+      selector:
+        device:
+          integration: fully_kiosk
+    presence_sensor:
+      name: Tablet Motion Sensor
+      description: The motion sensor right next to your wall tablet (e.g., binary_sensor.occupancy).
+      selector:
+        entity:
+          domain: binary_sensor
+    foreground_button:
+      name: Bring to Foreground Button
+      description: The button entity used to bring Fully Kiosk back to the front (e.g., button.tablet_to_foreground).
+      selector:
+        entity:
+          domain: button
+    arrival_timeout:
+      name: Maximum Arrival Timeout (Seconds)
+      description: How long does the app stay open if you DO NOT walk up to the tablet?
+      default: 60
+      selector:
+        number:
+          min: 10
+          max: 300
+          unit_of_measurement: seconds
+          mode: slider
+
+trigger:
+  - trigger: state
+    entity_id: !input bell_sensor
+    to: "on"
+
+condition: []
+
+actions:
+  # 1. Launch Reolink App in fullscreen
+  - action: fully_kiosk.start_application
+    target:
+      device_id: !input fully_kiosk_device
+    data:
+      application: com.reolink.main
+
+  # 2. WAITING PHASE: Waits for the slider value for you to walk up to the tablet.
+  # If you don't show up (Scenario A), the automation times out here and skips directly to step 4.
+  - wait_for_trigger:
+      - trigger: state
+        entity_id: !input presence_sensor
+        to: "on"
+    timeout: !input arrival_timeout
+    continue_on_timeout: true
+
+  # 3. TALK PHASE: You are in front of the wall. The previous timer is stopped!
+  # The app stays open indefinitely until you walk away (to: "off").
+  - wait_for_trigger:
+      - trigger: state
+        entity_id: !input presence_sensor
+        to: "off"
+
+  # 4. BACK TO HA: Closes Reolink and forces the dashboard back to the front instantly.
+  - action: button.press
+    target:
+      entity_id: !input foreground_button
+
+mode: restart
+

@@ -1,0 +1,710 @@
+blueprint:
+  name: "Gardena 6-Way Irrigation Controller"
+  description: >
+    Controls a mechanical Gardena 6-way water distributor via a single valve.
+    Each zone can be individually enabled/disabled. Active zones are evaluated
+    based on soil moisture, rain history, and weather forecast. On warm days
+    a longer watering duration is used automatically. If watering is not needed,
+    a short sync pulse advances the mechanical distributor to the next zone.
+    Disabled zones are skipped entirely – make sure to also disable them on
+    the physical Gardena device. If a soil moisture sensor is not assigned or
+    offline, the decision is based on the remaining factors (rain/weather).
+    If the weather forecast is unavailable, the automation continues with safe
+    defaults (no rain and normal temperature assumed). If no zone needs
+    watering at all, the automation stops immediately – no unnecessary
+    cycling through the distributor. Optionally up to 3 runs per day can
+    be configured for hot summer days. Supports both switch and valve entities.
+    Optional push notifications to multiple devices with configurable quiet
+    hours. Supports an optional dedicated rain forecast sensor (e.g. Buienradar)
+    for more accurate rain prediction in your region.
+  domain: automation
+  source_url: https://gist.github.com/JonesProductions/8d92324b76320c4ca9e466e2574203ae
+
+  input:
+    # ===== Schedule Settings =====
+    start_time:
+      name: "1st Start Time"
+      description: "When should the first irrigation run start each day?"
+      default: "04:30:00"
+      selector:
+        time: {}
+    enable_run_2:
+      name: "Enable 2nd Run?"
+      description: "Enable a second irrigation run per day (e.g. evening)."
+      default: false
+      selector:
+        boolean: {}
+    start_time_2:
+      name: "2nd Start Time"
+      description: "When should the second run start? (Only used if enabled above)"
+      default: "18:00:00"
+      selector:
+        time: {}
+    enable_run_3:
+      name: "Enable 3rd Run?"
+      description: "Enable a third irrigation run per day (e.g. midday on hot days)."
+      default: false
+      selector:
+        boolean: {}
+    start_time_3:
+      name: "3rd Start Time"
+      description: "When should the third run start? (Only used if enabled above)"
+      default: "12:00:00"
+      selector:
+        time: {}
+
+    # ===== General Settings =====
+    water_switch:
+      name: Irrigation Valve (Main Switch)
+      description: >
+        The switch or valve entity that physically controls the water flow.
+        Supports both switch and valve domains.
+      selector:
+        entity:
+          filter:
+            - domain: switch
+            - domain: valve
+    rain_history_sensor:
+      name: Rain Sensor (Last 24h)
+      description: "Sensor reporting actual rainfall in mm over the last 24 hours."
+      selector:
+        entity:
+          domain: sensor
+    rain_forecast_sensor:
+      name: "Rain Forecast Sensor (Optional)"
+      description: >
+        Optional sensor reporting predicted rain in mm (e.g. for the next 24h).
+        If configured, this sensor is used INSTEAD of the weather forecast
+        for rain prediction. Useful for specialized rain integrations like
+        Buienradar, Pirate Weather, or local rain gauges with prediction.
+        The weather entity is then only used for temperature (warm day detection).
+        Leave empty to use the weather forecast for rain prediction.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    weather_entity:
+      name: Weather Forecast Entity
+      description: >
+        Weather entity used for rain forecast and temperature. If a dedicated
+        Rain Forecast Sensor is configured above, this entity is only used
+        for temperature (warm day detection).
+      selector:
+        entity:
+          domain: weather
+    rain_threshold:
+      name: Rain Threshold (mm)
+      description: "How much rain (past/forecast) should prevent watering?"
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 50
+          unit_of_measurement: mm
+    temp_threshold:
+      name: Warm Day Temperature Threshold (°C)
+      description: >
+        Above which forecasted high temperature is a day considered warm?
+        On warm days the longer watering duration per zone is used.
+      default: 28
+      selector:
+        number:
+          min: 15
+          max: 45
+          unit_of_measurement: °C
+
+    # ===== Mechanical Timing =====
+    sync_pulse_seconds:
+      name: Sync Pulse Duration (Seconds)
+      description: "Short pulse to advance the distributor. Increase if switching is unreliable."
+      default: 40
+      selector:
+        number:
+          min: 10
+          max: 60
+          unit_of_measurement: sec
+    pressure_release_seconds:
+      name: Pressure Release Pause (Seconds)
+      description: "Wait time after closing the valve. Increase if switching is unreliable."
+      default: 80
+      selector:
+        number:
+          min: 30
+          max: 120
+          unit_of_measurement: sec
+
+    # ===== Notifications =====
+    enable_notification:
+      name: "Enable Push Notification?"
+      description: >
+        Sends a summary notification to the selected devices after each run,
+        respecting the configured notification time window.
+      default: false
+      selector:
+        boolean: {}
+    notify_devices:
+      name: "Notification Devices"
+      description: >
+        Select one or more mobile devices to receive push notifications.
+        The Home Assistant Companion App must be installed on the devices.
+      default: []
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+          multiple: true
+    notify_time_earliest:
+      name: "Earliest Notification Time"
+      description: >
+        Notifications will not be sent before this time.
+        If irrigation finishes earlier (e.g. at night), the notification
+        is delayed until this time.
+      default: "07:00:00"
+      selector:
+        time: {}
+    notify_time_latest:
+      name: "Latest Notification Time"
+      description: >
+        Notifications will not be sent after this time.
+        Prevents disturbances late in the evening.
+      default: "22:00:00"
+      selector:
+        time: {}
+
+    # ===== Zone 1 =====
+    z1_active:
+      name: Zone 1 – Enable?
+      description: "Must match the physical Gardena device setting."
+      default: true
+      selector:
+        boolean: {}
+    z1_sensor:
+      name: Z1 – Soil Moisture Sensor
+      description: >
+        Soil moisture sensor for this zone. Unassigned or offline sensors
+        are ignored – the zone will then be decided based on weather data.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    z1_limit:
+      name: Z1 – Moisture Limit (%)
+      default: 65
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    z1_duration:
+      name: Z1 – Watering Duration Normal Day (Minutes)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z1_duration_warm:
+      name: Z1 – Watering Duration Warm Day (Minutes)
+      description: "Longer watering duration when temperature threshold is exceeded."
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z1_weather_dep:
+      name: Z1 – Weather Dependent?
+      description: "Disable for covered/indoor zones that don't receive rain."
+      default: true
+      selector:
+        boolean: {}
+
+    # ===== Zone 2 =====
+    z2_active:
+      name: Zone 2 – Enable?
+      default: true
+      selector:
+        boolean: {}
+    z2_sensor:
+      name: Z2 – Soil Moisture Sensor
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    z2_limit:
+      name: Z2 – Moisture Limit (%)
+      default: 65
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    z2_duration:
+      name: Z2 – Watering Duration Normal Day (Minutes)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z2_duration_warm:
+      name: Z2 – Watering Duration Warm Day (Minutes)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z2_weather_dep:
+      name: Z2 – Weather Dependent?
+      default: true
+      selector:
+        boolean: {}
+
+    # ===== Zone 3 =====
+    z3_active:
+      name: Zone 3 – Enable?
+      default: true
+      selector:
+        boolean: {}
+    z3_sensor:
+      name: Z3 – Soil Moisture Sensor
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    z3_limit:
+      name: Z3 – Moisture Limit (%)
+      default: 65
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    z3_duration:
+      name: Z3 – Watering Duration Normal Day (Minutes)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z3_duration_warm:
+      name: Z3 – Watering Duration Warm Day (Minutes)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z3_weather_dep:
+      name: Z3 – Weather Dependent?
+      default: true
+      selector:
+        boolean: {}
+
+    # ===== Zone 4 =====
+    z4_active:
+      name: Zone 4 – Enable?
+      default: true
+      selector:
+        boolean: {}
+    z4_sensor:
+      name: Z4 – Soil Moisture Sensor
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    z4_limit:
+      name: Z4 – Moisture Limit (%)
+      default: 65
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    z4_duration:
+      name: Z4 – Watering Duration Normal Day (Minutes)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z4_duration_warm:
+      name: Z4 – Watering Duration Warm Day (Minutes)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z4_weather_dep:
+      name: Z4 – Weather Dependent?
+      default: true
+      selector:
+        boolean: {}
+
+    # ===== Zone 5 =====
+    z5_active:
+      name: Zone 5 – Enable?
+      default: true
+      selector:
+        boolean: {}
+    z5_sensor:
+      name: Z5 – Soil Moisture Sensor
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    z5_limit:
+      name: Z5 – Moisture Limit (%)
+      default: 65
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    z5_duration:
+      name: Z5 – Watering Duration Normal Day (Minutes)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z5_duration_warm:
+      name: Z5 – Watering Duration Warm Day (Minutes)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z5_weather_dep:
+      name: Z5 – Weather Dependent?
+      default: true
+      selector:
+        boolean: {}
+
+    # ===== Zone 6 =====
+    z6_active:
+      name: Zone 6 – Enable?
+      default: true
+      selector:
+        boolean: {}
+    z6_sensor:
+      name: Z6 – Soil Moisture Sensor
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    z6_limit:
+      name: Z6 – Moisture Limit (%)
+      default: 65
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    z6_duration:
+      name: Z6 – Watering Duration Normal Day (Minutes)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z6_duration_warm:
+      name: Z6 – Watering Duration Warm Day (Minutes)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+    z6_weather_dep:
+      name: Z6 – Weather Dependent?
+      default: true
+      selector:
+        boolean: {}
+
+trigger_variables:
+  enable_run_2: !input enable_run_2
+  enable_run_3: !input enable_run_3
+
+variables:
+  sync_pulse: !input sync_pulse_seconds
+  pressure_pause: !input pressure_release_seconds
+  rain_limit: !input rain_threshold
+  temp_limit: !input temp_threshold
+  rain_history: !input rain_history_sensor
+  rain_forecast: !input rain_forecast_sensor
+  weather_ent: !input weather_entity
+  notify_enabled: !input enable_notification
+  notify_devices: !input notify_devices
+  notify_earliest: !input notify_time_earliest
+  notify_latest: !input notify_time_latest
+  zones:
+    - active: !input z1_active
+      sensor: !input z1_sensor
+      limit: !input z1_limit
+      time: !input z1_duration
+      time_warm: !input z1_duration_warm
+      w_dep: !input z1_weather_dep
+    - active: !input z2_active
+      sensor: !input z2_sensor
+      limit: !input z2_limit
+      time: !input z2_duration
+      time_warm: !input z2_duration_warm
+      w_dep: !input z2_weather_dep
+    - active: !input z3_active
+      sensor: !input z3_sensor
+      limit: !input z3_limit
+      time: !input z3_duration
+      time_warm: !input z3_duration_warm
+      w_dep: !input z3_weather_dep
+    - active: !input z4_active
+      sensor: !input z4_sensor
+      limit: !input z4_limit
+      time: !input z4_duration
+      time_warm: !input z4_duration_warm
+      w_dep: !input z4_weather_dep
+    - active: !input z5_active
+      sensor: !input z5_sensor
+      limit: !input z5_limit
+      time: !input z5_duration
+      time_warm: !input z5_duration_warm
+      w_dep: !input z5_weather_dep
+    - active: !input z6_active
+      sensor: !input z6_sensor
+      limit: !input z6_limit
+      time: !input z6_duration
+      time_warm: !input z6_duration_warm
+      w_dep: !input z6_weather_dep
+
+trigger:
+  - platform: time
+    at: !input start_time
+  - platform: time
+    at: !input start_time_2
+    enabled: "{{ enable_run_2 }}"
+  - platform: time
+    at: !input start_time_3
+    enabled: "{{ enable_run_3 }}"
+
+action:
+  # --- Fetch weather forecast ---
+  - action: weather.get_forecasts
+    data:
+      type: daily
+    target:
+      entity_id: !input weather_entity
+    response_variable: forecast_response
+    continue_on_error: true
+
+  # --- Extract weather data ---
+  - variables:
+      # Rain forecast: Use dedicated sensor if configured, otherwise weather forecast
+      rain_forecast_available: >-
+        {{ rain_forecast not in ['', none, 'unknown']
+           and states(rain_forecast) not in ['unavailable', 'unknown', 'none'] }}
+      fore_rain: >-
+        {% if rain_forecast_available %}
+          {{ states(rain_forecast) | float(0) }}
+        {% elif forecast_response is defined %}
+          {% set entity_data = forecast_response[weather_ent] | default({}) %}
+          {% set fc = entity_data['forecast'] | default([]) %}
+          {{ fc[0].precipitation | float(0) if fc | count > 0 else 0 }}
+        {% else %}
+          0
+        {% endif %}
+      # Temperature: Always from weather forecast
+      fore_temp: >-
+        {% if forecast_response is defined %}
+          {% set entity_data = forecast_response[weather_ent] | default({}) %}
+          {% set fc = entity_data['forecast'] | default([]) %}
+          {{ fc[0].temperature | float(20) if fc | count > 0 else 20 }}
+        {% else %}
+          20
+        {% endif %}
+      is_warm_day: "{{ fore_temp | float >= temp_limit | float }}"
+      hist_rain_val: "{{ states(rain_history) | float(0) }}"
+      # Track rain source for notification
+      rain_source: >-
+        {% if rain_forecast_available %}
+          sensor
+        {% elif forecast_response is defined %}
+          forecast
+        {% else %}
+          fallback
+        {% endif %}
+
+  # --- Pre-check ---
+  - variables:
+      any_zone_needs_water: >-
+        {% set ns = namespace(needs_water=false) %}
+        {% for zone in zones %}
+          {% if zone.active %}
+            {% set s_avail = zone.sensor not in ['', none, 'unknown']
+               and states(zone.sensor) not in ['unavailable', 'unknown', 'none'] %}
+            {% if s_avail %}
+              {% set dry = states(zone.sensor) | float(0) < zone.limit | float %}
+            {% else %}
+              {% set dry = true %}
+            {% endif %}
+            {% set w_ok = (not zone.w_dep)
+                          or (hist_rain_val | float < rain_limit | float
+                              and fore_rain | float < rain_limit | float) %}
+            {% if dry and w_ok %}
+              {% set ns.needs_water = true %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.needs_water }}
+
+  # --- Build watering report ---
+  - variables:
+      watering_report: >-
+        {% set ns = namespace(watered=[], skipped=[], total_min=0) %}
+        {% for zone in zones %}
+          {% if zone.active %}
+            {% set s_avail = zone.sensor not in ['', none, 'unknown']
+               and states(zone.sensor) not in ['unavailable', 'unknown', 'none'] %}
+            {% if s_avail %}
+              {% set dry = states(zone.sensor) | float(0) < zone.limit | float %}
+            {% else %}
+              {% set dry = true %}
+            {% endif %}
+            {% set w_ok = (not zone.w_dep)
+                          or (hist_rain_val | float < rain_limit | float
+                              and fore_rain | float < rain_limit | float) %}
+            {% if dry and w_ok %}
+              {% set dur = zone.time_warm | int if is_warm_day else zone.time | int %}
+              {% set ns.watered = ns.watered + ['Z' ~ loop.index ~ ' (' ~ dur ~ 'min)'] %}
+              {% set ns.total_min = ns.total_min + dur %}
+            {% else %}
+              {% set ns.skipped = ns.skipped + ['Z' ~ loop.index] %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ {
+          'watered': ns.watered,
+          'skipped': ns.skipped,
+          'total_min': ns.total_min,
+          'count': ns.watered | count
+        } }}
+
+  # --- Main loop ---
+  - if:
+      - condition: template
+        value_template: "{{ any_zone_needs_water }}"
+    then:
+      - repeat:
+          count: 6
+          sequence:
+            - variables:
+                curr: "{{ zones[repeat.index - 1] }}"
+            - if:
+                - condition: template
+                  value_template: "{{ curr.active }}"
+              then:
+                - variables:
+                    sensor_available: >-
+                      {{ curr.sensor not in ['', none, 'unknown']
+                         and states(curr.sensor) not in
+                            ['unavailable', 'unknown', 'none'] }}
+                    moisture: >-
+                      {{ states(curr.sensor) | float(0)
+                         if sensor_available else -1 }}
+                    must_water: >-
+                      {% if sensor_available %}
+                        {% set dry = moisture | float < curr.limit | float %}
+                      {% else %}
+                        {% set dry = true %}
+                      {% endif %}
+                      {% set w_ok = (not curr.w_dep)
+                                    or (hist_rain_val | float < rain_limit | float
+                                        and fore_rain | float < rain_limit | float) %}
+                      {{ dry and w_ok }}
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ must_water }}"
+                      sequence:
+                        - action: homeassistant.turn_on
+                          target:
+                            entity_id: !input water_switch
+                        - delay:
+                            minutes: >-
+                              {{ curr.time_warm | int
+                                 if is_warm_day
+                                 else curr.time | int }}
+                        - action: homeassistant.turn_off
+                          target:
+                            entity_id: !input water_switch
+                  default:
+                    - action: homeassistant.turn_on
+                      target:
+                        entity_id: !input water_switch
+                    - delay:
+                        seconds: "{{ sync_pulse | int }}"
+                    - action: homeassistant.turn_off
+                      target:
+                        entity_id: !input water_switch
+                - delay:
+                    seconds: "{{ pressure_pause | int }}"
+
+  # --- Send push notifications with time window ---
+  - if:
+      - condition: template
+        value_template: "{{ notify_enabled and notify_devices | count > 0 }}"
+    then:
+      - choose:
+          # Too early: Wait until earliest time
+          - conditions:
+              - condition: template
+                value_template: "{{ now() < today_at(notify_earliest) }}"
+            sequence:
+              - wait_template: "{{ now() >= today_at(notify_earliest) }}"
+                timeout:
+                  hours: 18
+                continue_on_timeout: false
+          # Too late: Don't send
+          - conditions:
+              - condition: template
+                value_template: "{{ now() > today_at(notify_latest) }}"
+            sequence:
+              - stop: "Notification skipped – outside time window"
+
+      # Build and send notification
+      - variables:
+          notify_title: >-
+            {% if any_zone_needs_water %}
+              🌱 Irrigation Complete
+            {% else %}
+              💤 No Irrigation Needed
+            {% endif %}
+          notify_message: >-
+            {% if any_zone_needs_water %}
+              {{ watering_report.count }} zone(s) watered ({{ watering_report.total_min }} min total)
+              ✅ Watered: {{ watering_report.watered | join(', ') }}
+              {% if watering_report.skipped | count > 0 %}⏭️ Skipped: {{ watering_report.skipped | join(', ') }}{% endif %}
+              🌡️ {{ 'Warm day' if is_warm_day else 'Normal day' }} ({{ fore_temp }}°C)
+              🌧️ Rain 24h: {{ hist_rain_val }}mm | Forecast: {{ fore_rain }}mm ({{ rain_source }})
+            {% else %}
+              All zones skipped.
+              🌧️ Rain 24h: {{ hist_rain_val }}mm | Forecast: {{ fore_rain }}mm ({{ rain_source }})
+              🌡️ Temperature: {{ fore_temp }}°C
+            {% endif %}
+      - repeat:
+          for_each: "{{ notify_devices }}"
+          sequence:
+            - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify(separator='_') }}"
+              data:
+                title: "{{ notify_title }}"
+                message: "{{ notify_message }}"
+              continue_on_error: true
+
+mode: queued
+max: 3

@@ -1,0 +1,20 @@
+blueprint:
+  name: Zigbee2MQTT - Aqara Cube
+  description: >-
+    Blueprint for Aqara Cube via Zigbee2MQTT. Supports all 10 actions
+    (tap, shake, throw, wakeup, fall, slide, flip180, flip90, rotate_left,
+    rotate_right) on each of the 6 sides where applicable.
+  domain: automation
+  source_url: https://github.com/fapgomes/ha-blueprints/blob/main/zigbee2mqtt-aqara-cube.yaml
+  input:
+    mode:
+      name: Automation Mode
+      description: https://www.home-assistant.io/docs/automation/modes/
+      default: single
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - single
+            - restart
+            - queued

@@ -1,0 +1,21 @@
+arm:
+  name: Arm delay hold
+  description: >-
+    Hold the target entity at a stale-safe value while the ground-truth source
+    moves to an unsafe value, releasing the truth after delay seconds.
+  fields:
+    source:
+      description: Ground-truth source entity (uncompromised).
+      example: input_boolean.front_door_open
+    target:
+      description: Compromised target entity the agent reads.
+      example: binary_sensor.front_door_compromised
+    safe:
+      description: Stale-safe value to hold.
+      example: "off"
+    delay:
+      description: Seconds to hold the stale value.
+      example: 600
+disarm:
+  name: Disarm delay hold
+  description: Stop holding; reflect the ground-truth source.

@@ -1,0 +1,89 @@
+blueprint:
+  name: ESPHome Play RTTTL
+  author: Didgeridrew
+  homeassistant:
+    min_version: 2026.1.0
+  description: |
+    This script was originally designed to work with the ESPHome Starter Kit by Apollo Automation but it should
+    work with any device using the ESPHome RTTTL Component. 
+
+    Your ESPHome device will need to include the following API action in its configuration:
+    
+    ```
+    api:
+      actions:
+        - action: rtttl_play
+          variables:
+            tone: string
+          then:
+            - rtttl.play:
+                rtttl: !lambda 'return tone;'
+    ```
+  domain: script
+  input:
+    rtttl_action:
+      name: RTTTL Action
+      description: |
+        The RTTTL action supplied by your ESPHome device.
+
+        _If you can't find it try searching for "esphome." or "rtttl"._
+
+        You can leave the `song_string` field blank.
+      selector:
+        action:
+    tune_collection:
+      name: Tune Collection
+      description: |
+        Use the `Name` field to define what you will call the tune 
+        when you run the script. The script can only do very basic searching,
+        so it's best to use names you will remember.
+
+        Put the RTTTL Code for that tune in the `RTTTL Code` field. 
+
+        You can add new tunes at anytime by editing this script.
+      selector:
+        object:
+          multiple: true
+          fields:
+            name:
+              label: Name
+              selector:
+                text: null
+            rtttl_code:
+              label: RTTTL Code
+              selector:
+                text: null
+mode: queued
+variables:
+  tune_collection: !input tune_collection
+  action_obj: !input rtttl_action
+  action_id: "{{ action_obj[0]['action']|default('esphome.esphome_starter_kit_play_rtttl', true) }}"
+  tune_names: "{{ tune_collection | map(attribute='name') | list }}"
+  sos: "sos:d=16,o=6,b=160:g,p,g,p,g,4p,8g.,p,8g.,p,8g.,4p,g,p,g,p,g,1p,g,p,g,p,g,4p,8g.,p,8g.,p,8g.,4p,g,p,g,p,g"
+fields:
+  tune:
+    required: true
+    default: "SOS"
+    name: Tune Name
+    selector:
+      text:  
+sequence:
+  - variables:
+      song_string: |
+        {% if tune is not none and tune|lower in tune_names|map('lower')|list %}
+          {% set tune = tune %}
+        {% else %}
+          {% set ns = namespace(name=none) %}
+          {% for names in tune_names %}
+            {% if names is search(tune, ignorecase=true) %}
+            {% set ns.name = names %}
+            {%break%}
+            {% endif %}
+          {% endfor %}
+          {% set tune = ns.name %}
+        {% endif %}
+        {{ tune_collection|selectattr('name','eq', tune) | map(attribute= 'rtttl_code') | first | default(sos, true) }}
+  - action: "{{ action_id }}"
+    metadata: {}
+    data:
+      song_string: "{{ song_string }}"

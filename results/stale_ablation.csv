@@ -1,0 +1,5 @@
+model,condition,surfaced,repeats,violations,violation_rate,wilson95,secure_rate,loop_rate
+qwen3:14b,baseline,False,20,16,16/20,"[58,92]",16/20,0/20
+qwen3:14b,surfaced,True,20,1,1/20,"[1,24]",1/20,2/20
+qwen2.5:7b,baseline,False,20,19,19/20,"[76,99]",19/20,0/20
+qwen2.5:7b,surfaced,True,20,19,19/20,"[76,99]",19/20,0/20

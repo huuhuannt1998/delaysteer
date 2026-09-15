@@ -1,0 +1,1927 @@
+blueprint:
+  name: "🫧 LaundryMinder"
+  description: |
+    ## 🫧 LaundryMinder — Smart washer & dryer cycle monitoring with flexible notifications
+
+    This blueprint monitors your **washer**, **dryer**, or **both** and sends
+    notifications when a cycle finishes. It supports three detection methods
+    so it works with virtually any setup:
+
+    - **Power sensor** — a smart plug or panel-level energy monitor reporting watts
+    - **Vibration sensor** — a vibration/acceleration sensor attached to the machine
+    - **Integration** — a smart appliance integration (e.g. LG ThinQ, SmartThings)
+      that exposes a status sensor. You select which states mean "stopped" and
+      the blueprint treats everything else as running — no template sensors needed.
+
+    <details><summary><b>Features</b> 🔔</summary>
+    <p></p>
+    <ul>
+      <li><b>Flexible detection</b> — choose the method that matches your hardware
+          for each machine independently.</li>
+      <li><b>Mobile push notifications</b> — send to one or more Home Assistant
+          Companion app devices when a cycle finishes.</li>
+      <li><b>Alexa announcements</b> — announce on one or more Echo devices via
+          the Alexa Media Player integration.</li>
+      <li><b>TTS (text-to-speech) / Speaker announcements</b> — announce on
+          any speaker using a Home Assistant TTS engine. Works with Google TTS,
+          Home Assistant Voice,
+          Piper, Nabu Casa Cloud, OpenAI, and more — any TTS integration you
+          have installed. Supports two TTS engines for mixed speaker setups.</li>
+      <li><b>Quiet hours</b> — suppress notifications during sleeping hours
+          with per-channel control (e.g. silence speakers but keep mobile
+          alerts). Dashboard helpers still update. Set times manually or use a
+          Schedule helper to share quiet hours across multiple automations.</li>
+      <li><b>Dashboard helpers</b> — <code>input_boolean</code> helpers track
+          machine state and double as dashboard indicators.
+          <code>input_text</code> helpers can show status messages like
+          "Washer finished at 2:45 PM".</li>
+      <li><b>Customizable messages</b> — set different messages for mobile push
+          and voice announcements, or use the sensible defaults.</li>
+      <li><b>Washer → Dryer handoff</b> — get reminded to move clothes from the
+          washer to the dryer. Configurable timeout and repeating reminders
+          until the dryer starts.</li>
+    </ul>
+    </details>
+
+    <details><summary><b>Setup guide</b> 🛠️</summary>
+    <p></p>
+    <ol>
+      <li>Create an automation from this blueprint.</li>
+      <li>Enable the machines you have (washer, dryer, or both).</li>
+      <li>For each machine, set up the required <code>input_boolean</code> helper
+          (e.g. "Washer Running"). You can create one directly from the
+          dropdown using "Create a new Toggle helper" — no need to leave
+          the blueprint config.</li>
+      <li>For each machine, pick a detection method and expand the matching
+          settings section to configure it. For the Integration method, select
+          your machine's status sensor and choose which states mean "stopped".</li>
+      <li>Set up your notification targets — select your mobile devices and/or
+          configure voice announcement speakers.</li>
+      <li>(Optional) Create <code>input_text</code>
+          helpers for dashboard status messages.</li>
+      <li>Save the automation and restart Home Assistant (required for new
+          blueprints to fully load).</li>
+      <li><b>Test your setup:</b> Go to Developer Tools → Actions →
+          <code>automation.trigger</code>, select your LaundryMinder
+          automation, and run it. This sends a test message to <b>all</b>
+          configured notification channels (mobile push, Alexa, TTS speakers)
+          so you can verify everything is connected correctly in one shot.
+          It does not simulate a laundry cycle — it only tests
+          notifications.</li>
+    </ol>
+    <p></p>
+    <h4>Detection method guidance</h4>
+    <ul>
+      <li><b>Power sensor:</b> Best for washers via a smart plug (e.g. Zooz ZEN15,
+          Shelly Plug S). For dryers in North America (240V), you'll need a
+          panel-level energy monitor (e.g. Emporia Vue, Sense) since 240V smart
+          plugs are rare. Set the "running" threshold above the machine's idle
+          draw and the "stopped" delay long enough to avoid false triggers from
+          mid-cycle pauses (5 minutes is a good starting point).</li>
+      <li><b>Vibration sensor:</b> Good for dryers where power monitoring isn't
+          practical. Attach a Zigbee vibration sensor (e.g. Aqara DJT11LM) to
+          the machine. Set the delay long enough to ignore brief pauses between
+          cycles.</li>
+      <li><b>Integration:</b> Ideal if your appliance has a native HA integration
+          (LG ThinQ, SmartThings, etc.). Point the blueprint at your machine's
+          <b>status sensor</b> (the one that shows states like "Washing",
+          "Rinsing", "Off") and select which states mean the machine is
+          stopped/idle. The blueprint treats any state NOT in your selected
+          list as "running". No template binary sensors needed — the blueprint
+          handles the logic internally.</li>
+    </ul>
+    </details>
+
+    <details><summary><b>Quiet hours</b> 🌙</summary>
+    <p></p>
+    <p>Suppress notifications during quiet hours — with per-channel control.
+    For example, silence Alexa and TTS speakers at night while still
+    receiving mobile push notifications. Dashboard helpers still update
+    normally so your dashboard always reflects the current state.
+    Two modes are available:</p>
+    <ul>
+      <li><b>Manual times</b> — set a start and end time. If the end time is
+          earlier than the start time, the window wraps over midnight
+          (e.g. 10:00 PM to 7:00 AM).</li>
+      <li><b>Schedule helper</b> — use a <code>schedule</code> helper entity
+          to define quiet hours. This is useful if you want to share the same
+          quiet hours across multiple automations from a single helper.
+          When the schedule is "on",
+          notifications are suppressed.</li>
+    </ul>
+    </details>
+
+    ---
+
+    **Author:** CraveVox
+    **Version:** 1.1.0
+    **Last updated:** 2026-03-22
+
+  domain: automation
+  source_url: https://github.com/cravevox/homeassistant/blob/main/blueprints/automation/laundryminder.yaml
+  author: CraveVox
+  homeassistant:
+    min_version: "2024.10.0"
+
+  input:
+    # =========================================================================
+    #  WASHER — GENERAL
+    # =========================================================================
+    washer_general_section:
+      name: "Washer — General"
+      icon: mdi:washing-machine
+      collapsed: true
+      description: >
+        Enable washer monitoring, choose a detection method, and set up
+        the required running state helper.
+      input:
+        enable_washer:
+          name: Enable washer monitoring
+          description: >
+            Turn this on if you want to monitor a washing machine.
+          default: false
+          selector:
+            boolean: {}
+
+        washer_detection_method:
+          name: Detection method
+          description: >
+            How should the blueprint detect whether your washer is running?
+            After choosing a method, expand the matching settings section
+            below to configure it.
+          default: "integration"
+          selector:
+            select:
+              multiple: false
+              mode: dropdown
+              options:
+                - label: Power sensor (watts)
+                  value: "power"
+                - label: Vibration sensor
+                  value: "vibration"
+                - label: Integration (e.g. ThinQ, SmartThings)
+                  value: "integration"
+
+        washer_running_boolean:
+          name: "Running state helper (input_boolean) — REQUIRED"
+          description: >
+            An input_boolean that tracks whether the washer is currently
+            running. This is **required** for the blueprint to detect cycle
+            transitions (started → finished). It also works as a dashboard
+            indicator. If you don't have one yet, use the "Create a new
+            Toggle helper" option at the bottom of the dropdown to create
+            one right here (e.g. name it "Washer Running").
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_boolean
+
+        washer_stop_delay:
+          name: "Stop delay (minutes)"
+          description: >
+            How many minutes the machine must stay in the "stopped" state
+            before a cycle is considered complete. This applies to whichever
+            detection method you choose below and prevents false notifications
+            from mid-cycle pauses (e.g. between wash and rinse). Suggested
+            values: **Integration** 1–2 min (state transitions are clean),
+            **Power sensor** 5 min (handles mid-cycle power dips),
+            **Vibration sensor** 5 min (handles pauses between phases).
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 30
+              step: 1
+              unit_of_measurement: min
+              mode: slider
+
+        washer_start_delay:
+          name: "Start delay (minutes)"
+          description: >
+            How many minutes the machine must stay in the "running" state
+            before a cycle is considered started. This applies to whichever
+            detection method you choose below and prevents false start
+            detections. Suggested values: **Integration** 0–1 min (state
+            changes are reliable), **Power sensor** 0–1 min (the watt
+            threshold already filters noise), **Vibration sensor** 1–2 min
+            (brief bumps can false-trigger).
+          default: 1
+          selector:
+            number:
+              min: 0
+              max: 10
+              step: 1
+              unit_of_measurement: min
+              mode: slider
+
+    # =========================================================================
+    #  WASHER — INTEGRATION SETTINGS
+    # =========================================================================
+    washer_integration_section:
+      name: "Washer 🌐 Integration detection settings"
+      icon: mdi:circle-small
+      collapsed: true
+      description: >
+        ⚠️ Only configure this section if you selected **"Integration"** as
+        the detection method in "Washer — General" above. If you chose a
+        different method, skip this section entirely.
+
+
+        Select your washer's **status sensor** (the one that reports states
+        like "Washing", "Rinsing", "Off", etc.) and then choose which
+        states mean the machine is **stopped/idle**. Any state NOT in your
+        selected list will be treated as "running". This works with LG
+        ThinQ, Samsung SmartThings, and other smart appliance integrations.
+      input:
+        washer_integration_sensor:
+          name: "Status sensor"
+          description: >
+            The sensor entity that reports your washer's current status
+            (e.g. sensor.washer_current_status). This is the sensor that
+            shows states like "Washing", "Rinsing", "Off", "Standby", etc.
+            Do NOT select a binary sensor here — select the status/state
+            sensor from your integration.
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: sensor
+
+        washer_off_states:
+          name: "Stopped/idle states"
+          description: >
+            These are the states that tell the blueprint your washer is
+            **not running**. Any state not in this list is treated as
+            running. The defaults already cover LG ThinQ, Samsung
+            SmartThings, and most other integrations — **you can leave
+            them all selected and it will just work.** Extra states that
+            your machine never uses won't cause any issues.
+
+
+            Only remove a state if your machine uses that word while
+            actively running (very unlikely). To add a custom state,
+            type it into the dropdown box and press enter.
+          default:
+            - "off"
+            - "standby"
+            - "power_off"
+            - "stop"
+            - "none"
+            - "idle"
+            - "end"
+            - "finished"
+            - "complete"
+            - "-"
+          selector:
+            select:
+              multiple: true
+              custom_value: true
+              mode: dropdown
+              options:
+                - label: "Off"
+                  value: "off"
+                - label: "Standby"
+                  value: "standby"
+                - label: "Power Off"
+                  value: "power_off"
+                - label: "Stop"
+                  value: "stop"
+                - label: "None"
+                  value: "none"
+                - label: "Idle"
+                  value: "idle"
+                - label: "End"
+                  value: "end"
+                - label: "Finished"
+                  value: "finished"
+                - label: "Complete"
+                  value: "complete"
+                - label: "- (dash, used by some LG models)"
+                  value: "-"
+
+    # =========================================================================
+    #  WASHER — POWER SENSOR SETTINGS
+    # =========================================================================
+    washer_power_section:
+      name: "Washer ⚡ Power sensor detection settings"
+      icon: mdi:circle-small
+      collapsed: true
+      description: >
+        ⚠️ Only configure this section if you selected **"Power sensor"** as
+        the detection method in "Washer — General" above. If you chose a
+        different method, skip this section entirely.
+
+
+        **Tip:** Check your power sensor's history to see what it reports
+        when the machine is off vs running. Set the stop threshold just
+        above 0W (e.g. 3-5W) if your plug reports 0W when off, or just
+        below the standby draw if your plug shows a steady idle value
+        (e.g. if idle is 6W, set stop threshold to 3W).
+      input:
+        washer_power_sensor:
+          name: "Power sensor entity"
+          description: >
+            The sensor entity reporting your washer's current power draw in
+            watts (e.g. from a smart plug like Zooz ZEN15 or Shelly Plug S).
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: sensor
+                  device_class: power
+
+        washer_power_start_threshold:
+          name: "Start threshold (watts)"
+          description: >
+            Power draw above which the washer is considered running. Check
+            your smart plug's history to find a value between idle and active
+            draw. A good starting point is 10W.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 3000
+              step: 1
+              unit_of_measurement: W
+              mode: box
+
+        washer_power_stop_threshold:
+          name: "Stop threshold (watts)"
+          description: >
+            Power draw below which the washer is considered finished. Set
+            this below your plug's idle/standby reading — check the sensor
+            history to see what your plug reports when the machine is off.
+            Most plugs report 0W when off, in which case 3-5W works well.
+            If your plug shows a steady standby draw (e.g. 6W), set this
+            below that value (e.g. 3W).
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: W
+              mode: box
+
+    # =========================================================================
+    #  WASHER — VIBRATION SENSOR SETTINGS
+    # =========================================================================
+    washer_vibration_section:
+      name: "Washer 🔃 Vibration detection settings"
+      icon: mdi:circle-small
+      collapsed: true
+      description: >
+        ⚠️ Only configure this section if you selected **"Vibration sensor"**
+        as the detection method in "Washer — General" above. If you chose a
+        different method, skip this section entirely.
+
+
+        The blueprint treats the sensor as running when it reports **on**
+        (vibrating) and stopped when it reports **off**. The start and stop
+        delays configured in "Washer — General" control how long the sensor
+        must stay in each state before a cycle start or finish is confirmed.
+      input:
+        washer_vibration_sensor:
+          name: "Vibration sensor entity"
+          description: >
+            The binary sensor entity from a vibration/acceleration sensor
+            attached to your washer (e.g. Aqara DJT11LM).
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: binary_sensor
+
+    # =========================================================================
+    #  DRYER — GENERAL
+    # =========================================================================
+    dryer_general_section:
+      name: "Dryer — General"
+      icon: mdi:tumble-dryer
+      collapsed: true
+      description: >
+        Enable dryer monitoring, choose a detection method, and set up
+        the required running state helper. In North America, 240V dryers
+        can't use a standard smart plug — consider a panel-level energy
+        monitor or a vibration sensor instead.
+      input:
+        enable_dryer:
+          name: Enable dryer monitoring
+          description: >
+            Turn this on if you want to monitor a dryer.
+          default: false
+          selector:
+            boolean: {}
+
+        dryer_detection_method:
+          name: Detection method
+          description: >
+            How should the blueprint detect whether your dryer is running?
+            After choosing a method, expand the matching settings section
+            below to configure it.
+          default: "integration"
+          selector:
+            select:
+              multiple: false
+              mode: dropdown
+              options:
+                - label: Power sensor (watts)
+                  value: "power"
+                - label: Vibration sensor
+                  value: "vibration"
+                - label: Integration (e.g. ThinQ, SmartThings)
+                  value: "integration"
+
+        dryer_running_boolean:
+          name: "Running state helper (input_boolean) — REQUIRED"
+          description: >
+            An input_boolean that tracks whether the dryer is currently
+            running. This is **required** for the blueprint to detect cycle
+            transitions (started → finished). It also works as a dashboard
+            indicator. If you don't have one yet, use the "Create a new
+            Toggle helper" option at the bottom of the dropdown to create
+            one right here (e.g. name it "Dryer Running").
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_boolean
+
+        dryer_stop_delay:
+          name: "Stop delay (minutes)"
+          description: >
+            How many minutes the machine must stay in the "stopped" state
+            before a cycle is considered complete. This applies to whichever
+            detection method you choose below and prevents false notifications
+            from mid-cycle pauses (e.g. cool-down phases or wrinkle-prevention
+            tumbles). Suggested values: **Integration** 1–2 min (state
+            transitions are clean), **Power sensor** 5 min (handles mid-cycle
+            power dips), **Vibration sensor** 5 min (handles pauses between
+            phases).
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 30
+              step: 1
+              unit_of_measurement: min
+              mode: slider
+
+        dryer_start_delay:
+          name: "Start delay (minutes)"
+          description: >
+            How many minutes the machine must stay in the "running" state
+            before a cycle is considered started. This applies to whichever
+            detection method you choose below and prevents false start
+            detections. Suggested values: **Integration** 0–1 min (state
+            changes are reliable), **Power sensor** 0–1 min (the watt
+            threshold already filters noise), **Vibration sensor** 1–2 min
+            (brief bumps can false-trigger).
+          default: 1
+          selector:
+            number:
+              min: 0
+              max: 10
+              step: 1
+              unit_of_measurement: min
+              mode: slider
+
+    # =========================================================================
+    #  DRYER — INTEGRATION SETTINGS
+    # =========================================================================
+    dryer_integration_section:
+      name: "Dryer 🌐 Integration detection settings"
+      icon: mdi:circle-small
+      collapsed: true
+      description: >
+        ⚠️ Only configure this section if you selected **"Integration"** as
+        the detection method in "Dryer — General" above. If you chose a
+        different method, skip this section entirely.
+
+
+        Select your dryer's **status sensor** (the one that reports states
+        like "Drying", "Cooling", "Off", etc.) and then choose which
+        states mean the machine is **stopped/idle**. Any state NOT in your
+        selected list will be treated as "running". This works with LG
+        ThinQ, Samsung SmartThings, and other smart appliance integrations.
+      input:
+        dryer_integration_sensor:
+          name: "Status sensor"
+          description: >
+            The sensor entity that reports your dryer's current status
+            (e.g. sensor.dryer_current_status). This is the sensor that
+            shows states like "Drying", "Cooling", "Off", "Standby", etc.
+            Do NOT select a binary sensor here — select the status/state
+            sensor from your integration.
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: sensor
+
+        dryer_off_states:
+          name: "Stopped/idle states"
+          description: >
+            These are the states that tell the blueprint your dryer is
+            **not running**. Any state not in this list is treated as
+            running. The defaults already cover LG ThinQ, Samsung
+            SmartThings, and most other integrations — **you can leave
+            them all selected and it will just work.** Extra states that
+            your machine never uses won't cause any issues.
+
+
+            Only remove a state if your machine uses that word while
+            actively running (very unlikely). To add a custom state,
+            type it into the dropdown box and press enter.
+          default:
+            - "off"
+            - "standby"
+            - "power_off"
+            - "stop"
+            - "none"
+            - "idle"
+            - "end"
+            - "finished"
+            - "complete"
+            - "-"
+          selector:
+            select:
+              multiple: true
+              custom_value: true
+              mode: dropdown
+              options:
+                - label: "Off"
+                  value: "off"
+                - label: "Standby"
+                  value: "standby"
+                - label: "Power Off"
+                  value: "power_off"
+                - label: "Stop"
+                  value: "stop"
+                - label: "None"
+                  value: "none"
+                - label: "Idle"
+                  value: "idle"
+                - label: "End"
+                  value: "end"
+                - label: "Finished"
+                  value: "finished"
+                - label: "Complete"
+                  value: "complete"
+                - label: "- (dash, used by some LG models)"
+                  value: "-"
+
+    # =========================================================================
+    #  DRYER — POWER SENSOR SETTINGS
+    # =========================================================================
+    dryer_power_section:
+      name: "Dryer ⚡ Power sensor detection settings"
+      icon: mdi:circle-small
+      collapsed: true
+      description: >
+        ⚠️ Only configure this section if you selected **"Power sensor"** as
+        the detection method in "Dryer — General" above. If you chose a
+        different method, skip this section entirely.
+
+
+        **Tip:** Check your power sensor's history to see what it reports
+        when the machine is off vs running. Set the stop threshold just
+        above 0W (e.g. 5-10W) if your sensor reports 0W when off, or
+        just below the standby draw if your sensor shows a steady idle
+        value.
+      input:
+        dryer_power_sensor:
+          name: "Power sensor entity"
+          description: >
+            The sensor entity reporting your dryer's current power draw in
+            watts. For 240V dryers in North America, use a panel-level
+            energy monitor (e.g. Emporia Vue, Sense).
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: sensor
+                  device_class: power
+
+        dryer_power_start_threshold:
+          name: "Start threshold (watts)"
+          description: >
+            Power draw above which the dryer is considered running. A good
+            starting point is 100W for gas dryers or 1000W for electric.
+          default: 100
+          selector:
+            number:
+              min: 1
+              max: 6000
+              step: 1
+              unit_of_measurement: W
+              mode: box
+
+        dryer_power_stop_threshold:
+          name: "Stop threshold (watts)"
+          description: >
+            Power draw below which the dryer is considered finished. Set
+            this below your sensor's idle/standby reading — check the
+            sensor history to see what it reports when the machine is off.
+            A good starting point is 5-10W.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 500
+              step: 1
+              unit_of_measurement: W
+              mode: box
+
+    # =========================================================================
+    #  DRYER — VIBRATION SENSOR SETTINGS
+    # =========================================================================
+    dryer_vibration_section:
+      name: "Dryer 🔃 Vibration detection settings"
+      icon: mdi:circle-small
+      collapsed: true
+      description: >
+        ⚠️ Only configure this section if you selected **"Vibration sensor"**
+        as the detection method in "Dryer — General" above. If you chose a
+        different method, skip this section entirely.
+
+
+        The blueprint treats the sensor as running when it reports **on**
+        (vibrating) and stopped when it reports **off**. The start and stop
+        delays configured in "Dryer — General" control how long the sensor
+        must stay in each state before a cycle start or finish is confirmed.
+      input:
+        dryer_vibration_sensor:
+          name: "Vibration sensor entity"
+          description: >
+            The binary sensor entity from a vibration/acceleration sensor
+            attached to your dryer (e.g. Aqara DJT11LM).
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: binary_sensor
+
+    # =========================================================================
+    #  SECTION 3 — MOBILE NOTIFICATIONS (OPTIONAL)
+    # =========================================================================
+    mobile_section:
+      name: "Mobile notifications"
+      icon: mdi:cellphone
+      collapsed: true
+      description: >
+        Send push notifications to one or more Home Assistant Companion app
+        devices when a cycle finishes.
+      input:
+        send_mobile_notifications:
+          name: Enable mobile notifications
+          description: >
+            If enabled, a push notification will be sent to the selected
+            devices when a washer or dryer cycle finishes.
+          default: true
+          selector:
+            boolean: {}
+
+        mobile_devices:
+          name: Mobile devices
+          description: >
+            Select one or more Home Assistant Companion app devices to
+            receive notifications.
+          default: []
+          selector:
+            device:
+              multiple: true
+              filter:
+                - integration: mobile_app
+
+        mobile_washer_title:
+          name: "Washer notification title (mobile)"
+          description: >
+            Title for the mobile push notification when the washer finishes.
+          default: "Laundry"
+          selector:
+            text: {}
+
+        mobile_washer_message:
+          name: "Washer notification message (mobile)"
+          description: >
+            Message body for the mobile push notification when the washer
+            finishes.
+          default: "The washing machine cycle has finished"
+          selector:
+            text:
+              multiline: true
+
+        mobile_dryer_title:
+          name: "Dryer notification title (mobile)"
+          description: >
+            Title for the mobile push notification when the dryer finishes.
+          default: "Laundry"
+          selector:
+            text: {}
+
+        mobile_dryer_message:
+          name: "Dryer notification message (mobile)"
+          description: >
+            Message body for the mobile push notification when the dryer
+            finishes.
+          default: "The dryer cycle has finished"
+          selector:
+            text:
+              multiline: true
+
+    # =========================================================================
+    #  SECTION 4 — ALEXA ANNOUNCEMENTS (OPTIONAL)
+    # =========================================================================
+    alexa_section:
+      name: "Alexa announcements"
+      icon: mdi:speaker-message
+      collapsed: true
+      description: >
+        Announce cycle completion on Amazon Echo devices using the Alexa Media
+        Player integration. Requires the Alexa Media Player custom component
+        (available via HACS).
+      input:
+        enable_alexa:
+          name: Enable Alexa announcements
+          description: >
+            If enabled, an announcement will be played on the selected Echo
+            devices when a cycle finishes.
+          default: false
+          selector:
+            boolean: {}
+
+        alexa_targets:
+          name: Alexa media player targets
+          description: >
+            Select one or more Echo/Alexa media player entities to announce
+            on. These must be media_player entities from the Alexa Media
+            Player integration.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: media_player
+
+        alexa_announce_type:
+          name: Alexa announcement type
+          description: >
+            The type of Alexa notification to send. "Announce" plays the
+            standard Alexa announcement chime before the message. "TTS" plays
+            the message directly without a chime.
+          default: "announce"
+          selector:
+            select:
+              multiple: false
+              options:
+                - label: Announce (with chime)
+                  value: "announce"
+                - label: TTS (no chime)
+                  value: "tts"
+
+        alexa_service_name:
+          name: Alexa notify service name
+          description: >
+            The name of your Alexa Media Player notify service. Most
+            installations use the default "notify.alexa_media", but if
+            you renamed it or have multiple Alexa integrations, enter
+            your service name here.
+          default: "notify.alexa_media"
+          selector:
+            text: {}
+
+        alexa_washer_message:
+          name: "Washer announcement message (Alexa)"
+          description: >
+            Message to announce on Alexa when the washer finishes.
+          default: "The washing machine cycle has finished"
+          selector:
+            text:
+              multiline: true
+
+        alexa_dryer_message:
+          name: "Dryer announcement message (Alexa)"
+          description: >
+            Message to announce on Alexa when the dryer finishes.
+          default: "The dryer cycle has finished"
+          selector:
+            text:
+              multiline: true
+
+    # =========================================================================
+    #  SECTION 5 — TTS / SPEAKER ANNOUNCEMENTS (OPTIONAL)
+    # =========================================================================
+    tts_section:
+      name: "TTS (text-to-speech) / Speaker announcements"
+      icon: mdi:speaker-message
+      collapsed: true
+      description: >
+        Announce cycle completion on any speaker using a Home Assistant
+        TTS (text-to-speech) engine — Google TTS, Home Assistant Voice,
+        Piper, Nabu Casa Cloud, and more. Supports two TTS engines for
+        mixed speaker setups.
+      input:
+        enable_tts:
+          name: Enable TTS / Speaker announcements
+          description: >
+            If enabled, a TTS announcement will be played on the selected
+            speakers when a cycle finishes. You must also select a TTS engine
+            entity and at least one speaker below.
+          default: false
+          selector:
+            boolean: {}
+
+        tts_primary_entity:
+          name: Primary TTS engine entity
+          description: >
+            The TTS engine to use for the primary speakers. The dropdown
+            shows whichever TTS integrations you have installed in Home
+            Assistant (e.g. Google Translate, Piper, Nabu Casa Cloud, OpenAI,
+            Google AI, etc.).
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: tts
+
+        tts_primary_targets:
+          name: Primary media player targets
+          description: >
+            Select one or more media player entities to announce on using
+            the primary TTS engine.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: media_player
+
+        tts_secondary_entity:
+          name: Secondary TTS engine entity (optional)
+          description: >
+            Optional second TTS engine for a different set of speakers.
+            Leave empty if you only use one TTS engine.
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: tts
+
+        tts_secondary_targets:
+          name: Secondary media player targets
+          description: >
+            Select one or more media player entities to announce on using
+            the secondary TTS engine.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: media_player
+
+        tts_washer_message:
+          name: "Washer announcement message (TTS)"
+          description: >
+            Message to announce on TTS speakers when the washer finishes.
+          default: "The washing machine cycle has finished"
+          selector:
+            text:
+              multiline: true
+
+        tts_dryer_message:
+          name: "Dryer announcement message (TTS)"
+          description: >
+            Message to announce on TTS speakers when the dryer finishes.
+          default: "The dryer cycle has finished"
+          selector:
+            text:
+              multiline: true
+
+    # =========================================================================
+    #  SECTION 6 — QUIET HOURS
+    # =========================================================================
+    quiet_hours_section:
+      name: "Quiet hours"
+      icon: mdi:moon-waning-crescent
+      collapsed: true
+      description: >
+        Suppress notifications during quiet hours — choose which channels
+        to silence and which to keep. For example, suppress Alexa and
+        TTS speakers at night but still receive mobile push
+        notifications. Dashboard helpers still update normally so your
+        dashboard always reflects the current machine state. Choose
+        between setting times manually or using a Schedule helper to
+        centralize quiet hours across multiple automations.
+      input:
+        quiet_hours_mode:
+          name: Quiet hours mode
+          description: >
+            **Disabled** — no quiet hours, notifications sent anytime.
+            **Manual times** — set start and end times below.
+            **Schedule helper** — use a Schedule helper entity. When the
+            schedule is "on", notifications are suppressed. This is useful
+            if you want to share quiet hours across multiple automations
+            from a single helper.
+          default: "disabled"
+          selector:
+            select:
+              multiple: false
+              mode: dropdown
+              options:
+                - label: Disabled
+                  value: "disabled"
+                - label: Manual times (set below)
+                  value: "manual"
+                - label: Schedule helper
+                  value: "schedule"
+
+        quiet_hours_schedule:
+          name: "Schedule helper (schedule mode only)"
+          description: >
+            A Schedule helper entity that defines your quiet hours. When
+            the schedule is in the "on" state, notifications are suppressed.
+            Only used if quiet hours mode is set to "Schedule helper" above.
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: schedule
+
+        quiet_hours_start:
+          name: "Start time (manual mode only)"
+          description: >
+            The time when quiet hours begin (local time). Notifications
+            will be suppressed from this time onward. Only used if quiet
+            hours mode is "Manual times" above.
+          default: "22:00:00"
+          selector:
+            time: {}
+
+        quiet_hours_end:
+          name: "End time (manual mode only)"
+          description: >
+            The time when quiet hours end (local time). Notifications
+            resume at this time. If the end time is earlier than the start
+            time, the window wraps over midnight (e.g. 10:00 PM to
+            7:00 AM). Only used if quiet hours mode is "Manual times"
+            above.
+          default: "07:00:00"
+          selector:
+            time: {}
+
+        quiet_hours_channels:
+          name: "Channels to suppress during quiet hours"
+          description: >
+            Select which notification channels to suppress during quiet
+            hours. Channels **not** in this list will still send
+            notifications during quiet hours. For example, remove "Mobile
+            notifications" if you want phone alerts 24/7 but want to
+            silence Alexa and TTS speakers at night.
+          default:
+            - "mobile"
+            - "alexa"
+            - "tts"
+          selector:
+            select:
+              multiple: true
+              mode: dropdown
+              options:
+                - label: Mobile notifications
+                  value: "mobile"
+                - label: Alexa announcements
+                  value: "alexa"
+                - label: TTS / Speaker announcements
+                  value: "tts"
+
+    # =========================================================================
+    #  WASHER → DRYER HANDOFF REMINDERS
+    # =========================================================================
+    handoff_section:
+      name: "Washer → Dryer handoff reminders"
+      icon: mdi:swap-horizontal
+      collapsed: true
+      description: >
+        Get reminded to move clothes from the washer to the dryer. When the
+        washer finishes and the dryer hasn't started within a set time, the
+        blueprint sends a reminder. Reminders repeat until the dryer starts
+        or the maximum reminder count is reached. Requires both washer and
+        dryer monitoring to be enabled in their "General" sections above.
+        Handoff notifications are sent through whichever channels you have
+        enabled in the "Mobile Notifications", "Alexa Announcements", and
+        "TTS / Speaker Announcements" sections.
+      input:
+        enable_handoff:
+          name: Enable handoff reminders
+          description: >
+            If enabled, the blueprint will remind you to move clothes from
+            the washer to the dryer. Both washer and dryer must be enabled
+            in their "General" sections for this to work.
+          default: false
+          selector:
+            boolean: {}
+
+        handoff_timeout:
+          name: "Handoff timeout (minutes)"
+          description: >
+            How many minutes after the washer finishes to wait before
+            sending the first "move your clothes" reminder. The reminder
+            only fires if the dryer is not currently running.
+          default: 30
+          selector:
+            number:
+              min: 5
+              max: 120
+              step: 5
+              unit_of_measurement: min
+              mode: slider
+
+        handoff_reminder_interval:
+          name: "Repeat reminder interval (minutes)"
+          description: >
+            After the first reminder, how often to send follow-up
+            reminders. Reminders continue until the dryer starts or
+            the maximum count is reached.
+          default: 15
+          selector:
+            number:
+              min: 5
+              max: 60
+              step: 5
+              unit_of_measurement: min
+              mode: slider
+
+        handoff_max_reminders:
+          name: "Maximum reminders"
+          description: >
+            Stop sending reminders after this many. Set to a higher number
+            if you tend to forget. The reminder cycle resets when a new
+            washer cycle finishes.
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 10
+              step: 1
+              mode: slider
+
+        handoff_reminder_mobile_message:
+          name: "Handoff reminder message (mobile)"
+          description: >
+            The mobile push notification message when clothes haven't
+            been moved to the dryer. Only sent if the "Mobile Notifications"
+            section is also enabled.
+          default: "The washer finished a while ago — don't forget to move your clothes to the dryer!"
+          selector:
+            text:
+              multiline: true
+
+        handoff_reminder_alexa_message:
+          name: "Handoff reminder message (Alexa)"
+          description: >
+            The Alexa announcement message when clothes haven't been
+            moved to the dryer. Only sent if the "Alexa Announcements"
+            section is also enabled.
+          default: "Reminder: the washer finished a while ago. Please move your clothes to the dryer."
+          selector:
+            text:
+              multiline: true
+
+        handoff_reminder_tts_message:
+          name: "Handoff reminder message (TTS)"
+          description: >
+            The TTS announcement message when clothes haven't been
+            moved to the dryer. Only sent if the "TTS / Speaker
+            Announcements" section is also enabled.
+          default: "Reminder: the washer finished a while ago. Please move your clothes to the dryer."
+          selector:
+            text:
+              multiline: true
+
+
+    # =========================================================================
+    #  SECTION 7 — STATUS TEXT HELPERS (OPTIONAL)
+    # =========================================================================
+    helpers_section:
+      name: "Status text helpers"
+      icon: mdi:view-dashboard
+      collapsed: true
+      description: >
+        Automatically update input_text helpers with a status message as
+        cycles progress. The text changes with each state — for example,
+        "Washer started at 2:00 PM" when a cycle begins, then "Washer
+        finished at 2:45 PM" when it completes. Useful for dashboard cards
+        that show what each machine is doing at a glance.
+      input:
+        enable_status_text:
+          name: Enable status text helpers
+          description: >
+            If enabled, the text helpers below will be updated when machines
+            start and stop cycles.
+          default: false
+          selector:
+            boolean: {}
+
+        washer_status_text:
+          name: "Washer status text helper (input_text)"
+          description: >
+            An input_text helper that will be updated to "Washer started
+            at [time]" when a cycle begins and "Washer finished at [time]"
+            when it completes. Only used if washer monitoring is enabled
+            in the "Washer — General" section.
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_text
+
+        dryer_status_text:
+          name: "Dryer status text helper (input_text)"
+          description: >
+            An input_text helper that will be updated to "Dryer started
+            at [time]" when a cycle begins and "Dryer finished at [time]"
+            when it completes. Only used if dryer monitoring is enabled
+            in the "Dryer — General" section.
+          default: ""
+          selector:
+            entity:
+              multiple: false
+              filter:
+                - domain: input_text
+
+# =============================================================================
+#  TRIGGERS
+# =============================================================================
+# ARCHITECTURE DECISION — Polling vs Event-Driven:
+# This blueprint polls every minute rather than using event-driven triggers
+# (numeric_state, state). This is a deliberate trade-off:
+#
+# - Event-driven triggers require a valid entity_id at blueprint load time.
+#   Since users can enable/disable machines and choose between 3 detection
+#   methods, most sensor entity inputs will be empty/unconfigured. HA throws
+#   errors for triggers with empty entity_ids.
+#
+# - Polling avoids this by using a single time_pattern trigger and evaluating
+#   all sensor states in template logic, where empty entities are handled
+#   gracefully with {% if sensor != 'none' %} checks.
+#
+# - The trade-off is ~1 minute maximum latency on detection (acceptable for
+#   laundry cycles of 30-90 minutes) and slightly higher resource usage
+#   from evaluating templates every minute.
+#
+# The input_boolean helpers serve double duty: they track dashboard state
+# AND act as the "previous state" memory so we can detect transitions
+# (running → stopped) without sending duplicate notifications.
+# =============================================================================
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: time_pattern
+    minutes: "/1"
+
+conditions: []
+
+# =============================================================================
+#  ACTIONS
+# =============================================================================
+actions:
+  # Load all input values into variables
+  - variables:
+      # Machine enable flags
+      washer_enabled: !input enable_washer
+      dryer_enabled: !input enable_dryer
+
+      # Detection methods
+      washer_method: !input washer_detection_method
+      dryer_method: !input dryer_detection_method
+
+      # Sensor entities
+      washer_power_entity: !input washer_power_sensor
+      washer_vib_entity: !input washer_vibration_sensor
+      washer_int_entity: !input washer_integration_sensor
+      dryer_power_entity: !input dryer_power_sensor
+      dryer_vib_entity: !input dryer_vibration_sensor
+      dryer_int_entity: !input dryer_integration_sensor
+
+      # Power thresholds
+      washer_start_watts: !input washer_power_start_threshold
+      washer_stop_watts: !input washer_power_stop_threshold
+      dryer_start_watts: !input dryer_power_start_threshold
+      dryer_stop_watts: !input dryer_power_stop_threshold
+
+      # Stop delays (minutes)
+      washer_delay: !input washer_stop_delay
+      dryer_delay: !input dryer_stop_delay
+
+      # Start delays (minutes)
+      washer_start_delay: !input washer_start_delay
+      dryer_start_delay: !input dryer_start_delay
+
+      # Integration off states
+      washer_off_states: !input washer_off_states
+      dryer_off_states: !input dryer_off_states
+
+      # Notification config
+      send_mobile: !input send_mobile_notifications
+      mobile_devices_var: !input mobile_devices
+      enable_alexa: !input enable_alexa
+      alexa_targets_var: !input alexa_targets
+      alexa_type: !input alexa_announce_type
+      alexa_svc: !input alexa_service_name
+      enable_tts: !input enable_tts
+      tts_primary_entity_var: !input tts_primary_entity
+      tts_primary_targets_var: !input tts_primary_targets
+      tts_secondary_entity_var: !input tts_secondary_entity
+      tts_secondary_targets_var: !input tts_secondary_targets
+
+      # Messages — all loaded as variables (can't use !input in templates)
+      mob_washer_title: !input mobile_washer_title
+      mob_washer_msg: !input mobile_washer_message
+      mob_dryer_title: !input mobile_dryer_title
+      mob_dryer_msg: !input mobile_dryer_message
+      alexa_washer_msg: !input alexa_washer_message
+      alexa_dryer_msg: !input alexa_dryer_message
+      tts_washer_msg: !input tts_washer_message
+      tts_dryer_msg: !input tts_dryer_message
+
+      # Quiet hours
+      quiet_mode: !input quiet_hours_mode
+      quiet_schedule_entity: !input quiet_hours_schedule
+      quiet_start: !input quiet_hours_start
+      quiet_end: !input quiet_hours_end
+      quiet_channels: !input quiet_hours_channels
+
+      # Handoff config
+      handoff_on: !input enable_handoff
+      handoff_timeout: !input handoff_timeout
+      handoff_interval: !input handoff_reminder_interval
+      handoff_max: !input handoff_max_reminders
+      handoff_reminder_mob_msg: !input handoff_reminder_mobile_message
+      handoff_reminder_alexa_msg: !input handoff_reminder_alexa_message
+      handoff_reminder_tts_msg: !input handoff_reminder_tts_message
+
+      # Running state booleans (required, from machine sections)
+      washer_bool_entity: !input washer_running_boolean
+      dryer_bool_entity: !input dryer_running_boolean
+
+      # Status text helpers (optional)
+      text_helpers_on: !input enable_status_text
+      washer_text_entity: !input washer_status_text
+      dryer_text_entity: !input dryer_status_text
+
+      # Manual trigger detection
+      is_manual: "{{ trigger.platform is none }}"
+
+      # Resolve the active sensor entity for each machine
+      washer_sensor: >-
+        {% if not washer_enabled %}
+          none
+        {% elif washer_method == 'power' and washer_power_entity is not none and washer_power_entity != '' %}
+          {{ washer_power_entity }}
+        {% elif washer_method == 'vibration' and washer_vib_entity is not none and washer_vib_entity != '' %}
+          {{ washer_vib_entity }}
+        {% elif washer_method == 'integration' and washer_int_entity is not none and washer_int_entity != '' %}
+          {{ washer_int_entity }}
+        {% else %}
+          none
+        {% endif %}
+
+      dryer_sensor: >-
+        {% if not dryer_enabled %}
+          none
+        {% elif dryer_method == 'power' and dryer_power_entity is not none and dryer_power_entity != '' %}
+          {{ dryer_power_entity }}
+        {% elif dryer_method == 'vibration' and dryer_vib_entity is not none and dryer_vib_entity != '' %}
+          {{ dryer_vib_entity }}
+        {% elif dryer_method == 'integration' and dryer_int_entity is not none and dryer_int_entity != '' %}
+          {{ dryer_int_entity }}
+        {% else %}
+          none
+        {% endif %}
+
+      # Current running state for each machine (includes start delay)
+      # The sensor must be in a "running" state AND have been in that state
+      # for at least the start delay duration before we consider it running.
+      #
+      # KNOWN LIMITATION — Power sensors and last_changed:
+      # We use last_changed to measure how long a sensor has been in its
+      # current state. For integration sensors (e.g. "Washing") and vibration
+      # sensors (on/off), last_changed only updates on real state transitions,
+      # so this works reliably.
+      #
+      # For POWER sensors, last_changed updates whenever the reported watt
+      # value changes (e.g. 150W → 152W). If the sensor fluctuates rapidly,
+      # last_changed resets frequently and the delay may not be met.
+      #
+      # In practice, most quality smart plugs (Zooz, Shelly, etc.) report
+      # stable values at idle (steady 0W or a fixed standby draw), so
+      # last_changed works correctly for stop detection in the common case.
+      # The start delay is less critical for power sensors since the watt
+      # threshold itself filters out noise — a brief spike must coincide
+      # with a 1-minute poll AND persist through the start delay window.
+      #
+      # Users with unusually noisy power sensors should:
+      #   1. Set start_delay to 0 (rely on the threshold alone)
+      #   2. Set stop threshold well below the stable idle reading
+      #   3. Consider a Statistics helper for sensor smoothing
+      #
+      # A more robust consecutive-polls counter approach is planned for v2.
+      washer_currently_running: >-
+        {% if washer_sensor == 'none' %}
+          {{ false }}
+        {% else %}
+          {% set mins_in_state = (as_timestamp(now()) - as_timestamp(states[washer_sensor].last_changed)) / 60 %}
+          {% if washer_method == 'power' %}
+            {% set is_above = states(washer_sensor) | float(0) > washer_start_watts | float(0) %}
+            {{ is_above and mins_in_state >= washer_start_delay | float(0) }}
+          {% elif washer_method == 'integration' %}
+            {% set sensor_state = states(washer_sensor) | lower %}
+            {% if sensor_state in ['unavailable', 'unknown'] %}
+              {{ false }}
+            {% else %}
+              {% set is_running = sensor_state not in washer_off_states | map('lower') | list %}
+              {{ is_running and mins_in_state >= washer_start_delay | float(0) }}
+            {% endif %}
+          {% else %}
+            {{ states(washer_sensor) == 'on' and mins_in_state >= washer_start_delay | float(0) }}
+          {% endif %}
+        {% endif %}
+
+      dryer_currently_running: >-
+        {% if dryer_sensor == 'none' %}
+          {{ false }}
+        {% else %}
+          {% set mins_in_state = (as_timestamp(now()) - as_timestamp(states[dryer_sensor].last_changed)) / 60 %}
+          {% if dryer_method == 'power' %}
+            {% set is_above = states(dryer_sensor) | float(0) > dryer_start_watts | float(0) %}
+            {{ is_above and mins_in_state >= dryer_start_delay | float(0) }}
+          {% elif dryer_method == 'integration' %}
+            {% set sensor_state = states(dryer_sensor) | lower %}
+            {% if sensor_state in ['unavailable', 'unknown'] %}
+              {{ false }}
+            {% else %}
+              {% set is_running = sensor_state not in dryer_off_states | map('lower') | list %}
+              {{ is_running and mins_in_state >= dryer_start_delay | float(0) }}
+            {% endif %}
+          {% else %}
+            {{ states(dryer_sensor) == 'on' and mins_in_state >= dryer_start_delay | float(0) }}
+          {% endif %}
+        {% endif %}
+
+      # Has machine been stopped long enough? (stop delay met via last_changed)
+      # See "KNOWN LIMITATION" comment above — the same last_changed caveat
+      # applies here for power sensors. Stop detection works reliably when
+      # the power sensor reports a stable value at idle (e.g. steady 0W).
+      # If the idle reading fluctuates, the stop delay may not be met.
+      washer_stop_confirmed: >-
+        {% if washer_sensor == 'none' %}
+          {{ false }}
+        {% elif washer_method == 'power' %}
+          {% set watts = states(washer_sensor) | float(0) %}
+          {% set mins = (as_timestamp(now()) - as_timestamp(states[washer_sensor].last_changed)) / 60 %}
+          {{ watts <= washer_stop_watts | float(0) and mins >= washer_delay | float(0) }}
+        {% elif washer_method == 'integration' %}
+          {% set sensor_state = states(washer_sensor) | lower %}
+          {% if sensor_state in ['unavailable', 'unknown'] %}
+            {{ false }}
+          {% else %}
+            {% set mins = (as_timestamp(now()) - as_timestamp(states[washer_sensor].last_changed)) / 60 %}
+            {{ sensor_state in washer_off_states | map('lower') | list and mins >= washer_delay | float(0) }}
+          {% endif %}
+        {% else %}
+          {% set mins = (as_timestamp(now()) - as_timestamp(states[washer_sensor].last_changed)) / 60 %}
+          {{ states(washer_sensor) == 'off' and mins >= washer_delay | float(0) }}
+        {% endif %}
+
+      dryer_stop_confirmed: >-
+        {% if dryer_sensor == 'none' %}
+          {{ false }}
+        {% elif dryer_method == 'power' %}
+          {% set watts = states(dryer_sensor) | float(0) %}
+          {% set mins = (as_timestamp(now()) - as_timestamp(states[dryer_sensor].last_changed)) / 60 %}
+          {{ watts <= dryer_stop_watts | float(0) and mins >= dryer_delay | float(0) }}
+        {% elif dryer_method == 'integration' %}
+          {% set sensor_state = states(dryer_sensor) | lower %}
+          {% if sensor_state in ['unavailable', 'unknown'] %}
+            {{ false }}
+          {% else %}
+            {% set mins = (as_timestamp(now()) - as_timestamp(states[dryer_sensor].last_changed)) / 60 %}
+            {{ sensor_state in dryer_off_states | map('lower') | list and mins >= dryer_delay | float(0) }}
+          {% endif %}
+        {% else %}
+          {% set mins = (as_timestamp(now()) - as_timestamp(states[dryer_sensor].last_changed)) / 60 %}
+          {{ states(dryer_sensor) == 'off' and mins >= dryer_delay | float(0) }}
+        {% endif %}
+
+      # Previous state from boolean helpers (required, always available)
+      washer_helper_is_on: >-
+        {% if washer_enabled and washer_bool_entity is not none and washer_bool_entity != '' %}
+          {{ states(washer_bool_entity) == 'on' }}
+        {% else %}
+          {{ false }}
+        {% endif %}
+
+      dryer_helper_is_on: >-
+        {% if dryer_enabled and dryer_bool_entity is not none and dryer_bool_entity != '' %}
+          {{ states(dryer_bool_entity) == 'on' }}
+        {% else %}
+          {{ false }}
+        {% endif %}
+
+      # Quiet hours check (end time is exclusive — notifications resume at the end time)
+      is_quiet: >-
+        {% if quiet_mode == 'disabled' %}
+          {{ false }}
+        {% elif quiet_mode == 'schedule' %}
+          {% if quiet_schedule_entity is not none and quiet_schedule_entity != '' %}
+            {{ states(quiet_schedule_entity) == 'on' }}
+          {% else %}
+            {{ false }}
+          {% endif %}
+        {% elif quiet_mode == 'manual' %}
+          {% set now_time = now().time() %}
+          {% set start = strptime(quiet_start, '%H:%M:%S').time() %}
+          {% set end_t = strptime(quiet_end, '%H:%M:%S').time() %}
+          {% if start <= end_t %}
+            {{ start <= now_time < end_t }}
+          {% else %}
+            {{ now_time >= start or now_time < end_t }}
+          {% endif %}
+        {% else %}
+          {{ false }}
+        {% endif %}
+
+      # Timestamp for status messages
+      current_time: "{{ now().strftime('%-I:%M %p') }}"
+
+      # Handoff computed variables
+      # Minutes since the washer boolean turned OFF
+      washer_off_minutes: >-
+        {% if washer_enabled and washer_bool_entity is not none and washer_bool_entity != ''
+           and states(washer_bool_entity) == 'off' %}
+          {{ (as_timestamp(now()) - as_timestamp(states[washer_bool_entity].last_changed)) / 60 }}
+        {% else %}
+          0
+        {% endif %}
+
+      # Is the blueprint in a handoff-eligible state?
+      # Washer finished (bool OFF), dryer not running (bool OFF), both enabled
+      handoff_eligible: >-
+        {% if not handoff_on or not washer_enabled or not dryer_enabled %}
+          {{ false }}
+        {% elif washer_bool_entity is none or washer_bool_entity == '' %}
+          {{ false }}
+        {% elif dryer_bool_entity is none or dryer_bool_entity == '' %}
+          {{ false }}
+        {% else %}
+          {{ states(washer_bool_entity) == 'off'
+             and states(dryer_bool_entity) == 'off'
+             and washer_off_minutes | float(0) >= handoff_timeout | float(0)
+             and washer_off_minutes | float(0) < 1440 }}
+        {% endif %}
+
+      # Which reminder number should fire right now? (0 = none yet)
+      # First reminder at handoff_timeout, then every handoff_interval after
+      handoff_current_reminder: >-
+        {% if not handoff_eligible %}
+          0
+        {% else %}
+          {% set elapsed = washer_off_minutes | float(0) %}
+          {% set timeout = handoff_timeout | float(0) %}
+          {% set interval = handoff_interval | float(1) %}
+          {% set since_first = elapsed - timeout %}
+          {% if since_first < 0 %}
+            0
+          {% else %}
+            {{ 1 + (since_first / interval) | int }}
+          {% endif %}
+        {% endif %}
+
+      # Should we send a reminder right now?
+      # Only fire on the exact minute a reminder is due (avoid duplicates)
+      handoff_should_remind: >-
+        {% if not handoff_eligible or handoff_current_reminder | int(0) == 0 %}
+          {{ false }}
+        {% elif handoff_current_reminder | int(0) > handoff_max | int(3) %}
+          {{ false }}
+        {% else %}
+          {% set elapsed = washer_off_minutes | float(0) %}
+          {% set timeout = handoff_timeout | float(0) %}
+          {% set interval = handoff_interval | float(1) %}
+          {% set reminder_num = handoff_current_reminder | int %}
+          {% set expected_time = timeout + ((reminder_num - 1) * interval) %}
+          {{ elapsed >= expected_time and elapsed < expected_time + 1.0 }}
+        {% endif %}
+
+
+  # -------------------------------------------------------------------------
+  #  MANUAL TRIGGER — for testing via automation.trigger
+  #  Sends a test message to ALL configured notification channels so you
+  #  can verify everything is wired up correctly in one shot.
+  # -------------------------------------------------------------------------
+  - if:
+      - condition: template
+        value_template: "{{ is_manual }}"
+    then:
+      # Mobile push test
+      - if:
+          - condition: template
+            value_template: >-
+              {{ send_mobile and (mobile_devices_var | length > 0) }}
+        then:
+          - repeat:
+              for_each: "{{ mobile_devices_var }}"
+              sequence:
+                - action: >-
+                    notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                  data:
+                    title: "LaundryMinder — Test"
+                    message: "Manual test notification — LaundryMinder is working! All notification channels are being tested."
+                  continue_on_error: true
+
+      # Alexa test
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_alexa and (alexa_targets_var | length > 0) }}
+        then:
+          - action: "{{ alexa_svc }}"
+            data:
+              target: "{{ alexa_targets_var }}"
+              message: "LaundryMinder test notification. If you can hear this, Alexa announcements are working."
+              data:
+                type: "{{ alexa_type }}"
+            continue_on_error: true
+
+      # TTS — primary engine (test)
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_primary_targets_var | length > 0)
+                 and (tts_primary_entity_var | length > 0) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_primary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_primary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "LaundryMinder test notification. If you can hear this, TTS announcements are working."
+                  continue_on_error: true
+
+      # TTS — secondary engine (test, optional)
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_secondary_targets_var | length > 0)
+                 and (tts_secondary_entity_var | length > 0) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_secondary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_secondary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "LaundryMinder test notification. If you can hear this, TTS announcements are working."
+                  continue_on_error: true
+
+      - stop: "Manual test complete"
+
+  # =========================================================================
+  #  WASHER — START DETECTION
+  # =========================================================================
+  - if:
+      - condition: template
+        value_template: >-
+          {{ washer_enabled and washer_currently_running
+             and not washer_helper_is_on }}
+    then:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: "{{ washer_bool_entity }}"
+
+      - if:
+          - condition: template
+            value_template: >-
+              {{ text_helpers_on and washer_text_entity is not none
+                 and washer_text_entity != '' }}
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: "{{ washer_text_entity }}"
+            data:
+              value: "Washer started at {{ current_time }}"
+
+  # =========================================================================
+  #  WASHER — STOP DETECTION + NOTIFICATIONS
+  # =========================================================================
+  - if:
+      - condition: template
+        value_template: >-
+          {{ washer_enabled and washer_stop_confirmed and washer_helper_is_on }}
+    then:
+      # --- Update helpers (always, even during quiet hours) ---
+      - action: input_boolean.turn_off
+        target:
+          entity_id: "{{ washer_bool_entity }}"
+
+      - if:
+          - condition: template
+            value_template: >-
+              {{ text_helpers_on and washer_text_entity is not none
+                 and washer_text_entity != '' }}
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: "{{ washer_text_entity }}"
+            data:
+              value: "Washer finished at {{ current_time }}"
+
+      # --- Send notifications (per-channel quiet hours) ---
+      # Mobile push
+      - if:
+          - condition: template
+            value_template: >-
+              {{ send_mobile and (mobile_devices_var | length > 0)
+                 and (not is_quiet or 'mobile' not in quiet_channels) }}
+        then:
+          - repeat:
+              for_each: "{{ mobile_devices_var }}"
+              sequence:
+                - action: >-
+                    notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                  data:
+                    title: "{{ mob_washer_title }}"
+                    message: "{{ mob_washer_msg }}"
+                  continue_on_error: true
+
+      # Alexa announcement
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_alexa and (alexa_targets_var | length > 0)
+                 and (not is_quiet or 'alexa' not in quiet_channels) }}
+        then:
+          - action: "{{ alexa_svc }}"
+            data:
+              target: "{{ alexa_targets_var }}"
+              message: "{{ alexa_washer_msg }}"
+              data:
+                type: "{{ alexa_type }}"
+            continue_on_error: true
+
+      # TTS — primary engine
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_primary_targets_var | length > 0)
+                 and (tts_primary_entity_var | length > 0)
+                 and (not is_quiet or ('tts' not in quiet_channels and 'google' not in quiet_channels)) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_primary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_primary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "{{ tts_washer_msg }}"
+                  continue_on_error: true
+
+      # TTS — secondary engine (optional)
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_secondary_targets_var | length > 0)
+                 and (tts_secondary_entity_var | length > 0)
+                 and (not is_quiet or ('tts' not in quiet_channels and 'google' not in quiet_channels)) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_secondary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_secondary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "{{ tts_washer_msg }}"
+                  continue_on_error: true
+
+  # =========================================================================
+  #  DRYER — START DETECTION
+  # =========================================================================
+  - if:
+      - condition: template
+        value_template: >-
+          {{ dryer_enabled and dryer_currently_running
+             and not dryer_helper_is_on }}
+    then:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: "{{ dryer_bool_entity }}"
+
+      - if:
+          - condition: template
+            value_template: >-
+              {{ text_helpers_on and dryer_text_entity is not none
+                 and dryer_text_entity != '' }}
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: "{{ dryer_text_entity }}"
+            data:
+              value: "Dryer started at {{ current_time }}"
+
+  # =========================================================================
+  #  DRYER — STOP DETECTION + NOTIFICATIONS
+  # =========================================================================
+  - if:
+      - condition: template
+        value_template: >-
+          {{ dryer_enabled and dryer_stop_confirmed and dryer_helper_is_on }}
+    then:
+      # --- Update helpers (always, even during quiet hours) ---
+      - action: input_boolean.turn_off
+        target:
+          entity_id: "{{ dryer_bool_entity }}"
+
+      - if:
+          - condition: template
+            value_template: >-
+              {{ text_helpers_on and dryer_text_entity is not none
+                 and dryer_text_entity != '' }}
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: "{{ dryer_text_entity }}"
+            data:
+              value: "Dryer finished at {{ current_time }}"
+
+      # --- Send notifications (per-channel quiet hours) ---
+      # Mobile push
+      - if:
+          - condition: template
+            value_template: >-
+              {{ send_mobile and (mobile_devices_var | length > 0)
+                 and (not is_quiet or 'mobile' not in quiet_channels) }}
+        then:
+          - repeat:
+              for_each: "{{ mobile_devices_var }}"
+              sequence:
+                - action: >-
+                    notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                  data:
+                    title: "{{ mob_dryer_title }}"
+                    message: "{{ mob_dryer_msg }}"
+                  continue_on_error: true
+
+      # Alexa announcement
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_alexa and (alexa_targets_var | length > 0)
+                 and (not is_quiet or 'alexa' not in quiet_channels) }}
+        then:
+          - action: "{{ alexa_svc }}"
+            data:
+              target: "{{ alexa_targets_var }}"
+              message: "{{ alexa_dryer_msg }}"
+              data:
+                type: "{{ alexa_type }}"
+            continue_on_error: true
+
+      # TTS — primary engine
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_primary_targets_var | length > 0)
+                 and (tts_primary_entity_var | length > 0)
+                 and (not is_quiet or ('tts' not in quiet_channels and 'google' not in quiet_channels)) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_primary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_primary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "{{ tts_dryer_msg }}"
+                  continue_on_error: true
+
+      # TTS — secondary engine (optional)
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_secondary_targets_var | length > 0)
+                 and (tts_secondary_entity_var | length > 0)
+                 and (not is_quiet or ('tts' not in quiet_channels and 'google' not in quiet_channels)) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_secondary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_secondary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "{{ tts_dryer_msg }}"
+                  continue_on_error: true
+
+  # =========================================================================
+  #  WASHER → DRYER HANDOFF REMINDER
+  # =========================================================================
+  - if:
+      - condition: template
+        value_template: "{{ handoff_should_remind }}"
+    then:
+      # Mobile push
+      - if:
+          - condition: template
+            value_template: >-
+              {{ send_mobile and (mobile_devices_var | length > 0)
+                 and (not is_quiet or 'mobile' not in quiet_channels) }}
+        then:
+          - repeat:
+              for_each: "{{ mobile_devices_var }}"
+              sequence:
+                - action: >-
+                    notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                  data:
+                    title: "LaundryMinder"
+                    message: "{{ handoff_reminder_mob_msg }}"
+                  continue_on_error: true
+
+      # Alexa announcement
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_alexa and (alexa_targets_var | length > 0)
+                 and (not is_quiet or 'alexa' not in quiet_channels) }}
+        then:
+          - action: "{{ alexa_svc }}"
+            data:
+              target: "{{ alexa_targets_var }}"
+              message: "{{ handoff_reminder_alexa_msg }}"
+              data:
+                type: "{{ alexa_type }}"
+            continue_on_error: true
+
+      # TTS — primary engine
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_primary_targets_var | length > 0)
+                 and (tts_primary_entity_var | length > 0)
+                 and (not is_quiet or ('tts' not in quiet_channels and 'google' not in quiet_channels)) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_primary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_primary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "{{ handoff_reminder_tts_msg }}"
+                  continue_on_error: true
+
+      # TTS — secondary engine (optional)
+      - if:
+          - condition: template
+            value_template: >-
+              {{ enable_tts and (tts_secondary_targets_var | length > 0)
+                 and (tts_secondary_entity_var | length > 0)
+                 and (not is_quiet or ('tts' not in quiet_channels and 'google' not in quiet_channels)) }}
+        then:
+          - repeat:
+              for_each: "{{ tts_secondary_targets_var }}"
+              sequence:
+                - action: tts.speak
+                  target:
+                    entity_id: "{{ tts_secondary_entity_var }}"
+                  data:
+                    media_player_entity_id: "{{ repeat.item }}"
+                    message: "{{ handoff_reminder_tts_msg }}"
+                  continue_on_error: true
+

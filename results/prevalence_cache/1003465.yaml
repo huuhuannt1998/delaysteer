@@ -1,0 +1,2314 @@
+blueprint:
+  name: "🌡️ Airzone Climate Manager"
+  description: >
+    Intelligent Airzone HVAC management with 6 modes (Heating, Cooling, Dehumidification,
+    Fan Only, Away, Off). Supports up to 5 zones with configurable time slots (Day/Evening/Night),
+    hysteresis regulation per zone (optional external thermometer), automatic stop when window
+    is open, solar PV boost, and EV charger awareness.
+
+    ⚙️ PREREQUISITE: Create an input_select whose states match the mode values configured
+    below. Defaults: "🔥 Heating", "❄️ Cooling", "🌵 Dehumidification",
+    "💨 Fan Only", "Away", "Off", "Free" (or any custom names you set below).
+
+    ⏱️ Update cycle: every 30 seconds + immediately on mode change.
+
+    ☀️ Solar boost: in Cooling mode, lowers setpoints when PV surplus is detected
+    and EV is not charging.
+
+    ⚡ Regulation: if an external thermometer is configured for a zone → hysteresis
+    control (start/stop). Otherwise → simple setpoint sent to Airzone.
+  domain: automation
+  author: "Airzone Blueprint"
+  homeassistant:
+    min_version: "2024.6.0"
+
+  input:
+
+    # ═══════════════════════════════════════════════════════
+    # SECTION 1 — GLOBAL CONFIGURATION
+    # ═══════════════════════════════════════════════════════
+    section_global:
+      name: "⚙️ Global Configuration"
+      input:
+        airzone_main:
+          name: "Main Airzone entity (whole house)"
+          description: "Primary climate entity controlling the global HVAC mode (e.g. climate.main)"
+          selector:
+            entity:
+              domain: climate
+
+        mode_selector:
+          name: "Thermal mode selector"
+          description: "input_select containing the operating modes"
+          selector:
+            entity:
+              domain: input_select
+
+    # ═══════════════════════════════════════════════════════
+    # SECTION 2 — MODE NAMES (as defined in your input_select)
+    # ═══════════════════════════════════════════════════════
+    section_modes:
+      name: "🏷️ Mode Names"
+      description: "Enter the exact state values present in your input_select"
+      collapsed: true
+      input:
+        mode_value_heat:
+          name: "Value = Heating"
+          default: "🔥 Heating"
+          selector:
+            text: {}
+
+        mode_value_cool:
+          name: "Value = Cooling"
+          default: "❄️ Cooling"
+          selector:
+            text: {}
+
+        mode_value_dry:
+          name: "Value = Dehumidification"
+          default: "🌵 Dehumidification"
+          selector:
+            text: {}
+
+        mode_value_fan:
+          name: "Value = Fan Only"
+          default: "💨 Fan Only"
+          selector:
+            text: {}
+
+        mode_value_away:
+          name: "Value = Away"
+          default: "Away"
+          selector:
+            text: {}
+
+        mode_value_off:
+          name: "Value = Off"
+          default: "Off"
+          selector:
+            text: {}
+
+    # ═══════════════════════════════════════════════════════
+    # SECTION 3 — TIME SLOTS
+    # ═══════════════════════════════════════════════════════
+    section_horaires:
+      name: "🕐 Time Slots"
+      input:
+        day_start:
+          name: "Day slot start"
+          description: "e.g. 05:30 — start of the Day period"
+          default: "05:30:00"
+          selector:
+            time: {}
+
+        day_end:
+          name: "Day slot end / Evening start"
+          description: "e.g. 21:00 — start of the Evening period"
+          default: "21:00:00"
+          selector:
+            time: {}
+
+        evening_end:
+          name: "Evening slot end / Night start"
+          description: "e.g. 23:00 — after this time: Night period (until Day start)"
+          default: "23:00:00"
+          selector:
+            time: {}
+
+    # ═══════════════════════════════════════════════════════
+    # SECTION 4 — AWAY MODE
+    # ═══════════════════════════════════════════════════════
+    section_away:
+      name: "🏃 Away Mode"
+      input:
+        away_hvac_mode:
+          name: "HVAC mode while Away"
+          default: "heat"
+          selector:
+            select:
+              options:
+                - label: "🔥 Heating (frost protection)"
+                  value: "heat"
+                - label: "❄️ Cooling"
+                  value: "cool"
+                - label: "⛔ Full stop"
+                  value: "off"
+
+        away_temperature:
+          name: "Away mode setpoint (°C)"
+          default: 18
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+    # ═══════════════════════════════════════════════════════
+    # SECTION 5 — SOLAR PANELS (optional)
+    # ═══════════════════════════════════════════════════════
+    section_solar:
+      name: "☀️ Solar PV Boost (optional)"
+      collapsed: true
+      input:
+        has_solar:
+          name: "Enable solar boost"
+          description: "Lowers cooling setpoints when PV surplus is detected"
+          default: false
+          selector:
+            boolean: {}
+
+        solar_power_sensor:
+          name: "Grid power sensor"
+          description: "NEGATIVE value = power injected to grid (e.g. sensor.shelly_channel_1_power)"
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: power
+
+        solar_threshold:
+          name: "Surplus threshold to trigger boost (W)"
+          description: "Boost activates when injected surplus exceeds this value"
+          default: 1500
+          selector:
+            number:
+              min: 200
+              max: 10000
+              step: 100
+              unit_of_measurement: "W"
+              mode: box
+
+        solar_boost_offset:
+          name: "Setpoint offset during boost (°C)"
+          description: "This value is subtracted from the cooling setpoint during boost"
+          default: 2
+          selector:
+            number:
+              min: 0.5
+              max: 5
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+    # ═══════════════════════════════════════════════════════
+    # SECTION 6 — EV CHARGER (optional)
+    # ═══════════════════════════════════════════════════════
+    section_ev:
+      name: "🔌 EV Charger (optional)"
+      collapsed: true
+      input:
+        has_ev_charger:
+          name: "I have an EV charger"
+          description: "Solar boost is disabled while the EV is charging"
+          default: false
+          selector:
+            boolean: {}
+
+        ev_power_sensor:
+          name: "EV charging power sensor"
+          description: "If value > 0 W: EV is charging → solar boost disabled"
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: power
+
+    # ═══════════════════════════════════════════════════════
+    # ZONE 1 (required)
+    # ═══════════════════════════════════════════════════════
+    section_zone1:
+      name: "🏠 Zone 1"
+      input:
+        zone1_enabled:
+          name: "Zone 1 enabled"
+          default: true
+          selector:
+            boolean: {}
+
+        zone1_climate:
+          name: "Zone 1 climate entity"
+          description: "e.g. climate.office"
+          selector:
+            entity:
+              domain: climate
+
+        zone1_window:
+          name: "Zone 1 window sensor (optional)"
+          description: "binary_sensor — if 'on' (open) → zone is turned Off"
+          default:
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: opening
+
+        zone1_auto_boolean:
+          name: "Zone 1 auto-regulation helper (optional)"
+          description: "input_boolean — if Off, zone regulation is suspended"
+          default:
+          selector:
+            entity:
+              domain: input_boolean
+
+        zone1_external_sensor:
+          name: "Zone 1 external thermometer (optional)"
+          description: "If set → hysteresis regulation. Otherwise → simple setpoint."
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        zone1_heat_day:
+          name: "Zone 1 — 🔥 Heating Day (°C)"
+          default: 20
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_heat_evening:
+          name: "Zone 1 — 🔥 Heating Evening (°C)"
+          default: 19
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_heat_night:
+          name: "Zone 1 — 🔥 Heating Night (°C)"
+          default: 18.5
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_day:
+          name: "Zone 1 — ❄️ Cooling Day (°C)"
+          default: 25
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_evening:
+          name: "Zone 1 — ❄️ Cooling Evening (°C)"
+          default: 26
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_night:
+          name: "Zone 1 — ❄️ Cooling Night (°C)"
+          default: 27
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_heat_hyst_day_start:
+          name: "Zone 1 — Heat hysteresis Day: start below (°C)"
+          description: "Only applies if external thermometer is configured"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_heat_hyst_day_stop:
+          name: "Zone 1 — Heat hysteresis Day: stop above (°C)"
+          default: 19.3
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_heat_hyst_night_start:
+          name: "Zone 1 — Heat hysteresis Night: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_heat_hyst_night_stop:
+          name: "Zone 1 — Heat hysteresis Night: stop above (°C)"
+          default: 19.4
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_hyst_day_start:
+          name: "Zone 1 — Cool hysteresis Day: start above (°C)"
+          default: 26.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_hyst_day_stop:
+          name: "Zone 1 — Cool hysteresis Day: stop below (°C)"
+          default: 25.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_hyst_night_start:
+          name: "Zone 1 — Cool hysteresis Night: start above (°C)"
+          default: 24.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone1_cool_hyst_night_stop:
+          name: "Zone 1 — Cool hysteresis Night: stop below (°C)"
+          default: 23.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+    # ═══════════════════════════════════════════════════════
+    # ZONE 2
+    # ═══════════════════════════════════════════════════════
+    section_zone2:
+      name: "🏠 Zone 2 (optional)"
+      collapsed: true
+      input:
+        zone2_enabled:
+          name: "Zone 2 enabled"
+          default: false
+          selector:
+            boolean: {}
+
+        zone2_climate:
+          name: "Zone 2 climate entity"
+          default:
+          selector:
+            entity:
+              domain: climate
+
+        zone2_window:
+          name: "Zone 2 window sensor (optional)"
+          default:
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: opening
+
+        zone2_auto_boolean:
+          name: "Zone 2 auto-regulation helper (optional)"
+          default:
+          selector:
+            entity:
+              domain: input_boolean
+
+        zone2_external_sensor:
+          name: "Zone 2 external thermometer (optional)"
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        zone2_heat_day:
+          name: "Zone 2 — 🔥 Heating Day (°C)"
+          default: 20
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_heat_evening:
+          name: "Zone 2 — 🔥 Heating Evening (°C)"
+          default: 19
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_heat_night:
+          name: "Zone 2 — 🔥 Heating Night (°C)"
+          default: 18.5
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_day:
+          name: "Zone 2 — ❄️ Cooling Day (°C)"
+          default: 25
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_evening:
+          name: "Zone 2 — ❄️ Cooling Evening (°C)"
+          default: 26
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_night:
+          name: "Zone 2 — ❄️ Cooling Night (°C)"
+          default: 27
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_heat_hyst_day_start:
+          name: "Zone 2 — Heat hysteresis Day: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_heat_hyst_day_stop:
+          name: "Zone 2 — Heat hysteresis Day: stop above (°C)"
+          default: 19.3
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_heat_hyst_night_start:
+          name: "Zone 2 — Heat hysteresis Night: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_heat_hyst_night_stop:
+          name: "Zone 2 — Heat hysteresis Night: stop above (°C)"
+          default: 19.4
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_hyst_day_start:
+          name: "Zone 2 — Cool hysteresis Day: start above (°C)"
+          default: 26.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_hyst_day_stop:
+          name: "Zone 2 — Cool hysteresis Day: stop below (°C)"
+          default: 25.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_hyst_night_start:
+          name: "Zone 2 — Cool hysteresis Night: start above (°C)"
+          default: 24.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone2_cool_hyst_night_stop:
+          name: "Zone 2 — Cool hysteresis Night: stop below (°C)"
+          default: 23.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+    # ═══════════════════════════════════════════════════════
+    # ZONE 3
+    # ═══════════════════════════════════════════════════════
+    section_zone3:
+      name: "🏠 Zone 3 (optional)"
+      collapsed: true
+      input:
+        zone3_enabled:
+          name: "Zone 3 enabled"
+          default: false
+          selector:
+            boolean: {}
+
+        zone3_climate:
+          name: "Zone 3 climate entity"
+          default:
+          selector:
+            entity:
+              domain: climate
+
+        zone3_window:
+          name: "Zone 3 window sensor (optional)"
+          default:
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: opening
+
+        zone3_auto_boolean:
+          name: "Zone 3 auto-regulation helper (optional)"
+          default:
+          selector:
+            entity:
+              domain: input_boolean
+
+        zone3_external_sensor:
+          name: "Zone 3 external thermometer (optional)"
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        zone3_heat_day:
+          name: "Zone 3 — 🔥 Heating Day (°C)"
+          default: 20
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_heat_evening:
+          name: "Zone 3 — 🔥 Heating Evening (°C)"
+          default: 19
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_heat_night:
+          name: "Zone 3 — 🔥 Heating Night (°C)"
+          default: 18.5
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_day:
+          name: "Zone 3 — ❄️ Cooling Day (°C)"
+          default: 25
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_evening:
+          name: "Zone 3 — ❄️ Cooling Evening (°C)"
+          default: 26
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_night:
+          name: "Zone 3 — ❄️ Cooling Night (°C)"
+          default: 27
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_heat_hyst_day_start:
+          name: "Zone 3 — Heat hysteresis Day: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_heat_hyst_day_stop:
+          name: "Zone 3 — Heat hysteresis Day: stop above (°C)"
+          default: 19.3
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_heat_hyst_night_start:
+          name: "Zone 3 — Heat hysteresis Night: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_heat_hyst_night_stop:
+          name: "Zone 3 — Heat hysteresis Night: stop above (°C)"
+          default: 19.4
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_hyst_day_start:
+          name: "Zone 3 — Cool hysteresis Day: start above (°C)"
+          default: 26.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_hyst_day_stop:
+          name: "Zone 3 — Cool hysteresis Day: stop below (°C)"
+          default: 25.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_hyst_night_start:
+          name: "Zone 3 — Cool hysteresis Night: start above (°C)"
+          default: 24.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone3_cool_hyst_night_stop:
+          name: "Zone 3 — Cool hysteresis Night: stop below (°C)"
+          default: 23.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+    # ═══════════════════════════════════════════════════════
+    # ZONE 4
+    # ═══════════════════════════════════════════════════════
+    section_zone4:
+      name: "🏠 Zone 4 (optional)"
+      collapsed: true
+      input:
+        zone4_enabled:
+          name: "Zone 4 enabled"
+          default: false
+          selector:
+            boolean: {}
+
+        zone4_climate:
+          name: "Zone 4 climate entity"
+          default:
+          selector:
+            entity:
+              domain: climate
+
+        zone4_window:
+          name: "Zone 4 window sensor (optional)"
+          default:
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: opening
+
+        zone4_auto_boolean:
+          name: "Zone 4 auto-regulation helper (optional)"
+          default:
+          selector:
+            entity:
+              domain: input_boolean
+
+        zone4_external_sensor:
+          name: "Zone 4 external thermometer (optional)"
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        zone4_heat_day:
+          name: "Zone 4 — 🔥 Heating Day (°C)"
+          default: 19
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_heat_evening:
+          name: "Zone 4 — 🔥 Heating Evening (°C)"
+          default: 19.5
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_heat_night:
+          name: "Zone 4 — 🔥 Heating Night (°C)"
+          default: 18
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_day:
+          name: "Zone 4 — ❄️ Cooling Day (°C)"
+          default: 26
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_evening:
+          name: "Zone 4 — ❄️ Cooling Evening (°C)"
+          default: 24
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_night:
+          name: "Zone 4 — ❄️ Cooling Night (°C)"
+          default: 24
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_heat_hyst_day_start:
+          name: "Zone 4 — Heat hysteresis Day: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_heat_hyst_day_stop:
+          name: "Zone 4 — Heat hysteresis Day: stop above (°C)"
+          default: 19.3
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_heat_hyst_night_start:
+          name: "Zone 4 — Heat hysteresis Night: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_heat_hyst_night_stop:
+          name: "Zone 4 — Heat hysteresis Night: stop above (°C)"
+          default: 19.4
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_hyst_day_start:
+          name: "Zone 4 — Cool hysteresis Day: start above (°C)"
+          default: 26.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_hyst_day_stop:
+          name: "Zone 4 — Cool hysteresis Day: stop below (°C)"
+          default: 25.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_hyst_night_start:
+          name: "Zone 4 — Cool hysteresis Night: start above (°C)"
+          default: 24.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone4_cool_hyst_night_stop:
+          name: "Zone 4 — Cool hysteresis Night: stop below (°C)"
+          default: 23.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+    # ═══════════════════════════════════════════════════════
+    # ZONE 5
+    # ═══════════════════════════════════════════════════════
+    section_zone5:
+      name: "🏠 Zone 5 (optional)"
+      collapsed: true
+      input:
+        zone5_enabled:
+          name: "Zone 5 enabled"
+          default: false
+          selector:
+            boolean: {}
+
+        zone5_climate:
+          name: "Zone 5 climate entity"
+          default:
+          selector:
+            entity:
+              domain: climate
+
+        zone5_window:
+          name: "Zone 5 window sensor (optional)"
+          default:
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: opening
+
+        zone5_auto_boolean:
+          name: "Zone 5 auto-regulation helper (optional)"
+          default:
+          selector:
+            entity:
+              domain: input_boolean
+
+        zone5_external_sensor:
+          name: "Zone 5 external thermometer (optional)"
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        zone5_heat_day:
+          name: "Zone 5 — 🔥 Heating Day (°C)"
+          default: 20
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_heat_evening:
+          name: "Zone 5 — 🔥 Heating Evening (°C)"
+          default: 18
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_heat_night:
+          name: "Zone 5 — 🔥 Heating Night (°C)"
+          default: 18
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_day:
+          name: "Zone 5 — ❄️ Cooling Day (°C)"
+          default: 25
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_evening:
+          name: "Zone 5 — ❄️ Cooling Evening (°C)"
+          default: 23
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_night:
+          name: "Zone 5 — ❄️ Cooling Night (°C)"
+          default: 23
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.5
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_heat_hyst_day_start:
+          name: "Zone 5 — Heat hysteresis Day: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_heat_hyst_day_stop:
+          name: "Zone 5 — Heat hysteresis Day: stop above (°C)"
+          default: 19.3
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_heat_hyst_night_start:
+          name: "Zone 5 — Heat hysteresis Night: start below (°C)"
+          default: 18.8
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_heat_hyst_night_stop:
+          name: "Zone 5 — Heat hysteresis Night: stop above (°C)"
+          default: 19.4
+          selector:
+            number:
+              min: 10
+              max: 30
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_hyst_day_start:
+          name: "Zone 5 — Cool hysteresis Day: start above (°C)"
+          default: 26.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_hyst_day_stop:
+          name: "Zone 5 — Cool hysteresis Day: stop below (°C)"
+          default: 25.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_hyst_night_start:
+          name: "Zone 5 — Cool hysteresis Night: start above (°C)"
+          default: 24.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+        zone5_cool_hyst_night_stop:
+          name: "Zone 5 — Cool hysteresis Night: stop below (°C)"
+          default: 23.5
+          selector:
+            number:
+              min: 16
+              max: 32
+              step: 0.1
+              unit_of_measurement: "°C"
+              mode: box
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AUTOMATION VARIABLES
+# All !input values captured here — never used directly inside Jinja2 templates
+# These variables are substituted at automation creation time from the blueprint
+# ═══════════════════════════════════════════════════════════════════════════════
+variables:
+  # Globaux
+  v_main: !input airzone_main
+  v_sel: !input mode_selector
+  v_m_heat: !input mode_value_heat
+  v_m_cool: !input mode_value_cool
+  v_m_dry: !input mode_value_dry
+  v_m_fan: !input mode_value_fan
+  v_m_away: !input mode_value_away
+  v_m_off: !input mode_value_off
+  # Horaires
+  v_day_start: !input day_start
+  v_day_end: !input day_end
+  v_eve_end: !input evening_end
+  # Away
+  v_away_hvac: !input away_hvac_mode
+  v_away_temp: !input away_temperature
+  # Solaire
+  v_has_solar: !input has_solar
+  v_solar_sen: !input solar_power_sensor
+  v_solar_thr: !input solar_threshold
+  v_boost_off: !input solar_boost_offset
+  v_has_ev: !input has_ev_charger
+  v_ev_sen: !input ev_power_sensor
+  # Zone 1
+  v_z1_en: !input zone1_enabled
+  v_z1_clim: !input zone1_climate
+  v_z1_win: !input zone1_window
+  v_z1_auto: !input zone1_auto_boolean
+  v_z1_ext: !input zone1_external_sensor
+  v_z1_hd: !input zone1_heat_day
+  v_z1_he: !input zone1_heat_evening
+  v_z1_hn: !input zone1_heat_night
+  v_z1_cd: !input zone1_cool_day
+  v_z1_ce: !input zone1_cool_evening
+  v_z1_cn: !input zone1_cool_night
+  v_z1_hhds: !input zone1_heat_hyst_day_start
+  v_z1_hhdp: !input zone1_heat_hyst_day_stop
+  v_z1_hhns: !input zone1_heat_hyst_night_start
+  v_z1_hhnp: !input zone1_heat_hyst_night_stop
+  v_z1_chds: !input zone1_cool_hyst_day_start
+  v_z1_chdp: !input zone1_cool_hyst_day_stop
+  v_z1_chns: !input zone1_cool_hyst_night_start
+  v_z1_chnp: !input zone1_cool_hyst_night_stop
+  # Zone 2
+  v_z2_en: !input zone2_enabled
+  v_z2_clim: !input zone2_climate
+  v_z2_win: !input zone2_window
+  v_z2_auto: !input zone2_auto_boolean
+  v_z2_ext: !input zone2_external_sensor
+  v_z2_hd: !input zone2_heat_day
+  v_z2_he: !input zone2_heat_evening
+  v_z2_hn: !input zone2_heat_night
+  v_z2_cd: !input zone2_cool_day
+  v_z2_ce: !input zone2_cool_evening
+  v_z2_cn: !input zone2_cool_night
+  v_z2_hhds: !input zone2_heat_hyst_day_start
+  v_z2_hhdp: !input zone2_heat_hyst_day_stop
+  v_z2_hhns: !input zone2_heat_hyst_night_start
+  v_z2_hhnp: !input zone2_heat_hyst_night_stop
+  v_z2_chds: !input zone2_cool_hyst_day_start
+  v_z2_chdp: !input zone2_cool_hyst_day_stop
+  v_z2_chns: !input zone2_cool_hyst_night_start
+  v_z2_chnp: !input zone2_cool_hyst_night_stop
+  # Zone 3
+  v_z3_en: !input zone3_enabled
+  v_z3_clim: !input zone3_climate
+  v_z3_win: !input zone3_window
+  v_z3_auto: !input zone3_auto_boolean
+  v_z3_ext: !input zone3_external_sensor
+  v_z3_hd: !input zone3_heat_day
+  v_z3_he: !input zone3_heat_evening
+  v_z3_hn: !input zone3_heat_night
+  v_z3_cd: !input zone3_cool_day
+  v_z3_ce: !input zone3_cool_evening
+  v_z3_cn: !input zone3_cool_night
+  v_z3_hhds: !input zone3_heat_hyst_day_start
+  v_z3_hhdp: !input zone3_heat_hyst_day_stop
+  v_z3_hhns: !input zone3_heat_hyst_night_start
+  v_z3_hhnp: !input zone3_heat_hyst_night_stop
+  v_z3_chds: !input zone3_cool_hyst_day_start
+  v_z3_chdp: !input zone3_cool_hyst_day_stop
+  v_z3_chns: !input zone3_cool_hyst_night_start
+  v_z3_chnp: !input zone3_cool_hyst_night_stop
+  # Zone 4
+  v_z4_en: !input zone4_enabled
+  v_z4_clim: !input zone4_climate
+  v_z4_win: !input zone4_window
+  v_z4_auto: !input zone4_auto_boolean
+  v_z4_ext: !input zone4_external_sensor
+  v_z4_hd: !input zone4_heat_day
+  v_z4_he: !input zone4_heat_evening
+  v_z4_hn: !input zone4_heat_night
+  v_z4_cd: !input zone4_cool_day
+  v_z4_ce: !input zone4_cool_evening
+  v_z4_cn: !input zone4_cool_night
+  v_z4_hhds: !input zone4_heat_hyst_day_start
+  v_z4_hhdp: !input zone4_heat_hyst_day_stop
+  v_z4_hhns: !input zone4_heat_hyst_night_start
+  v_z4_hhnp: !input zone4_heat_hyst_night_stop
+  v_z4_chds: !input zone4_cool_hyst_day_start
+  v_z4_chdp: !input zone4_cool_hyst_day_stop
+  v_z4_chns: !input zone4_cool_hyst_night_start
+  v_z4_chnp: !input zone4_cool_hyst_night_stop
+  # Zone 5
+  v_z5_en: !input zone5_enabled
+  v_z5_clim: !input zone5_climate
+  v_z5_win: !input zone5_window
+  v_z5_auto: !input zone5_auto_boolean
+  v_z5_ext: !input zone5_external_sensor
+  v_z5_hd: !input zone5_heat_day
+  v_z5_he: !input zone5_heat_evening
+  v_z5_hn: !input zone5_heat_night
+  v_z5_cd: !input zone5_cool_day
+  v_z5_ce: !input zone5_cool_evening
+  v_z5_cn: !input zone5_cool_night
+  v_z5_hhds: !input zone5_heat_hyst_day_start
+  v_z5_hhdp: !input zone5_heat_hyst_day_stop
+  v_z5_hhns: !input zone5_heat_hyst_night_start
+  v_z5_hhnp: !input zone5_heat_hyst_night_stop
+  v_z5_chds: !input zone5_cool_hyst_day_start
+  v_z5_chdp: !input zone5_cool_hyst_day_stop
+  v_z5_chns: !input zone5_cool_hyst_night_start
+  v_z5_chnp: !input zone5_cool_hyst_night_stop
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TRIGGERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+trigger:
+  - platform: time_pattern
+    seconds: /30
+    id: "poll"
+
+  - platform: state
+    entity_id: !input mode_selector
+    id: "mode_changed"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ACTION
+# ═══════════════════════════════════════════════════════════════════════════════
+action:
+  # ── Step 1: Runtime variables ───────────────────────────────────────────────
+  # All automation variables (v_xxx) are already available via the variables: block above.
+  # Here we compute dynamic runtime values.
+  - variables:
+      _mode: "{{ states(v_sel) }}"
+      _now_m: "{{ now().hour * 60 + now().minute }}"
+      _ds_m: "{{ (v_day_start[0:2] | int) * 60 + (v_day_start[3:5] | int) }}"
+      _de_m: "{{ (v_day_end[0:2] | int) * 60 + (v_day_end[3:5] | int) }}"
+      _ee_m: "{{ (v_eve_end[0:2] | int) * 60 + (v_eve_end[3:5] | int) }}"
+      _is_day: "{{ _now_m >= _ds_m and _now_m < _de_m }}"
+      _is_eve: "{{ _now_m >= _de_m and _now_m < _ee_m }}"
+      _is_ngt: "{{ _now_m < _ds_m or _now_m >= _ee_m }}"
+      # Window status (true = open)
+      _z1_wopen: "{{ v_z1_win not in [none, ''] and states(v_z1_win) == 'on' }}"
+      _z2_wopen: "{{ v_z2_win not in [none, ''] and states(v_z2_win) == 'on' }}"
+      _z3_wopen: "{{ v_z3_win not in [none, ''] and states(v_z3_win) == 'on' }}"
+      _z4_wopen: "{{ v_z4_win not in [none, ''] and states(v_z4_win) == 'on' }}"
+      _z5_wopen: "{{ v_z5_win not in [none, ''] and states(v_z5_win) == 'on' }}"
+      # Auto-regulation enabled (true if not configured or boolean = on)
+      _z1_aok: "{{ v_z1_auto in [none, ''] or states(v_z1_auto) == 'on' }}"
+      _z2_aok: "{{ v_z2_auto in [none, ''] or states(v_z2_auto) == 'on' }}"
+      _z3_aok: "{{ v_z3_auto in [none, ''] or states(v_z3_auto) == 'on' }}"
+      _z4_aok: "{{ v_z4_auto in [none, ''] or states(v_z4_auto) == 'on' }}"
+      _z5_aok: "{{ v_z5_auto in [none, ''] or states(v_z5_auto) == 'on' }}"
+      # External temperatures (none if sensor not configured)
+      _z1_tmp: "{{ states(v_z1_ext) | float(none) if v_z1_ext not in [none, ''] else none }}"
+      _z2_tmp: "{{ states(v_z2_ext) | float(none) if v_z2_ext not in [none, ''] else none }}"
+      _z3_tmp: "{{ states(v_z3_ext) | float(none) if v_z3_ext not in [none, ''] else none }}"
+      _z4_tmp: "{{ states(v_z4_ext) | float(none) if v_z4_ext not in [none, ''] else none }}"
+      _z5_tmp: "{{ states(v_z5_ext) | float(none) if v_z5_ext not in [none, ''] else none }}"
+      # Solar boost active?
+      _boost: >
+        {% if v_has_solar and v_solar_sen not in [none, ''] %}
+          {% set surplus = states(v_solar_sen) | float(0) %}
+          {% set ev_on = v_has_ev and v_ev_sen not in [none, '']
+                         and states(v_ev_sen) | float(0) > 0 %}
+          {{ surplus < -(v_solar_thr | float(1500)) and not ev_on }}
+        {% else %}
+          false
+        {% endif %}
+
+  # ── Step 2: Update main HVAC mode ───────────────────────────────────────────
+  - choose:
+      - conditions: "{{ _mode == v_m_heat }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ state_attr(v_main, 'hvac_mode') != 'heat' }}"
+            then:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ v_main }}"
+                data:
+                  hvac_mode: heat
+      - conditions: "{{ _mode == v_m_cool }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ state_attr(v_main, 'hvac_mode') != 'cool' }}"
+            then:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ v_main }}"
+                data:
+                  hvac_mode: cool
+      - conditions: "{{ _mode == v_m_dry }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ state_attr(v_main, 'hvac_mode') != 'dry' }}"
+            then:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ v_main }}"
+                data:
+                  hvac_mode: dry
+      - conditions: "{{ _mode == v_m_fan }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ state_attr(v_main, 'hvac_mode') != 'fan_only' }}"
+            then:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ v_main }}"
+                data:
+                  hvac_mode: fan_only
+      - conditions: "{{ _mode == v_m_away }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ state_attr(v_main, 'hvac_mode') != v_away_hvac }}"
+            then:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ v_main }}"
+                data:
+                  hvac_mode: "{{ v_away_hvac }}"
+      - conditions: "{{ _mode == v_m_off }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ state_attr(v_main, 'hvac_mode') != 'off' }}"
+            then:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ v_main }}"
+                data:
+                  hvac_mode: off
+
+  # ── Step 3: Zone management by mode ─────────────────────────────────────────
+  - choose:
+
+      # ══════════════════════════════════════════════════════
+      # HEATING MODE — ALL ZONES
+      # ══════════════════════════════════════════════════════
+      - conditions: "{{ _mode == v_m_heat }}"
+        sequence:
+
+          # Zone 1 – Heating
+          - if:
+              - condition: template
+                value_template: "{{ v_z1_en }}"
+            then:
+              - choose:
+                  # Window open → stop
+                  - conditions: "{{ _z1_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z1_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z1_clim }}"
+                            data:
+                              hvac_mode: off
+                  # Regulation suspended → skip
+                  - conditions: "{{ not _z1_aok }}"
+                    sequence: []
+                  # External thermometer → hysteresis
+                  - conditions: "{{ v_z1_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _tgt: "{{ v_z1_hd if _is_day else (v_z1_he if _is_eve else v_z1_hn) }}"
+                          _hs: "{{ v_z1_hhds if _is_day else v_z1_hhns }}"
+                          _hp: "{{ v_z1_hhdp if _is_day else v_z1_hhnp }}"
+                      # Too warm → stop heating
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z1_tmp is not none and _z1_tmp >= _hp
+                                 and states(v_z1_clim) == 'heat' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z1_clim }}"
+                            data:
+                              hvac_mode: off
+                      # Too cold → start heating
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z1_tmp is not none and _z1_tmp < _hs
+                                 and states(v_z1_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z1_clim }}"
+                            data:
+                              hvac_mode: heat
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z1_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z1_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                # Simple mode → time-slot setpoint
+                default:
+                  - variables:
+                      _tgt: "{{ v_z1_hd if _is_day else (v_z1_he if _is_eve else v_z1_hn) }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z1_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z1_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 2 – Heating
+          - if:
+              - condition: template
+                value_template: "{{ v_z2_en and v_z2_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z2_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z2_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z2_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z2_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z2_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _tgt: "{{ v_z2_hd if _is_day else (v_z2_he if _is_eve else v_z2_hn) }}"
+                          _hs: "{{ v_z2_hhds if _is_day else v_z2_hhns }}"
+                          _hp: "{{ v_z2_hhdp if _is_day else v_z2_hhnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z2_tmp is not none and _z2_tmp >= _hp
+                                 and states(v_z2_clim) == 'heat' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z2_clim }}"
+                            data:
+                              hvac_mode: off
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z2_tmp is not none and _z2_tmp < _hs
+                                 and states(v_z2_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z2_clim }}"
+                            data:
+                              hvac_mode: heat
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z2_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z2_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                default:
+                  - variables:
+                      _tgt: "{{ v_z2_hd if _is_day else (v_z2_he if _is_eve else v_z2_hn) }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z2_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z2_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 3 – Heating
+          - if:
+              - condition: template
+                value_template: "{{ v_z3_en and v_z3_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z3_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z3_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z3_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z3_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z3_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _tgt: "{{ v_z3_hd if _is_day else (v_z3_he if _is_eve else v_z3_hn) }}"
+                          _hs: "{{ v_z3_hhds if _is_day else v_z3_hhns }}"
+                          _hp: "{{ v_z3_hhdp if _is_day else v_z3_hhnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z3_tmp is not none and _z3_tmp >= _hp
+                                 and states(v_z3_clim) == 'heat' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z3_clim }}"
+                            data:
+                              hvac_mode: off
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z3_tmp is not none and _z3_tmp < _hs
+                                 and states(v_z3_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z3_clim }}"
+                            data:
+                              hvac_mode: heat
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z3_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z3_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                default:
+                  - variables:
+                      _tgt: "{{ v_z3_hd if _is_day else (v_z3_he if _is_eve else v_z3_hn) }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z3_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z3_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 4 – Heating
+          - if:
+              - condition: template
+                value_template: "{{ v_z4_en and v_z4_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z4_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z4_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z4_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z4_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z4_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _tgt: "{{ v_z4_hd if _is_day else (v_z4_he if _is_eve else v_z4_hn) }}"
+                          _hs: "{{ v_z4_hhds if _is_day else v_z4_hhns }}"
+                          _hp: "{{ v_z4_hhdp if _is_day else v_z4_hhnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z4_tmp is not none and _z4_tmp >= _hp
+                                 and states(v_z4_clim) == 'heat' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z4_clim }}"
+                            data:
+                              hvac_mode: off
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z4_tmp is not none and _z4_tmp < _hs
+                                 and states(v_z4_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z4_clim }}"
+                            data:
+                              hvac_mode: heat
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z4_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z4_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                default:
+                  - variables:
+                      _tgt: "{{ v_z4_hd if _is_day else (v_z4_he if _is_eve else v_z4_hn) }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z4_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z4_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 5 – Heating
+          - if:
+              - condition: template
+                value_template: "{{ v_z5_en and v_z5_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z5_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z5_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z5_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z5_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z5_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _tgt: "{{ v_z5_hd if _is_day else (v_z5_he if _is_eve else v_z5_hn) }}"
+                          _hs: "{{ v_z5_hhds if _is_day else v_z5_hhns }}"
+                          _hp: "{{ v_z5_hhdp if _is_day else v_z5_hhnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z5_tmp is not none and _z5_tmp >= _hp
+                                 and states(v_z5_clim) == 'heat' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z5_clim }}"
+                            data:
+                              hvac_mode: off
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z5_tmp is not none and _z5_tmp < _hs
+                                 and states(v_z5_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z5_clim }}"
+                            data:
+                              hvac_mode: heat
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z5_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z5_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                default:
+                  - variables:
+                      _tgt: "{{ v_z5_hd if _is_day else (v_z5_he if _is_eve else v_z5_hn) }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z5_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z5_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+      # ══════════════════════════════════════════════════════
+      # COOLING MODE — ALL ZONES
+      # ══════════════════════════════════════════════════════
+      - conditions: "{{ _mode == v_m_cool }}"
+        sequence:
+
+          # Zone 1 – Cooling
+          - if:
+              - condition: template
+                value_template: "{{ v_z1_en }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z1_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z1_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z1_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z1_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z1_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _base: "{{ v_z1_cd if _is_day else (v_z1_ce if _is_eve else v_z1_cn) }}"
+                          _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                          _cs: "{{ v_z1_chds if _is_day else v_z1_chns }}"
+                          _cp: "{{ v_z1_chdp if _is_day else v_z1_chnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z1_tmp is not none and _z1_tmp >= _cs
+                                 and states(v_z1_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z1_clim }}"
+                            data:
+                              hvac_mode: cool
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z1_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z1_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z1_tmp is not none and _z1_tmp <= _cp
+                                 and states(v_z1_clim) == 'cool' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z1_clim }}"
+                            data:
+                              hvac_mode: off
+                default:
+                  - variables:
+                      _base: "{{ v_z1_cd if _is_day else (v_z1_ce if _is_eve else v_z1_cn) }}"
+                      _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z1_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z1_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 2 – Cooling
+          - if:
+              - condition: template
+                value_template: "{{ v_z2_en and v_z2_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z2_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z2_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z2_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z2_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z2_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _base: "{{ v_z2_cd if _is_day else (v_z2_ce if _is_eve else v_z2_cn) }}"
+                          _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                          _cs: "{{ v_z2_chds if _is_day else v_z2_chns }}"
+                          _cp: "{{ v_z2_chdp if _is_day else v_z2_chnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z2_tmp is not none and _z2_tmp >= _cs
+                                 and states(v_z2_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z2_clim }}"
+                            data:
+                              hvac_mode: cool
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z2_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z2_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z2_tmp is not none and _z2_tmp <= _cp
+                                 and states(v_z2_clim) == 'cool' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z2_clim }}"
+                            data:
+                              hvac_mode: off
+                default:
+                  - variables:
+                      _base: "{{ v_z2_cd if _is_day else (v_z2_ce if _is_eve else v_z2_cn) }}"
+                      _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z2_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z2_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 3 – Cooling
+          - if:
+              - condition: template
+                value_template: "{{ v_z3_en and v_z3_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z3_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z3_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z3_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z3_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z3_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _base: "{{ v_z3_cd if _is_day else (v_z3_ce if _is_eve else v_z3_cn) }}"
+                          _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                          _cs: "{{ v_z3_chds if _is_day else v_z3_chns }}"
+                          _cp: "{{ v_z3_chdp if _is_day else v_z3_chnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z3_tmp is not none and _z3_tmp >= _cs
+                                 and states(v_z3_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z3_clim }}"
+                            data:
+                              hvac_mode: cool
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z3_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z3_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z3_tmp is not none and _z3_tmp <= _cp
+                                 and states(v_z3_clim) == 'cool' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z3_clim }}"
+                            data:
+                              hvac_mode: off
+                default:
+                  - variables:
+                      _base: "{{ v_z3_cd if _is_day else (v_z3_ce if _is_eve else v_z3_cn) }}"
+                      _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z3_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z3_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 4 – Cooling
+          - if:
+              - condition: template
+                value_template: "{{ v_z4_en and v_z4_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z4_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z4_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z4_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z4_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z4_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _base: "{{ v_z4_cd if _is_day else (v_z4_ce if _is_eve else v_z4_cn) }}"
+                          _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                          _cs: "{{ v_z4_chds if _is_day else v_z4_chns }}"
+                          _cp: "{{ v_z4_chdp if _is_day else v_z4_chnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z4_tmp is not none and _z4_tmp >= _cs
+                                 and states(v_z4_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z4_clim }}"
+                            data:
+                              hvac_mode: cool
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z4_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z4_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z4_tmp is not none and _z4_tmp <= _cp
+                                 and states(v_z4_clim) == 'cool' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z4_clim }}"
+                            data:
+                              hvac_mode: off
+                default:
+                  - variables:
+                      _base: "{{ v_z4_cd if _is_day else (v_z4_ce if _is_eve else v_z4_cn) }}"
+                      _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z4_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z4_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+          # Zone 5 – Cooling
+          - if:
+              - condition: template
+                value_template: "{{ v_z5_en and v_z5_clim not in [none, ''] }}"
+            then:
+              - choose:
+                  - conditions: "{{ _z5_wopen }}"
+                    sequence:
+                      - if:
+                          - condition: template
+                            value_template: "{{ states(v_z5_clim) != 'off' }}"
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z5_clim }}"
+                            data:
+                              hvac_mode: off
+                  - conditions: "{{ not _z5_aok }}"
+                    sequence: []
+                  - conditions: "{{ v_z5_ext not in [none, ''] }}"
+                    sequence:
+                      - variables:
+                          _base: "{{ v_z5_cd if _is_day else (v_z5_ce if _is_eve else v_z5_cn) }}"
+                          _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                          _cs: "{{ v_z5_chds if _is_day else v_z5_chns }}"
+                          _cp: "{{ v_z5_chdp if _is_day else v_z5_chnp }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z5_tmp is not none and _z5_tmp >= _cs
+                                 and states(v_z5_clim) in ['off', 'idle'] }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z5_clim }}"
+                            data:
+                              hvac_mode: cool
+                          - if:
+                              - condition: template
+                                value_template: >
+                                  {{ state_attr(v_z5_clim, 'temperature') | float(0) != _tgt | float }}
+                            then:
+                              - service: climate.set_temperature
+                                target:
+                                  entity_id: "{{ v_z5_clim }}"
+                                data:
+                                  temperature: "{{ _tgt }}"
+                      - if:
+                          - condition: template
+                            value_template: >
+                              {{ _z5_tmp is not none and _z5_tmp <= _cp
+                                 and states(v_z5_clim) == 'cool' }}
+                        then:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: "{{ v_z5_clim }}"
+                            data:
+                              hvac_mode: off
+                default:
+                  - variables:
+                      _base: "{{ v_z5_cd if _is_day else (v_z5_ce if _is_eve else v_z5_cn) }}"
+                      _tgt: "{{ _base - v_boost_off | float if _boost else _base }}"
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ state_attr(v_z5_clim, 'temperature') | float(0) != _tgt | float }}
+                    then:
+                      - service: climate.set_temperature
+                        target:
+                          entity_id: "{{ v_z5_clim }}"
+                        data:
+                          temperature: "{{ _tgt }}"
+
+      # ══════════════════════════════════════════════════════
+      # AWAY MODE — ALL ZONES
+      # ══════════════════════════════════════════════════════
+      - conditions: "{{ _mode == v_m_away }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ v_z1_en }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: >
+                      {{ state_attr(v_z1_clim, 'temperature') | float(0) != v_away_temp | float
+                         or states(v_z1_clim) == 'off' }}
+                then:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ v_z1_clim }}"
+                    data:
+                      hvac_mode: "{{ v_away_hvac }}"
+                  - service: climate.set_temperature
+                    target:
+                      entity_id: "{{ v_z1_clim }}"
+                    data:
+                      temperature: "{{ v_away_temp }}"
+          - if:
+              - condition: template
+                value_template: "{{ v_z2_en and v_z2_clim not in [none, ''] }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: >
+                      {{ state_attr(v_z2_clim, 'temperature') | float(0) != v_away_temp | float
+                         or states(v_z2_clim) == 'off' }}
+                then:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ v_z2_clim }}"
+                    data:
+                      hvac_mode: "{{ v_away_hvac }}"
+                  - service: climate.set_temperature
+                    target:
+                      entity_id: "{{ v_z2_clim }}"
+                    data:
+                      temperature: "{{ v_away_temp }}"
+          - if:
+              - condition: template
+                value_template: "{{ v_z3_en and v_z3_clim not in [none, ''] }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: >
+                      {{ state_attr(v_z3_clim, 'temperature') | float(0) != v_away_temp | float
+                         or states(v_z3_clim) == 'off' }}
+                then:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ v_z3_clim }}"
+                    data:
+                      hvac_mode: "{{ v_away_hvac }}"
+                  - service: climate.set_temperature
+                    target:
+                      entity_id: "{{ v_z3_clim }}"
+                    data:
+                      temperature: "{{ v_away_temp }}"
+          - if:
+              - condition: template
+                value_template: "{{ v_z4_en and v_z4_clim not in [none, ''] }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: >
+                      {{ state_attr(v_z4_clim, 'temperature') | float(0) != v_away_temp | float
+                         or states(v_z4_clim) == 'off' }}
+                then:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ v_z4_clim }}"
+                    data:
+                      hvac_mode: "{{ v_away_hvac }}"
+                  - service: climate.set_temperature
+                    target:
+                      entity_id: "{{ v_z4_clim }}"
+                    data:
+                      temperature: "{{ v_away_temp }}"
+          - if:
+              - condition: template
+                value_template: "{{ v_z5_en and v_z5_clim not in [none, ''] }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: >
+                      {{ state_attr(v_z5_clim, 'temperature') | float(0) != v_away_temp | float
+                         or states(v_z5_clim) == 'off' }}
+                then:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ v_z5_clim }}"
+                    data:
+                      hvac_mode: "{{ v_away_hvac }}"
+                  - service: climate.set_temperature
+                    target:
+                      entity_id: "{{ v_z5_clim }}"
+                    data:
+                      temperature: "{{ v_away_temp }}"
+
+      # Dry / Fan / Off / Free modes → handled by main entity only (Step 2)
+      # No additional action on individual zones
+
+mode: single
+max_exceeded: silent

@@ -1,0 +1,72 @@
+blueprint:
+  name: Bathroom Shower Lock (Door + Presence Hold)
+  description: >
+    Keeps lights on while the bathroom door is closed and presence is detected.
+    Prevents lights from turning off during showers or extended stillness.
+    Releases when the door opens or presence is lost.
+
+  domain: automation
+
+  input:
+    presence_sensor:
+      name: Presence Sensor (mmWave)
+      selector:
+        entity:
+          domain: binary_sensor
+
+    door_sensor:
+      name: Door Sensor
+      description: OFF = closed, ON = open
+      selector:
+        entity:
+          domain: binary_sensor
+
+    light_target:
+      name: Lights
+      selector:
+        target:
+          entity:
+            domain: light
+
+    exit_delay:
+      name: Exit Delay (seconds)
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 30
+          step: 1
+          mode: slider
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input door_sensor
+    to: "off"
+
+condition:
+  - condition: state
+    entity_id: !input presence_sensor
+    state: "on"
+
+action:
+  - delay:
+      seconds: !input exit_delay
+
+  - if:
+      - condition: state
+        entity_id: !input presence_sensor
+        state: "off"
+    then:
+      - service: light.turn_off
+        target: !input light_target
+      - stop: Occupancy lost
+
+  - wait_for_trigger:
+      - platform: state
+        entity_id: !input door_sensor
+        to: "on"
+
+  - service: light.turn_off
+    target: !input light_target

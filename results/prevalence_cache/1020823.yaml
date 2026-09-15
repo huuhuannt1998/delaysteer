@@ -1,0 +1,391 @@
+blueprint:
+  name: Riarmo automatico interruttore
+  description: "Riarmo automatico di un interruttore quando viene spento, con notifica\
+    \ opzionale.\n_Versione italiana. La versione mantenuta, in inglese, e su\
+    \ https://github.com/driin0/home-assistant-blueprints — le correzioni future\
+    \ arrivano prima li._\n"
+
+  domain: automation
+  author: driin0
+  homeassistant:
+    # notify.send_message and the notify entity platform arrived in 2024.6.
+    min_version: 2024.6.0
+  input:
+    switch_entity:
+      name: Interruttore da monitorare
+      description: L'interruttore che deve essere riarmato automaticamente
+      selector:
+        entity:
+          domain:
+          - switch
+          multiple: false
+          reorder: false
+    switch_name_custom:
+      name: Nome dell'interruttore personalizzato
+      description: Nome personalizzato dell'interruttore da includere nelle notifiche
+      default: ''
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    boolean_entity:
+      name: Booleano di controllo
+      description: Il booleano che abilita/disabilita il riarmo automatico
+      selector:
+        entity:
+          domain:
+          - input_boolean
+          multiple: false
+          reorder: false
+    auto_restart_delay:
+      name: Ritardo prima del riarmo
+      description: Tempo di attesa in secondi prima di tentare il riarmo
+      default: 5
+      selector:
+        number:
+          min: 0.0
+          max: 60.0
+          unit_of_measurement: secondi
+          step: 1.0
+          mode: slider
+    auto_restart_multiplier:
+      name: Moltiplicatore tempo ritardo
+      description: "Coefficiente di moltiplicazione del tempo di attesa\n_Esempio
+        per coefficiente 2.0 e ritardo 5 sec_\n- Prima occorrenza: _5 sec_\n- Seconda
+        occorrenza: _10 sec_\n    _(tempo prededente per coefficiente: 5 sec * 2.0
+        = 10 sec)_\n- Terza occorrenza: _20 sec_\n    _(tempo prededente per coefficiente:
+        10 sec * 2.0 = 20 sec)_\n"
+      default: 2.0
+      selector:
+        number:
+          min: 1.0
+          max: 10.0
+          step: 0.1
+          mode: slider
+    auto_restart_max_delay:
+      name: Ritardo massimo tra i tentativi
+      description: "Il tempo di attesa non cresce mai oltre questo valore, qualunque\
+        \ sia il moltiplicatore.\n_Senza un tetto, l'attesa esponenziale raggiunge\
+        \ valori assurdi: con ritardo 20 sec, moltiplicatore 3 e 8 tentativi l'ultimo\
+        \ arriva 18 ore dopo lo scatto._\n"
+      default: 3600
+      selector:
+        number:
+          min: 60.0
+          max: 86400.0
+          unit_of_measurement: secondi
+          step: 60.0
+          mode: box
+    reachability_timeout:
+      name: Attesa massima per il ritorno del dispositivo
+      description: "Quanto attendere che il dispositivo torni raggiungibile e riporti\
+        \ di nuovo lo stato dell'interruttore.\n_Senza questo limite l'automazione\
+        \ resterebbe in attesa per sempre su un dispositivo che non torna, e girando\
+        \ in modalita singola bloccherebbe anche tutti gli scatti successivi._\n"
+      default: 300
+      selector:
+        number:
+          min: 10.0
+          max: 3600.0
+          unit_of_measurement: secondi
+          step: 10.0
+          mode: box
+    settle_delay:
+      name: Tempo di assestamento dopo il riarmo
+      description: Quanto attendere dopo aver riacceso, prima di verificare che il
+        dispositivo sia di nuovo raggiungibile
+      default: 10
+      selector:
+        number:
+          min: 0.0
+          max: 300.0
+          unit_of_measurement: secondi
+          step: 1.0
+          mode: box
+    auto_restart_timeout:
+      name: Timeout del riarmo
+      description: Tempo massimo per verificare se il riarmo ha avuto successo
+      default: 30
+      selector:
+        number:
+          min: 1.0
+          max: 60.0
+          unit_of_measurement: secondi
+          step: 1.0
+          mode: slider
+    max_attempts:
+      name: Numero di tentativi
+      description: Numero massimo di tentativi di riarmo prima di segnalare il fallimento
+      default: 3
+      selector:
+        number:
+          min: 1.0
+          max: 10.0
+          step: 1.0
+          mode: slider
+    binary_sensor_entity:
+      name: Sensore binario di monitoraggio
+      description: Il sensore binario che indica la raggiungibilità dell'interruttore
+        (opzionale)
+      default: ''
+      selector:
+        entity:
+          domain:
+          - binary_sensor
+          - device_tracker
+          multiple: false
+          reorder: false
+    enable_notifications:
+      name: Abilita notifiche
+      description: Se abilitato, invierà notifiche quando l'interruttore viene riarmato
+        o fallisce
+      default: false
+      selector:
+        boolean: {}
+    notify_target:
+      name: Destinatario della notifica
+      description: "Entità notify che riceverà il messaggio.\n_Le entità notify\
+        \ delle app mobili esistono da Home Assistant 2026.5: su versioni precedenti\
+        \ vanno usate quelle di altre integrazioni._\n"
+      default: notify.person
+      selector:
+        entity:
+          domain:
+          - notify
+          multiple: false
+          reorder: false
+    notify_title_off:
+      name: Titolo notifica - Interruttore spento
+      description: Titolo della notifica quando l'interruttore si spegne
+      default: '*⚠️ Interruttore {{switch_name}} spento ⚠️*'
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_message_off:
+      name: Messaggio notifica - Interruttore spento
+      description: Messaggio della notifica quando l'interruttore si spegne
+      default: L'interruttore {{switch_name}} si è spento. Verrà effettuato un primo
+        tentativo di riarmo.
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_title_on:
+      name: Titolo notifica - Riarmo completato
+      description: Titolo della notifica quando il riarmo è completato
+      default: "*\U0001F7E2 Riarmo interruttore {{switch_name}} completato \U0001F7E2*"
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_message_on:
+      name: Messaggio notifica - Riarmo completato
+      description: Messaggio della notifica quando il riarmo è completato
+      default: Il riarmo dell'interruttore {{switch_name}} è stato completato in {{current_attempt}}
+        tentativo/i.
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_title_fail_retry:
+      name: Titolo notifica - Tentativo fallito
+      description: Titolo della notifica quando il tentativo di riarmo fallisce
+      default: '*⚠️ Riarmo interruttore {{switch_name}} fallito ⚠️*'
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_message_fail_retry:
+      name: Messaggio notifica - Tentativo fallito
+      description: Messaggio della notifica quando il tentativo di riarmo fallisce
+      default: Il riarmo dell'interruttore {{switch_name}} ha provocato un'ulteriore
+        interruzione e quindi verrà effettuato un nuovo tentativo di riarmo. Tentativo
+        {{next_attempt}} di {{max_attempts}}.
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_title_unreachable:
+      name: Titolo notifica - Dispositivo non tornato
+      description: Titolo della notifica quando il dispositivo non torna raggiungibile
+      default: "*\U0001F534 {{switch_name}} non raggiungibile \U0001F534*"
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_message_unreachable:
+      name: Messaggio notifica - Dispositivo non tornato
+      description: Messaggio della notifica quando il dispositivo non torna raggiungibile
+      default: Il dispositivo {{switch_name}} non e tornato raggiungibile entro il
+        tempo previsto. Il riarmo automatico e stato lasciato disattivato.
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_title_fail:
+      name: Titolo notifica - Riarmo fallito
+      description: Titolo della notifica quando il riarmo fallisce
+      default: "*\U0001F534 Riarmo interruttore {{switch_name}} fallito \U0001F534*"
+      selector:
+        text:
+          multiple: false
+          multiline: false
+    notify_message_fail:
+      name: Messaggio notifica - Riarmo fallito
+      description: Messaggio della notifica quando il riarmo fallisce
+      default: Il riarmo dell'interruttore {{switch_name}} ha provocato un'ulteriore
+        interruzione e quindi il riarmo automatico è stato disattivato.
+      selector:
+        text:
+          multiple: false
+          multiline: false
+  source_url: https://gist.github.com/driin0/f28c2013c95f8eb39c407d73aecd156c
+variables:
+  switch_entity: !input switch_entity
+  binary_sensor_entity: !input binary_sensor_entity
+  switch_name_custom: !input switch_name_custom
+  auto_restart_delay: !input auto_restart_delay
+  auto_restart_multiplier: !input auto_restart_multiplier
+  auto_restart_timeout: !input auto_restart_timeout
+  auto_restart_max_delay: !input auto_restart_max_delay
+  reachability_timeout: !input reachability_timeout
+  settle_delay: !input settle_delay
+  enable_notifications: !input enable_notifications
+  max_attempts: !input max_attempts
+  switch_name: "{% if switch_name_custom == '' %}\n  {{ states[switch_entity].name
+    | lower }}\n{% else %}\n  {{ switch_name_custom }}\n{% endif %}\n"
+trigger:
+- platform: state
+  entity_id: !input switch_entity
+  from: 'on'
+  to: 'off'
+condition:
+- condition: state
+  entity_id: !input boolean_entity
+  state: 'on'
+action:
+- choose:
+  - conditions:
+    - condition: template
+      value_template: '{{ enable_notifications }}'
+    sequence:
+    - service: notify.send_message
+      target:
+        entity_id: !input notify_target
+      data:
+        title: !input notify_title_off
+        message: !input notify_message_off
+- service: input_boolean.turn_off
+  target:
+    entity_id: !input boolean_entity
+- repeat:
+    count: !input max_attempts
+    sequence:
+    - variables:
+        current_attempt: '{{ repeat.index }}'
+        next_attempt: '{{ current_attempt + 1 }}'
+        dynamic_delay: '{{ [ (auto_restart_delay * (auto_restart_multiplier ** (current_attempt
+          - 1))), auto_restart_max_delay ] | min | int }}'
+    - delay:
+        seconds: '{{ dynamic_delay }}'
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ binary_sensor_entity != '''' }}'
+        sequence:
+        - wait_template: '{{ states(binary_sensor_entity) in [''on'', ''home''] }}'
+          timeout:
+            seconds: '{{ reachability_timeout }}'
+          continue_on_timeout: true
+        - wait_template: '{{ is_state(switch_entity, ''off'') }}'
+          timeout:
+            seconds: '{{ reachability_timeout }}'
+          continue_on_timeout: true
+        - choose:
+          - conditions:
+            - condition: template
+              value_template: '{{ not (states(binary_sensor_entity) in [''on'', ''home''] and is_state(switch_entity,
+                ''off'')) }}'
+            sequence:
+            - choose:
+              - conditions:
+                - condition: template
+                  value_template: '{{ enable_notifications }}'
+                sequence:
+                - service: notify.send_message
+                  target:
+                    entity_id: !input notify_target
+                  data:
+                    title: !input notify_title_unreachable
+                    message: !input notify_message_unreachable
+            - stop: Il dispositivo non e tornato raggiungibile
+    - service: switch.turn_on
+      target:
+        entity_id: !input switch_entity
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ binary_sensor_entity != '''' }}'
+        sequence:
+        - delay:
+            seconds: '{{ settle_delay }}'
+        - wait_template: '{{ states(binary_sensor_entity) in [''on'', ''home''] }}'
+          timeout:
+            seconds: '{{ reachability_timeout }}'
+          continue_on_timeout: true
+    - wait_for_trigger:
+      - platform: state
+        entity_id: !input switch_entity
+        to: 'off'
+      timeout:
+        seconds: !input auto_restart_timeout
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: !input switch_entity
+          state: 'on'
+        sequence:
+        - service: input_boolean.turn_on
+          target:
+            entity_id: !input boolean_entity
+        - choose:
+          - conditions:
+            - condition: template
+              value_template: '{{ enable_notifications }}'
+            sequence:
+            - service: notify.send_message
+              target:
+                entity_id: !input notify_target
+              data:
+                title: !input notify_title_on
+                message: !input notify_message_on
+        - stop: true
+      default:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ enable_notifications }}'
+          sequence:
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: '{{ current_attempt < max_attempts }}'
+              sequence:
+              - service: notify.send_message
+                target:
+                  entity_id: !input notify_target
+                data:
+                  title: !input notify_title_fail_retry
+                  message: !input notify_message_fail_retry
+            default:
+            - service: notify.send_message
+              target:
+                entity_id: !input notify_target
+              data:
+                title: !input notify_title_fail
+                message: !input notify_message_fail
+
+# single e voluto: cicli di riarmo sovrapposti sullo stesso interruttore
+# si ostacolerebbero. Per questo ogni attesa qui sopra ha un timeout.
+mode: single

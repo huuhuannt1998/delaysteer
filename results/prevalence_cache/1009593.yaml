@@ -1,0 +1,397 @@
+blueprint:
+  name: MCZ71 Multi-Channel Remote Control
+  description: >
+    Blueprint for the MCZ71 Multi-Channel Remote Control device.
+    Supports 12 channels × 3 buttons (Up, Down, Home) = 36 scene events.
+
+    Scene mapping:
+      001–012 → Channels 1–12 Up
+      013–024 → Channels 1–12 Down
+      025–036 → Channels 1–12 Home
+
+  domain: automation
+  input:
+    remote_device:
+      name: Remote Control Device
+      description: The MCZ71 Multi-Channel Remote Control device.
+      selector:
+        device:
+          integration: zwave_js
+
+    # ── Channel 1 ──────────────────────────────────────────────────────────────
+    channel_1_up:
+      name: "Channel 1 – Up (Scene 001)"
+      description: Action to run when Channel 1 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_1_down:
+      name: "Channel 1 – Down (Scene 013)"
+      description: Action to run when Channel 1 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_1_home:
+      name: "Channel 1 – Home (Scene 025)"
+      description: Action to run when Channel 1 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 2 ──────────────────────────────────────────────────────────────
+    channel_2_up:
+      name: "Channel 2 – Up (Scene 002)"
+      description: Action to run when Channel 2 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_2_down:
+      name: "Channel 2 – Down (Scene 014)"
+      description: Action to run when Channel 2 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_2_home:
+      name: "Channel 2 – Home (Scene 026)"
+      description: Action to run when Channel 2 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 3 ──────────────────────────────────────────────────────────────
+    channel_3_up:
+      name: "Channel 3 – Up (Scene 003)"
+      description: Action to run when Channel 3 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_3_down:
+      name: "Channel 3 – Down (Scene 015)"
+      description: Action to run when Channel 3 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_3_home:
+      name: "Channel 3 – Home (Scene 027)"
+      description: Action to run when Channel 3 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 4 ──────────────────────────────────────────────────────────────
+    channel_4_up:
+      name: "Channel 4 – Up (Scene 004)"
+      description: Action to run when Channel 4 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_4_down:
+      name: "Channel 4 – Down (Scene 016)"
+      description: Action to run when Channel 4 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_4_home:
+      name: "Channel 4 – Home (Scene 028)"
+      description: Action to run when Channel 4 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 5 ──────────────────────────────────────────────────────────────
+    channel_5_up:
+      name: "Channel 5 – Up (Scene 005)"
+      description: Action to run when Channel 5 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_5_down:
+      name: "Channel 5 – Down (Scene 017)"
+      description: Action to run when Channel 5 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_5_home:
+      name: "Channel 5 – Home (Scene 029)"
+      description: Action to run when Channel 5 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 6 ──────────────────────────────────────────────────────────────
+    channel_6_up:
+      name: "Channel 6 – Up (Scene 006)"
+      description: Action to run when Channel 6 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_6_down:
+      name: "Channel 6 – Down (Scene 018)"
+      description: Action to run when Channel 6 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_6_home:
+      name: "Channel 6 – Home (Scene 030)"
+      description: Action to run when Channel 6 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 7 ──────────────────────────────────────────────────────────────
+    channel_7_up:
+      name: "Channel 7 – Up (Scene 007)"
+      description: Action to run when Channel 7 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_7_down:
+      name: "Channel 7 – Down (Scene 019)"
+      description: Action to run when Channel 7 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_7_home:
+      name: "Channel 7 – Home (Scene 031)"
+      description: Action to run when Channel 7 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 8 ──────────────────────────────────────────────────────────────
+    channel_8_up:
+      name: "Channel 8 – Up (Scene 008)"
+      description: Action to run when Channel 8 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_8_down:
+      name: "Channel 8 – Down (Scene 020)"
+      description: Action to run when Channel 8 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_8_home:
+      name: "Channel 8 – Home (Scene 032)"
+      description: Action to run when Channel 8 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 9 ──────────────────────────────────────────────────────────────
+    channel_9_up:
+      name: "Channel 9 – Up (Scene 009)"
+      description: Action to run when Channel 9 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_9_down:
+      name: "Channel 9 – Down (Scene 021)"
+      description: Action to run when Channel 9 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_9_home:
+      name: "Channel 9 – Home (Scene 033)"
+      description: Action to run when Channel 9 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 10 ─────────────────────────────────────────────────────────────
+    channel_10_up:
+      name: "Channel 10 – Up (Scene 010)"
+      description: Action to run when Channel 10 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_10_down:
+      name: "Channel 10 – Down (Scene 022)"
+      description: Action to run when Channel 10 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_10_home:
+      name: "Channel 10 – Home (Scene 034)"
+      description: Action to run when Channel 10 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 11 ─────────────────────────────────────────────────────────────
+    channel_11_up:
+      name: "Channel 11 – Up (Scene 011)"
+      description: Action to run when Channel 11 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_11_down:
+      name: "Channel 11 – Down (Scene 023)"
+      description: Action to run when Channel 11 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_11_home:
+      name: "Channel 11 – Home (Scene 035)"
+      description: Action to run when Channel 11 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+    # ── Channel 12 ─────────────────────────────────────────────────────────────
+    channel_12_up:
+      name: "Channel 12 – Up (Scene 012)"
+      description: Action to run when Channel 12 Up is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_12_down:
+      name: "Channel 12 – Down (Scene 024)"
+      description: Action to run when Channel 12 Down is pressed.
+      default: []
+      selector:
+        action: {}
+
+    channel_12_home:
+      name: "Channel 12 – Home (Scene 036)"
+      description: Action to run when Channel 12 Home is pressed.
+      default: []
+      selector:
+        action: {}
+
+# ── Trigger ────────────────────────────────────────────────────────────────────
+trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      device_id: !input remote_device
+      command_class_name: Central Scene
+      property: scene
+
+# ── Action ─────────────────────────────────────────────────────────────────────
+action:
+  - variables:
+      scene_key: "{{ trigger.event.data.property_key }}"
+
+  - choose:
+      # ── Channel 1 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '001' }}"
+        sequence: !input channel_1_up
+      - conditions: "{{ scene_key == '013' }}"
+        sequence: !input channel_1_down
+      - conditions: "{{ scene_key == '025' }}"
+        sequence: !input channel_1_home
+
+      # ── Channel 2 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '002' }}"
+        sequence: !input channel_2_up
+      - conditions: "{{ scene_key == '014' }}"
+        sequence: !input channel_2_down
+      - conditions: "{{ scene_key == '026' }}"
+        sequence: !input channel_2_home
+
+      # ── Channel 3 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '003' }}"
+        sequence: !input channel_3_up
+      - conditions: "{{ scene_key == '015' }}"
+        sequence: !input channel_3_down
+      - conditions: "{{ scene_key == '027' }}"
+        sequence: !input channel_3_home
+
+      # ── Channel 4 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '004' }}"
+        sequence: !input channel_4_up
+      - conditions: "{{ scene_key == '016' }}"
+        sequence: !input channel_4_down
+      - conditions: "{{ scene_key == '028' }}"
+        sequence: !input channel_4_home
+
+      # ── Channel 5 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '005' }}"
+        sequence: !input channel_5_up
+      - conditions: "{{ scene_key == '017' }}"
+        sequence: !input channel_5_down
+      - conditions: "{{ scene_key == '029' }}"
+        sequence: !input channel_5_home
+
+      # ── Channel 6 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '006' }}"
+        sequence: !input channel_6_up
+      - conditions: "{{ scene_key == '018' }}"
+        sequence: !input channel_6_down
+      - conditions: "{{ scene_key == '030' }}"
+        sequence: !input channel_6_home
+
+      # ── Channel 7 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '007' }}"
+        sequence: !input channel_7_up
+      - conditions: "{{ scene_key == '019' }}"
+        sequence: !input channel_7_down
+      - conditions: "{{ scene_key == '031' }}"
+        sequence: !input channel_7_home
+
+      # ── Channel 8 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '008' }}"
+        sequence: !input channel_8_up
+      - conditions: "{{ scene_key == '020' }}"
+        sequence: !input channel_8_down
+      - conditions: "{{ scene_key == '032' }}"
+        sequence: !input channel_8_home
+
+      # ── Channel 9 ────────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '009' }}"
+        sequence: !input channel_9_up
+      - conditions: "{{ scene_key == '021' }}"
+        sequence: !input channel_9_down
+      - conditions: "{{ scene_key == '033' }}"
+        sequence: !input channel_9_home
+
+      # ── Channel 10 ───────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '010' }}"
+        sequence: !input channel_10_up
+      - conditions: "{{ scene_key == '022' }}"
+        sequence: !input channel_10_down
+      - conditions: "{{ scene_key == '034' }}"
+        sequence: !input channel_10_home
+
+      # ── Channel 11 ───────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '011' }}"
+        sequence: !input channel_11_up
+      - conditions: "{{ scene_key == '023' }}"
+        sequence: !input channel_11_down
+      - conditions: "{{ scene_key == '035' }}"
+        sequence: !input channel_11_home
+
+      # ── Channel 12 ───────────────────────────────────────────────────────────
+      - conditions: "{{ scene_key == '012' }}"
+        sequence: !input channel_12_up
+      - conditions: "{{ scene_key == '024' }}"
+        sequence: !input channel_12_down
+      - conditions: "{{ scene_key == '036' }}"
+        sequence: !input channel_12_home
+
+mode: parallel
+max: 10

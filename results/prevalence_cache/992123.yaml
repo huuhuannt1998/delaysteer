@@ -1,0 +1,149 @@
+blueprint:
+  name: "Snapshot avec Délai, Script et Condition (Vidéo/Snapshot)"
+  description: "Capture une séquence/image, notifie, exécute un script et évalue un interrupteur global optionnel."
+  domain: automation
+  input:
+    condition_switch:
+      name: "Interrupteur d'activation (Optionnel)"
+      description: "Entité input_boolean. Si définie et sur 'off', annule l'exécution de l'alerte. Laissez vide pour ignorer."
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+    target_script:
+      name: "Script (Optionnel)"
+      description: "Sélectionnez un script à exécuter au déclenchement. Laissez vide pour l'ignorer."
+      default: ""
+      selector:
+        entity:
+          domain: script
+    delay_capture:
+      name: "Délai avant capture"
+      description: "Temps d'attente (en secondes) avant de déclencher l'enregistrement ou le snapshot."
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 15
+          step: 0.5
+          mode: slider
+    capture_mode:
+      name: "Mode de capture"
+      description: "Format du média à capturer et envoyer."
+      default: "video"
+      selector:
+        select:
+          options:
+            - label: "Séquence animée"
+              value: "video"
+            - label: "Snapshot (Image fixe)"
+              value: "snapshot"
+    motion_sensor:
+      name: "Capteur"
+      description: "L'entité binaire qui déclenche l'alerte."
+      selector:
+        entity:
+          domain: binary_sensor
+    camera_entity:
+      name: "Caméra"
+      description: "La caméra source."
+      selector:
+        entity:
+          domain: camera
+    record_duration:
+      name: "Durée (séquence uniquement)"
+      description: "Temps d'enregistrement en secondes."
+      default: 3
+      selector:
+        number:
+          min: 2
+          max: 8
+          step: 1
+          mode: slider
+    telegram_chat_id:
+      name: "ID Chat Telegram"
+      description: "L'identifiant numérique de la discussion."
+      selector:
+        text: {}
+    notify_title:
+      name: "Titre de la notification"
+      description: "En-tête du message Telegram (sera mis en gras)."
+      default: "Alerte"
+      selector:
+        text: {}
+    notify_text:
+      name: "Texte de la notification"
+      description: "Texte d'accompagnement sous le titre."
+      default: "à {{ now().strftime('%H:%M') }}, le {{ now().strftime('%d.%m.%Y') }}."
+      selector:
+        text:
+          multiline: true
+
+variables:
+  mode: !input capture_mode
+  var_title: !input notify_title
+  var_text: !input notify_text
+  var_script: !input target_script
+  var_condition: !input condition_switch
+
+trigger:
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "on"
+
+action:
+  # 0. Évaluation de la condition maître (Bloquante si 'off')
+  - condition: template
+    value_template: "{{ var_condition | length == 0 or is_state(var_condition, 'on') }}"
+
+  # 1. Exécution du script optionnel (Immédiat)
+  - if:
+      - condition: template
+        value_template: "{{ var_script | length > 0 }}"
+    then:
+      - action: script.turn_on
+        target:
+          entity_id: "{{ var_script }}"
+
+  # 2. Temporisation avant l'action de capture
+  - delay:
+      seconds: !input delay_capture
+
+  # 3. Routage vers le mode sélectionné
+  - choose:
+      # Branche 1 : Mode Vidéo
+      - conditions:
+          - condition: template
+            value_template: "{{ mode == 'video' }}"
+        sequence:
+          - action: camera.record
+            target:
+              entity_id: !input camera_entity
+            data:
+              filename: "/config/www/snapshots/temp_raw.mp4"
+              duration: !input record_duration
+              lookback: 0
+          - action: shell_command.process_alert_video
+          - action: telegram_bot.send_video
+            data:
+              chat_id: !input telegram_chat_id
+              file: "/config/www/snapshots/alert_final.mp4"
+              caption: "<b>{{ var_title }}</b>\n{{ var_text }}"
+              parse_mode: "html"
+
+      # Branche 2 : Mode Snapshot
+      - conditions:
+          - condition: template
+            value_template: "{{ mode == 'snapshot' }}"
+        sequence:
+          - action: camera.snapshot
+            target:
+              entity_id: !input camera_entity
+            data:
+              filename: "/config/www/snapshots/alert_snapshot.jpg"
+          - action: telegram_bot.send_photo
+            data:
+              chat_id: !input telegram_chat_id
+              file: "/config/www/snapshots/alert_snapshot.jpg"
+              caption: "<b>{{ var_title }}</b>\n{{ var_text }}"
+              parse_mode: "html"

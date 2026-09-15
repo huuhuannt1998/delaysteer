@@ -74,6 +74,25 @@ class HomeAssistantAdapter(HomeAdapter):
 
     # ---- HomeAdapter interface ----
     def get_state(self, entity_id: str) -> Observation:
+        # Active-poll revalidation (TemporalGuard sets `active_poll` on the adapter at the
+        # commit). A plain GET returns the platform's CACHED state, whose generation time is
+        # whenever the integration last reported -- so a commit-time re-read of a slow-reporting
+        # entity is not fresher than the read the planner already had. Forcing
+        # homeassistant.update_entity makes the integration re-poll the device NOW, so the
+        # value-age the guard measures is bounded by the poll round-trip rather than by the
+        # passive reporting cadence. This is the platform primitive measured in
+        # scripts/latency_calibration.py (P99 ~4.4 ms on the bedtime entities). Failures are
+        # non-fatal: if the refresh cannot be issued we fall through to the cached read, which
+        # the guard then judges on its (older) generation time -- fail-closed, never fail-open.
+        if getattr(self, "active_poll", False):
+            try:
+                self._http.post(
+                    f"{self.base_url}/api/services/homeassistant/update_entity",
+                    headers=self._headers(),
+                    content=json.dumps({"entity_id": entity_id}),
+                )
+            except Exception:  # noqa: BLE001 - refresh is best-effort; cached read still applies
+                pass
         resp = self._http.get(
             f"{self.base_url}/api/states/{entity_id}", headers=self._headers()
         )

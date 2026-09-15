@@ -1,0 +1,20 @@
+blueprint:
+  name: "ZHA - TS004F Rotary Knob (Dual Mode Support)"
+  description: |
+    Complete blueprint for Tuya TS004F rotary knob (manufacturer: _TZ3000_402vrq2i and similar).
+    
+    Supports ALL actions in BOTH operating modes:
+    - Mode 1 (Dimmer): Smooth step-based rotation
+    - Mode 2 (Scene): Button-press based rotation
+    
+    Switch modes by triple-clicking the button or long-pressing (device-dependent).
+    
+    Features:
+    - Configurable rotation debounce delay (prevents accidental triggers during button presses)
+    - Single, double, and long press actions
+    - Works in both dimmer and scene modes automatically
+    
+    Compatible with various TS004F manufacturers including:
+    - _TZ3000_402vrq2i
+    - _TZ3000_4fjiwweb (Moes)
+    - _TZ3000_qja6nq5z

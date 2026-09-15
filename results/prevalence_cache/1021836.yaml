@@ -1,0 +1,10 @@
+blueprint:
+  name: Anker SOLIX 4 Pro - Lokale Nulleinspeisung & Eco-Modus
+  description: >
+    Regelt die Nulleinspeisung einer Anker Solix Anlage lokal via Home Assistant.
+    Beinhaltet getrennte Offsets, eine Leistungs-Hysterese, einen Eco-Modus für die Nacht 
+    sowie einen Übersteuerungsschutz (Third Party Mode Wächter) und harte SOC-Grenzen.
+  domain: automation
+  input:
+    # --- ENTITÄTEN ---
+    grid_power_sensor:

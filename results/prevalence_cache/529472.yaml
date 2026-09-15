@@ -1,0 +1,174 @@
+blueprint:
+  name: Ikea STYRBAR automation light
+  description: Turn a light on/off - increase/decrease brightness - set color and temperature
+  domain: automation
+  source_url: https://github.com/robertomontinaro80/ha-blueprint/blob/main/ikea_styrbar_light.yaml
+  input:
+    remote:
+      name: Ikea STYRBAR 2001/2002
+      description: This remote device will manage the light.
+      selector:
+        entity:
+          domain: sensor
+    target_light:
+      name: Light color
+      description: The light color to keep in sync.
+      selector:
+        entity:
+          domain: light
+    force_brightness:
+      name: Force turn on brightness
+      description: Force the brightness to the set level below, when the "on" button
+        on the remote is pushed and lights turn on.
+      default: false
+      selector:
+        boolean: {}
+    brightness:
+      name: Brightness
+      description: Brightness of the light(s) when turning on
+      default: 100
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    brightness_step:
+      name: Brightness step
+      description: Brightness step to increase/decrease brightness of light(s).
+      default: 50.0
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+    kelvin:
+      name: Color temperature
+      description: Color temperature of light(s) when turning on.
+      default: 4000.0
+      selector:
+        number:
+          min: 2000.0
+          max: 6500.0
+          mode: slider
+          step: 100.0
+          unit_of_measurement: '°K'
+mode: restart
+max_exceeded: silent
+variables:
+  force_brightness: !input 'force_brightness'
+  brightness_step: !input 'brightness_step'
+  kelvin: !input 'kelvin'
+trigger:
+- platform: state
+  entity_id: !input remote
+trigger_variables:
+  input_light: !input target_light
+action:
+- variables:
+    command: "{{ trigger.to_state.state }}"
+- choose:
+  - conditions: "{{ command == 'on' }}"
+    sequence:
+    - choose:
+      - conditions: '{{ force_brightness }}'
+        sequence:
+        - service: light.turn_on
+          target:
+            entity_id: !input target_light
+          data:
+            brightness_pct: !input 'brightness'
+            kelvin: !input kelvin
+      default:
+      - service: light.turn_on
+        target: 
+          entity_id: !input target_light
+  - conditions: "{{ command == 'off' }}"
+    sequence:
+    - service: light.turn_off
+      target:
+        entity_id: !input target_light  
+  - conditions:
+    - "{{ command == 'arrow_left_click' }}"
+    sequence:
+    - service: light.turn_on
+      target:
+        entity_id: !input target_light
+      data:
+        hs_color:
+        - >-
+            {% if (((state_attr(input_light, 'hs_color')[0] or 0) - 30) < 0)  %}
+              360
+            {% else %}
+              {{ ((state_attr(input_light, 'hs_color')[0] or 0) - 30) }}
+            {% endif %}
+        - 100        
+  - conditions:
+    - "{{ command == 'arrow_right_click' }}"
+    sequence:
+    - service: light.turn_on
+      target:
+        entity_id: !input target_light
+      data:
+        hs_color:
+        - >-
+            {% if ((30 + (state_attr(input_light, 'hs_color')[0] or 0)) > 360)  %}
+              0
+            {% else %}
+              {{ (30 + (state_attr(input_light, 'hs_color')[0] or 0)) }}
+            {% endif %}
+        - 100
+  - conditions: 
+    - "{{ (command == 'brightness_move_up') }}"
+    sequence:
+    - service: light.turn_on
+      target: 
+        entity_id: !input target_light
+      data:
+        brightness: >-
+          {% if ((brightness_step + (state_attr(input_light, 'brightness') or 0)) > 255)  %}
+            255
+          {% else %}
+            {{ (state_attr(input_light, 'brightness') or 0) + brightness_step }}
+          {% endif %}
+  - conditions: 
+    - "{{ (command == 'brightness_move_down') }}"
+    sequence:
+    - service: light.turn_on
+      target: 
+        entity_id: !input target_light
+      data:
+        brightness: >-
+          {% if (((state_attr(input_light, 'brightness') or 0) - brightness_step) < 0)  %}
+            1
+          {% else %}
+            {{ (state_attr(input_light, 'brightness') or 0) - brightness_step }}
+          {% endif %}
+  - conditions: 
+    - "{{ (command == 'arrow_left_hold') }}"
+    sequence:
+    - service: light.turn_on
+      target: 
+        entity_id: !input target_light
+      data:
+        color_temp: >-
+          {% if (((state_attr(input_light, 'color_temp') or 0) + 100) > 500)  %}
+            500
+          {% else %}
+            {{ (state_attr(input_light, 'color_temp') or 0) + 100 }}
+          {% endif %}
+  - conditions: 
+    - "{{ (command == 'arrow_right_hold') }}"
+    sequence:
+    - service: light.turn_on
+      target: 
+        entity_id: !input target_light
+      data:
+        color_temp: >-
+          {% if (((state_attr(input_light, 'color_temp') or 0) - 100) < 153)  %}
+            153
+          {% else %}
+            {{ (state_attr(input_light, 'color_temp') or 0) - 100 }}
+          {% endif %}

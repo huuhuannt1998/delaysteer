@@ -1,0 +1,138 @@
+blueprint:
+  name: Tuya Rotary Button (ZG-101Z/D ZHA)
+  description: >-
+    Automate Tuya Smart Knob using ZHA events.
+    
+    Faster rotation is reported through the absolute value 'step_multiplier' variable.
+  domain: automation
+  input:
+    smart_knob:
+      name: Smart Knob Device
+      description: Select your Tuya Smart Knob
+      selector:
+        device:
+          integration: zha
+          manufacturer: _TZ3000_gwkzibhs
+          model: TS004F
+          multiple: false
+
+    action_rotate_clockwise:
+      name: Rotate Clockwise
+      default: []
+      selector:
+        action: {}
+
+    action_rotate_anti_clockwise:
+      name: Rotate Anti Clockwise
+      default: []
+      selector:
+        action: {}
+
+    action_single_press:
+      name: Single Press
+      default: []
+      selector:
+        action: {}
+
+    action_double_press:
+      name: Double Press
+      default: []
+      selector:
+        action: {}
+
+    action_long_press:
+      name: Long Press
+      default: []
+      selector:
+        action: {}
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  # --- ROTATE CLOCKWISE (0) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      command: step
+      params:
+        step_mode: 0
+    id: "rotate_clockwise"
+
+  # --- ROTATE ANTI-CLOCKWISE (1) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      command: step
+      params:
+        step_mode: 1
+    id: "rotate_anti_clockwise"
+
+  # --- SINGLE PRESS (0) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      command: toggle
+    id: "single_press"
+
+  # --- DOUBLE PRESS (1) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      command: remote_button_double_press
+    id: "double_press"
+
+  # --- LONG PRESS (2) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      command: move_saturation
+    id: "long_press"
+
+variables:
+  step_size: "{{ trigger.event.data.params.step_size | default(13) | int }}"
+  step_multiplier: "{{ [1, [(step_size / 13) | round(0, 'floor') | int, 5] | min] | max }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "rotate_clockwise"
+        sequence: !input action_rotate_clockwise
+
+      - conditions:
+          - condition: trigger
+            id: "rotate_anti_clockwise"
+        sequence: !input action_rotate_anti_clockwise
+
+      - conditions:
+          - condition: trigger
+            id: "single_press"
+        sequence: !input action_single_press
+
+      - conditions:
+          - condition: trigger
+            id: "double_press"
+        sequence: !input action_double_press
+
+      - conditions:
+          - condition: trigger
+            id: "long_press"
+        sequence:
+          - sequence: !input action_long_press
+          - wait_for_trigger:
+              - trigger: event
+                event_type: zha_event
+                event_data:
+                  device_id: !input smart_knob
+                  command: stop_move_step
+            timeout:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0

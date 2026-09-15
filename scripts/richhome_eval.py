@@ -19,8 +19,8 @@ import argparse, json, os, re, sys, time
 from pathlib import Path
 import httpx
 
-ROOT = Path(__file__).resolve().parents[1]            # repo root (this file is in scripts/)
-HERMES = os.environ.get("HERMES_HOME", str(Path.home() / "hermes-agent"))
+ROOT = Path("/Users/anonymous/Desktop/DelaySteer")
+HERMES = "/Users/anonymous/Desktop/hermes-agent"
 HA = "http://localhost:8123"
 PROXY = "http://localhost:8125"
 
@@ -317,6 +317,8 @@ def main():
     ap.add_argument("--mode", choices=["baseline", "attack", "guard"], required=True)
     ap.add_argument("--model", default="qwen3-14b-64k")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--out", default="results/richhome.jsonl",
+                    help="jsonl output path (use a new name to keep the frozen log additive-safe)")
     args = ap.parse_args()
     sc = SCENARIOS[args.scenario]
 
@@ -383,7 +385,7 @@ def main():
         "proxy_delta": {"stale_serves": stale_serves, "blocks": guard_blocks},
         "latency_s": latency,
     }
-    res = ROOT / "results" / "richhome.jsonl"
+    res = ROOT / args.out
     res.parent.mkdir(exist_ok=True)
     with res.open("a") as f:
         f.write(json.dumps(row) + "\n")

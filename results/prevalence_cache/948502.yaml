@@ -1,0 +1,314 @@
+blueprint:
+  name: Aqara W100 Thermostat Synchronization
+  description: |
+    Synchronizes an Aqara W100 climate controller with a main thermostat entity.
+    Supports bidirectional sync for HVAC mode, temperature, and fan mode.
+    Optionally publishes external temperature and humidity data to the W100 display.
+    Configure which HVAC modes and features your system supports.
+  domain: automation
+  
+  input:
+    main_thermostat:
+      name: Main Thermostat
+      description: The primary thermostat entity to sync with
+      selector:
+        entity:
+          domain: climate
+    aqara_w100:
+      name: Aqara W100 Climate Controller
+      description: The Aqara W100 climate entity
+      selector:
+        entity:
+          domain: climate
+    hvac_has_heat:
+      name: Heating Support
+      description: Enable if your HVAC system supports heating mode
+      default: true
+      selector:
+        boolean:
+    hvac_has_cool:
+      name: Cooling Support
+      description: Enable if your HVAC system supports cooling mode
+      default: false
+      selector:
+        boolean:
+    hvac_has_auto:
+      name: Auto Mode Support
+      description: Enable if your HVAC system supports automatic mode
+      default: false
+      selector:
+        boolean:
+    hvac_has_vent:
+      name: Fan Mode Support
+      description: Enable if your HVAC system supports fan mode control
+      default: false
+      selector:
+        boolean:
+    sync_delay:
+      name: Synchronization Delay
+      description: Delay between sync commands (in seconds)
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 10
+          step: 1
+          unit_of_measurement: seconds
+    enable_external_data:
+      name: Enable External Data Publishing
+      description: Publish external temperature and humidity to W100 display
+      default: false
+      selector:
+        boolean:
+    external_temperature_sensor:
+      name: External Temperature Sensor
+      description: Temperature sensor to publish to W100 (optional)
+      default: []
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    external_humidity_sensor:
+      name: External Humidity Sensor
+      description: Humidity sensor to publish to W100 (optional)
+      default: []
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+
+variables:
+  main_thermostat: !input main_thermostat
+  aqara_w100: !input aqara_w100
+  hvac_has_heat: !input hvac_has_heat
+  hvac_has_cool: !input hvac_has_cool
+  hvac_has_auto: !input hvac_has_auto
+  hvac_has_vent: !input hvac_has_vent
+  sync_delay: !input sync_delay
+  enable_external_data: !input enable_external_data
+  external_temperature_sensor: !input external_temperature_sensor
+  external_humidity_sensor: !input external_humidity_sensor
+  thermostat_mode_switch: >-
+    {{ 'switch.' ~ aqara_w100.split('.')[1] ~ '_thermostat_mode' }}
+
+triggers:
+  - trigger: state
+    entity_id: !input main_thermostat
+    id: climate_state
+  - trigger: state
+    entity_id: !input aqara_w100
+    id: w100_climate_state
+  - trigger: state
+    entity_id: !input external_temperature_sensor
+    id: ext_temp
+    enabled: !input enable_external_data
+  - trigger: state
+    entity_id: !input external_humidity_sensor
+    id: ext_hum
+    enabled: !input enable_external_data
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - climate_state
+          - condition: template
+            value_template: >-
+              {{ is_state(thermostat_mode_switch, 'on') }}
+        sequence:
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ states(main_thermostat) != states(aqara_w100) }}
+              - condition: template
+                value_template: >-
+                  {{ is_state(thermostat_mode_switch, 'on') }}
+            then:
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: !input aqara_w100
+                data:
+                  hvac_mode: |
+                    {{ states(main_thermostat) }}
+              - delay:
+                  seconds: "{{ sync_delay }}"
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ state_attr(main_thermostat, "temperature") !=
+                  state_attr(aqara_w100, "temperature") }}
+            then:
+              - action: climate.set_temperature
+                target:
+                  entity_id: !input aqara_w100
+                data:
+                  temperature: |
+                    {{ state_attr(main_thermostat, "temperature") }}
+              - delay:
+                  seconds: "{{ sync_delay }}"
+          - if:
+              - condition: template
+                value_template: >-
+                  {# Define the variables#}
+                  {% set source = state_attr(main_thermostat, "fan_mode") %}
+                  {% set target = state_attr(aqara_w100, "fan_mode") %}
+                  {# Normalize the source to lowercase and map med->medium for comparison #}
+                  {% set source_norm = 'medium' if source | lower == 'med' else source | lower %}
+                  {# Compare normalized values #}
+                  {{ 
+                    (source_norm != target) and 
+                    (hvac_has_vent | default(false) | bool) 
+                  }}
+            then:
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: !input aqara_w100
+                data:
+                  fan_mode: |
+                    {% set source = state_attr(main_thermostat, "fan_mode") %}
+                    {# If source is med/medium, pass "medium" to the Aqara #}
+                    {% if source | lower == 'med' or source | lower == 'medium' %}
+                      medium
+                    {# Otherwise just pass the source through #}
+                    {% else %}
+                      {{ source }}
+                    {% endif %}
+              - delay:
+                  seconds: "{{ sync_delay }}"
+      
+      - conditions:
+          - condition: trigger
+            id:
+              - w100_climate_state
+          - condition: template
+            value_template: >-
+              {{ is_state(thermostat_mode_switch, 'on') }}
+        sequence:
+          - if:
+              - condition: template
+                value_template: |
+                  {{
+                    (states(main_thermostat) != states(aqara_w100)) and
+                    (
+                      (is_state(aqara_w100, 'heat') and (hvac_has_heat | default(false) | bool)) or
+                      (is_state(aqara_w100, 'cool') and (hvac_has_cool | default(false) | bool)) or
+                      (is_state(aqara_w100, 'auto') and (hvac_has_auto | default(false) | bool)) or
+                      (is_state(aqara_w100, 'off'))
+                    )
+                  }}
+            then:
+              - action: climate.set_hvac_mode
+                data:
+                  hvac_mode: |
+                    {{ states(aqara_w100) }}
+                target:
+                  entity_id: !input main_thermostat
+              - delay:
+                  seconds: "{{ sync_delay }}"
+            else:
+              - if:
+                  - condition: template
+                    value_template: |
+                      {{
+                        (is_state(aqara_w100, 'heat') and not (hvac_has_heat | default(false) | bool)) or
+                        (is_state(aqara_w100, 'cool') and not (hvac_has_cool | default(false) | bool)) or
+                        (is_state(aqara_w100, 'auto') and not (hvac_has_auto | default(false) | bool))
+                      }}
+                then:
+                  - action: climate.set_hvac_mode
+                    metadata: {}
+                    data:
+                      hvac_mode: heat
+                    target:
+                      entity_id: !input aqara_w100
+                  - delay:
+                      seconds: "{{ sync_delay }}"
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ state_attr(main_thermostat, "temperature") !=
+                  state_attr(aqara_w100, "temperature") }}
+            then:
+              - action: climate.set_temperature
+                data:
+                  temperature: |
+                    {{ state_attr(aqara_w100, "temperature") }}
+                target:
+                  entity_id: !input main_thermostat
+              - delay:
+                  seconds: "{{ sync_delay }}"
+          - if:
+              - condition: template
+                value_template: >-
+                  {# Define the variables#}
+                  {% set source = state_attr(main_thermostat, "fan_mode") %}
+                  {% set target = state_attr(aqara_w100, "fan_mode") %}
+                  {# Normalize source to lowercase and map med->medium for comparison #}
+                  {% set source_norm = 'medium' if source | lower == 'med' else source | lower %}
+                  {# Compare normalized values #}
+                  {{ 
+                    (source_norm != target) and 
+                    (hvac_has_vent | default(false) | bool) 
+                  }}
+            then:
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: !input main_thermostat
+                data:
+                  fan_mode: |
+                    {% set source = state_attr(aqara_w100, "fan_mode") %}
+                    {% set target_valid_list = state_attr(main_thermostat, "fan_modes") %}
+                    
+                    {# If source is med/medium, find the target's specific medium mode #}
+                    {% if source | lower == 'med' or source | lower == 'medium' %}
+                      {{ target_valid_list | select('search', '(?i)^med') | first | default(source) }}
+                      
+                    {# Otherwise just pass the source through #}
+                    {% else %}
+                      {{ source }}
+                    {% endif %}
+              - delay:
+                  seconds: "{{ sync_delay }}"
+
+      - conditions:
+          - condition: trigger
+            id:
+              - ext_temp
+              - ext_hum
+          - condition: template
+            value_template: "{{ enable_external_data }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ states(external_temperature_sensor) not in ['unknown', 'unavailable'] }}
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: >-
+                    {{ 'number.' ~ aqara_w100.split('.')[1] ~ '_external_temperature' }}
+                data:
+                  value: |
+                    {{ states(external_temperature_sensor) | float }}
+              - delay:
+                  seconds: "{{ sync_delay }}"
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ states(external_humidity_sensor) not in ['unknown', 'unavailable'] }}
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: >-
+                    {{ 'number.' ~ aqara_w100.split('.')[1] ~ '_external_humidity' }}
+                data:
+                  value: |
+                    {{ states(external_humidity_sensor) | float }}
+              - delay:
+                  seconds: "{{ sync_delay }}"
+
+mode: queued
+max: 10

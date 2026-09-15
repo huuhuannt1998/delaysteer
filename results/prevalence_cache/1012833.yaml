@@ -1,0 +1,77 @@
+blueprint:
+  name: "Alarma Meross: Solo Sirena en Bucle"
+  description: "Hace sonar el Hub Meross en bucle continuo cada 3 segundos al activar el interruptor, y lo silencia por completo al desactivarlo."
+  domain: automation
+  input:
+    switch_control:
+      name: "Interruptor de Control"
+      description: "El ayudante alternar (input_boolean) que activa y desactiva la alarma."
+      selector:
+        entity:
+          domain: input_boolean
+    meross_hub_id:
+      name: "ID del Hub Meross (Sirena)"
+      description: "El UUID de 32 caracteres de tu Hub MSH400 o MSH450."
+      selector:
+        text:
+    alarm_song:
+      name: "Sonido de Alarma"
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 7
+          mode: box
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input switch_control
+    to: "on"
+    id: activar_alarma
+  - platform: state
+    entity_id: !input switch_control
+    to: "off"
+    id: desactivar_alarma
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: activar_alarma
+        sequence:
+          - repeat:
+              while:
+                - condition: state
+                  entity_id: !input switch_control
+                  state: "on"
+              sequence:
+                - service: meross_lan.request
+                  data:
+                    device_id: !input meross_hub_id
+                    namespace: Appliance.Config.Alarm
+                    method: SET
+                    payload:
+                      config:
+                        - testSong: !input alarm_song
+                          enable: 1
+                          volume: 100
+                          channel: 0
+                - delay: "00:00:03"
+
+      - conditions:
+          - condition: trigger
+            id: desactivar_alarma
+        sequence:
+          - service: meross_lan.request
+            data:
+              device_id: !input meross_hub_id
+              namespace: Appliance.Config.Alarm
+              method: SET
+              payload:
+                config:
+                  - testSong: !input alarm_song
+                    enable: 0
+                    volume: 0
+                    channel: 0

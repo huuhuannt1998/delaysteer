@@ -1,0 +1,227 @@
+blueprint:
+  name: Range Actions (1.0)
+  description: |
+    # Range Actions  
+    **Version: 1.0**
+
+    Source: https://github.com/mimoSK/Range-actions
+    
+    Range Actions is a Home Assistant automation blueprint for
+    value-band based automations.
+
+    It monitors one numeric entity and runs actions when the value enters a
+    configured range, making it useful for notifications, staged control logic,
+    and threshold-driven automations.
+
+    **What This Blueprint Does:**
+    - Watches a `sensor`, `input_number`, or `number` entity.
+    - Evaluates configured ranges in order (first matching range wins).
+    - Triggers only when entering a different range.
+    - Supports optional additional conditions before actions run.
+    - Exposes range and value context as template variables for actions.
+
+    **Inputs:**
+    - **Numeric Entity**: The sensor or number entity whose state is monitored.
+    - **Monitored Ranges**: Ordered range definitions with name, optional description, minimum, and maximum values.
+    - **Remembered Range Helper**: `input_number` helper that keeps the last entered range index to support deadband or hysteresis behavior.
+    - **Additional Conditions (Optional)**: Extra conditions that must pass before actions run.
+    - **On Range Entered**: Actions executed when a new range is entered.
+
+    **Create The Helper:**
+    - Go to `Settings -> Devices & Services -> Helpers`.
+    - Create a `Number` helper.
+    - Set minimum to `-1`.
+    - Set maximum to at least `number_of_ranges - 1`.
+    - Set step to `1`.
+    - Set the initial value to `-1`.
+    - Select this helper as `Remembered Range Helper` when creating the automation.
+
+    **How Range Matching Works:**
+    - Ranges are inclusive (`min <= value <= max`).
+    - Overlapping ranges are allowed, but order determines the active range.
+    - Invalid range bounds are skipped during evaluation.
+    - The remembered range helper keeps the last entered range active across unmatched gaps until another valid range is entered.
+
+    <details>
+    <summary><b>Automation Process</b></summary>
+
+    - On every state change of the monitored entity:
+      - Current value is parsed.
+      - Current range is resolved.
+      - Entry is detected when current range differs from the remembered range.
+
+    - Actions run only when:
+      - Current value is numeric,
+      - A new range was entered,
+      - Additional conditions (if provided) are satisfied.
+    </details>
+
+  domain: automation
+  input:
+    numeric_entity:
+      name: Numeric Entity
+      description: The sensor or number entity whose state should be monitored.
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+            - domain: input_number
+            - domain: number
+    ranges:
+      name: Monitored Ranges
+      description: >-
+        Ordered list of ranges to monitor. The first matching range is
+        treated as the active range, so overlapping ranges should be avoided or
+        intentionally ordered.
+      selector:
+        object:
+          label_field: name
+          description_field: description
+          multiple: true
+          fields:
+            name:
+              label: Range Name
+              required: true
+              selector:
+                text: {}
+            description:
+              label: Description
+              required: false
+              selector:
+                text: {}
+            min:
+              label: Minimum Value
+              required: true
+              selector:
+                number:
+                  min: -1000000000
+                  max: 1000000000
+                  step: any
+                  mode: box
+            max:
+              label: Maximum Value
+              required: true
+              selector:
+                number:
+                  min: -1000000000
+                  max: 1000000000
+                  step: any
+                  mode: box
+    remembered_range_helper:
+      name: Remembered Range Helper
+      description: >-
+        Input_number helper that stores the last entered range index. Use this
+        to keep the previous range active across deadband gaps and
+        avoid repeated triggers when the value fluctuates near a threshold.
+        Configure the helper with a minimum of -1 and a maximum high enough for
+        your number of ranges.
+      selector:
+        entity:
+          filter:
+            - domain: input_number
+    additional_conditions:
+      name: Additional Conditions
+      description: Optional extra conditions that must pass before the entry actions run.
+      default: []
+      selector:
+        condition: {}
+    entered_range_actions:
+      name: On Range Entered
+      description: 
+        "Actions to run when the monitored entity enters a configured range.\n
+        Available variables:\n
+        {{ monitored_entity }} - Entity ID of the monitored entity\n
+        {{ current_value }} - Current numeric value of the monitored entity (or null if unavailable)\n
+        {{ remembered_range_index }} - Latched range index from helper (or -1 if none)\n
+        {{ current_range_index }} - Index of the currently active range (or -1 if none)\n
+        {{ entered_range_index }} - Index of the newly entered range (or -1 if none)\n
+        {{ entered_range_name }} - Name of the newly entered range\n
+        {{ entered_range_description }} - Description of the newly entered range\n
+        {{ entered_range_min }} - Minimum value of the newly entered range\n
+        {{ entered_range_max }} - Maximum value of the newly entered range\n
+        {{ range_was_entered }} - Boolean indicating if a new range was entered"
+      default: []
+      selector:
+        action: {}
+
+variables:
+  monitored_entity: !input numeric_entity
+  configured_ranges: !input ranges
+  remembered_range_helper_entity: !input remembered_range_helper
+  current_value: >-
+    {% if trigger.to_state is not none %}
+      {{ trigger.to_state.state | float(none) }}
+    {% else %}
+      {{ none }}
+    {% endif %}
+  entered_range_index: >-
+    {% set value = trigger.to_state.state | float(none) if trigger.to_state is not none else none %}
+    {% set ns = namespace(index=-1) %}
+    {% if value is number %}
+      {% for item in configured_ranges %}
+        {% set range_min = item.min | float(none) %}
+        {% set range_max = item.max | float(none) %}
+        {% set is_first_match = ns.index == -1 %}
+        {% set has_valid_bounds = range_min is number and range_max is number and range_min <= range_max %}
+        {% set is_in_range = value >= range_min and value <= range_max if has_valid_bounds else false %}
+        {% if is_first_match and has_valid_bounds and is_in_range %}
+          {% set ns.index = loop.index0 %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {{ ns.index }}
+  remembered_range_index: >-
+    {{ states(remembered_range_helper_entity) | int(-1) }}
+  current_range_index: "{{ entered_range_index | int(-1) }}"
+  range_was_entered: >-
+    {{ entered_range_index | int(-1) >= 0 and entered_range_index | int(-1) != remembered_range_index | int(-1) }}
+  entered_range_name: >-
+    {% set idx = entered_range_index | int(-1) %}
+    {% if idx >= 0 and idx < (configured_ranges | count) %}
+      {{ configured_ranges[idx].name }}
+    {% else %}
+      {{ '' }}
+    {% endif %}
+  entered_range_description: >-
+    {% set idx = entered_range_index | int(-1) %}
+    {% if idx >= 0 and idx < (configured_ranges | count) %}
+      {{ configured_ranges[idx].description | default('') }}
+    {% else %}
+      {{ '' }}
+    {% endif %}
+  entered_range_min: >-
+    {% set idx = entered_range_index | int(-1) %}
+    {% if idx >= 0 and idx < (configured_ranges | count) %}
+      {{ configured_ranges[idx].min }}
+    {% else %}
+      {{ none }}
+    {% endif %}
+  entered_range_max: >-
+    {% set idx = entered_range_index | int(-1) %}
+    {% if idx >= 0 and idx < (configured_ranges | count) %}
+      {{ configured_ranges[idx].max }}
+    {% else %}
+      {{ none }}
+    {% endif %}
+
+trigger:
+  - platform: state
+    entity_id: !input numeric_entity
+
+condition:
+  - condition: template
+    value_template: "{{ current_value is number }}"
+  - condition: template
+    value_template: "{{ range_was_entered }}"
+
+action:
+  - action: input_number.set_value
+    target:
+      entity_id: !input remembered_range_helper
+    data:
+      value: "{{ current_range_index | int(-1) }}"
+  - condition: and
+    conditions: !input additional_conditions
+  - sequence: !input entered_range_actions
+
+mode: queued

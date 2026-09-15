@@ -1,0 +1,43 @@
+{
+  "tier": "tier0_synthetic",
+  "rows": [
+    {
+      "level": "O_0",
+      "target": false,
+      "k": 0,
+      "k_flows": 0,
+      "total_hold": 0.0
+    },
+    {
+      "level": "O_1",
+      "target": false,
+      "k": 0,
+      "k_flows": 0,
+      "total_hold": 0.0
+    },
+    {
+      "level": "O_2",
+      "target": true,
+      "k": 3,
+      "k_flows": 2,
+      "total_hold": 28792.0
+    },
+    {
+      "level": "O_3",
+      "target": true,
+      "k": 3,
+      "k_flows": 2,
+      "total_hold": 28792.0
+    },
+    {
+      "level": "O_4",
+      "target": true,
+      "k": 3,
+      "k_flows": 2,
+      "total_hold": 28792.0
+    }
+  ],
+  "first_successful_level": "O_2",
+  "preplanned_suffices": true,
+  "note": "Algorithm 2's precommitted witness is an O_0 adversary; this run tests whether a reactive policy also reaches the target and at which observability level."
+}

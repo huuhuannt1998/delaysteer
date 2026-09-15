@@ -1,0 +1,1385 @@
+blueprint:
+  name: Frigate AI Notification
+  author: sam2kb
+  description: >
+    [0.3.9] A clean, low-noise blueprint for smart multi-camera alerts powered by Frigate and (optionally) LLMVision.
+    It focuses on fast, relevant notifications with the right links and the right amount of detail - no spam.
+  source_url: https://github.com/sam2kb/frigate-ai-notification-blueprint/blob/main/frigate-ai-notification.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+
+  input:
+    camera:
+      name: Frigate Cameras
+      description: Select one or more Frigate cameras to monitor for events.
+      selector:
+        entity:
+          domain: [camera]
+          multiple: true
+
+    labels:
+      name: Labels to Notify On
+      description: List of Frigate object labels to notify on. Leave empty to match all.
+      default: [person]
+      selector:
+        select:
+          multiple: true
+          options: [person, dog, cat, car, package, bicycle, face]
+          sort: false
+          custom_value: false
+
+    zones:
+      name: Include Zones
+      description: >
+        Comma-separated list of Frigate zone names. Example: driveway, porch.
+        Supports wildcards (* and ?), e.g. *_near to match all "..._near" zones. Leave empty to match all zones.
+      default: ""
+      selector:
+        text: {}
+
+    zones_exclude:
+      name: Exclude Zones
+      description: >
+        Zones that always suppress notifications. If an event matches both include and exclude, it is BLOCKED.
+      default: ""
+      selector:
+        text: {}
+
+    zone_match_type:
+      name: Zone Match Type
+      description: Which zone field to check from Frigate.
+      default: either
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - entered # only after.entered_zones (crossings)
+            - current # only after.current_zones (currently inside)
+            - either # union of entered+current
+
+    zone_logic:
+      name: Zone Logic for include list
+      description: "any: intersects at least one listed include zone; all: must be in all listed include zones"
+      default: any
+      selector:
+        select:
+          mode: dropdown
+          options: [any, all]
+
+    cooldown:
+      name: Global Cooldown
+      description: The cooldown is a global throttle for push notifications and LLM step from firing too often. Turning this on will lead to missed/skipped notifications.
+      default: { hours: 0, minutes: 0, seconds: 0 }
+      selector:
+        duration:
+          enable_day: true
+
+    cooldown_timestamp:
+      name: Global Cooldown Helper (optional)
+      description: Datetime helper used the global cooldown above. Open the picker → select "Create" → name it "Frigate Notification Cooldown" → select "Date and Time" → Create.
+      default: ""
+      selector:
+        entity:
+          domain: [input_datetime]
+          multiple: false
+
+    notify_device:
+      name: Mobile Devices
+      description: Select devices (Home Assistant Companion app) to receive the notification.
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+
+    notification_customization:
+      name: Notification Customization
+      icon: mdi:message-alert
+      description: Configure optional notification features
+      collapsed: true
+      input:
+        ios_live_view:
+          name: iOS Notification
+          description: Enable if the target device runs iOS for enhanced notification support (uses HLS .m3u8 where possible).
+          default: false
+          selector: { boolean: {} }
+        append:
+          name: Append "Camera"
+          description: Add the word "Camera" to the end of the camera name (e.g., "Back Yard" → "Back Yard Camera").
+          default: false
+          selector: { boolean: {} }
+        expand:
+          name: Expand "Cam" → "Camera"
+          description: Replace "Cam" with "Camera" in the camera name.
+          default: false
+          selector: { boolean: {} }
+
+    quality_filters:
+      name: Signal Quality Filters
+      icon: mdi:tune-variant
+      description: Reduce noise by filtering low-confidence or incomplete events
+      collapsed: true
+      input:
+        min_score:
+          name: Minimum Detection Score
+          default: 0.6
+          selector:
+            number: { min: 0, max: 1, step: 0.05, mode: slider }
+
+        require_clip:
+          name: Require Clip Ready
+          description: Only notify if the event reports has_clip=true.
+          default: false
+          selector: { boolean: {} }
+
+        require_not_false_positive:
+          name: Ignore Likely False Positives
+          default: true
+          selector: { boolean: {} }
+
+        suppress_known_faces:
+          name: Suppress Known Faces
+          description: >-
+            Comma-separated list of recognized face names to suppress. Names with spaces are fine
+            (e.g. "John Doe"). Matches case-insensitively against Frigate's sub_label. Leave empty
+            to notify on all faces. Example: Alice, John Doe, Mary Jane
+          default: ""
+          selector:
+            text:
+              multiline: false
+
+    llmvision_tweaks:
+      name: LLMVision Tweaks
+      icon: mdi:brain
+      description: Tweak LLMVision settings and options
+      collapsed: true
+      input:
+        helper:
+          name: Input Helper
+          description: >
+            Optional toggle used as a simple "busy" flag when multiple cameras or LLM analysis are active.
+            Open the picker → select "Create" → name it "Frigate LLM Busy" → Create.
+          default: ""
+          selector:
+            entity:
+              domain: [input_boolean]
+              multiple: false
+        log_helper:
+          name: AI Description Log Helper
+          description: >
+            Optional Input Text helper to persist AI-generated descriptions beyond the notification.
+            Create an Input Text helper (e.g. "Frigate AI Log"), leave its value empty, and select it here.
+            Each LLMVision summary is appended with timestamp, camera, and label so you can display it on a markdown card.
+          default: ""
+          selector:
+            entity:
+              domain: [input_text]
+              multiple: false
+        dashboard:
+          name: Event Summary Dashboard
+          description: Optional dashboard URL opened by the "View Summary" action; leave blank to hide the button.
+          default: ""
+          selector: { text: {} }
+        generate_title:
+          name: Generate Event Title
+          description: Enable to generate a dynamic title for each event summary.
+          default: true
+          selector: { boolean: {} }
+        include_filename:
+          name: Include Filenames
+          description: Attach filenames when sending Frigate clips.
+          default: false
+          selector: { boolean: {} }
+        expose_images:
+          name: Expose Images
+          description: Save analyzed frames to `/www/llmvision` for notifications. File paths will be included in the LLM response.
+          default: true
+          selector: { boolean: {} }
+        provider:
+          name: Provider
+          description: Choose the LLMVision provider. See documentation for supported options.
+          default: ""
+          selector:
+            config_entry:
+              integration: llmvision
+        model:
+          name: Model
+          description: Language model to use. Depends on the selected provider.
+          default: gemini-2.0-flash
+          selector:
+            text:
+              multiline: false
+              multiple: false
+        prompt:
+          name: LLMVision Prompt
+          default: >
+            Summarize the observed events using clear, neutral third-person language. Use timestamps to ensure the summary
+            follows the correct chronological order. Focus on moving subjects such as people, vehicles, animals, packages,
+            equipment, or other active elements. Ignore static background objects unless directly interacted with. Include
+            stationary vehicles only if they are clearly identifiable as delivery or emergency vehicles, mentioning any visible
+            company names or uniform details. Describe activity relevant to the general monitored area without referencing
+            camera angles, timestamps, or observers. Present the events as if witnessed in real time, avoiding frame-by-frame
+            descriptions or introductory phrases. Summarize naturally in a single, cohesive narrative, keeping it concise and
+            suitable for brief notifications. When context strongly suggests a likely outcome, describe it confidently. Do not
+            mention the absence of activity or objects, nor conclude with statements about what was or wasn’t observed.
+          selector:
+            text:
+              multiline: true
+              multiple: false
+        max_tokens:
+          name: Maximum Tokens
+          description: Limit the number of tokens used in the summary (controls length). Increase for modern models (e.g. 200+ for GPT-5).
+          default: 100
+          selector:
+            number: { min: 1, max: 4000, step: 10, mode: slider }
+        temperature:
+          name: Temperature
+          description: Adjusts response randomness. Lower values yield more accurate, consistent results; higher values are more creative.
+          default: 0.1
+          selector:
+            number: { min: 0.1, max: 1.0, step: 0.1, mode: slider }
+        max_frames:
+          name: Total Frames
+          description: Number of frames to analyze from the event.
+          default: 3
+          selector:
+            number: { min: 1, max: 60, step: 1, mode: slider }
+        frigate_retry_attempts:
+          name: Retry Attempts
+          description: Number of retry attempts if the Frigate clip isn’t ready.
+          default: 4
+          selector:
+            number: { min: 1, max: 20, step: 1, mode: slider }
+        frigate_retry_time:
+          name: Retry Timing
+          description: How long to keep retrying the LLM request if the clip isn't ready.
+          default: { hours: 0, minutes: 0, seconds: 30 }
+          selector: { duration: {} }
+        target_width:
+          name: Target Width
+          description: Downscale frame width to reduce token usage and speed up processing.
+          default: 1920
+          selector:
+            number: { min: 480, max: 3840, step: 20, mode: slider }
+
+    advanced_options:
+      name: Advanced Options
+      icon: mdi:cog
+      description: Customize Frigate, Home Assistant, and other details
+      collapsed: true
+      input:
+        sublabel:
+          name: Sublabels
+          description: Include Frigate sublabels in the prompt if available.
+          default: true
+          selector: { boolean: {} }
+        base_url:
+          name: External Base URL
+          description: Public URL for Home Assistant. Leave empty to use configured external URL.
+          default: ""
+          selector: { text: {} }
+        local_url:
+          name: Internal Base URL
+          description: Local URL for Home Assistant. Leave empty to use configured internal URL.
+          default: ""
+          selector: { text: {} }
+        frigate_url:
+          name: Frigate Instance URL
+          description: Optional. Full base URL to your Frigate UI (include port if needed), e.g. https://frigate.lan:8971
+          default: ""
+          selector: { text: {} }
+        require_zones:
+          name: Require Zones On Initial Send
+          description: >
+            Optional. When enabled, the initial "new" notification is sent only after zones are present in the event.
+            This can reduce early sends before Frigate populates entered/current zones.
+          default: false
+          selector: { boolean: {} }
+        camera_name_map:
+          name: Camera Name Override Map (optional)
+          description: >
+            Optional JSON map to override Frigate camera names for selected camera entities.
+            Use when your HA camera entity ids do not match Frigate's camera names.
+            Example: {"camera.front_door_2":"front_door"}
+          default: ""
+          selector:
+            text:
+              multiline: true
+        # Per-camera silence table (also used for auto 30s cooldown if present)
+        silence_table:
+          name: Per-Camera Silence Table (input_text)
+          description: >
+            Recommended. Input Text helper storing a JSON map of {camera_slug: silent_until_ts}.
+            Create an Input Text (e.g. "Frigate Silence Table"), set its value to "{}", and select it here.
+            If not set, the “Silence” button (and auto-cooldown fallback) mute the whole automation temporarily.
+          default: ""
+          selector:
+            entity:
+              domain: [input_text]
+              multiple: false
+        debug:
+          name: Debugging
+          description: Enable debug logging for this automation.
+          default: false
+          selector: { boolean: {} }
+        notification_timeout:
+          name: Notification Timeout (hours)
+          description: Time before Android automatically clears the notification.
+          default: 10
+          selector:
+            number:
+              { min: 1, max: 48, step: 1, unit_of_measurement: hours, mode: slider }
+
+trigger_variables:
+  input_cameras: !input camera
+  camera_slugs: >-
+    {{ (input_cameras | default([], true) | list)
+       | map('replace','camera.','')
+       | map('lower')
+       | map('replace','-','_')
+       | list }}
+
+trigger:
+  - trigger: mqtt
+    id: frigate-event
+    topic: frigate/events
+    value_template: "{{ value_json['type'] }}"
+    payload: "new"
+  - trigger: event
+    event_type: mobile_app_notification_action
+    id: mobile-action
+
+condition: []
+
+action:
+  - variables:
+      selected_cameras_input: !input camera
+      input_append: !input append
+      input_dashboard: !input dashboard
+      input_expand: !input expand
+      input_provider: !input provider
+      input_frigate_retry_attempts: !input frigate_retry_attempts
+      input_frigate_retry_time: !input frigate_retry_time
+      input_max_frames: !input max_frames
+      input_notification_timeout: !input notification_timeout
+      input_ios_live_view: !input ios_live_view
+      input_include_filename: !input include_filename
+      input_generate_title: !input generate_title
+      input_expose_images: !input expose_images
+      input_model: !input model
+      input_target_width: !input target_width
+      input_max_tokens: !input max_tokens
+      input_temperature: !input temperature
+      input_prompt: !input prompt
+      input_sublabel: !input sublabel
+      input_cooldown: !input cooldown
+      input_helper: !input helper
+      input_debug: !input debug
+      input_base_url: !input base_url
+      input_local_url: !input local_url
+      input_frigate_url: !input frigate_url
+      input_suppress_faces: !input suppress_known_faces
+      input_require_zones: !input require_zones
+      input_camera_name_map: !input camera_name_map
+      input_cooldown_datetime: !input cooldown_timestamp
+      input_silence_table: !input silence_table
+      payload: >-
+        {{ trigger.payload_json | default({}, true) if trigger is defined else {} }}
+      
+      # Track the best detection score we've already sent for this event
+      best_score_sent: 0.0
+
+      # Current best score at initial trigger time (after -> top_score or score)
+      score_best_initial: >-
+        {% set a = payload.get('after', {}) or {} %}
+        {{ (a.get('top_score') if a.get('top_score') is not none else a.get('score', 0)) | float(0) }}
+
+      # auto-cooldown (hardcoded): 25 seconds after sending a push for this camera
+      auto_silence_secs: 25
+
+      silence_table_enabled: "{{ (input_silence_table | default('', true) | string | trim) | length > 0 }}"
+      silence_raw: "{{ states(input_silence_table) if input_silence_table else '' }}"
+      silence_raw_norm: "{{ (silence_raw | default('', true) | trim) }}"
+      silence_is_empty: "{{ silence_raw_norm in ['', 'unknown', 'unavailable'] }}"
+      ha_external_url: "{{ state_attr('homeassistant', 'external_url') | default('', true) | trim }}"
+      ha_internal_url: "{{ state_attr('homeassistant', 'internal_url') | default('', true) | trim }}"
+      input_labels: !input labels
+      labels: "{{ (input_labels | default([], true) | list) | map('lower') | list }}"
+      camera_slugs_vars: >-
+        {% set cams = (selected_cameras_input | default([], true) | list) %}
+        {% set raw = (input_camera_name_map | default('', true) | string | trim) %}
+        {% set map0 = '{}' if raw in ['', 'unknown', 'unavailable'] else raw %}
+        {% set m = map0 | from_json %}
+        {% set ns = namespace(names=[]) %}
+        {% for ent in cams %}
+          {% set ent_slug = (ent | replace('camera.','') | lower | replace('-','_')) %}
+          {% set mapped = m.get(ent) if m is mapping else none %}
+          {% if mapped is none %}{% set mapped = m.get(ent_slug) if m is mapping else none %}{% endif %}
+          {% set mapped_clean = (mapped | default('', true) | string | trim) %}
+          {% set mapped_slug = (mapped_clean | lower | replace(' ','_') | replace('-','_')) %}
+          {% set ns.names = ns.names + [ent_slug] %}
+          {% if mapped_clean not in ['', 'unknown', 'unavailable'] %}
+            {% set ns.names = ns.names + [mapped_slug] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.names | unique | list }}
+      min_score: !input min_score
+      require_clip: !input require_clip
+      require_not_false_positive: !input require_not_false_positive
+
+      event_type: "{{ payload.get('type') | default('') }}"
+      event_camera_raw: >-
+        {{ (payload.get('after') or {}).get('camera')
+            or (payload.get('before') or {}).get('camera')
+            or '' }}
+      camera: "{{ (event_camera_raw | string) | lower | replace('-','_') }}"
+
+      input_zones: !input zones
+      input_zones_exclude: !input zones_exclude
+      input_zone_match_type: !input zone_match_type
+      input_zone_logic: !input zone_logic
+
+      zones_filter: >-
+        {% set z = (input_zones | default('', true) | string) %}
+        {{ z.split(',') | map('trim') | select('ne','') | map('lower') | list }}
+
+      zones_exclude_filter: >-
+        {% set z = (input_zones_exclude | default('', true) | string) %}
+        {{ z.split(',') | map('trim') | select('ne','') | map('lower') | list }}
+
+      zones_include_rx: >-
+        {% set ns = namespace(rx=[]) %}
+        {% for p in (zones_filter | default([], true)) %}
+          {% set raw = (p | lower | trim) %}
+          {% if raw %}
+            {% set escaped = raw | regex_replace('([.^$+{}()|\\[\\]\\\\])','\\\\\\1') %}
+            {% set body = escaped | replace('*','.*') | replace('?','.') %}
+            {% set has_wc = ('*' in raw) or ('?' in raw) or ('^' in raw) or ('$' in raw) %}
+            {% set body = ('.*' ~ body ~ '.*') if not has_wc else body %}
+            {% set ns.rx = ns.rx + ['^' ~ body ~ '$'] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.rx }}
+
+      zones_exclude_rx: >-
+        {% set ns = namespace(rx=[]) %}
+        {% for p in (zones_exclude_filter | default([], true)) %}
+          {% set raw = (p | lower | trim) %}
+          {% if raw %}
+            {% set escaped = raw | regex_replace('([.^$+{}()|\\[\\]\\\\])','\\\\\\1') %}
+            {% set body = escaped | replace('*','.*') | replace('?','.') %}
+            {% set has_wc = ('*' in raw) or ('?' in raw) or ('^' in raw) or ('$' in raw) %}
+            {% set body = ('.*' ~ body ~ '.*') if not has_wc else body %}
+            {% set ns.rx = ns.rx + ['^' ~ body ~ '$'] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.rx }}
+
+      event_zones_entered: >-
+        {{ (((payload.get('after') or {}).get('entered_zones', []) or []) | list) | map('lower') | list }}
+      event_zones_current: >-
+        {{ (((payload.get('after') or {}).get('current_zones', []) or []) | list) | map('lower') | list }}
+      event_zones_checked: >-
+        {% set t = (input_zone_match_type | lower) %}
+        {% if t == 'entered' %}
+          {{ event_zones_entered }}
+        {% elif t == 'current' %}
+          {{ event_zones_current }}
+        {% else %}
+          {{ (event_zones_entered + event_zones_current) | unique | list }}
+        {% endif %}
+      zones_known: "{{ (event_zones_checked | length) > 0 }}"
+
+      zone_match: >-
+        {% set Z = (event_zones_checked | default([], true)) | map('lower') | list %}
+        {% set zones_known = Z | length > 0 %}
+        {% set logic = (input_zone_logic | lower) %}
+        {% set RXI = zones_include_rx %}
+        {% set RXE = zones_exclude_rx %}
+        {% set exclude_hit = false %}
+        {% for rx in RXE %}{% for z in Z %}{% if z | regex_match(rx, ignorecase=true) %}{% set exclude_hit = true %}{% endif %}{% endfor %}{% endfor %}
+        {% if (zones_filter | length) == 0 %}
+          {% set include_ok = true %}
+        {% else %}
+          {% if not zones_known %}
+            {% set include_ok = false %}
+          {% elif logic == 'all' %}
+            {% set include_ok = true %}
+            {% for rx in RXI %}
+              {% set nsf = namespace(found=false) %}
+              {% for z in Z %}{% if z | regex_match(rx, ignorecase=true) %}{% set nsf.found = true %}{% endif %}{% endfor %}
+              {% if not nsf.found %}{% set include_ok = false %}{% endif %}
+            {% endfor %}
+          {% else %}
+            {% set ns_any = namespace(hit=false) %}
+            {% for rx in RXI %}{% for z in Z %}{% if z | regex_match(rx, ignorecase=true) %}{% set ns_any.hit = true %}{% endif %}{% endfor %}{% endfor %}
+            {% set include_ok = ns_any.hit %}
+          {% endif %}
+        {% endif %}
+        {{ include_ok and (not exclude_hit) }}
+
+      object: "{{ ((payload.get('after') or {}).get('label') | default('')) }}"
+      label: "{{ object | title }}"
+      sub_label: "{{ (payload.get('after') or {}).get('sub_label') }}"
+      sub_label_text: >-
+        {% set s = (payload.get('after') or {}) %}
+        {% set sl = s.get('sub_label') %}
+        {% if sl is string %}{{ sl }}
+        {% elif sl is sequence and not (sl is string) %}{{ sl | join(', ') }}
+        {% else %}{{ '' }}{% endif %}
+      raw_device: !input notify_device
+      camera_name: >-
+        {% set n = camera | replace('_', ' ') | title %}
+        {% if input_expand %}{% set n = n | regex_replace('(?i)\\bcam\\b', 'Camera') %}{% endif %}
+        {{ n ~ (' Camera' if input_append else '') }}
+
+      cooldown_td: "{{ input_cooldown }}"
+      cooldown_secs: >-
+        {% set d = input_cooldown %}
+        {{ ((d.get('hours',0) | int(0) + (d.get('days',0) | int(0)) * 24) * 3600)
+           + ((d.get('minutes',0) | int(0)) * 60)
+           + (d.get('seconds',0) | int(0)) }}
+      last_notification_ts: "{{ state_attr(input_cooldown_datetime, 'timestamp') | default(0) }}"
+      now_ts: "{{ as_timestamp(now()) | int(0) }}"
+      timeout_secs: "{{ ((input_notification_timeout | float) * 3600) | int }}"
+
+      cooldown_active: >-
+        {% set ent = (input_cooldown_datetime | default('', true) | string) %}
+        {% if ent|length == 0 %}false
+        {% else %}{{ (now_ts - (last_notification_ts | int(0))) < (cooldown_secs | int(0)) }}{% endif %}
+
+      base_url: >-
+        {% set configured = input_base_url | default('', true) | trim %}
+        {% set fallback = ha_external_url or ha_internal_url %}
+        {% set value = configured if configured else fallback %}
+        {{ (value or '') | trim | regex_replace('/+$', '') }}
+
+      local_url: >-
+        {% set configured = input_local_url | default('', true) | trim %}
+        {% set fallback = ha_internal_url or ha_external_url %}
+        {% set value = configured if configured else fallback %}
+        {{ (value or base_url) | trim | regex_replace('/+$', '') }}
+
+      # Best available absolute base URL; used to ensure notification links are
+      # absolute (Android requires absolute URLs; iOS tolerates relative ones).
+      effective_base_url: "{{ (base_url or local_url or '') | trim }}"
+
+      base_title: "{{ label }} detected"
+      base_message: "{{ label }} detected by {{ camera_name }}."
+      title: "{{ base_title }}"
+      message: "{{ base_message }}"
+      fps: "{{ states('sensor.' + camera + '_camera_fps') | int(5) }}"
+      id: "{{ ((payload.get('after') or {}).get('id')) or ((payload.get('before') or {}).get('id')) }}"
+
+      icon: >-
+        mdi:{% if label == 'Person' %}account-outline{% elif label == 'Dog' %}dog{% elif label == 'Cat' %}cat{% elif label == 'Car' %}car{% else %}home-assistant{% endif %}
+
+      clip_path: "/api/frigate/notifications/{{ id }}/{{ camera }}/clip.mp4"
+      snapshot_path: "/api/frigate/notifications/{{ id }}/snapshot.jpg"
+      thumbnail_path: "/api/frigate/notifications/{{ id }}/thumbnail.jpg"
+
+      clip_url: "{{ (effective_base_url ~ clip_path) if effective_base_url else clip_path }}"
+      clip_url_signed: "{{ clip_url }}?sign=true"
+      snapshot_url: "{{ (effective_base_url ~ snapshot_path) if effective_base_url else snapshot_path }}"
+      thumbnail_url: "{{ (effective_base_url ~ thumbnail_path) if effective_base_url else thumbnail_path }}"
+      thumbnail_android_url: "{{ thumbnail_url ~ '?format=android' }}"
+      video_ios: "{{ effective_base_url }}/api/frigate/notifications/{{ id }}/{{ camera }}/master.m3u8"
+      live_deeplink: "entityId:camera.{{ camera }}"
+
+      has_clip: "{{ (payload.get('after') or {}).get('has_clip', false) }}"
+      click_target_url: "{{ clip_url if has_clip else snapshot_url }}"
+      ios_click_target_url: >-
+        {% if input_ios_live_view %}{{ video_ios if has_clip else snapshot_url }}
+        {% else %}{{ click_target_url }}{% endif %}
+      view_clip_uri_initial: >-
+        {% if input_ios_live_view %}{{ video_ios if has_clip else clip_url }}
+        {% else %}{{ clip_url }}{% endif %}
+
+      frigate_review_url: >-
+        {% set configured = (input_frigate_url | default('', true) | trim) %}
+        {% if configured %}
+          {{ configured | regex_replace('/+$','') | regex_replace('/review$','') }}/review?camera={{ camera }}&id={{ id }}
+        {% else %}
+          {% if base_url %}{{ base_url }}/api/frigate/review?camera={{ camera }}&id={{ id }}
+          {% elif local_url %}{{ local_url }}/api/frigate/review?camera={{ camera }}&id={{ id }}
+          {% else %}/api/frigate/review?camera={{ camera }}&id={{ id }}{% endif %}
+        {% endif %}
+
+      update_thumbnail: true
+      alert_once: true
+      ended: false
+
+      # per-camera silence (evaluated at trigger time)
+      camera_silenced: >-
+        {% if not silence_table_enabled %}
+          false
+        {% else %}
+          {% set raw0 = states(input_silence_table) %}
+          {% set raw  = (raw0 | default('', true) | trim | replace("'", '"')) %}
+          {% set raw  = '{}' if raw in ['', 'unknown', 'unavailable'] else raw %}
+          {% set m    = raw | from_json %}
+          {% set until = (m.get(camera) | default(0)) | int(0) %}
+          {{ now_ts < until }}
+        {% endif %}
+
+      # Use camera slug as tag to collapse cards per camera
+      tag_key: "{{ camera }}"
+
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: mobile-action
+          - condition: template
+            value_template: "{{ trigger.event.data.action is string and trigger.event.data.action.startswith('SILENCE_' ~ this.entity_id) }}"
+        sequence:
+          - variables:
+              action_raw: "{{ trigger.event.data.action }}"
+              action_cam: >-
+                {% set prefix = 'SILENCE_' ~ this.entity_id ~ '__' %}
+                {% if action_raw.startswith(prefix) %}{{ action_raw[prefix|length:] }}{% else %}{{ '' }}{% endif %}
+              silence_min: >-
+                {% if trigger.event.data.reply_text is defined and (trigger.event.data.reply_text | regex_match('^\\d+$')) %}
+                  {{ ([ (trigger.event.data.reply_text | int), 1 ] | max) | min(120) }}
+                {% else %}
+                  5
+                {% endif %}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ silence_table_enabled and (action_cam | length > 0) }}"
+                sequence:
+                  - service: input_text.set_value
+                    data:
+                      entity_id: "{{ input_silence_table }}"
+                      value: >-
+                        {% set current = (states(input_silence_table) | default('{}', true) | trim | replace("'", '"') | from_json) %}
+                        {% set until = (as_timestamp(now()) | int(0)) + (silence_min * 60) %}
+                        {{ (current | combine({ action_cam: until })) | to_json }}
+                  - service: persistent_notification.create
+                    data:
+                      title: "Frigate Notifications"
+                      message: "Silenced {{ action_cam }} for {{ silence_min }} minutes."
+              - conditions:
+                  - condition: template
+                    value_template: "{{ not silence_table_enabled }}"
+                sequence:
+                  - service: persistent_notification.create
+                    data:
+                      title: "Frigate Notifications"
+                      message: "Global silence for {{ silence_min }} minutes (no per-camera silence table configured)."
+                  - service: automation.turn_off
+                    target:
+                      entity_id: "{{ this.entity_id }}"
+                    data:
+                      stop_actions: false
+                  - delay:
+                      minutes: "{{ silence_min }}"
+                  - service: automation.turn_on
+                    target:
+                      entity_id: "{{ this.entity_id }}"
+          - stop: "Handled mobile action"
+
+  - condition: template
+    value_template: "{{ not labels|length or object in labels }}"
+
+  - condition: template
+    value_template: "{{ (id | string) | length > 0 }}"
+
+  - condition: template
+    value_template: "{{ camera in (camera_slugs_vars or []) }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ input_debug }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: Frigate Notification
+              message: >
+                DEBUG (initial decision):
+                  event_type={{ event_type }} camera={{ camera }} zone_match={{ zone_match }}
+                  cooldown_active={{ cooldown_active }} camera_silenced={{ camera_silenced }}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ zone_match }}"
+          - condition: template
+            value_template: "{{ (not input_require_zones) or zones_known }}"
+          - condition: template
+            value_template: "{{ not cooldown_active }}"
+          - condition: template
+            value_template: "{{ not camera_silenced }}"
+          - condition: template
+            value_template: >
+              {% set names = (input_suppress_faces | default('', true) | string | trim).split(',') | map('trim') | select('ne','') | map('lower') | list %}
+              {{ names | length == 0 or (sub_label_text | lower | trim) not in names }}
+          - condition: template
+            value_template: >
+              {% set a = payload.get('after', {}) or {} %}
+              {% set best = (a.get('top_score') if a.get('top_score') is not none else a.get('score', 1)) | float(1) %}
+              {% set score_ok = best >= (min_score | float(0)) %}
+              {% set clip_ok = (not require_clip) or a.get('has_clip', false) %}
+              {% set fp_ok = (not require_not_false_positive) or (a.get('false_positive') in [false, None]) %}
+              {{ score_ok and clip_ok and fp_ok }}
+        sequence:
+          - variables:
+              initial_sent: false
+          - repeat:
+              for_each: "{{ raw_device }}"
+              sequence:
+                - variables:
+                    input_notify_device: "{{ 'notify.mobile_app_' ~ (device_attr(repeat.item, 'name') | slugify) }}"
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ (input_dashboard | default('', true) | string | trim) != '' }}"
+                      sequence:
+                        - service: "{{ input_notify_device }}"
+                          data:
+                            title: "{{ title }}"
+                            message: "{{ message }}"
+                            data:
+                              channel: "{{ camera_name }} Notifications"
+                              timeout: "{{ timeout_secs }}"
+                              tag: "{{ tag_key }}"
+                              group: "{{ camera_name }}"
+                              notification_icon: "{{ icon }}"
+                              data: { ttl: "0", priority: "high" }
+                              attachment: { url: "{{ thumbnail_url ~ '?t=' ~ now_ts }}" }
+                              image: "{{ thumbnail_android_url ~ '&t=' ~ now_ts }}"
+                              clickAction: "{{ ios_click_target_url }}"
+                              push: { interruption-level: active }
+                              alert_once: "{{ alert_once }}"
+                              actions:
+                                - action: URI
+                                  title: View Clip
+                                  uri: "{{ view_clip_uri_initial }}"
+                                - action: URI
+                                  title: View Summary
+                                  uri: "{{ input_dashboard }}"
+                                - action: URI
+                                  title: Open Frigate
+                                  uri: "{{ frigate_review_url }}"
+                                - action: URI
+                                  title: View Live
+                                  uri: "{{ live_deeplink }}"
+                                - action: "SILENCE_{{ this.entity_id }}__{{ camera }}"
+                                  title: Silence
+                                  behavior: textInput
+                        - variables:
+                            initial_sent: true
+                  default:
+                    - service: "{{ input_notify_device }}"
+                      data:
+                        title: "{{ title }}"
+                        message: "{{ message }}"
+                        data:
+                          channel: "{{ camera_name }} Notifications"
+                          timeout: "{{ timeout_secs }}"
+                          tag: "{{ tag_key }}"
+                          group: "{{ camera_name }}"
+                          notification_icon: "{{ icon }}"
+                          data: { ttl: "0", priority: "high" }
+                          attachment: { url: "{{ thumbnail_url }}" }
+                          image: "{{ thumbnail_android_url }}"
+                          clickAction: "{{ ios_click_target_url }}"
+                          push: { interruption-level: active }
+                          alert_once: "{{ alert_once }}"
+                          actions:
+                            - action: URI
+                              title: View Clip
+                              uri: "{{ view_clip_uri_initial }}"
+                            - action: URI
+                              title: Open Frigate
+                              uri: "{{ frigate_review_url }}"
+                            - action: URI
+                              title: View Live
+                              uri: "{{ live_deeplink }}"
+                            - action: "SILENCE_{{ this.entity_id }}__{{ camera }}"
+                              title: Silence
+                              behavior: textInput
+                    - variables:
+                        initial_sent: true
+
+          # Auto 30s per-camera cooldown: write to silence table if present, else global fallback
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ initial_sent and silence_table_enabled }}"
+                sequence:
+                  - service: input_text.set_value
+                    data:
+                      entity_id: "{{ input_silence_table }}"
+                      value: >-
+                        {% set cur = (states(input_silence_table) | default('{}', true) | from_json) %}
+                        {% set existing = (cur.get(camera) | default(0)) | int(0) %}
+                        {% set until = [ existing, (as_timestamp(now()) | int(0)) + (auto_silence_secs | int) ] | max %}
+                        {{ (cur | combine({ camera: until })) | tojson }}
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ input_debug }}"
+                        sequence:
+                          - service: logbook.log
+                            data:
+                              name: Frigate Notification
+                              message: "DEBUG: auto per-camera silence set for {{ camera }} ({{ auto_silence_secs }}s)."
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ input_debug and initial_sent }}"
+                sequence:
+                  - service: logbook.log
+                    data:
+                      name: Frigate Notification
+                      message: >
+                        INFO (initial sent): camera={{ camera }} id={{ id }} clip_ready={{ has_clip }}
+
+          # After initial send, update the best score we've announced
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ initial_sent }}"
+                sequence:
+                  - variables:
+                      best_score_sent: "{{ [ (best_score_sent | float(0)), (score_best_initial | float(0)) ] | max }}"
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (input_cooldown_datetime | default('', true) | string) | length > 0 }}"
+                sequence:
+                  - service: input_datetime.set_datetime
+                    data:
+                      entity_id: "{{ input_cooldown_datetime }}"
+                      date: "{{ now().strftime('%Y-%m-%d') }}"
+                      time: "{{ now().strftime('%H:%M:%S') }}"
+
+  # UPDATE LOOP
+  - repeat:
+      sequence:
+        - wait_for_trigger:
+            - trigger: mqtt
+              topic: frigate/events
+              value_template: >
+                {{ value_json['after']['id'] if value_json.get('after') is not none else value_json.get('before', {}).get('id') }}
+              payload: "{{ id }}"
+          timeout: >-
+            {% set base = cooldown_secs | int(0) %}
+            {% set uts = [base, 30] | max %}
+            {{ '%02d:%02d:%02d' | format((uts // 3600), ((uts % 3600) // 60), (uts % 60)) }}
+          continue_on_timeout: true
+
+        - delay: "00:00:02"
+
+        - variables:
+            event: "{{ wait.trigger.payload_json if wait.trigger else {} }}"
+            event_before: "{{ event.get('before', {}) or {} }}"
+            event_after: "{{ event.get('after', {}) or {} }}"
+            new_snapshot: >-
+              {% set aft = event_after.get('snapshot_time') or (event_after.get('snapshot', {}).get('frame_time')) %}
+              {% set bef = event_before.get('snapshot_time') or (event_before.get('snapshot', {}).get('frame_time')) %}
+              {{ update_thumbnail and (aft is not none) and (bef is not none) and (aft != bef) }}
+            is_stationary: "{{ event_after.get('stationary', event_after.get('motionless', False)) }}"
+            sub_label: "{{ event_after.get('sub_label') }}"
+            sub_label_text: >-
+              {% if sub_label is string %}{{ sub_label }}
+              {% elif sub_label is sequence and not (sub_label is string) %}{{ sub_label | join(', ') }}
+              {% else %}{{ '' }}{% endif %}
+            sub_label_changed: "{{ sub_label_text != (event_before.get('sub_label') or '') }}"
+            has_clip_before: "{{ event_before.get('has_clip', false) }}"
+            has_clip_now: "{{ event_after.get('has_clip', false) }}"
+            has_clip_became_true: "{{ (not has_clip_before) and has_clip_now }}"
+            click_target_url_update: "{{ clip_url if has_clip_now else snapshot_url }}"
+            click_target_url_update_ios: >-
+              {% if input_ios_live_view %}{{ video_ios if has_clip_now else snapshot_url }}
+              {% else %}{{ click_target_url_update }}{% endif %}
+            view_clip_uri_update: >-
+              {% if input_ios_live_view %}{{ video_ios if has_clip_now else clip_url }}
+              {% else %}{{ clip_url }}{% endif %}
+            thumb_ts_update: "{{ (event_after.get('snapshot_time') or (event_after.get('snapshot', {}).get('frame_time')) or as_timestamp(now())) | int(0) }}"
+            # recompute per-camera silenced state on each loop tick
+            camera_silenced_now: >-
+              {% if not silence_table_enabled %}false{% else %}
+              {% set raw = (states(input_silence_table) | default('{}', true) | trim | replace("'", '"')) %}
+              {% set raw = '{}' if raw in ['', 'unknown', 'unavailable'] else raw %}
+              {% set m = raw | from_json %}
+              {% set until = (m.get(camera) | default(0)) | int(0) %}
+              {{ (as_timestamp(now()) | int(0)) < until }}
+              {% endif %}
+            current_zones_lower: "{{ (event_after.get('current_zones', []) | map('lower') | list) }}"
+            current_zones_before_lower: "{{ (event_before.get('current_zones', []) | map('lower') | list) }}"
+            entered_zones_lower: "{{ (event_after.get('entered_zones', []) | map('lower') | list) }}"
+            entered_zones_before_lower: "{{ (event_before.get('entered_zones', []) | map('lower') | list) }}"
+            event_zones_checked_before: >-
+              {% set t = (input_zone_match_type | lower) %}
+              {% if t == 'entered' %}{{ entered_zones_before_lower }}
+              {% elif t == 'current' %}{{ current_zones_before_lower }}
+              {% else %}{{ (entered_zones_before_lower + current_zones_before_lower) | unique | list }}{% endif %}
+            event_zones_checked_now: >-
+              {% set t = (input_zone_match_type | lower) %}
+              {% if t == 'entered' %}{{ entered_zones_lower }}
+              {% elif t == 'current' %}{{ current_zones_lower }}
+              {% else %}{{ (entered_zones_lower + current_zones_lower) | unique | list }}{% endif %}
+            zones_checked_changed: "{{ event_zones_checked_before != event_zones_checked_now }}"
+            event_zones_checked_update: "{{ (event_zones_checked_before + event_zones_checked_now) | unique | list }}"
+            # Current best score for this update tick
+            score_now_update: >-
+              {% set a = event_after or {} %}
+              {{ (a.get('top_score') if a.get('top_score') is not none else a.get('score', 0)) | float(0) }}
+            # Improvement threshold (relative): require >2% increase over previous best
+            score_improve_threshold: 0.02
+            # Is this score better than previous by more than the threshold?
+            score_improved: >-
+              {% set prev = (best_score_sent | float(0)) %}
+              {% set now = (score_now_update | float(0)) %}
+              {% if prev <= 0 %}
+                {{ now > 0 }}
+              {% else %}
+                {{ now > (prev * (1 + score_improve_threshold)) }}
+              {% endif %}
+            zone_match_update: >-
+              {% set Z = (event_zones_checked_update | default([], true)) | map('lower') | list %}
+              {% set logic = (input_zone_logic | lower) %}
+              {% set RXI = zones_include_rx %}
+              {% set RXE = zones_exclude_rx %}
+              {% if (zones_filter | length) == 0 %}
+                {% set include_ok = true %}
+              {% else %}
+                {% set include_ok = true if logic == 'all' else false %}
+                {% if logic == 'all' %}
+                  {% for rx in RXI %}
+                    {% set nsf = namespace(found=false) %}
+                    {% for z in Z %}{% if z is match(rx, ignorecase=true) %}{% set nsf.found = true %}{% endif %}{% endfor %}
+                    {% if not nsf.found %}{% set include_ok = false %}{% endif %}
+                  {% endfor %}
+                {% else %}
+                  {% set ns_any = namespace(hit=false) %}
+                  {% for rx in RXI %}{% for z in Z %}{% if z is match(rx, ignorecase=true) %}{% set ns_any.hit = true %}{% endif %}{% endfor %}{% endfor %}
+                  {% set include_ok = ns_any.hit %}
+                {% endif %}
+              {% endif %}
+              {% set exclude_hit = false %}
+              {% for rx in RXE %}{% for z in Z %}{% if z is match(rx, ignorecase=true) %}{% set exclude_hit = true %}{% endif %}{% endfor %}{% endfor %}
+              {{ include_ok and (not exclude_hit) }}
+            title: >-
+              {% if sub_label_text %}{{ sub_label_text }} detected by {{ camera_name }}.
+              {% else %}{{ base_title }}{% endif %}
+            message: >-
+              {% if sub_label_text %}{{ base_message }} (Updated sub-label: {{ sub_label_text }})
+              {% else %}{{ base_message }}{% endif %}
+            final_zones_union: >-
+              {{ (
+                (event_before.get('entered_zones', []) + event_before.get('current_zones', [])) +
+                (event_after.get('entered_zones', []) + event_after.get('current_zones', []))
+              ) | map('lower') | unique | list }}
+            zone_match_final: >-
+              {% set Z = final_zones_union | map('lower') | list %}
+              {% set logic = (input_zone_logic | lower) %}
+              {% set RXI = zones_include_rx %}
+              {% set RXE = zones_exclude_rx %}
+              {% set exclude_hit = false %}
+              {% for rx in RXE %}{% for z in Z %}{% if z is match(rx, ignorecase=true) %}{% set exclude_hit = true %}{% endif %}{% endfor %}{% endfor %}
+              {% if (zones_filter | length) == 0 %}
+                {{ not exclude_hit }}
+              {% else %}
+                {% if logic == 'all' %}
+                  {% set include_ok = true %}
+                  {% for rx in RXI %}
+                    {% set nsf = namespace(found=false) %}
+                    {% for z in Z %}{% if z is match(rx, ignorecase=true) %}{% set nsf.found = true %}{% endif %}{% endfor %}
+                    {% if not nsf.found %}{% set include_ok = false %}{% endif %}
+                  {% endfor %}
+                {% else %}
+                  {% set ns_any = namespace(hit=false) %}
+                  {% for rx in RXI %}{% for z in Z %}{% if z is match(rx, ignorecase=true) %}{% set ns_any.hit = true %}{% endif %}{% endfor %}{% endfor %}
+                  {% set include_ok = ns_any.hit %}
+                {% endif %}
+                {{ include_ok and (not exclude_hit) }}
+              {% endif %}
+
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ event.get('type') == 'end' }}"
+              sequence:
+                - variables:
+                    ended: true
+                    final_has_clip: "{{ has_clip_now }}"
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ input_debug }}"
+                      sequence:
+                        - service: logbook.log
+                          data:
+                            name: Frigate Notification
+                            message: >
+                              DEBUG (end seen): id={{ id }} zone_match_final={{ zone_match_final }}
+
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ input_debug and event.get('type','update') != 'end' }}"
+              sequence:
+                - service: logbook.log
+                  data:
+                    name: Frigate Notification
+                    message: >
+                      DEBUG (update): id={{ id }} new_snapshot={{ new_snapshot }} sub_label_changed={{ sub_label_changed }}
+                      zones_checked_changed={{ zones_checked_changed }} has_clip_became_true={{ has_clip_became_true }}
+                      camera_silenced_now={{ camera_silenced_now }} score_now={{ score_now_update }} best_sent={{ best_score_sent }} improved={{ score_improved }} threshold={{ score_improve_threshold }}
+
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >-
+                    {{ event.get('type','update') != 'end'
+                      and zone_match_update
+                      and ( has_clip_became_true or ((sub_label_changed or zones_checked_changed) and score_improved) )
+                      and ( (not is_stationary) or sub_label_changed or zones_checked_changed ) }}
+                - condition: template
+                  value_template: >-
+                    {% set ent = (input_cooldown_datetime | default('', true) | string) %}
+                    {% if ent|length == 0 %} true
+                    {% else %} {{ (as_timestamp(now()) - (state_attr(input_cooldown_datetime, 'timestamp') | int(0))) >= (cooldown_secs | int(0)) }} {% endif %}
+                - condition: template
+                  value_template: "{{ not camera_silenced_now }}"
+                - condition: template
+                  value_template: >
+                    {% set names = (input_suppress_faces | default('', true) | string | trim).split(',') | map('trim') | select('ne','') | map('lower') | list %}
+                    {{ names | length == 0 or (sub_label_text | lower | trim) not in names }}
+                - condition: template
+                  value_template: >
+                    {% set a = event_after or {} %}
+                    {% set best = (a.get('top_score') if a.get('top_score') is not none else a.get('score', 1)) | float(1) %}
+                    {% set score_ok = best >= (min_score | float(0)) %}
+                    {% set clip_ok = (not require_clip) or a.get('has_clip', false) %}
+                    {% set fp_ok = (not require_not_false_positive) or (a.get('false_positive') in [false, None]) %}
+                    {{ score_ok and clip_ok and fp_ok }}
+              sequence:
+                - variables:
+                    update_sent: false
+                - repeat:
+                    for_each: "{{ raw_device }}"
+                    sequence:
+                      - variables:
+                          input_notify_device: "{{ 'notify.mobile_app_' ~ (device_attr(repeat.item, 'name') | slugify) }}"
+                      - service: "{{ input_notify_device }}"
+                        data:
+                          title: "{{ title }}"
+                          message: "{{ message }}"
+                          data:
+                            channel: "{{ camera_name }} Notifications"
+                            timeout: "{{ timeout_secs }}"
+                            tag: "{{ tag_key }}"
+                            group: "{{ camera_name }}"
+                            data: { ttl: "0", priority: "high" }
+                            notification_icon: "{{ icon }}"
+                            attachment: { url: "{{ thumbnail_url ~ '?t=' ~ thumb_ts_update }}" }
+                            image: "{{ thumbnail_android_url ~ '&t=' ~ thumb_ts_update }}"
+                            clickAction: "{{ click_target_url_update_ios }}"
+                            push: { interruption-level: active }
+                            alert_once: "{{ alert_once }}"
+                            actions:
+                              - action: URI
+                                title: View Clip
+                                uri: "{{ view_clip_uri_update }}"
+                              - action: URI
+                                title: Open Frigate
+                                uri: "{{ frigate_review_url }}"
+                              - action: URI
+                                title: View Live
+                                uri: "{{ live_deeplink }}"
+                              - action: "SILENCE_{{ this.entity_id }}__{{ camera }}"
+                                title: Silence
+                                behavior: textInput
+                      - variables:
+                          update_sent: true
+
+                # After sending an update, record the best score we've announced so far
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ update_sent | default(false) }}"
+                      sequence:
+                        - variables:
+                            best_score_sent: "{{ [ (best_score_sent | float(0)), (score_now_update | float(0)) ] | max }}"
+
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ input_debug and event.get('type','update') != 'end' and (update_sent | default(false)) }}"
+              sequence:
+                - service: logbook.log
+                  data:
+                    name: Frigate Notification
+                    message: >
+                      INFO (update sent): camera={{ camera }} id={{ id }}
+
+        # When debug is on, log suppressed updates due to score not improving
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >-
+                    {{ input_debug and (event.get('type','update') != 'end') and (not (update_sent | default(false)))
+                       and (sub_label_changed or zones_checked_changed) and (not has_clip_became_true) }}
+              sequence:
+                - service: logbook.log
+                  data:
+                    name: Frigate Notification
+                    message: >
+                      DEBUG (update suppressed): id={{ id }} score_now={{ score_now_update }} best_sent={{ best_score_sent }} improved={{ score_improved }} threshold={{ score_improve_threshold }}
+
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: "{{ (input_cooldown_datetime | default('', true) | string) | length > 0 and (update_sent | default(false)) }}"
+              sequence:
+                - service: input_datetime.set_datetime
+                  data:
+                    entity_id: "{{ input_cooldown_datetime }}"
+                    date: "{{ now().strftime('%Y-%m-%d') }}"
+                    time: "{{ now().strftime('%H:%M:%S') }}"
+      until:
+        - condition: template
+          value_template: "{{ not wait.trigger or ended }}"
+
+  # Final notification on END
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ ended | default(false) }}"
+          - condition: template
+            value_template: "{{ zone_match_final | default(false) }}"
+          - condition: template
+            value_template: >
+              {% set names = (input_suppress_faces | default('', true) | string | trim).split(',') | map('trim') | select('ne','') | map('lower') | list %}
+              {{ names | length == 0 or (sub_label_text | lower | trim) not in names }}
+          - condition: template
+            value_template: >-
+              {% set a = payload.get('after', {}) or {} %}
+              {% set best = (a.get('top_score') if a.get('top_score') is not none else a.get('score', 1)) | float(1) %}
+              {% set score_ok = best >= (min_score | float(0)) %}
+              {% set clip_ok = (not require_clip) or a.get('has_clip', false) %}
+              {% set fp_ok = (not require_not_false_positive) or (a.get('false_positive') in [false, None]) %}
+              {{ score_ok and clip_ok and fp_ok }}
+          - condition: template
+            value_template: >-
+              {% if not silence_table_enabled %}true{% else %}
+              {% set raw = (states(input_silence_table) | default('{}', true) | trim | replace("'", '"')) %}
+              {% set raw = '{}' if raw in ['', 'unknown', 'unavailable'] else raw %}
+              {% set m = raw | from_json %}
+              {% set until = (m.get(camera) | default(0)) | int(0) %}
+              {{ (as_timestamp(now()) | int(0)) >= until }}
+              {% endif %}
+          - condition: template
+            value_template: >-
+              {% set ent = (input_cooldown_datetime | default('', true) | string) %}
+              {% if ent|length == 0 %} true
+              {% else %} {{ (as_timestamp(now()) - (state_attr(input_cooldown_datetime, 'timestamp') | int(0))) >= (cooldown_secs | int(0)) }}
+              {% endif %}
+        sequence:
+          - repeat:
+              for_each: "{{ raw_device }}"
+              sequence:
+                - variables:
+                    input_notify_device: "{{ 'notify.mobile_app_' ~ (device_attr(repeat.item, 'name') | slugify) }}"
+                - service: "{{ input_notify_device }}"
+                  data:
+                    title: "{{ title }}"
+                    message: "{{ message }}"
+                    data:
+                      channel: "{{ camera_name }} Notifications"
+                      timeout: "{{ timeout_secs }}"
+                      tag: "{{ id }}"          # END uses event id, not camera, to keep a final card per event
+                      group: "{{ camera_name }}"
+                      notification_icon: "{{ icon }}"
+                      data: { ttl: "0", priority: "high" }
+                      attachment: { url: "{{ thumbnail_url ~ '?t=' ~ now_ts }}" }
+                      image: "{{ thumbnail_android_url ~ '&t=' ~ now_ts }}"
+                      clickAction: >-
+                        {% set has = (final_has_clip | default(has_clip)) %}
+                        {% if input_ios_live_view %}{{ video_ios if has else snapshot_url }}
+                        {% else %}{{ clip_url if has else snapshot_url }}{% endif %}
+                      push: { interruption-level: active }
+                      alert_once: "{{ alert_once }}"
+                      actions:
+                        - action: URI
+                          title: View Clip
+                          uri: >-
+                            {% set has = (final_has_clip | default(has_clip)) %}
+                            {% if input_ios_live_view %}{{ video_ios if has else clip_url }}
+                            {% else %}{{ clip_url }}{% endif %}
+                        - action: URI
+                          title: Open Frigate
+                          uri: "{{ frigate_review_url }}"
+                        - action: URI
+                          title: View Live
+                          uri: "{{ live_deeplink }}"
+                        - action: "SILENCE_{{ this.entity_id }}__{{ camera }}"
+                          title: Silence
+                          behavior: textInput
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (input_cooldown_datetime | default('', true) | string) | length > 0 }}"
+                sequence:
+                  - service: input_datetime.set_datetime
+                    data:
+                      entity_id: "{{ input_cooldown_datetime }}"
+                      date: "{{ now().strftime('%Y-%m-%d') }}"
+                      time: "{{ now().strftime('%H:%M:%S') }}"
+
+  # LLMVision (optional)
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ (input_provider | default('', true) | string | trim) != '' }}"
+          - condition: template
+            value_template: >-
+              {{ (zone_match is defined and zone_match) or (zone_match_final is defined and zone_match_final) }}
+          - condition: template
+            value_template: >
+              {% set names = (input_suppress_faces | default('', true) | string | trim).split(',') | map('trim') | select('ne','') | map('lower') | list %}
+              {{ names | length == 0 or (sub_label_text | lower | trim) not in names }}
+          - condition: template
+            value_template: >-
+              {% if not silence_table_enabled %}true{% else %}
+              {% set raw = (states(input_silence_table) | default('{}', true) | trim | replace("'", '"')) %}
+              {% set raw = '{}' if raw in ['', 'unknown', 'unavailable'] else raw %}
+              {% set m = raw | from_json %}
+              {% set until = (m.get(camera) | default(0)) | int(0) %}
+              {{ (as_timestamp(now()) | int(0)) >= until }}
+              {% endif %}
+        sequence:
+          - delay: "00:00:30"
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (input_helper | default('', true) | string) | length > 0 }}"
+                  - condition: template
+                    value_template: "{{ is_state(input_helper, 'on') }}"
+                sequence:
+                  - wait_template: "{{ (input_helper | default('', true) | string) | length == 0 or is_state(input_helper, 'off') }}"
+                    timeout: { hours: 0, minutes: 3, seconds: 0 }
+                    continue_on_timeout: false
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (input_helper | default('', true) | string) | length > 0 }}"
+                sequence:
+                  - service: input_boolean.turn_on
+                    data:
+                      entity_id: "{{ input_helper }}"
+
+          - service: llmvision.video_analyzer
+            alias: "LLM Vision: Analyze Frigate Clip"
+            data:
+              remember: true
+              model: "{{ input_model }}"
+              provider: "{{ input_provider }}"
+              frigate_retry_attempts: "{{ input_frigate_retry_attempts }}"
+              frigate_retry_seconds: >-
+                {% set d = input_frigate_retry_time %}
+                {{ (d.hours | default(0)) * 3600 + (d.minutes | default(0)) * 60 + (d.seconds | default(0)) }}
+              max_frames: "{{ input_max_frames }}"
+              include_filename: "{{ input_include_filename }}"
+              target_width: "{{ input_target_width }}"
+              max_tokens: "{{ input_max_tokens }}"
+              temperature: "{{ input_temperature }}"
+              generate_title: "{{ input_generate_title }}"
+              expose_images: "{{ input_expose_images }}"
+              event_id: "{{ id }}"
+              message: >-
+                {{ input_prompt }}
+                {% if input_sublabel and sub_label_text %}
+                  These images have already been passed to DeepStack and Double Take and {{ sub_label_text }} has been identified, use this knowledge as well.
+                {% endif %}
+            response_variable: response
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (input_log_helper | default('', true) | string | trim) | length > 0 }}"
+                sequence:
+                  - service: input_text.set_value
+                    data:
+                      entity_id: "{{ input_log_helper }}"
+                      value: >-
+                        {% set ts = now().strftime('%Y-%m-%d %H:%M') %}
+                        {% set entry_title = response.response_title | default('', true) | trim %}
+                        {% set entry_body = response.response_text | default('', true) | trim %}
+                        {% set old = states(input_log_helper) | default('', true) %}
+                        {% set header = '[' ~ ts ~ '] ' ~ camera_name ~ ' — ' ~ label %}
+                        {% if entry_title and entry_title != '' %}
+                          {% set header = header ~ ': ' ~ entry_title %}
+                        {% endif %}
+                        {{ header ~ '\n' ~ entry_body ~ '\n---\n' ~ old }}
+
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (input_helper | default('', true) | string) | length > 0 }}"
+                sequence:
+                  - service: input_boolean.turn_off
+                    data:
+                      entity_id: "{{ input_helper }}"
+
+          - variables:
+              title: >-
+                {% if input_generate_title and (response.response_title | default('') | trim != '') %}
+                  {{ response.response_title }}
+                {% else %}
+                  {{ base_title }}
+                {% endif %}
+              message: "{{ response.response_text | default(base_message) }}"
+
+          - repeat:
+              for_each: "{{ raw_device }}"
+              sequence:
+                - variables:
+                    input_notify_device: "{{ 'notify.mobile_app_' ~ (device_attr(repeat.item, 'name') | slugify) }}"
+                - service: "{{ input_notify_device }}"
+                  data:
+                    title: "{{ title }}"
+                    message: "{{ message }}"
+                    data:
+                      channel: "{{ camera_name }} Notifications"
+                      timeout: "{{ timeout_secs }}"
+                      tag: "{{ tag_key }}"
+                      group: "{{ camera_name }}"
+                      notification_icon: "{{ icon }}"
+                      data: { ttl: "0", priority: "high" }
+                      attachment:
+                        url: >
+                          {% if input_ios_live_view and (base_url | string | length > 0) %}
+                            {{ clip_url_signed }}
+                          {% else %}
+                            {{ thumbnail_url ~ '?t=' ~ now_ts }}
+                          {% endif %}
+                      image: "{{ thumbnail_android_url ~ '?t=' ~ now_ts }}"
+                      clickAction: "{{ (video_ios if input_ios_live_view else clip_url) }}"
+                      push: { interruption-level: active }
+                      alert_once: "{{ alert_once }}"
+                      actions:
+                        - action: URI
+                          title: View Clip
+                          uri: "{{ (video_ios if input_ios_live_view else clip_url) }}"
+                        - action: URI
+                          title: Open Frigate
+                          uri: "{{ frigate_review_url }}"
+                        - action: URI
+                          title: View Live
+                          uri: "{{ live_deeplink }}"
+                        - action: "SILENCE_{{ this.entity_id }}__{{ camera }}"
+                          title: Silence
+                          behavior: textInput
+          - delay: "{{ cooldown_td }}"
+
+mode: parallel
+max: 25

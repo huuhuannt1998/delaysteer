@@ -1,0 +1,349 @@
+blueprint:
+  name: Shelly i4 4 Buttons actions
+  description: This blueprint is for the Shelly i4 setup as button. It is for general use.
+  domain: automation
+  input:
+    button:
+      name: button
+      description: Choose Shelly i4
+      selector:
+        device:
+          manufacturer: Shelly
+          model: SNSN-0024X
+          multiple: false
+    downb1:
+      name: Down Button 1
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    upb1:
+      name: up Button 1
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    singleb1:
+      name: single short press Button 1
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    doubleb1:
+      name: double short press Button 1
+      description: Action to run when DOUBLE SHORT press
+      default: []
+      selector:
+        action: {}
+    longb1:
+      name: long press Button 1
+      description: Action to run when LONG press
+      default: []
+      selector:
+        action: {}
+        
+    downb2:
+      name: Down Button 2
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    upb2:
+      name: up Button 2
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    singleb2:
+      name: single short press Button 2
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    doubleb2:
+      name: double short press Button 2
+      description: Action to run when DOUBLE SHORT press
+      default: []
+      selector:
+        action: {}
+    longb2:
+      name: long press Button 2
+      description: Action to run when LONG press
+      default: []
+      selector:
+        action: {}
+        
+    downb3:
+      name: Down Button 3
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    upb3:
+      name: up Button 3
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    singleb3:
+      name: single short press Button 3
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    doubleb3:
+      name: double short press Button 3
+      description: Action to run when DOUBLE SHORT press
+      default: []
+      selector:
+        action: {}
+    longb3:
+      name: long press Button 3
+      description: Action to run when LONG press
+      default: []
+      selector:
+        action: {}
+        
+    downb4:
+      name: Down Button 4
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    upb4:
+      name: up Button 4
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    singleb4:
+      name: single short press Button 4
+      description: Action to run when SHORT press
+      default: []
+      selector:
+        action: {}
+    doubleb4:
+      name: double short press Button 4
+      description: Action to run when DOUBLE SHORT press
+      default: []
+      selector:
+        action: {}
+    longb4:
+      name: long press Button 4
+      description: Action to run when LONG press
+      default: []
+      selector:
+        action: {}
+  source_url: https://community.home-assistant.io/t/shelly-i4-4-buttons-actions/514527
+mode: restart
+max_exceeded: silent
+trigger:
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_down
+  subtype: button1
+  id: btn1_down
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_up
+  subtype: button1
+  id: btn1_up
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: single_push
+  subtype: button1
+  id: btn1_single
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: double_push
+  subtype: button1
+  id: btn1_double
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: long_push
+  subtype: button1
+  id: btn1_long
+  
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_down
+  subtype: button2
+  id: btn2_down
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_up
+  subtype: button2
+  id: btn2_up
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: single_push
+  subtype: button2
+  id: btn2_single
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: double_push
+  subtype: button2
+  id: btn2_double
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: long_push
+  subtype: button2
+  id: btn2_long
+  
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_down
+  subtype: button3
+  id: btn3_down
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_up
+  subtype: button3
+  id: btn3_up
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: single_push
+  subtype: button3
+  id: btn3_single
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: double_push
+  subtype: button3
+  id: btn3_double
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: long_push
+  subtype: button3
+  id: btn3_long
+  
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_down
+  subtype: button4
+  id: btn4_down
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: btn_up
+  subtype: button4
+  id: btn4_up
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: single_push
+  subtype: button4
+  id: btn4_single
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: double_push
+  subtype: button4
+  id: btn4_double
+- platform: device
+  device_id: !input  button
+  domain: shelly
+  type: long_push
+  subtype: button4
+  id: btn4_long
+action:
+- choose:
+  - conditions:
+    - condition: trigger
+      id: btn1_down
+    sequence: !input downb1
+  - conditions:
+    - condition: trigger
+      id: btn1_up
+    sequence: !input upb1
+  - conditions:
+    - condition: trigger
+      id: btn1_single
+    sequence: !input singleb1
+  - conditions:
+    - condition: trigger
+      id: btn1_double
+    sequence: !input doubleb1
+  - conditions:
+    - condition: trigger
+      id: btn1_long
+    sequence: !input longb1
+
+  - conditions:
+    - condition: trigger
+      id: btn2_down
+    sequence: !input downb2
+  - conditions:
+    - condition: trigger
+      id: btn2_up
+    sequence: !input upb2
+  - conditions:
+    - condition: trigger
+      id: btn2_single
+    sequence: !input singleb2
+  - conditions:
+    - condition: trigger
+      id: btn2_double
+    sequence: !input doubleb2
+  - conditions:
+    - condition: trigger
+      id: btn2_long
+    sequence: !input longb2
+
+  - conditions:  
+    - condition: trigger
+      id: btn3_down
+    sequence: !input downb3
+  - conditions:
+    - condition: trigger
+      id: btn3_up
+    sequence: !input upb3
+  - conditions:
+    - condition: trigger
+      id: btn3_single
+    sequence: !input singleb3
+  - conditions:
+    - condition: trigger
+      id: btn3_double
+    sequence: !input doubleb3
+  - conditions:
+    - condition: trigger
+      id: btn3_long
+    sequence: !input longb3
+
+  - conditions:
+    - condition: trigger
+      id: btn4_down
+    sequence: !input downb4
+  - conditions:
+    - condition: trigger
+      id: btn4_up
+    sequence: !input upb4
+  - conditions:
+    - condition: trigger
+      id: btn4_single
+    sequence: !input singleb4
+  - conditions:
+    - condition: trigger
+      id: btn4_double
+    sequence: !input doubleb4
+  - conditions:
+    - condition: trigger
+      id: btn4_long
+    sequence: !input longb4
+  

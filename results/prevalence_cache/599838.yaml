@@ -1,0 +1,78 @@
+blueprint:
+  name: Adjustable Wake-up to Android alarm
+  description: >
+    # Adjustable Wake-up to Android alarm V5
+
+    When the specified __conditions__ are satisfied, it runs these specified __actions__ prior the phone's next alarm
+     
+    ## 🔧 Requirements:
+      - [Android app](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) installed on your phone
+      - Next alarm sensor activated in the app (HA App → Settings → Companion App → Manage Sensors → Next Alarm → enable)
+        [![Open your Home Assistant instance and show your helper entities.](https://my.home-assistant.io/badges/helpers.svg)](https://my.home-assistant.io/redirect/helpers/)    
+      - Home Assistant version 2023.8.0 or higher
+
+    ## 💡Some Inspiratios: **(at your own risk)**
+     - If the sun has not risen yet, turn on the bedroom lights 10 minutes before the phone alarm goes off
+     - If person 1 is at home, switch on the TV and tune it to a news channel 30 minutes before the phone alarm rings
+     - If person 2 is not at home, retrieve today's calendar events and announce them on the bedroom speaker 2 minutes before the alarm is set to go off
+     - If the temperature outside is below 0°C, start warming up the car 45 minutes before the alarm is set to go off
+    
+    ## 🤝Feedback and Discussion
+      - [Home Assistant Forum](https://community.home-assistant.io/t/adjustable-wake-up-to-android-alarm/599838)
+  domain: automation
+  author: op00
+  homeassistant:
+    min_version: 2024.10.0
+  source_url: https://community.home-assistant.io/t/adjustable-wake-up-to-android-alarm/599838/26
+  input:
+    offset:
+      name: Offset
+      description: "Enter an offset for the next alarm. Specify when the
+        action should run the alarm. Use negative values for hour, minutes and seconds\n\n
+        -1:-22:-33 = 1 hour 22 minutes and 33 seconds before alarm"
+      selector:
+        duration:
+          enable_day: false
+          enable_millisecond: false
+      default:
+        hours: -0
+        minutes: -10
+        seconds: -20
+    alarm_source:
+      name: Alarm Source
+      description: "Select the alarm source\n\n _your Android phone's next alarm sensor_"
+      selector:
+        entity:
+          filter:
+            - integration: mobile_app
+              device_class:
+                - timestamp
+          multiple: false
+    conditions:
+      name: Conditions
+      description:
+        "Choose the circumstances under which the actions will or will
+        not run\n\n _can be multiple or none_"
+      default: []
+      selector:
+        condition: {}
+    actions:
+      name: Actions
+      description: "Actions to run before alarm goes off\n\n _can be multiple_"
+      default: []
+      selector:
+        action: {}
+trigger:
+  - platform: time
+    at:
+      entity_id: !input alarm_source
+      offset: !input offset
+    id: wake_up
+conditions: !input conditions
+actions:
+  sequence: !input actions
+  alias: Alarm Actions
+mode: single
+trace:
+  stored_traces: 21
+

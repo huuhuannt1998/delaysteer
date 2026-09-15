@@ -1,0 +1,10 @@
+blueprint:
+  name: Update notifications
+  description: Send notifications for new updates and install or skip on action
+  homeassistant:
+    min_version: '2022.4.0'
+  domain: automation
+  input:
+    update_entities:
+      name: Update entities
+      description: >-

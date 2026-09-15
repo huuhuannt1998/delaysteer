@@ -1,0 +1,249 @@
+blueprint:
+  name: Advanced Auto Fan Off
+  description: Home Assistant smart fan control with shower sensors
+  domain: automation
+  input:
+    fan_entity:
+      name: Fan
+      description: Fan to monitor and control
+      selector:
+        entity:
+          filter:
+          - domain:
+            - light
+            - switch
+          multiple: false
+    fan_entity_watchdog:
+      name: Fan Watchdog
+      default:
+        hours: 0
+        minutes: 0
+        seconds: 0
+      description: Turn off after x duration no matter what is running (optional)
+      selector:
+        duration: {}
+    control_light_entity:
+      name: Control Light
+      default: []
+      description: Light to monitor and control the fan (optional)
+      selector:
+        entity:
+          filter:
+          - domain:
+            - light
+            - swtich
+          multiple: false
+    shower_entity:
+      name: Shower Heads
+      default: []
+      description: Shower(s) to monitor (optional)
+      selector:
+        entity:
+          multiple: true
+          filter:
+          - domain:
+            - light
+            - switch
+    fan_timer:
+      name: Fan Timer Helper
+      description: Timer Helper
+      selector:
+        entity:
+          filter:
+          - domain:
+            - timer
+          multiple: false
+    fan_timer_duration:
+      name: Fan Timer Duration Helper
+      description: Number Helper
+      selector:
+        entity:
+          filter:
+          - domain:
+            - input_number
+          multiple: false
+  source_url: https://gist.github.com/Jjbasso/be243f0ffef860d47f90239ac9271cb3
+trigger:
+- platform: state
+  entity_id: !input shower_entity
+  from: 'off'
+  to: 'on'
+  id: Master Bathroom Shower On
+- platform: state
+  entity_id: !input shower_entity
+  from: 'on'
+  to: 'off'
+  id: Master Bathroom Shower Off
+- platform: state
+  entity_id: !input fan_entity
+  from: 'off'
+  to: 'on'
+  id: Bathroom Fan On
+- platform: state
+  entity_id: !input fan_entity
+  from: 'off'
+  to: 'on'
+  for: !input fan_entity_watchdog
+  id: Bathroom Fan On Delayed
+- platform: state
+  entity_id: !input fan_entity
+  from: 'on'
+  to: 'off'
+  id: Bathroom Fan Off
+- platform: state
+  entity_id: !input control_light_entity
+  from: 'on'
+  to: 'off'
+  id: Bathroom Light Off
+- platform: state
+  entity_id: !input control_light_entity
+  from: 'off'
+  to: 'on'
+  id: Bathroom Light On
+- platform: event
+  event_type: timer.finished
+  id: Master Bathroom Lavatory Fan Timer Finished
+  event_data:
+    entity_id: !input fan_timer
+variables:
+  shower_entity: !input shower_entity
+  fan_timer_duration: !input fan_timer_duration 
+  
+action:
+- if:
+  - condition: trigger
+    id: Bathroom Fan On Delayed
+  - condition: state
+    entity_id: !input fan_entity
+    state: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  then:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: !input fan_entity
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Bathroom Fan On
+    - condition: state
+      entity_id: !input control_light_entity
+      state: 'off'
+    sequence:
+    - service: timer.start
+      data:
+        duration: '{{ states(fan_timer_duration)|float|multiply(60)|timestamp_custom(''%H:%M:%S'', false)
+            }}'
+      target:
+        entity_id: !input fan_timer
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Bathroom Fan On
+    - condition: state
+      entity_id: !input control_light_entity
+      state: 'on'
+    sequence:
+    - service: timer.cancel
+      data: {}
+      target:
+        entity_id: !input fan_timer
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Bathroom Light On
+    sequence:
+    - service: timer.cancel
+      data: {}
+      target:
+        entity_id: !input fan_timer
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Master Bathroom Shower On
+    sequence:
+    - service: homeassistant.turn_on
+      data: {}
+      target:
+        entity_id: !input fan_entity
+    - service: timer.cancel
+      data: {}
+      target:
+        entity_id: !input fan_timer
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Master Bathroom Shower Off
+    - condition: state
+      entity_id: !input fan_entity
+      state: 'on'
+    - condition: state
+      entity_id: !input control_light_entity
+      state: 'off'
+    - condition: state
+      entity_id: !input shower_entity
+      state: 'off'
+    sequence:
+    - service: timer.start
+      data:
+        duration: '{{ states(fan_timer_duration)|float|multiply(60)|timestamp_custom(''%H:%M:%S'', false)
+            }}'
+      target:
+        entity_id: !input fan_timer
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Bathroom Light Off
+    - condition: state
+      entity_id: !input fan_entity
+      state: 'on'
+    - condition: state
+      entity_id: !input shower_entity
+      state: 'off'
+    sequence:
+    - service: timer.start
+      data:
+        duration: '{{ states(fan_timer_duration)|float|multiply(60)|timestamp_custom(''%H:%M:%S'', false)
+            }}'
+      target:
+        entity_id: !input fan_timer
+        
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Bathroom Fan Off
+    sequence:
+    - service: timer.cancel
+      data: {}
+      target:
+        entity_id: !input fan_timer
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Master Bathroom Lavatory Fan Timer Finished
+    sequence:
+    - service: homeassistant.turn_off
+      data: {}
+      target:
+        entity_id: !input fan_entity
+- choose:
+  - conditions:
+    - condition: trigger
+      id: Bathroom Fan Off
+    - condition: template
+      value_template: '{{ expand(shower_entity) | selectattr(''state'', ''eq'', ''on'')
+        | list | count > 0 }}'
+    sequence:
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 2
+        milliseconds: 0
+    - service: homeassistant.turn_on
+      data: {}
+      target:
+        entity_id: !input fan_entity
+mode: single

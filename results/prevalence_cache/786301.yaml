@@ -1,0 +1,88 @@
+blueprint:
+  name: Import Calendar Events
+  description: "Imports calendar events from a source calendar to a destination calendar within a defined timeframe."
+  domain: automation
+  author: N1c093
+  input:
+    calendar_source:
+      name: Source Calendar
+      description: "Select the calendar from which events will be imported."
+      selector:
+        entity:
+          domain:
+            - calendar
+    calendar_destination:
+      name: Destination Calendar
+      description: "Select the destination calendar where the imported events will be saved."
+      selector:
+        entity:
+          domain:
+            - calendar
+    timeframe:
+      name: Timeframe
+      description: "Specify the time duration for which events should be imported (e.g. 2 days)."
+      selector:
+        duration:
+          enable_day: true
+    prefix:
+      name: (optional) Event Prefix
+      description: "Add a custom prefix to the title of imported events in the destination calendar, if desired."
+      default: ""
+      selector:
+        text:
+    trigger:
+      name: Automation trigger
+      description: "Choose when the automation should be triggered (e.g., time-based, event-based)."
+      selector:
+        trigger:
+
+  source_url: https://community.home-assistant.io/t/import-sync-calendar-events/786301
+mode: single
+variables:
+  calendar_source: !input calendar_source
+  calendar_destination: !input calendar_destination
+  prefix: !input prefix
+
+trigger: !input trigger
+
+action:
+  - data:
+      duration: !input timeframe
+    target:
+      entity_id: "{{ calendar_source }}"
+    response_variable: source_calendar_events
+    action: calendar.get_events
+  - repeat:
+      count: '{{ source_calendar_events[calendar_source]["events"] | length }}'
+      sequence:
+        - response_variable: existingevents
+          target:
+            entity_id: "{{ calendar_destination }}"
+          data:
+            start_date_time: "{{ source_calendar_events[calendar_source].events[repeat.index-1].start }}"
+            end_date_time: "{{ source_calendar_events[calendar_source].events[repeat.index-1].end }}"
+          action: calendar.get_events
+        - variables:
+            event_summary: "{{ source_calendar_events[calendar_source].events[repeat.index-1].summary }}"
+            prefixed_summary: "{{ prefix }} {{ event_summary }}"
+            existing_events: "{{ existingevents }}"
+            existing_events_summary: >-
+              {{ existingevents[calendar_destination].events |
+              map(attribute='summary') | list }}
+        - condition: template
+          value_template: >-
+            {{ not prefixed_summary in
+            existingevents[calendar_destination].events |
+            map(attribute='summary') | list }}
+        - target:
+            entity_id: "{{ calendar_destination }}"
+          data_template:
+            start_date_time: "{{ source_calendar_events[calendar_source].events[repeat.index-1].start }}"
+            end_date_time: "{{ source_calendar_events[calendar_source].events[repeat.index-1].end }}"
+            summary: "{{ prefixed_summary }}"
+            description: "{{ source_calendar_events[calendar_source].events[repeat.index-1].description }}"
+            location: "{{ source_calendar_events[calendar_source].events[repeat.index-1].location }}"
+          enabled: true
+          action: calendar.create_event
+        - delay: "00:00:01"
+

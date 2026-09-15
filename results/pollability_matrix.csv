@@ -1,0 +1,9 @@
+pollable,guard,deliberation_s,benign_completes,benign_false_block,attack_violation,attack_blocked,verdict
+1,challenge,0.5,0,1,0,1,fail-closed
+1,challenge,3.0,0,1,0,1,fail-closed
+1,activepoll,0.5,1,0,0,1,secure+usable
+1,activepoll,3.0,1,0,0,1,secure+usable
+0,challenge,0.5,0,1,0,1,fail-closed
+0,challenge,3.0,0,1,0,1,fail-closed
+0,activepoll,0.5,0,1,0,1,fail-closed
+0,activepoll,3.0,0,1,0,1,fail-closed

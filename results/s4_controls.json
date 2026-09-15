@@ -1,0 +1,80 @@
+{
+  "definition_source": "design's mandatory attack-baseline list; 'Controls A/B/C' is never defined in the design document and this reading should be reconciled with the advisor",
+  "tier": "tier0_synthetic",
+  "A": {
+    "control": "A_honest",
+    "target": false,
+    "k": 0,
+    "k_flows": 0,
+    "total_hold": 0.0,
+    "n": 1,
+    "hits": 0
+  },
+  "B": {
+    "control": "B_fixed_max_delay",
+    "n": 6,
+    "hits": 0,
+    "rows": [
+      {
+        "hold_s": 30.0,
+        "target": false,
+        "k": 3,
+        "k_flows": 2,
+        "total_hold": 10001.0
+      },
+      {
+        "hold_s": 120.0,
+        "target": false,
+        "k": 3,
+        "k_flows": 2,
+        "total_hold": 10001.0
+      },
+      {
+        "hold_s": 600.0,
+        "target": false,
+        "k": 3,
+        "k_flows": 2,
+        "total_hold": 10001.0
+      },
+      {
+        "hold_s": 1800.0,
+        "target": false,
+        "k": 3,
+        "k_flows": 2,
+        "total_hold": 10001.0
+      },
+      {
+        "hold_s": 3600.0,
+        "target": false,
+        "k": 3,
+        "k_flows": 2,
+        "total_hold": 10001.0
+      },
+      {
+        "hold_s": 9000.0,
+        "target": false,
+        "k": 3,
+        "k_flows": 2,
+        "total_hold": 10001.0
+      }
+    ]
+  },
+  "C": {
+    "control": "C_random_admissible",
+    "matched_budget_s": 8820.0,
+    "pool_size": 52,
+    "n": 200,
+    "hits": 69,
+    "hit_rate": 0.345
+  },
+  "best_single_delay": {
+    "exact": true,
+    "n_single_flow_schedules": 52,
+    "n_reaching_target": 0,
+    "min_total_hold_reaching_target": null
+  },
+  "passes": false,
+  "control_c_informative": false,
+  "space_base_success_rate": 0.2043,
+  "control_c_caveat": "Control C lacks discriminating power in a bounded micro-scenario: 19/93 of the whole space succeeds, so matched-budget random draws succeed often by construction. Do not quote it in either direction at this scale; re-run on a larger scenario. I_k, per-release necessity and Control B are the certifications that discriminate here."
+}

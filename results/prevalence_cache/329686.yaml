@@ -1,0 +1,57 @@
+blueprint:
+  name: Z2M - Hue Tap Switch 4 buttons
+  description: 'Use the individual buttons of the Hue Tap switch to control an action by a tap.'
+  domain: automation
+  input:
+    dimmer:
+      name: Hue Tap switch
+      description: Hue Tap Switch to use (Zigbee2mqtt Action Sensor)
+      selector:
+        entity:
+          domain: sensor
+    button_1:
+      name: Button Single Dot
+      description: Action to run on click of single dot button
+      default: []
+      selector:
+        action: null
+    button_2:
+      name: Button Two Dots
+      description: Action to run on click of two dot button
+      default: []
+      selector:
+        action: null
+    button_3:
+      name: Button Three Dots
+      description: Action to run on click of three dot button
+      default: []
+      selector:
+        action: null
+    button_4:
+      name: Button Four Dots
+      description: Action to run on click of four dot button
+      default: []
+      selector:
+        action: null
+mode: restart
+max_exceeded: silent
+trigger:
+- platform: state
+  entity_id: !input 'dimmer'
+  attribute: action
+action:
+- variables:
+    command: '{{ trigger.to_state.state }}'
+- choose:
+  - conditions:
+    - '{{ command == ''press_1'' }}'
+    sequence: !input button_1
+  - conditions:
+    - '{{ command == ''press_2'' }}'
+    sequence: !input button_2
+  - conditions:
+    - '{{ command == ''press_3'' }}'
+    sequence: !input button_3
+  - conditions:
+    - '{{ command == ''press_4'' }}'
+    sequence: !input button_4

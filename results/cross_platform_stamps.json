@@ -1,0 +1,55 @@
+{
+  "platforms": {
+    "home_assistant": {
+      "n_entities": 125,
+      "time_fields": [
+        "last_changed",
+        "last_reported",
+        "last_updated"
+      ],
+      "attested_origin_fields": [],
+      "stamp_semantics": "receiver-side: when Home Assistant recorded the change, not when the device produced it"
+    },
+    "smartthings": {
+      "n_devices": 26,
+      "security_capabilities": [
+        "contactSensor",
+        "motionSensor"
+      ],
+      "probes": [
+        {
+          "device": "Motion Sensor",
+          "cap": "motionSensor",
+          "attr": "motion",
+          "value": "inactive",
+          "age_s": 26997707.312511
+        },
+        {
+          "device": "vEdge Motion 1",
+          "cap": "motionSensor",
+          "attr": "motion",
+          "value": "inactive",
+          "age_s": 38354375.89083
+        },
+        {
+          "device": "Ring Sensor",
+          "cap": "contactSensor",
+          "attr": "contact",
+          "value": "closed",
+          "age_s": 40191505.126266
+        },
+        {
+          "device": "Ring Sensor",
+          "cap": "motionSensor",
+          "attr": "motion",
+          "value": "inactive",
+          "age_s": 40191505.156299
+        }
+      ],
+      "attested_origin_fields": [],
+      "stamp_semantics": "receiver-side: when the SmartThings CLOUD recorded the event, not when the device produced it",
+      "read_only": true
+    }
+  },
+  "both_receiver_side_only": true
+}

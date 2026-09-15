@@ -1,0 +1,902 @@
+blueprint:
+  name: Aqara Rotary Knob H1 – Adjustable Brightness & Color Temperature (Z2M)
+  description: |-
+    ## BREAKING CHANGES - READ BEFORE UPDATING
+      - Home Assistant Core `2025.4` or newer is now required.
+      - `Target Light` now accepts one UI-selected `light` or light-group entity.
+        Existing template/list users must re-select the target and save.
+      - Brightness and color-temperature sensitivity now use direct per-tick units.
+        Review both values after updating.
+      - The unused `translate_friendly_name` has been removed; no replacement is needed.
+      - Hold Repeat Maximum Duration is now limited to `11 seconds`.
+        Change any saved higher value before saving the automation.
+
+    ## Supporting
+      - Aqara Rotary Knob H1 (wireless) [ZNXNKG02LM](https://www.zigbee2mqtt.io/devices/ZNXNKG02LM.html)
+      - Supports Zigbee2MQTT versions, including 2.0.0 and later updates. (It is expected to work on lower versions as well.)
+
+    ## Prerequisites
+      - Requires **Home Assistant Core `2025.4` or newer**. This minimum is
+        enforced by the Blueprint metadata, so older Core versions cannot import it.
+      - Home Assistant 2025.4 made variables accessible across nested and parallel action
+        scopes. The Hold and rotation listeners rely on that shared run-scope behavior.
+      - The knob only works when connected via `Zigbee2MQTT`.
+      - The operation mode of the knob must be set to `event`. It is unknown whether it works in `command` mode.
+      
+      - The controlled lights can be connected through any platform. (Color temperature adjustment in Kelvin must be supported.)
+      - The MQTT integration must be installed in Home Assistant.
+
+      - The blueprint consumes each JSON event directly from the Zigbee2MQTT device topic.
+        It does not depend on generated Home Assistant sensor entity IDs.
+      - The global automation mode is `parallel`, so `start_rotating` can start its
+        listener immediately even while a configured press action is still running.
+        Only `single`, `double`, `hold`, `release`, and `start_rotating` create
+        top-level runs. Intermediate rotation packets stay inside one gesture run.
+      - Internal parallel blocks only keep a listener alive beside one sequential
+        worker. Light service commands for a rotation gesture never run in multiple
+        branches.
+      - Rotation is processed as one gesture from `start_rotating` through
+        `stop_rotating`. The listener keeps the newest cumulative
+        `action_rotation_angle`, so intermediate rotation packets may be coalesced and
+        no longer create separate top-level traces.
+      - The final stop packet can supply the last cumulative angle. When an off light
+        needs a restore-only startup command, only the first positive packet is
+        consumed; any later coalesced movement is still applied.
+      - If a light group's aggregate brightness or color-temperature attribute is
+        temporarily unavailable, available member values provide the gesture base.
+        A missing value is never treated as 0% brightness.
+
+    ## Breaking Change: Direct Per-Tick Controls
+      - The legacy step-size multiplier behavior is deprecated. The existing input IDs are retained, but their values now have direct physical meanings.
+      - The obsolete `translate_friendly_name` compatibility input has been removed.
+        It was unused and has no replacement. Existing automations may retain the
+        old saved key until they are edited, but Home Assistant ignores that extra
+        input. The required `knob` input remains because it supplies the
+        Zigbee2MQTT device-topic segment for the single MQTT trigger.
+      - `Target Light` now accepts one `light` entity selected in the UI. Direct
+        entity lists and templates are no longer supported. Re-select one light or
+        one light-group entity and save each existing automation after updating.
+      - One knob tick is `12 degrees`.
+      - Brightness is now configured as `1-100 %/tick`; the default is exactly `2 %/tick`.
+      - Pressed-rotation color temperature is now configured as `1-10000 K/tick`; the default is `100 K/tick`.
+      - After re-importing this blueprint, open every automation created from it, review these two inputs, and save it again.
+      - Existing brightness values above `100` are no longer valid and must be changed to a value from `1` through `100`.
+      - To preserve the old default color-temperature response, change a saved value of `5` to `60 K/tick`.
+      - Hold Repeat Maximum Duration now defaults to `11 seconds` and cannot be
+        set higher. Existing values above `11` must be changed before saving.
+
+    ## Customizing Options
+
+      - `Target Light` must be one `light` entity. To control multiple lights,
+        select one group entity created with the native
+        [Home Assistant Light Group](https://www.home-assistant.io/integrations/group/#light-groups)
+        or [Cheerpipe Relative Light Group](https://github.com/Cheerpipe/relative-light-group).
+        Direct entity lists and templates are not supported.
+
+      - If Restore Brightness is disabled (default), turning the knob `right` to turn on the Target Light will start at the `minimum brightness` and increase based on the knob rotation.
+      
+      - If the Restore Brightness option is enabled, turning the knob `right` to turn on the Target Light while it is off will restore its previous brightness state (if supported by the light).
+
+      - You can set the `transition time` for smooth brightness and color temperature adjustments. The default value is `0.4s`, as it matches the default transition time of my Hue bulbs.
+
+      - You can adjust the amount of color temperature change per tick of the knob.
+      
+      - You can adjust the brightness percentage change per tick of the knob.
+      
+      - Added functionality to set the starting color temperature via the `Default Color Temp Setting` when adjusting the light's color temperature by pressing and turning the light (instead of using the color temperature mode). The default value is set to `4000k`
+
+      - You can set the minimum and maximum color temperature values to limit the physically adjustable range. If you don’t want any restrictions, you can ignore this setting.
+
+    ## User Manual
+      1. If you haven’t changed the topic in Zigbee2MQTT, you don’t need to modify the base topic. Leave it as the `default` value
+
+      2. Type in the `friendly name` of the knob exactly as it appears in the `Zigbee2MQTT Web UI`
+         Ensure that uppercase letters, spaces, and underscores match the exact formatting used in Zigbee2MQTT.
+
+      3. Ensure that all prerequisites are fully met before proceeding.
+
+      4. Adjust the Knob Action Config settings according to your needs, following the options listed in Customizing Options.
+
+    ## How It Works
+    *Press Action*
+      - `Single`, `Double`, and `Hold` actions are configured in `Press Action`.
+      - Repeat behavior and `Release Action` are configured in the collapsed
+        `Hold Repeat & Release` section.
+      - `Do not repeat`: `Hold Action` runs once. The automation does not need to
+        remain waiting; `Release` starts a separate parallel run and executes
+        `Release Action` once.
+      - `Repeat Hold Action`: `Hold Action` runs once and then repeats at the
+        configured interval while the button is held.
+      - `Hold once, then repeat a separate action`: `Hold Action` runs
+        once, then the separate `Hold Repeat Action` repeats at the configured
+        interval while the button is held.
+      - Any following knob action stops an active Hold repeat. `Release Action`
+        still runs once when a `release` event is received.
+      - `Release Action` is optional. Leave it empty when no action is needed on
+        release; the `release` event is then accepted without performing anything.
+      - **Hardware warning:** Do not keep the physical knob button pressed for
+        10 seconds. The Aqara ZNXNKG02LM manual defines a 10-second press as the
+        command to enter networking mode, which can interrupt the current Zigbee
+        connection and require pairing again.
+
+    *Knob Action*
+      - Turning the knob right without pressing increases brightness (+), Turning the knob left without pressing decreases brightness (-).
+      - Turning the knob right while pressing increases the color temperature (cooler), Turning the knob left while pressing decreases the color temperature (warmer).
+
+  domain: automation
+  homeassistant:
+    min_version: 2025.4.0
+  input:
+    base_topic:
+      name: Base Topic
+      description: The base topic configured in Zigbee2MQTT.
+        <br>If you haven't changed this, leave the default here `Zigbee2MQTT`
+      default: zigbee2mqtt
+    knob:
+      name: Knob Name
+      description: The `FRIENDLY NAME` of the Zigbee device you want to control.
+        <br> (as set in `Zigbee2MQTT web UI`;).
+      selector:
+        text: {}
+
+    target_light:
+      name: Target Light
+      description: >-
+        Select one light entity to control brightness and color temperature. To
+        control multiple lights, first create one group entity with the
+        [Home Assistant Light Group](https://www.home-assistant.io/integrations/group/#light-groups)
+        or [Cheerpipe Relative Light Group](https://github.com/Cheerpipe/relative-light-group),
+        then select that group here. Direct entity lists and templates are not supported.
+      selector:
+        entity:
+          filter:
+            - domain: light
+          multiple: false
+
+    # Restore Brightness option
+    restore_brightness:
+      name: Restore Brightness
+      description: When "`TRUE`";
+        <br>If the Target light is `OFF` and you turn the knob to the right, it first restores the brightness level from before the light was turned off, and then adjusts the brightness.
+        <br>When "`FALSE`";
+        <br>If the Target light is `OFF` and you turn the knob to the right, the brightness is adjusted starting from 0%.
+        <br>The default setting is "`FALSE`".
+      default: false
+      selector:
+        boolean:
+
+    color_temp_base:
+      name: Default Color Temp setting
+      description:
+        If the `TARGET LIGHT` is operating in a mode other than Color Temp (e.g., RGB, HS, etc.),
+        <br>this setting determines the starting color temperature (within 1000K - 10000K) when pressing and turning the knob.
+        <br>The selected value must not be higher than the `TARGET LIGHT`'s `min_color_temp` or lower than `max_color_temp`
+      default: 4000
+      selector:
+        number:
+          min: 1000
+          max: 10000
+          unit_of_measurement: "K"
+
+    ##### Press Action
+    press_action:
+      name: Press Action
+      description: Set the action to be triggered when the knob is pressed.
+      icon: mdi:gesture-tap-button
+      collapsed: false
+      input:
+        action_single:
+          name: Single Action
+          description: Action to take when `tapped`
+          default: []
+          selector:
+            action: {}
+        action_double:
+          name: Double Action
+          description: Actions to take when `double-tapped`
+          default: []
+          selector:
+            action: {}
+        action_hold:
+          name: Hold Action
+          description: >-
+            Runs once when `hold` is received.
+            <br>With **Repeat Hold Action**, it repeats while the button is held,
+            until `release`, another knob action, or the maximum duration.
+            <br>Keep repeating actions short so another knob event can stop promptly.
+          default: []
+          selector:
+            action: {}
+
+    ##### Hold Repeat & Release
+    hold_repeat:
+      name: Hold Repeat & Release
+      description: Configure what repeats while held and what runs on release.
+      icon: mdi:repeat
+      collapsed: true
+      input:
+        hold_repeat_mode:
+          name: Hold Repeat Mode
+          description: >-
+            Choose what repeats while the button is held after `hold` is received.
+            <br><br>**Do not repeat:** Hold Action runs once.
+            <br>**Repeat Hold Action:** Repeats Hold Action while the button is held.
+            <br>**Hold once, then repeat a separate action:** Runs Hold Action once,
+            then repeats Hold Repeat Action while the button is held.
+            <br><br>Repeating stops on `release`, another knob action, or the maximum duration.
+            <br>Do not hold the physical button for 10 seconds; the device enters
+            networking mode and may need to be paired again.
+          default: none
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Do not repeat
+                  value: none
+                - label: Repeat Hold Action
+                  value: repeat_hold
+                - label: Hold once, then repeat a separate action
+                  value: separate_repeat
+
+        action_hold_repeat:
+          name: Hold Repeat Action
+          description: >-
+            Used only with **Hold once, then repeat a separate action**.
+            <br>It repeats while the button is held; it is not Release Action.
+            <br>Keep it short so another knob event can stop the repeat promptly.
+          default: []
+          selector:
+            action: {}
+
+        hold_repeat_interval:
+          name: Hold Repeat Interval
+          description: Delay between repeated Hold actions.
+          default: 0.5
+          selector:
+            number:
+              min: 0.1
+              max: 10
+              step: 0.1
+              unit_of_measurement: s
+              mode: box
+
+        hold_repeat_max_duration:
+          name: Hold Repeat Maximum Duration
+          description: >-
+            Stops starting new repeats after this time if `release` is lost.
+            <br>An action already running may finish.
+            <br>The default and maximum are 11 seconds.
+            <br>**RELEASE THE PHYSICAL BUTTON BEFORE 10 SECONDS**; this software
+            limit cannot prevent the knob's networking-mode behavior.
+          default: 11
+          selector:
+            number:
+              min: 1
+              max: 11
+              step: 1
+              unit_of_measurement: s
+              mode: box
+
+        action_release:
+          name: Release Action
+          description: >-
+            Optional. Runs once when `release` is received.
+            <br><br>**LEAVE THIS EMPTY** unless you specifically need an action
+            when the knob is released.
+            <br>It runs independently of the selected Hold Repeat Mode.
+          default: []
+          selector:
+            action: {}
+
+    ##### Knob Action
+    knob_action:
+      name: Knob Action Config
+      description: Adjust the settings required for knob operation.
+      icon: mdi:knob
+      collapsed: true
+      input:
+        transition_time:
+          name: TRANSITION TIME
+          description:
+            Set the transition value for smooth brightness and color temperature adjustments.
+            <br>The default value is `0.4`
+          default: 0.4
+          selector:
+            number:
+              min: 0.0
+              max: 20.0
+              step: 0.1
+              unit_of_measurement: s
+              mode: slider
+
+        knob_control_min_brightness:
+          name: Min Brightness Limit (%)
+          description:
+            Set the minimum brightness limit. 
+            <br>The light will not dim below this value (%) when turning the knob.
+            <br>If set to 0 (default), there is no limit and the light can be turned off.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 99
+              step: 1
+              unit_of_measurement: "%"
+              mode: slider
+
+        knob_control_max_brightness:
+          name: Max Brightness Limit (%)
+          description:
+            Set the maximum brightness limit.
+            <br>The light will not brighten above this value (%) when turning the knob.
+            <br>If set to 100 (default), there is no limit.
+          default: 100
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: slider
+
+        brightness_stepsize:
+          name: Brightness per Tick
+          description:
+            Set the brightness change for one 12-degree knob tick.
+            <br>`2` means brightness changes by `2%` per tick.
+            <br>High values can reach the configured brightness limit in one tick.
+            <br>The default value is `2%` per tick.
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: "%/tick"
+              mode: slider
+
+        color_temp_stepsize:
+          name: Color Temperature per Tick
+          description:
+            Set the color-temperature change for one 12-degree tick while pressing the knob.
+            <br>`100` means color temperature changes by `100 K` per tick.
+            <br>The default value is `100 K` per tick.
+          default: 100
+          selector:
+            number:
+              min: 1
+              max: 10000
+              step: 1
+              unit_of_measurement: "K/tick"
+              mode: slider
+
+        color_temp_min:
+          name: Min Color Temp Kelvin
+          description:
+            Set the minimum color temperature within the target light's operational range. (Use Kelvin values)
+            <br>`NOTE!`
+            <br> The color temperature will not go lower than the set value.
+            <br> This value MUST BE LOWER than `Max Color Temp Kelvin`
+          default: 1000
+          selector:
+            number:
+              min: 1000
+              max: 10000
+              unit_of_measurement: "K"
+
+        color_temp_max:
+          name: Max Color Temp Kelvin
+          description:
+            Set the maximum color temperature within the target light's operational range. (Use Kelvin values)
+            <br>`NOTE!`
+            <br> The color temperature will not go higher than the set value.
+            <br> This value MUST BE HIGHER than `Min Color Temp Kelvin`.
+          default: 10000
+          selector:
+            number:
+              min: 1000
+              max: 10000
+              unit_of_measurement: "K"
+
+####################
+mode: parallel
+max: 1000
+max_exceeded: warning
+trace:
+  stored_traces: 20
+####################
+
+trigger_variables:
+  base_topic: !input base_topic
+  knob: !input knob
+trigger:
+  - platform: mqtt
+    topic: "{{ base_topic }}/{{ knob }}"
+    payload: action
+    value_template: >-
+      {{ 'action' if value_json.action | default('') in
+        ['single', 'double', 'hold', 'release', 'start_rotating']
+        else 'ignore' }}
+
+action:
+  - variables:
+      ACTION: "{{ trigger.payload_json.action | default('') }}"
+      TARGET_LIGHT: !input target_light
+      KNOB_MIN_BRIGHT_PCT: !input knob_control_min_brightness
+      KNOB_MAX_BRIGHT_PCT: !input knob_control_max_brightness
+      BRIGHTNESS_STEP_PCT: !input brightness_stepsize
+      COLOR_TEMP_STEP_K: !input color_temp_stepsize
+      RESTORE_BRIGHTNESS: !input restore_brightness
+      TEMP_BASE: !input color_temp_base
+      TEMP_MIN: !input color_temp_min
+      TEMP_MAX: !input color_temp_max
+      TRANSITION_TIME: !input transition_time
+      HOLD_REPEAT_MODE: !input hold_repeat_mode
+      HOLD_REPEAT_INTERVAL: !input hold_repeat_interval
+      HOLD_REPEAT_MAX_DURATION: !input hold_repeat_max_duration
+      HOLD_DEADLINE: >-
+        {{ as_timestamp(now()) +
+          (HOLD_REPEAT_MAX_DURATION | float(11)) }}
+      HOLD_STOPPED: false
+      ROTATION_LATEST_ACTION: "{{ trigger.payload_json.action | default('') }}"
+      ROTATION_LATEST_ANGLE: >-
+        {{ trigger.payload_json.action_rotation_angle | float(0) }}
+      ROTATION_LATEST_BUTTON_STATE: >-
+        {{ trigger.payload_json.action_rotation_button_state |
+          default('', true) }}
+      ROTATION_LISTENER_DONE: false
+      ROTATION_PACKET_ANGLE: null
+      ROTATION_PACKET_BUTTON_STATE: null
+      ROTATION_STARTUP_ANGLE: >-
+        {{ ROTATION_LATEST_ANGLE | float(0)
+          if ROTATION_LATEST_ANGLE | float(0) > 0 else none }}
+      ROTATION_STARTUP_BUTTON_STATE: >-
+        {{ ROTATION_LATEST_BUTTON_STATE
+          if ROTATION_STARTUP_ANGLE is not none else none }}
+      ROTATION_APPLIED_ANGLE: null
+      ROTATION_APPLIED_BUTTON_STATE: null
+      ROTATION_ANGLE_OFFSET: 0
+      ROTATION_OFF_STARTUP_PENDING: >-
+        {{ states(TARGET_LIGHT) == 'off' }}
+
+  - variables:
+      ROTATION_BASE_BRIGHTNESS_PCT: >-
+        {% set target_brightness =
+          state_attr(TARGET_LIGHT, 'brightness') %}
+        {% set member_ids =
+          state_attr(TARGET_LIGHT, 'entity_id') |
+            default([], true) %}
+        {% set member_brightness = expand(member_ids) |
+          selectattr('attributes.brightness', 'number') |
+          map(attribute='attributes.brightness') | list %}
+        {% if states(TARGET_LIGHT) == 'off' %}
+          {{ KNOB_MIN_BRIGHT_PCT | float(0) }}
+        {% elif target_brightness is number %}
+          {{ (target_brightness | float / 255 * 100) | round(0) }}
+        {% elif member_brightness | count > 0 %}
+          {{ ((member_brightness | average) / 255 * 100) | round(0) }}
+        {% else %}
+          {{ none }}
+        {% endif %}
+      ROTATION_LIGHT_TEMP_MIN: >-
+        {{ state_attr(TARGET_LIGHT, 'min_color_temp_kelvin') |
+          int(TEMP_MIN | int) }}
+      ROTATION_LIGHT_TEMP_MAX: >-
+        {{ state_attr(TARGET_LIGHT, 'max_color_temp_kelvin') |
+          int(TEMP_MAX | int) }}
+
+  - variables:
+      ROTATION_COLOR_TEMP_MIN: >-
+        {{ max(TEMP_MIN | int, ROTATION_LIGHT_TEMP_MIN | int) }}
+      ROTATION_COLOR_TEMP_MAX: >-
+        {{ min(TEMP_MAX | int, ROTATION_LIGHT_TEMP_MAX | int) }}
+
+  - variables:
+      ROTATION_BASE_COLOR_TEMP_K: >-
+        {% set gesture_start_temp =
+          state_attr(TARGET_LIGHT, 'color_temp_kelvin') %}
+        {% set member_ids =
+          state_attr(TARGET_LIGHT, 'entity_id') |
+            default([], true) %}
+        {% set member_color_temp = expand(member_ids) |
+          selectattr('attributes.color_temp_kelvin', 'number') |
+          map(attribute='attributes.color_temp_kelvin') | list %}
+        {% if states(TARGET_LIGHT) == 'off' %}
+          {{ min(ROTATION_COLOR_TEMP_MAX | int,
+            max(ROTATION_COLOR_TEMP_MIN | int, TEMP_BASE | int)) }}
+        {% elif gesture_start_temp is number %}
+          {{ gesture_start_temp | int }}
+        {% elif member_color_temp | count > 0 %}
+          {{ min(ROTATION_COLOR_TEMP_MAX | int,
+            max(ROTATION_COLOR_TEMP_MIN | int,
+              member_color_temp | average | int)) }}
+        {% else %}
+          {{ none }}
+        {% endif %}
+
+  - variables:
+      ROTATION_LAST_BRIGHTNESS_TARGET: >-
+        {{ ROTATION_BASE_BRIGHTNESS_PCT | round(0)
+          if ROTATION_BASE_BRIGHTNESS_PCT is number else none }}
+      ROTATION_LAST_COLOR_TEMP_TARGET: >-
+        {{ ROTATION_BASE_COLOR_TEMP_K | int
+          if ROTATION_BASE_COLOR_TEMP_K is number else none }}
+
+  - choose:
+      - conditions: "{{ ACTION == 'single' }}"
+        sequence: !input action_single
+
+      - conditions: "{{ ACTION == 'double' }}"
+        sequence: !input action_double
+
+      - conditions: "{{ ACTION == 'release' }}"
+        sequence: !input action_release
+
+      - conditions: "{{ ACTION == 'hold' }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ HOLD_REPEAT_MODE == 'none' }}"
+            then:
+              - choose:
+                  - conditions: "{{ true }}"
+                    sequence: !input action_hold
+            else:
+              - parallel:
+                  - alias: Hold stop listener
+                    sequence:
+                      - wait_for_trigger:
+                          - platform: mqtt
+                            topic: "{{ base_topic }}/{{ knob }}"
+                            payload: action
+                            value_template: >-
+                              {{ 'action' if value_json.action | default('') else 'ignore' }}
+                        timeout:
+                          seconds: >-
+                            {{ max(0,
+                              (HOLD_DEADLINE | float(0)) -
+                              as_timestamp(now())) }}
+                        continue_on_timeout: true
+
+                      - variables:
+                          HOLD_STOPPED: true
+
+                  - alias: Hold repeat worker
+                    sequence:
+                      - delay:
+                          milliseconds: 1
+
+                      - choose:
+                          - conditions: "{{ true }}"
+                            sequence: !input action_hold
+
+                      - repeat:
+                          while:
+                            - condition: template
+                              value_template: >-
+                                {{ not HOLD_STOPPED and
+                                  as_timestamp(now()) <
+                                    (HOLD_DEADLINE | float(0)) }}
+                          sequence:
+                            - variables:
+                                HOLD_WORKER_REMAINING: >-
+                                  {{ max(0,
+                                    (HOLD_DEADLINE | float(0)) -
+                                    as_timestamp(now())) }}
+
+                            - delay:
+                                seconds: >-
+                                  {{ min(HOLD_REPEAT_INTERVAL | float(0.5),
+                                    HOLD_WORKER_REMAINING | float(0)) }}
+
+                            - if:
+                                - condition: template
+                                  value_template: >-
+                                    {{ not HOLD_STOPPED and
+                                      as_timestamp(now()) <
+                                        (HOLD_DEADLINE | float(0)) }}
+                              then:
+                                - choose:
+                                    - conditions: "{{ HOLD_REPEAT_MODE == 'repeat_hold' }}"
+                                      sequence: !input action_hold
+                                    - conditions: "{{ HOLD_REPEAT_MODE == 'separate_repeat' }}"
+                                      sequence: !input action_hold_repeat
+
+      - conditions: "{{ ACTION == 'start_rotating' }}"
+        sequence:
+          - parallel:
+              - alias: Rotation gesture listener
+                sequence:
+                  - repeat:
+                      sequence:
+                        - wait_for_trigger:
+                            - platform: mqtt
+                              topic: "{{ base_topic }}/{{ knob }}"
+                              payload: action
+                              value_template: >-
+                                {{ 'action' if value_json.action | default('') else 'ignore' }}
+                          timeout:
+                            seconds: 2
+                          continue_on_timeout: true
+
+                        - if:
+                            - condition: template
+                              value_template: "{{ wait.completed }}"
+                          then:
+                            - variables:
+                                ROTATION_LATEST_ACTION: >-
+                                  {{ wait.trigger.payload_json.action |
+                                    default('') }}
+                                ROTATION_PACKET_ANGLE: >-
+                                  {% if wait.trigger.payload_json.action_rotation_angle is defined %}
+                                    {{ wait.trigger.payload_json.action_rotation_angle | float(0) }}
+                                  {% else %}
+                                    {{ ROTATION_LATEST_ANGLE }}
+                                  {% endif %}
+                                ROTATION_PACKET_BUTTON_STATE: >-
+                                  {% if wait.trigger.payload_json.action_rotation_button_state is defined %}
+                                    {{ wait.trigger.payload_json.action_rotation_button_state |
+                                      default('', true) }}
+                                  {% else %}
+                                    {{ ROTATION_LATEST_BUTTON_STATE }}
+                                  {% endif %}
+
+                            - if:
+                                - condition: template
+                                  value_template: >-
+                                    {{ ROTATION_LATEST_ACTION in ['rotation', 'stop_rotating'] }}
+                              then:
+                                - variables:
+                                    ROTATION_LATEST_ANGLE: >-
+                                      {{ ROTATION_PACKET_ANGLE | float(0) }}
+                                    ROTATION_LATEST_BUTTON_STATE: >-
+                                      {{ ROTATION_PACKET_BUTTON_STATE }}
+
+                                - if:
+                                    - condition: template
+                                      value_template: >-
+                                        {{ ROTATION_STARTUP_ANGLE is none and
+                                          ROTATION_PACKET_ANGLE | float(0) > 0 }}
+                                  then:
+                                    - variables:
+                                        ROTATION_STARTUP_ANGLE: >-
+                                          {{ ROTATION_PACKET_ANGLE | float(0) }}
+                                        ROTATION_STARTUP_BUTTON_STATE: >-
+                                          {{ ROTATION_PACKET_BUTTON_STATE }}
+
+                                - if:
+                                    - condition: template
+                                      value_template: >-
+                                        {{ ROTATION_LATEST_ACTION ==
+                                          'stop_rotating' }}
+                                  then:
+                                    - variables:
+                                        ROTATION_LISTENER_DONE: true
+                              else:
+                                - variables:
+                                    ROTATION_LISTENER_DONE: true
+                          else:
+                            - variables:
+                                ROTATION_LISTENER_DONE: true
+                      until:
+                        - condition: template
+                          value_template: "{{ ROTATION_LISTENER_DONE }}"
+
+              - alias: Sequential light command worker
+                sequence:
+                  - delay:
+                      milliseconds: 1
+
+                  - repeat:
+                      sequence:
+                        - if:
+                            - condition: template
+                              value_template: >-
+                                {{ ROTATION_APPLIED_ANGLE is none or
+                                  ROTATION_APPLIED_ANGLE | float(0) !=
+                                    ROTATION_LATEST_ANGLE | float(0) or
+                                  ROTATION_APPLIED_BUTTON_STATE !=
+                                    ROTATION_LATEST_BUTTON_STATE }}
+                          then:
+                            - variables:
+                                ROTATION_PROCESS_STARTUP: >-
+                                  {{ ROTATION_OFF_STARTUP_PENDING and
+                                    ROTATION_STARTUP_ANGLE is not none and
+                                    (ROTATION_STARTUP_BUTTON_STATE == 'pressed' or
+                                      RESTORE_BRIGHTNESS) and
+                                    (ROTATION_APPLIED_ANGLE is none or
+                                      ROTATION_APPLIED_ANGLE | float(0) !=
+                                        ROTATION_STARTUP_ANGLE | float(0) or
+                                      ROTATION_APPLIED_BUTTON_STATE !=
+                                        ROTATION_STARTUP_BUTTON_STATE) }}
+
+                            - variables:
+                                ROTATION_WORK_ANGLE: >-
+                                  {{ ROTATION_STARTUP_ANGLE | float(0)
+                                    if ROTATION_PROCESS_STARTUP else
+                                    ROTATION_LATEST_ANGLE | float(0) }}
+                                ROTATION_WORK_BUTTON_STATE: >-
+                                  {{ ROTATION_STARTUP_BUTTON_STATE
+                                    if ROTATION_PROCESS_STARTUP else
+                                    ROTATION_LATEST_BUTTON_STATE }}
+
+                            - variables:
+                                ROTATION_TICKS: >-
+                                  {{ ((ROTATION_WORK_ANGLE | float(0)) -
+                                    (ROTATION_ANGLE_OFFSET | float(0))) / 12 }}
+
+                            - choose:
+                                - conditions: >-
+                                    {{ ROTATION_WORK_BUTTON_STATE ==
+                                      'released' and
+                                      ROTATION_BASE_BRIGHTNESS_PCT is number }}
+                                  sequence:
+                                    - variables:
+                                        BRIGHTNESS_TARGET_PCT: >-
+                                          {{ min(KNOB_MAX_BRIGHT_PCT | int,
+                                            max(KNOB_MIN_BRIGHT_PCT | int,
+                                              ROTATION_BASE_BRIGHTNESS_PCT | float(0) +
+                                              ROTATION_TICKS | float(0) *
+                                              BRIGHTNESS_STEP_PCT | float(0))) }}
+
+                                    - if:
+                                        - condition: template
+                                          value_template: >-
+                                            {{ ROTATION_OFF_STARTUP_PENDING and
+                                              RESTORE_BRIGHTNESS and
+                                              ROTATION_TICKS | float(0) > 0 }}
+                                      then:
+                                        - action: light.turn_on
+                                          target:
+                                            entity_id: "{{ TARGET_LIGHT }}"
+                                          data:
+                                            transition: "{{ TRANSITION_TIME }}"
+
+                                        - alias: Wait for restored brightness state
+                                          wait_template: >-
+                                            {{ is_state(TARGET_LIGHT, 'on') and
+                                              state_attr(TARGET_LIGHT, 'brightness')
+                                                is number }}
+                                          timeout:
+                                            seconds: 2
+                                          continue_on_timeout: true
+
+                                        - alias: Refresh restored brightness base
+                                          variables:
+                                            ROTATION_BASE_BRIGHTNESS_PCT: >-
+                                              {% set restored_brightness =
+                                                state_attr(TARGET_LIGHT, 'brightness') %}
+                                              {% if restored_brightness is number %}
+                                                {{ (restored_brightness | float(0) /
+                                                  255 * 100) | round(0) }}
+                                              {% else %}
+                                                {{ ROTATION_BASE_BRIGHTNESS_PCT |
+                                                  round(0) }}
+                                              {% endif %}
+
+                                        - variables:
+                                            ROTATION_LAST_BRIGHTNESS_TARGET: >-
+                                              {{ ROTATION_BASE_BRIGHTNESS_PCT |
+                                                round(0) }}
+
+                                        - variables:
+                                            ROTATION_ANGLE_OFFSET: >-
+                                              {{ ROTATION_WORK_ANGLE | float(0) }}
+                                            ROTATION_OFF_STARTUP_PENDING: false
+                                      else:
+                                        - if:
+                                            - condition: template
+                                              value_template: >-
+                                                {{ BRIGHTNESS_TARGET_PCT |
+                                                  round(0) !=
+                                                  ROTATION_LAST_BRIGHTNESS_TARGET |
+                                                  round(0) }}
+                                          then:
+                                            - action: light.turn_on
+                                              target:
+                                                entity_id: "{{ TARGET_LIGHT }}"
+                                              data:
+                                                transition: "{{ TRANSITION_TIME }}"
+                                                brightness_pct: >-
+                                                  {{ BRIGHTNESS_TARGET_PCT |
+                                                    round(0) }}
+
+                                            - variables:
+                                                ROTATION_LAST_BRIGHTNESS_TARGET: >-
+                                                  {{ BRIGHTNESS_TARGET_PCT |
+                                                    round(0) }}
+                                                ROTATION_OFF_STARTUP_PENDING: false
+
+                                - conditions: >-
+                                    {{ ROTATION_WORK_BUTTON_STATE ==
+                                      'pressed' and
+                                      ROTATION_BASE_COLOR_TEMP_K is number }}
+                                  sequence:
+                                    - variables:
+                                        COLOR_TEMP_TARGET_K: >-
+                                          {{ min(ROTATION_COLOR_TEMP_MAX | int,
+                                            max(ROTATION_COLOR_TEMP_MIN | int,
+                                              ROTATION_BASE_COLOR_TEMP_K | int +
+                                              ROTATION_TICKS | float(0) *
+                                              COLOR_TEMP_STEP_K | float(0))) }}
+
+                                    - if:
+                                        - condition: template
+                                          value_template: >-
+                                            {{ ROTATION_OFF_STARTUP_PENDING and
+                                              ROTATION_TICKS | float(0) > 0 }}
+                                      then:
+                                        - action: light.turn_on
+                                          target:
+                                            entity_id: "{{ TARGET_LIGHT }}"
+                                          data:
+                                            transition: "{{ TRANSITION_TIME }}"
+
+                                        - alias: Wait for restored color temperature state
+                                          wait_template: >-
+                                            {{ is_state(TARGET_LIGHT, 'on') and
+                                              state_attr(TARGET_LIGHT, 'color_temp_kelvin')
+                                                is number }}
+                                          timeout:
+                                            seconds: 2
+                                          continue_on_timeout: true
+
+                                        - alias: Refresh restored color temperature base
+                                          variables:
+                                            ROTATION_BASE_COLOR_TEMP_K: >-
+                                              {% set restored_temp =
+                                                state_attr(TARGET_LIGHT, 'color_temp_kelvin') %}
+                                              {% if restored_temp is number %}
+                                                {{ min(ROTATION_COLOR_TEMP_MAX | int,
+                                                  max(ROTATION_COLOR_TEMP_MIN | int,
+                                                    restored_temp | int)) }}
+                                              {% else %}
+                                                {{ ROTATION_BASE_COLOR_TEMP_K | int }}
+                                              {% endif %}
+
+                                        - variables:
+                                            ROTATION_LAST_COLOR_TEMP_TARGET: >-
+                                              {{ ROTATION_BASE_COLOR_TEMP_K | int }}
+
+                                        - variables:
+                                            ROTATION_ANGLE_OFFSET: >-
+                                              {{ ROTATION_WORK_ANGLE | float(0) }}
+                                            ROTATION_OFF_STARTUP_PENDING: false
+                                      else:
+                                        - if:
+                                            - condition: template
+                                              value_template: >-
+                                                {{ COLOR_TEMP_TARGET_K | int !=
+                                                  ROTATION_LAST_COLOR_TEMP_TARGET |
+                                                  int }}
+                                          then:
+                                            - action: light.turn_on
+                                              target:
+                                                entity_id: "{{ TARGET_LIGHT }}"
+                                              data:
+                                                transition: "{{ TRANSITION_TIME }}"
+                                                color_temp_kelvin: >-
+                                                  {{ COLOR_TEMP_TARGET_K | int }}
+
+                                            - variables:
+                                                ROTATION_LAST_COLOR_TEMP_TARGET: >-
+                                                  {{ COLOR_TEMP_TARGET_K | int }}
+                                                ROTATION_OFF_STARTUP_PENDING: false
+
+                            - variables:
+                                ROTATION_APPLIED_ANGLE: >-
+                                  {{ ROTATION_WORK_ANGLE | float(0) }}
+                                ROTATION_APPLIED_BUTTON_STATE: >-
+                                  {{ ROTATION_WORK_BUTTON_STATE }}
+                          else:
+                            - delay:
+                                milliseconds: 25
+                      until:
+                        - condition: template
+                          value_template: >-
+                            {{ ROTATION_LISTENER_DONE and
+                              ROTATION_APPLIED_ANGLE is not none and
+                              ROTATION_APPLIED_ANGLE | float(0) ==
+                                ROTATION_LATEST_ANGLE | float(0) and
+                              ROTATION_APPLIED_BUTTON_STATE ==
+                                ROTATION_LATEST_BUTTON_STATE }}

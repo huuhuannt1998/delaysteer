@@ -1,0 +1,510 @@
+blueprint:
+  # Media control via IKEA BILRESA Scroll Wheel (Matter) - Shawsky May 2026
+
+  name: Matter - IKEA BILRESA Scroll Wheel for media (v1.0)
+  author: Shawsky
+  description: >
+    Controls up to 3 media players using an IKEA BILRESA Scroll Wheel via
+    Matter. 
+
+
+    The BILRESA remote has 3 channels, cycled with the secondary button
+    (internal to the remote, not reported to HA). 
+
+    Each channel maps to one
+    of the media players configured below.
+
+    Note: You can choose to use one or more media players. You do not have to
+    configure all three.
+
+
+    The scroll wheel button provides:
+
+
+    Single press → Play/Pause
+
+    Double press → Next Track
+
+    Triple press → Previous Track
+
+    Hold & Release → Toggle volume mode (group ↔ single room)
+
+
+    The scroll wheel controls volume. 
+
+    Volume can operate in group mode (all Sonos/speaker group members) or
+ 
+    single-room mode, toggled via Hold & Release. An input_boolean helper
+
+    persists the mode if switching is required (per channel).
+
+    Group volume control can be-renabled on Play/Pause (default, can be disabled)
+
+  homeassistant:
+    min_version: 2025.12.1
+
+  domain: automation
+
+  input:
+
+    # -------------------------------------------------------------------------
+    base:
+      name: Remote Control
+      icon: mdi:remote
+      input:
+        remote:
+          name: BILRESA Device
+          description: The IKEA BILRESA Scroll Wheel remote to use.
+          selector:
+            device:
+              filter:
+                - manufacturer: IKEA of Sweden
+                  model: BILRESA scroll wheel
+                  integration: matter
+
+    # -------------------------------------------------------------------------
+    channel_1:
+      name: "Channel 1"
+      icon: mdi:numeric-1-circle
+      input:
+        channel_1_media_player:
+          name: "Channel 1 – Media Player"
+          description: The media player to control on channel 1.
+          selector:
+            entity:
+              domain: media_player
+              multiple: false
+
+        channel_1_allow_group_volume:
+          name: "Channel 1 – Allow Group Volume Control"
+          description: >
+            When enabled, volume changes affect all members of a speaker
+            group (e.g. Sonos). Default is enabled.
+          default: true
+          selector:
+            boolean:
+
+        channel_1_group_volume_helper:
+          name: "Channel 1 – Group / Room Volume Helper"
+          description: >
+            An input_boolean helper to persist group/room volume mode for
+            channel 1. Leave blank to always use the setting above.
+          default: ""
+          selector:
+            entity:
+              domain: input_boolean
+              multiple: false
+
+        channel_1_reset_to_group_on_play:
+          name: "Channel 1 – Reset to Group Volume on Play/Pause"
+          default: true
+          selector:
+            boolean:
+
+        channel_1_default_play_pause:
+          name: "Channel 1 – Play/Pause (no media)"
+          description: >
+            Action when Play/Pause is pressed but the player has no media
+            queued. Leave blank to do nothing.
+          default: []
+          selector:
+            action: {}
+
+    # -------------------------------------------------------------------------
+    channel_2:
+      name: "Channel 2"
+      icon: mdi:numeric-2-circle
+      description: Leave the media player unset to disable channel 2.
+      input:
+        channel_2_media_player:
+          name: "Channel 2 – Media Player"
+          default: ""
+          selector:
+            entity:
+              domain: media_player
+              multiple: false
+
+        channel_2_allow_group_volume:
+          name: "Channel 2 – Allow Group Volume Control"
+          default: true
+          selector:
+            boolean:
+
+        channel_2_group_volume_helper:
+          name: "Channel 2 – Group / Room Volume Helper"
+          default: ""
+          selector:
+            entity:
+              domain: input_boolean
+              multiple: false
+
+        channel_2_reset_to_group_on_play:
+          name: "Channel 2 – Reset to Group Volume on Play/Pause"
+          default: true
+          selector:
+            boolean:
+
+        channel_2_default_play_pause:
+          name: "Channel 2 – Play/Pause (no media)"
+          default: []
+          selector:
+            action: {}
+
+    # -------------------------------------------------------------------------
+    channel_3:
+      name: "Channel 3"
+      icon: mdi:numeric-3-circle
+      description: Leave the media player unset to disable channel 3.
+      input:
+        channel_3_media_player:
+          name: "Channel 3 – Media Player"
+          default: ""
+          selector:
+            entity:
+              domain: media_player
+              multiple: false
+
+        channel_3_allow_group_volume:
+          name: "Channel 3 – Allow Group Volume Control"
+          default: true
+          selector:
+            boolean:
+
+        channel_3_group_volume_helper:
+          name: "Channel 3 – Group / Room Volume Helper"
+          default: ""
+          selector:
+            entity:
+              domain: input_boolean
+              multiple: false
+
+        channel_3_reset_to_group_on_play:
+          name: "Channel 3 – Reset to Group Volume on Play/Pause"
+          default: true
+          selector:
+            boolean:
+
+        channel_3_default_play_pause:
+          name: "Channel 3 – Play/Pause (no media)"
+          default: []
+          selector:
+            action: {}
+
+    # -------------------------------------------------------------------------
+    general:
+      name: General
+      icon: mdi:cog
+      input:
+        volume_steps:
+          name: Volume Steps
+          description: >
+            Controls volume granularity per scroll click. Default 25 matches
+            the Sonos app. Lower = larger jumps.
+          default: 25
+          selector:
+            number:
+              min: 5
+              max: 100
+              step: 5
+              unit_of_measurement: "Steps"
+              mode: slider
+
+        duck_on_vol_toggle:
+          name: Duck Volume on Mode Toggle
+          description: >
+            Briefly dip then restore volume when Hold & Release toggles
+            group/room mode, giving audible confirmation.
+          default: true
+          selector:
+            boolean:
+
+        duck_volume_time:
+          name: Duck Volume Duration
+          default: 150
+          selector:
+            number:
+              min: 0
+              max: 1000
+              step: 50
+              unit_of_measurement: "ms"
+              mode: slider
+
+        change_volume_control_action:
+          name: Volume Mode Toggle Action
+          description: >
+            Optional action on mode toggle (e.g. TTS announcement).
+          default: []
+          selector:
+            action: {}
+
+
+# =============================================================================
+mode: queued
+max_exceeded: silent
+
+trigger_variables:
+  _remote: !input remote
+
+trigger:
+  - platform: event
+    event_type: state_changed
+
+condition:
+  - condition: template
+    value_template: >
+      {% set eid = trigger.event.data.entity_id %}
+      {% set ev_ents = device_entities(_remote) | select('match', '^event[.]') | list %}
+      {% set ns = trigger.event.data.get('new_state') %}
+      {% set os = trigger.event.data.get('old_state') %}
+      {{ eid in ev_ents
+         and ns is not none
+         and ns.state not in ['unavailable', 'unknown']
+         and (os is none or ns.state != os.state)
+      }}
+
+# =============================================================================
+action:
+  - variables:
+      player_1: !input channel_1_media_player
+      player_2: !input channel_2_media_player
+      player_3: !input channel_3_media_player
+
+      helper_1: !input channel_1_group_volume_helper
+      helper_2: !input channel_2_group_volume_helper
+      helper_3: !input channel_3_group_volume_helper
+
+      group_control_1: !input channel_1_allow_group_volume
+      group_control_2: !input channel_2_allow_group_volume
+      group_control_3: !input channel_3_allow_group_volume
+
+      reset_group_1: !input channel_1_reset_to_group_on_play
+      reset_group_2: !input channel_2_reset_to_group_on_play
+      reset_group_3: !input channel_3_reset_to_group_on_play
+
+      steps: !input volume_steps
+      stepsize: "{{ 1.0 / steps }}"
+      duck_volume_state: !input duck_on_vol_toggle
+      duck_time: !input duck_volume_time
+
+      _eid: "{{ trigger.event.data.entity_id }}"
+      _new_state: "{{ trigger.event.data.new_state }}"
+
+      # -----------------------------------------------------------------------
+      # DETERMINISTIC LOOKUP
+      # Matter automatically appends _1 through _9 to the localized base name.
+      # Extracting this digit safely maps the button regardless of other events.
+      # -----------------------------------------------------------------------
+      _matches: "{{ _eid | regex_findall('_([1-9])') }}"
+      _button_num: "{{ _matches[0] | int if _matches | length > 0 else 0 }}"
+
+      # Fallback to sorted list ONLY if the entity was manually renamed and 
+      # the _1 to _9 suffix was destroyed.
+      _all_ev: >-
+        {{ device_entities(_remote)
+           | select('match', '^event[.]')
+           | sort | list }}
+
+      # Map button 1-9 to index 0-8
+      _idx_raw: >-
+        {% if _button_num > 0 %}
+          {{ _button_num - 1 }}
+        {% elif _eid in _all_ev %}
+          {{ _all_ev.index(_eid) }}
+        {% else %}
+          -1
+        {% endif %}
+        
+      _idx: "{{ _idx_raw | int }}"
+
+      # Position within the channel group: 0 = CW/vol_up, 1 = CCW/vol_down, 2 = button
+      _pos: "{{ _idx % 3 }}"
+
+      # Channel 1, 2, or 3
+      channel: "{{ (_idx // 3) + 1 }}"
+
+      # Read the event type for ALL actions (scroll and button)
+      press_type: >-
+        {% if trigger.event.data.get('new_state') is not none %}
+          {{ trigger.event.data.new_state.attributes.get('event_type', '') }}
+        {% else %}
+          ''
+        {% endif %}
+
+      # Extract the number of clicks from the event (e.g., "multi_press_3" -> 3). Default to 1.
+      _click_matches: "{{ press_type | regex_findall('[0-9]+') }}"
+      clicks: "{{ _click_matches[0] | int if _click_matches | length > 0 else 1 }}"
+
+      player: >-
+        {% if channel == 1 %}{{ player_1 }}
+        {% elif channel == 2 %}{{ player_2 }}
+        {% else %}{{ player_3 }}{% endif %}
+
+      helper: >-
+        {% if channel == 1 %}{{ helper_1 }}
+        {% elif channel == 2 %}{{ helper_2 }}
+        {% else %}{{ helper_3 }}{% endif %}
+
+      group_control: >-
+        {% if channel == 1 %}{{ group_control_1 }}
+        {% elif channel == 2 %}{{ group_control_2 }}
+        {% else %}{{ group_control_3 }}{% endif %}
+
+      reset_group: >-
+        {% if channel == 1 %}{{ reset_group_1 }}
+        {% elif channel == 2 %}{{ reset_group_2 }}
+        {% else %}{{ reset_group_3 }}{% endif %}
+
+      group_volume_control_state: >-
+        {% if helper != '' and states(helper) not in ['', 'none', 'unknown', 'unavailable'] %}
+          {{ states(helper) }}
+        {% elif group_control %}
+          on
+        {% else %}
+          off
+        {% endif %}
+
+      is_group: >-
+        {{ player != '' and
+           state_attr(player, 'group_members') not in [none, []] and
+           state_attr(player, 'group_members') | count > 1 }}
+
+      use_group_volume: >-
+        {{ is_group and group_control and group_volume_control_state == 'on' }}
+      
+  # Guard: entity must map to a known index and channel must have a player set
+  - condition: template
+    value_template: "{{ _idx >= 0 and player != '' }}"
+
+  - choose:
+
+      # -----------------------------------------------------------------------
+      # CW SCROLL – VOLUME UP  (_pos == 0)
+      # -----------------------------------------------------------------------
+      - conditions: "{{ _pos == 0 }}"
+        sequence:
+          - choose:
+              - conditions: "{{ use_group_volume }}"
+                sequence:
+                  - repeat:
+                      for_each: "{{ state_attr(player, 'group_members') }}"
+                      sequence:
+                        - service: media_player.volume_set
+                          target:
+                            entity_id: "{{ repeat.item }}"
+                          data:
+                            volume_level: >-
+                              {% set current_vol = state_attr(repeat.item, 'volume_level') | float(0) %}
+                              {% set vol = current_vol + (stepsize * clicks) %}
+                              {{ 1.0 if vol > 1.0 else vol }}
+            default:
+              - service: media_player.volume_set
+                target:
+                  entity_id: "{{ player }}"
+                data:
+                  volume_level: >-
+                    {% set current_vol = state_attr(player, 'volume_level') | float(0) %}
+                    {% set vol = current_vol + (stepsize * clicks) %}
+                    {{ 1.0 if vol > 1.0 else vol }}
+
+      # -----------------------------------------------------------------------
+      # CCW SCROLL – VOLUME DOWN  (_pos == 1)
+      # -----------------------------------------------------------------------
+      - conditions: "{{ _pos == 1 }}"
+        sequence:
+          - choose:
+              - conditions: "{{ use_group_volume }}"
+                sequence:
+                  - repeat:
+                      for_each: "{{ state_attr(player, 'group_members') }}"
+                      sequence:
+                        - service: media_player.volume_set
+                          target:
+                            entity_id: "{{ repeat.item }}"
+                          data:
+                            volume_level: >-
+                              {% set current_vol = state_attr(repeat.item, 'volume_level') | float(0) %}
+                              {% set vol = current_vol - (stepsize * clicks) %}
+                              {{ 0.0 if vol < 0.0 else vol }}
+            default:
+              - service: media_player.volume_set
+                target:
+                  entity_id: "{{ player }}"
+                data:
+                  volume_level: >-
+                    {% set current_vol = state_attr(player, 'volume_level') | float(0) %}
+                    {% set vol = current_vol - (stepsize * clicks) %}
+                    {{ 0.0 if vol < 0.0 else vol }}
+
+      # -----------------------------------------------------------------------
+      # BUTTON PRESS  (_pos == 2) – dispatch on press_type
+      # -----------------------------------------------------------------------
+      - conditions: "{{ _pos == 2 and press_type != '' }}"
+        sequence:
+          - choose:
+
+              # SINGLE PRESS → Play/Pause
+              - conditions: "{{ press_type in ['short_release', 'multi_press_1'] }}"
+                sequence:
+                  - choose:
+                      - conditions: "{{ states(player) not in ['playing', 'paused'] }}"
+                        sequence:
+                          - choose:
+                              - conditions: "{{ channel == 1 }}"
+                                sequence: !input channel_1_default_play_pause
+                              - conditions: "{{ channel == 2 }}"
+                                sequence: !input channel_2_default_play_pause
+                              - conditions: "{{ channel == 3 }}"
+                                sequence: !input channel_3_default_play_pause
+                    default:
+                      - service: media_player.media_play_pause
+                        target:
+                          entity_id: "{{ player }}"
+                      - if: "{{ reset_group and helper != '' }}"
+                        then:
+                          - service: input_boolean.turn_on
+                            target:
+                              entity_id: "{{ helper }}"
+
+              # DOUBLE PRESS → Next Track
+              - conditions: "{{ press_type in ['multi_press_2', 'double_press'] }}"
+                sequence:
+                  - service: media_player.media_next_track
+                    target:
+                      entity_id: "{{ player }}"
+
+              # TRIPLE PRESS → Previous Track
+              - conditions: "{{ press_type in ['multi_press_3', 'triple_press'] }}"
+                sequence:
+                  - service: media_player.media_previous_track
+                    target:
+                      entity_id: "{{ player }}"
+
+              # HOLD & RELEASE → Toggle Volume Mode
+              - conditions: "{{ press_type == 'long_release' }}"
+                sequence:
+                  - if: "{{ helper != '' }}"
+                    then:
+                      - service: input_boolean.toggle
+                        target:
+                          entity_id: "{{ helper }}"
+                  - sequence: !input change_volume_control_action
+                  - if:
+                      - condition: template
+                        value_template: "{{ duck_volume_state }}"
+                    then:
+                      - variables:
+                          pre_duck_volume: "{{ state_attr(player, 'volume_level') }}"
+                      - service: media_player.volume_set
+                        target:
+                          entity_id: "{{ player }}"
+                        data:
+                          volume_level: 0.1
+                      - delay:
+                          milliseconds: "{{ duck_time }}"
+                      - service: media_player.volume_set
+                        target:
+                          entity_id: "{{ player }}"
+                        data:
+                          volume_level: "{{ pre_duck_volume }}"
+
+              # long_press fires on hold-start; no action (long_release handles it)

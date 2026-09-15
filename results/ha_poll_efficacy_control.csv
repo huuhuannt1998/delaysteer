@@ -1,0 +1,15 @@
+entity,trial,http_status,service_result,poll_rtt_s,value_age_before_s,value_age_after_s,last_reported_advanced,pollable_in_practice
+zone.home,0,200,[],0.0074,953080.119,953080.135,False,False
+zone.home,1,200,[],0.0019,953080.138,953080.142,False,False
+person.delaysteer,0,200,[],0.003,953078.741,953078.745,False,False
+person.delaysteer,1,200,[],0.0019,953078.747,953078.751,False,False
+sensor.backup_backup_manager_state,0,200,[],0.0055,953078.742,953078.749,False,False
+sensor.backup_backup_manager_state,1,200,[],0.0027,953078.752,953078.756,False,False
+binary_sensor.hallway_motion,0,200,[],0.0041,953078.765,953078.771,False,False
+binary_sensor.hallway_motion,1,200,[],0.0032,953078.773,953078.778,False,False
+binary_sensor.kitchen_leak,0,200,[],0.0014,953078.779,953078.781,False,False
+binary_sensor.kitchen_leak,1,200,[],0.0015,953078.782,953078.785,False,False
+binary_sensor.living_room_motion,0,200,[],0.0015,953078.786,953078.789,False,False
+binary_sensor.living_room_motion,1,200,[],0.0019,953078.791,953078.796,False,False
+binary_sensor.back_door_contact,0,200,[],0.0022,953078.798,953078.801,False,False
+binary_sensor.back_door_contact,1,200,[],0.0019,953078.802,953078.805,False,False

@@ -114,6 +114,11 @@ ENTITIES = {
     # Camera event source (proposal §10): modelled as a camera-detected motion
     # event rather than a video entity, so it is a real, instrumentable signal.
     "camera": "binary_sensor.front_porch_camera_motion",
+    # E7 (fusion applicability): two more read-only facts for the multi-fact
+    # "house secure" commitment. Benign defaults (window closed, panel ready) so
+    # every pre-existing scenario and test is unaffected.
+    "window": "binary_sensor.living_room_window_contact",
+    "alarm_ready": "binary_sensor.alarm_ready",
 }
 
 
@@ -139,6 +144,8 @@ class VirtualHome:
         self.states.set(ENTITIES["thermostat"], "heat", {"temperature": 20.0})
         self.states.set(ENTITIES["leak"], "off", {"device_class": "moisture"})
         self.states.set(ENTITIES["camera"], "off", {"device_class": "motion"})
+        self.states.set(ENTITIES["window"], "off", {"device_class": "window"})  # off = closed
+        self.states.set(ENTITIES["alarm_ready"], "on", {"device_class": "safety"})  # on = ready
 
     def _register_services(self) -> None:
         sm = self.states
@@ -178,3 +185,9 @@ class VirtualHome:
 
     def close_door(self) -> None:
         self.states.set(ENTITIES["contact"], "off")
+
+    def open_window(self) -> None:
+        self.states.set(ENTITIES["window"], "on")  # on = open
+
+    def close_window(self) -> None:
+        self.states.set(ENTITIES["window"], "off")

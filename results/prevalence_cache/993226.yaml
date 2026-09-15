@@ -1,0 +1,68 @@
+blueprint:
+  name: Third Reality Button - Multi-Action
+  description: >
+    Trigger three configurable actions from a single button entity based on
+    single press, double press, and hold event types. Originally designed for
+    Third Reality button model 3RSB22BZ set up in Zigbee2MQTT.
+    Should work for buttons exposing event entities with event_type attributes.
+  domain: automation
+  input:
+    button_entity:
+      name: Button Entity
+      description: The event entity for your button.
+      selector:
+        entity:
+          domain: event
+
+    action_single:
+      name: Single Press Action
+      description: Action(s) to run when the button is pressed once.
+      default: []
+      selector:
+        action: {}
+
+    action_double:
+      name: Double Press Action
+      description: Action(s) to run when the button is pressed twice.
+      default: []
+      selector:
+        action: {}
+
+    action_hold:
+      name: Hold Action
+      description: Action(s) to run when the button is held down.
+      default: []
+      selector:
+        action: {}
+
+mode: single
+
+triggers:
+  - trigger: state
+    entity_id: !input button_entity
+    from: null
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input button_entity
+            attribute: event_type
+            state: single
+        sequence: !input action_single
+
+      - conditions:
+          - condition: state
+            entity_id: !input button_entity
+            attribute: event_type
+            state: double
+        sequence: !input action_double
+
+      - conditions:
+          - condition: state
+            entity_id: !input button_entity
+            attribute: event_type
+            state: hold
+        sequence: !input action_hold

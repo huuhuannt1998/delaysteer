@@ -1,0 +1,150 @@
+{
+  "algorithm6_tier1": {
+    "clean_calls": [
+      "read_outdoor_temp",
+      "report",
+      "run_hvac"
+    ],
+    "endogenous_by_arm": {
+      "delay1": [
+        "arm_window_zone",
+        "check_windows",
+        "close_windows",
+        "disarm_window_zone",
+        "open_windows"
+      ],
+      "delay2": [],
+      "composed": [
+        "arm_window_zone",
+        "check_windows",
+        "close_windows",
+        "disarm_window_zone",
+        "open_windows"
+      ]
+    },
+    "endogenous_nonempty": true
+  },
+  "algorithm4_tier1": {
+    "per_arm_target": {
+      "clean": 0,
+      "delay1": 0,
+      "delay2": 0,
+      "composed": 0
+    },
+    "per_arm_n": {
+      "clean": 20,
+      "delay1": 20,
+      "delay2": 20,
+      "composed": 20
+    },
+    "vacuous": true
+  },
+  "confirmation_burden": [
+    {
+      "delta_s": 1.0,
+      "benign_fpr": 0.1605,
+      "per_100": 16.1
+    },
+    {
+      "delta_s": 2.0,
+      "benign_fpr": 0.0645,
+      "per_100": 6.5
+    },
+    {
+      "delta_s": 3.0,
+      "benign_fpr": 0.047,
+      "per_100": 4.7
+    },
+    {
+      "delta_s": 5.0,
+      "benign_fpr": 0.0375,
+      "per_100": 3.8
+    },
+    {
+      "delta_s": 10.0,
+      "benign_fpr": 0.028,
+      "per_100": 2.8
+    },
+    {
+      "delta_s": 20.0,
+      "benign_fpr": 0.0025,
+      "per_100": 0.2
+    },
+    {
+      "delta_s": 30.0,
+      "benign_fpr": 0.0,
+      "per_100": 0.0
+    },
+    {
+      "delta_s": 60.0,
+      "benign_fpr": 0.0,
+      "per_100": 0.0
+    }
+  ],
+  "heldout_split": {
+    "development": {
+      "llama3.1:8b": {
+        "pairs": 18,
+        "b": 0,
+        "c": 0,
+        "p": 1.0
+      },
+      "mistral-nemo:12b": {
+        "pairs": 18,
+        "b": 1,
+        "c": 0,
+        "p": 1.0
+      },
+      "qwen2.5:7b": {
+        "pairs": 18,
+        "b": 8,
+        "c": 0,
+        "p": 0.0078125
+      },
+      "qwen3.6:27b": {
+        "pairs": 12,
+        "b": 6,
+        "c": 0,
+        "p": 0.03125
+      },
+      "qwen3:14b": {
+        "pairs": 22,
+        "b": 20,
+        "c": 0,
+        "p": 1.9073486328125e-06
+      }
+    },
+    "held-out": {
+      "llama3.1:8b": {
+        "pairs": 18,
+        "b": 0,
+        "c": 0,
+        "p": 1.0
+      },
+      "mistral-nemo:12b": {
+        "pairs": 18,
+        "b": 1,
+        "c": 0,
+        "p": 1.0
+      },
+      "qwen2.5:7b": {
+        "pairs": 18,
+        "b": 12,
+        "c": 0,
+        "p": 0.00048828125
+      },
+      "qwen3.6:27b": {
+        "pairs": 9,
+        "b": 3,
+        "c": 0,
+        "p": 0.25
+      },
+      "qwen3:14b": {
+        "pairs": 24,
+        "b": 23,
+        "c": 0,
+        "p": 2.384185791015625e-07
+      }
+    }
+  }
+}

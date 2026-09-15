@@ -1,0 +1,1131 @@
+blueprint:
+  name: "🌙 Smart Night Light by LTek"
+  description: |
+
+    **Smart Night Light**
+
+    🚀 Version 2026.05.02.5c
+    
+    Author: LTek
+    
+    How it works...
+    • Night Mode is determined by any enabled condition — Time Range, Sun Elevation, or Ambient Light. If any enabled condition is true, Night Mode is active (OR logic).
+    • Required Conditions add AND logic — if a condition is marked as Required, it must also be true for Night Mode to be active, regardless of other conditions.
+    • Motion Trigger: When Night Mode is active and motion is detected, lights brighten to Motion Brightness. When motion clears, lights return to Night Brightness after the configured timeout.
+    • Night Trigger: Each enabled trigger (Time Start/End, Sunset/Sunrise, Ambient Dark/Bright) fires independently and sets the light to Night Brightness or turns it off based on whether Night Mode is now active.
+    • Day Trigger: Sunrise, Time End, Ambient Bright → turns lights off.
+    • Bypass Schedule: When enabled, defines days and times when nothing will ever trigger — checked first, no light action taken.
+    • Bypass Switch: When enabled, overrides normal automation — checked last, acts on the light per the Bypass Switch Action setting.
+    
+    🌞 **Day** - Lights are not controlled; Night Mode is inactive
+    🌙 **Night Mode** - Any enabled condition is true (and all required conditions are met)
+    🏃 **Motion** - Lights brighten to Motion Brightness when Night Mode is active
+    
+    **FEATURES**
+    🎯 Multi-sensor support with motion confirmation and cooldown
+    🔅 Smart night detection via ambient light, sun elevation, or time schedule
+    ⏱️ Configurable timeouts with optional grace periods
+    🔒 Required Conditions enforce AND logic across night mode sources
+    ‍🚧 Bypass system for temporary automation override
+    📢 Comprehensive notification system
+        📌 Persistent Web UI Notifications
+        📱 Mobile Notifications
+    🌄 Sunset/sunrise triggers for automatic scheduling
+    💫 Smooth transitions between all lighting states
+    🐛 Debug mode for troubleshooting
+    
+    📖 Community Discussion, Help, and Details... https://community.home-assistant.io/
+    
+  source_url: https://gist.github.com/Ltek/f38f506ea2c64bdeb1b03d32b65c15da
+  domain: automation
+ 
+  input:
+    target_lights:
+      name: "💡 Target Light"
+      description: "Light Entity or Group to control and monitor"
+      selector:
+        entity:
+          domain: light
+   
+    motion_sensors:
+      name: "🎯 Motion / Occupancy Sensor(s)"
+      description: Select sensors to Trigger the automation
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: binary_sensor
+              device_class: motion
+            - domain: binary_sensor
+              device_class: occupancy
+   
+    motion_brightness:
+      name: "Motion Brightness"
+      description: Brightness level when motion is detected (Night Mode must be active)
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+
+    night_brightness:
+      name: "Night Mode Brightness"
+      description: Brightness level for night mode when no motion (0 = lights off)
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+
+    motion_settings:
+      name: "Motion"
+      icon: mdi:tune
+      description: Configure motion detection and timing
+      collapsed: true
+      input:
+        motion_timeout:
+          name: "Motion Timeout"
+          description: Time to wait after motion clears before returning to Night Brightness
+          default: 300
+          selector:
+            number:
+              min: 0
+              max: 3600
+              unit_of_measurement: seconds
+        bright_to_dim_timeout:
+          name: "Bright to Dim Timeout"
+          description: Time to wait before dimming lights that are above night brightness during night conditions
+          default: 300
+          selector:
+            number:
+              min: 0
+              max: 3600
+              unit_of_measurement: seconds
+        motion_confirmation_delay:
+          name: "Motion Confirmation Delay"
+          description: "Delay to confirm motion is real (prevents false triggers)"
+          default: 1
+          selector:
+            number:
+              min: 0
+              max: 5
+              unit_of_measurement: seconds
+        cooldown_period:
+          name: "Cooldown Period"
+          description: Minimum time between motion triggers in seconds
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 3600
+              unit_of_measurement: seconds
+        grace_period_duration:
+          name: "Grace Period Duration"
+          description: "Time to wait before adjusting lights after motion timeout (0 = disabled)"
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 300
+              unit_of_measurement: seconds
+   
+    bypass_settings:
+      name: "Bypass"
+      icon: mdi:pause-circle-outline
+      description: Override automation on demand or on a schedule
+      collapsed: true
+      input:
+        use_bypass_schedule:
+          name: "Use Bypass Schedule"
+          description: "Enable a Schedule Helper to define days & times when the automation will NOT run. Checked first — no light action is taken during these times."
+          default: false
+          selector:
+            boolean:
+        bypass_schedule:
+          name: "Bypass Schedule"
+          description: "Select a Schedule Helper that defines days & times when the automation will NOT run. Create one in Settings → Devices & Services → Helpers → Schedule."
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: schedule
+        use_bypass:
+          name: "Use Bypass Switch"
+          description: "Enable a switch to manually override automation. Checked last — acts on the light per the Bypass Switch Action setting."
+          default: false
+          selector:
+            boolean:
+        bypass_switch:
+          name: "Bypass Switch"
+          description: "Switch to bypass automation (input_boolean or switch)"
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+                - domain: switch
+              multiple: false
+        bypass_action:
+          name: "Bypass Switch Action"
+          description: "What happens when bypass switch is active?"
+          default: keep_current
+          selector:
+            select:
+              options:
+                - label: "Keep lights at current state"
+                  value: keep_current
+                - label: "Turn lights OFF during bypass"
+                  value: turn_off
+                - label: "Turn lights ON during bypass"
+                  value: turn_on
+   
+    time_range_settings:
+      name: "Night Time Range"
+      icon: mdi:clock-outline
+      description: Use a time window as a night mode condition
+      collapsed: true
+      input:
+        require_time_range:
+          name: "Require Time Range for Night Mode"
+          description: "When enabled, this condition is required to be True for the automation to run."
+          default: false
+          selector:
+            boolean:
+        use_time_range:
+          name: "Use Time Range"
+          description: Enable time range as a night condition
+          default: true
+          selector:
+            boolean:
+        enable_time_start_trigger:
+          name: "Use Start Time Trigger"
+          description: "Turn on lights at night brightness when start time is reached"
+          default: false
+          selector:
+            boolean:
+        enable_time_end_trigger:
+          name: "Use End Time Trigger"
+          description: "Turn off lights when end time is reached"
+          default: false
+          selector:
+            boolean:
+        night_start_time:
+          name: "Night Start Time"
+          description: Time when night mode can begin
+          default: "17:00:00"
+          selector:
+            time:
+        night_end_time:
+          name: "Night End Time"
+          description: Time when night mode ends
+          default: "05:00:00"
+          selector:
+            time:
+
+    sun_elevation_settings:
+      name: "Sun Elevation"
+      icon: mdi:weather-sunset
+      description: Use sun position as a night mode condition
+      collapsed: true
+      input:
+        require_sun_elevation:
+          name: "Require Sun Elevation for Night Mode"
+          description: "When enabled, this condition is required to be True for the automation to run."
+          default: false
+          selector:
+            boolean:
+        use_sun_elevation:
+          name: "Use Sun Elevation"
+          description: Enable sun elevation as a night condition
+          default: true
+          selector:
+            boolean:
+        enable_sun_sunset_trigger:
+          name: "Use Sunset Trigger"
+          description: "Turn on lights at night brightness when sunset occurs"
+          default: false
+          selector:
+            boolean:
+        enable_sun_sunrise_trigger:
+          name: "Use Sunrise Trigger"
+          description: "Turn off lights when sunrise occurs"
+          default: false
+          selector:
+            boolean:
+        sun_elevation_falling:
+          name: "Sun Elevation (Falling)"
+          description: Degrees below horizon when sun is setting
+          default: -1.5
+          selector:
+            number:
+              min: -20
+              max: 20
+              step: 0.1
+        sun_elevation_rising:
+          name: "Sun Elevation (Rising)"
+          description: Degrees below horizon when sun is rising
+          default: -4.0
+          selector:
+            number:
+              min: -20
+              max: 20
+              step: 0.1
+   
+    ambient_light_settings:
+      name: "Ambient Light"
+      icon: mdi:brightness-5
+      description: Use a light sensor as a night mode condition
+      collapsed: true
+      input:
+        require_ambient_light:
+          name: "Require Ambient Light for Night Mode"
+          description: "When enabled, this condition is required to be True for the automation to run."
+          default: false
+          selector:
+            boolean:
+        use_ambient_light:
+          name: "Use Ambient Light Sensor"
+          description: Enable ambient light as a night condition
+          default: false
+          selector:
+            boolean:
+        ambient_light_sensor:
+          name: "Ambient Light Sensor"
+          description: Light sensor to monitor
+          default: ""
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: illuminance
+        ambient_light_threshold:
+          name: "Ambient Light Threshold"
+          description: Light level below which night mode activates
+          default: 40
+          selector:
+            number:
+              min: 0
+              max: 1000
+              unit_of_measurement: lx
+        enable_ambient_dark_trigger:
+          name: "Use Dark Trigger"
+          description: "Turn on lights at night brightness when it gets dark (below threshold)"
+          default: false
+          selector:
+            boolean:
+        enable_ambient_bright_trigger:
+          name: "Use Bright Trigger"
+          description: "Turn off lights when it gets bright (above threshold)"
+          default: false
+          selector:
+            boolean:
+   
+    notification_settings:
+      name: "Notifications"
+      icon: mdi:bell-outline
+      description: Configure alerts for automation events
+      collapsed: true
+      input:
+        enable_mobile_notifications:
+          name: "Enable Mobile Notifications"
+          description: Send notifications to mobile devices
+          default: false
+          selector:
+            boolean:
+        mobile_notify_device:
+          name: "Mobile Notification Device"
+          description: Device to receive mobile notifications
+          default: []
+          selector:
+            device:
+              integration: mobile_app
+              multiple: true
+        enable_ui_notifications:
+          name: "Enable UI Notifications"
+          description: Show notifications in Home Assistant UI
+          default: false
+          selector:
+            boolean:
+        notify_on_motion:
+          name: "Notify on Motion Detection"
+          description: Send notification when motion is detected
+          default: false
+          selector:
+            boolean:
+        notify_on_timeout:
+          name: "Notify on Motion Timeout"
+          description: Send notification when motion timeout occurs
+          default: false
+          selector:
+            boolean:
+        notify_on_night_adjust:
+          name: "Notify on Night Adjustment"
+          description: Send notification when lights adjust for night mode
+          default: false
+          selector:
+            boolean:
+        notify_on_bypass:
+          name: "Notify on Bypass Change"
+          description: "Send notification when bypass is activated/deactivated"
+          default: false
+          selector:
+            boolean:
+   
+    debug_settings:
+      name: "Debug"
+      icon: mdi:bug-outline
+      description: Troubleshooting and diagnostic options
+      collapsed: true
+      input:
+        enable_debug_notifications:
+          name: "Enable Debug Notifications"
+          description: "Show debug notifications for troubleshooting"
+          default: false
+          selector:
+            boolean:
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  motion_brightness: !input motion_brightness
+  motion_timeout_var: !input motion_timeout
+  bright_to_dim_timeout_var: !input bright_to_dim_timeout
+  motion_confirmation_delay: !input motion_confirmation_delay
+  night_brightness_var: !input night_brightness
+  cooldown_period_var: !input cooldown_period
+  grace_period_duration: !input grace_period_duration
+  motion_sensors_var: !input motion_sensors
+  target_lights_var: !input target_lights
+  use_bypass: !input use_bypass
+  bypass_switch: !input bypass_switch
+  bypass_action: !input bypass_action
+  use_bypass_schedule: !input use_bypass_schedule
+  bypass_schedule: !input bypass_schedule
+  use_ambient: !input use_ambient_light
+  ambient_sensor: !input ambient_light_sensor
+  ambient_threshold: !input ambient_light_threshold
+  enable_ambient_dark_trigger: !input enable_ambient_dark_trigger
+  enable_ambient_bright_trigger: !input enable_ambient_bright_trigger
+  require_ambient_light: !input require_ambient_light
+  use_sun: !input use_sun_elevation
+  sun_falling: !input sun_elevation_falling
+  sun_rising: !input sun_elevation_rising
+  enable_sun_sunset_trigger: !input enable_sun_sunset_trigger
+  enable_sun_sunrise_trigger: !input enable_sun_sunrise_trigger
+  require_sun_elevation: !input require_sun_elevation
+  use_time: !input use_time_range
+  time_start: !input night_start_time
+  time_end: !input night_end_time
+  enable_time_start_trigger: !input enable_time_start_trigger
+  enable_time_end_trigger: !input enable_time_end_trigger
+  require_time_range: !input require_time_range
+  notify_on_motion: !input notify_on_motion
+  notify_on_timeout: !input notify_on_timeout
+  notify_on_night_adjust: !input notify_on_night_adjust
+  notify_on_bypass: !input notify_on_bypass
+  enable_mobile_notifications: !input enable_mobile_notifications
+  mobile_notify_device: !input mobile_notify_device
+  enable_ui_notifications: !input enable_ui_notifications
+  enable_debug_notifications: !input enable_debug_notifications
+  motion_sensors_list: >
+    {% if motion_sensors_var is string %}
+      {{ [motion_sensors_var] }}
+    {% else %}
+      {{ motion_sensors_var | list }}
+    {% endif %}
+  target_lights_list: >
+    {{ [target_lights_var] }}
+  is_bypassed: >
+    {% if use_bypass and bypass_switch != "" %}
+      {{ is_state(bypass_switch, 'on') }}
+    {% else %}
+      false
+    {% endif %}
+  is_schedule_blocked: >
+    {% if use_bypass_schedule and bypass_schedule != "" %}
+      {{ is_state(bypass_schedule, 'on') }}
+    {% else %}
+      false
+    {% endif %}
+  is_night_time: >
+    {% set ns = namespace(any_true=false, required_failed=false) %}
+    {% if use_ambient and ambient_sensor != "" %}
+      {% if states(ambient_sensor) | float(999) < ambient_threshold %}
+        {% set ns.any_true = true %}
+      {% endif %}
+    {% endif %}
+    {% if use_sun %}
+      {% set elevation = state_attr('sun.sun', 'elevation') | float(0) %}
+      {% set sun_state = states('sun.sun') %}
+      {% if sun_state == 'below_horizon' and ((elevation <= sun_rising) or (elevation <= sun_falling)) %}
+        {% set ns.any_true = true %}
+      {% endif %}
+    {% endif %}
+    {% if use_time %}
+      {% set current_time = now().strftime('%H:%M:%S') %}
+      {% if time_start > time_end %}
+        {% if current_time >= time_start or current_time <= time_end %}
+          {% set ns.any_true = true %}
+        {% endif %}
+      {% else %}
+        {% if current_time >= time_start and current_time <= time_end %}
+          {% set ns.any_true = true %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    {% if require_time_range %}
+      {% set current_time = now().strftime('%H:%M:%S') %}
+      {% if time_start > time_end %}
+        {% if not (current_time >= time_start or current_time <= time_end) %}
+          {% set ns.required_failed = true %}
+        {% endif %}
+      {% else %}
+        {% if not (current_time >= time_start and current_time <= time_end) %}
+          {% set ns.required_failed = true %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    {% if require_sun_elevation %}
+      {% set elevation = state_attr('sun.sun', 'elevation') | float(0) %}
+      {% set sun_state = states('sun.sun') %}
+      {% if not (sun_state == 'below_horizon' and ((elevation <= sun_rising) or (elevation <= sun_falling))) %}
+        {% set ns.required_failed = true %}
+      {% endif %}
+    {% endif %}
+    {% if require_ambient_light and ambient_sensor != "" %}
+      {% if states(ambient_sensor) | float(0) >= ambient_threshold %}
+        {% set ns.required_failed = true %}
+      {% endif %}
+    {% endif %}
+    {{ ns.any_true and not ns.required_failed }}
+  current_brightness_pct: >
+    {% if states(target_lights_var) == 'on' %}
+      {% set brightness = state_attr(target_lights_var, 'brightness') | float(0) %}
+      {% if brightness > 0 %}
+        {{ (brightness / 255 * 100) | round(0) }}
+      {% else %}
+        0
+      {% endif %}
+    {% else %}
+      0
+    {% endif %}
+
+trigger:
+  - platform: state
+    entity_id: !input motion_sensors
+    to: "on"
+    id: motion_detected
+  - platform: state
+    entity_id: !input motion_sensors
+    to: "off"
+    id: motion_cleared
+  - platform: time
+    at: !input night_start_time
+    id: time_start_trigger
+  - platform: time
+    at: !input night_end_time
+    id: time_end_trigger
+  - platform: sun
+    event: sunset
+    offset: 0
+    id: sun_sunset_trigger
+  - platform: sun
+    event: sunrise
+    offset: 0
+    id: sun_sunrise_trigger
+  - platform: state
+    entity_id: !input ambient_light_sensor
+    to: ~
+    id: ambient_light_change
+
+condition: []
+
+action:
+  - variables:
+      trigger_id: "{{ trigger.id }}"
+      motion_timeout_seconds: >
+        {% set base_timeout = motion_timeout_var | int %}
+        {% set grace = grace_period_duration | int %}
+        {{ base_timeout + grace }}
+
+  # --- DEBUG: log trigger ---
+  - if:
+      - condition: template
+        value_template: "{{ enable_debug_notifications }}"
+    then:
+      - service: persistent_notification.create
+        data:
+          title: "🐛 DEBUG: Trigger Fired"
+          message: "Trigger: {{ trigger_id }}, Time: {{ now().strftime('%H:%M:%S') }}, Light: {{ states(target_lights_var) }} ({{ current_brightness_pct }}%), Night Mode: {{ is_night_time }}, Schedule Blocked: {{ is_schedule_blocked }}, Bypassed: {{ is_bypassed }}"
+          notification_id: "night_light_debug_trigger"
+
+  # --- BYPASS SCHEDULE: hard stop, no light action ---
+  - if:
+      - condition: template
+        value_template: "{{ is_schedule_blocked }}"
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ enable_debug_notifications }}"
+        then:
+          - service: persistent_notification.create
+            data:
+              title: "🐛 DEBUG: Schedule Block Active"
+              message: "Automation stopped — Bypass Schedule is active"
+              notification_id: "night_light_debug_schedule_block"
+      - stop: "Bypass schedule is active"
+
+  # -------------------------------------------------------
+  # TREE 1 — MOTION
+  # Only acts when is_night_time is true
+  # -------------------------------------------------------
+  - choose:
+
+    # Motion detected → brighten to Motion Brightness
+    - conditions:
+        - condition: trigger
+          id: motion_detected
+        - condition: template
+          value_template: "{{ is_night_time }}"
+      sequence:
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Motion Detected"
+                message: "Night Mode active — waiting {{ motion_confirmation_delay }}s to confirm"
+                notification_id: "night_light_debug_motion"
+        - delay:
+            seconds: "{{ motion_confirmation_delay }}"
+        - condition: template
+          value_template: >
+            {% set motion_still_on = false %}
+            {% for sensor in motion_sensors_list %}
+              {% if states(sensor) == 'on' %}
+                {% set motion_still_on = true %}
+              {% endif %}
+            {% endfor %}
+            {{ motion_still_on }}
+        - variables:
+            last_motion_time: "{{ state_attr(this.entity_id, 'last_triggered') | as_timestamp | default(as_timestamp(now()) - 3600) }}"
+            time_since_last_motion: "{{ as_timestamp(now()) - last_motion_time }}"
+        - condition: template
+          value_template: "{{ time_since_last_motion >= cooldown_period_var }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'off' or current_brightness_pct != motion_brightness }}"
+        - service: light.turn_on
+          target:
+            entity_id: "{{ target_lights_list }}"
+          data:
+            brightness_pct: "{{ motion_brightness }}"
+            transition: 1
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights ON to {{ motion_brightness }}% (Motion)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_motion and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Motion Detected"
+                      message: "Lights on to {{ motion_brightness }}%"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_motion and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Motion detected — Lights set to {{ motion_brightness }}%"
+
+    # Motion cleared → wait timeout → return to Night Brightness or turn off
+    - conditions:
+        - condition: trigger
+          id: motion_cleared
+      sequence:
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Motion Cleared"
+                message: "Waiting {{ motion_timeout_seconds }}s before adjusting lights"
+                notification_id: "night_light_debug_timeout"
+        - delay:
+            seconds: "{{ motion_timeout_seconds }}"
+        - condition: template
+          value_template: >
+            {% set motion_still_off = true %}
+            {% for sensor in motion_sensors_list %}
+              {% if states(sensor) == 'on' %}
+                {% set motion_still_off = false %}
+              {% endif %}
+            {% endfor %}
+            {{ motion_still_off }}
+        - choose:
+          # Night Mode still active → dim to Night Brightness (or off if 0)
+          - conditions:
+              - condition: template
+                value_template: "{{ is_night_time }}"
+              - condition: template
+                value_template: "{{ states(target_lights_var) == 'off' or current_brightness_pct != night_brightness_var }}"
+            sequence:
+              - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ night_brightness_var == 0 }}"
+                  sequence:
+                    - service: light.turn_off
+                      target:
+                        entity_id: "{{ target_lights_list }}"
+                      data:
+                        transition: 2
+                default:
+                  - service: light.turn_on
+                    target:
+                      entity_id: "{{ target_lights_list }}"
+                    data:
+                      brightness_pct: "{{ night_brightness_var }}"
+                      transition: 2
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_debug_notifications }}"
+                then:
+                  - service: persistent_notification.create
+                    data:
+                      title: "🐛 DEBUG: Action Taken"
+                      message: "Lights dimmed to {{ night_brightness_var }}% (Night Mode after timeout)"
+                      notification_id: "night_light_debug_action"
+              - if:
+                  - condition: template
+                    value_template: "{{ notify_on_timeout and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+                then:
+                  - repeat:
+                      for_each: "{{ mobile_notify_device }}"
+                      sequence:
+                        - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                          data:
+                            title: "Motion Timeout"
+                            message: "No motion — Lights dimmed to {{ night_brightness_var }}%"
+              - if:
+                  - condition: template
+                    value_template: "{{ notify_on_timeout and enable_ui_notifications }}"
+                then:
+                  - service: persistent_notification.create
+                    data:
+                      title: "Night Light"
+                      message: "Motion timeout — Lights dimmed to {{ night_brightness_var }}%"
+          # Night Mode no longer active → turn off
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_night_time }}"
+              - condition: template
+                value_template: "{{ states(target_lights_var) == 'on' }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ target_lights_list }}"
+                data:
+                  transition: 2
+              - if:
+                  - condition: template
+                    value_template: "{{ enable_debug_notifications }}"
+                then:
+                  - service: persistent_notification.create
+                    data:
+                      title: "🐛 DEBUG: Action Taken"
+                      message: "Lights OFF (Night Mode inactive after timeout)"
+                      notification_id: "night_light_debug_action"
+              - if:
+                  - condition: template
+                    value_template: "{{ notify_on_timeout and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+                then:
+                  - repeat:
+                      for_each: "{{ mobile_notify_device }}"
+                      sequence:
+                        - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                          data:
+                            title: "Motion Timeout"
+                            message: "No motion — Lights turned off"
+              - if:
+                  - condition: template
+                    value_template: "{{ notify_on_timeout and enable_ui_notifications }}"
+                then:
+                  - service: persistent_notification.create
+                    data:
+                      title: "Night Light"
+                      message: "Motion timeout — Lights turned off"
+
+  # -------------------------------------------------------
+  # BYPASS SWITCH — checked after Trees, acts on light
+  # -------------------------------------------------------
+  - if:
+      - condition: template
+        value_template: "{{ is_bypassed }}"
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ enable_debug_notifications }}"
+        then:
+          - service: persistent_notification.create
+            data:
+              title: "🐛 DEBUG: Bypass Active"
+              message: "Bypass Switch is ON — action: {{ bypass_action }}"
+              notification_id: "night_light_debug_bypass"
+      - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ bypass_action == 'turn_off' }}"
+            - condition: template
+              value_template: "{{ states(target_lights_var) == 'on' }}"
+          sequence:
+            - service: light.turn_off
+              target:
+                entity_id: "{{ target_lights_list }}"
+              data:
+                transition: 1
+        - conditions:
+            - condition: template
+              value_template: "{{ bypass_action == 'turn_on' }}"
+            - condition: template
+              value_template: "{{ states(target_lights_var) == 'off' or current_brightness_pct != 100 }}"
+          sequence:
+            - service: light.turn_on
+              target:
+                entity_id: "{{ target_lights_list }}"
+              data:
+                brightness_pct: 100
+                transition: 1
+      - stop: "Bypass switch is active"
+
+  # -------------------------------------------------------
+  # TREE 2 — NIGHT CONDITION TRIGGERS
+  # Each trigger fires independently; all check is_night_time
+  # -------------------------------------------------------
+  - choose:
+
+    # Time start → Night Mode begins → turn lights on to Night Brightness
+    - conditions:
+        - condition: trigger
+          id: time_start_trigger
+        - condition: template
+          value_template: "{{ use_time and enable_time_start_trigger and is_night_time }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'off' or current_brightness_pct != night_brightness_var }}"
+      sequence:
+        - delay:
+            seconds: 2
+        - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ night_brightness_var == 0 }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ target_lights_list }}"
+                data:
+                  transition: 2
+          default:
+            - service: light.turn_on
+              target:
+                entity_id: "{{ target_lights_list }}"
+              data:
+                brightness_pct: "{{ night_brightness_var }}"
+                transition: 2
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights ON to {{ night_brightness_var }}% (Time start trigger)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Night Mode Started"
+                      message: "Night start time reached — Lights set to {{ night_brightness_var }}%"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Night start time reached — Lights set to {{ night_brightness_var }}%"
+
+    # Time end → Night Mode ends → turn lights off
+    - conditions:
+        - condition: trigger
+          id: time_end_trigger
+        - condition: template
+          value_template: "{{ use_time and enable_time_end_trigger and not is_night_time }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'on' }}"
+      sequence:
+        - delay:
+            seconds: 2
+        - service: light.turn_off
+          target:
+            entity_id: "{{ target_lights_list }}"
+          data:
+            transition: 2
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights OFF (Time end trigger)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Night Mode Ended"
+                      message: "Night end time reached — Lights turned off"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Night end time reached — Lights turned off"
+
+    # Sunset → Night Mode begins → turn lights on to Night Brightness
+    - conditions:
+        - condition: trigger
+          id: sun_sunset_trigger
+        - condition: template
+          value_template: "{{ use_sun and enable_sun_sunset_trigger and is_night_time }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'off' or current_brightness_pct != night_brightness_var }}"
+      sequence:
+        - delay:
+            seconds: 2
+        - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ night_brightness_var == 0 }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ target_lights_list }}"
+                data:
+                  transition: 2
+          default:
+            - service: light.turn_on
+              target:
+                entity_id: "{{ target_lights_list }}"
+              data:
+                brightness_pct: "{{ night_brightness_var }}"
+                transition: 2
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights ON to {{ night_brightness_var }}% (Sunset trigger)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Sunset"
+                      message: "Sunset — Lights set to {{ night_brightness_var }}%"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Sunset — Lights set to {{ night_brightness_var }}%"
+
+    # Sunrise → Night Mode ends → turn lights off
+    - conditions:
+        - condition: trigger
+          id: sun_sunrise_trigger
+        - condition: template
+          value_template: "{{ use_sun and enable_sun_sunrise_trigger and not is_night_time }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'on' }}"
+      sequence:
+        - delay:
+            seconds: 2
+        - service: light.turn_off
+          target:
+            entity_id: "{{ target_lights_list }}"
+          data:
+            transition: 2
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights OFF (Sunrise trigger)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Sunrise"
+                      message: "Sunrise — Lights turned off"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Sunrise — Lights turned off"
+
+    # Ambient dark → Night Mode active → turn lights on to Night Brightness
+    - conditions:
+        - condition: trigger
+          id: ambient_light_change
+        - condition: template
+          value_template: "{{ use_ambient and ambient_sensor != '' and enable_ambient_dark_trigger and is_night_time }}"
+        - condition: template
+          value_template: "{{ states(ambient_sensor) | float(0) < ambient_threshold }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'off' or current_brightness_pct != night_brightness_var }}"
+      sequence:
+        - delay:
+            seconds: 2
+        - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ night_brightness_var == 0 }}"
+            sequence:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ target_lights_list }}"
+                data:
+                  transition: 2
+          default:
+            - service: light.turn_on
+              target:
+                entity_id: "{{ target_lights_list }}"
+              data:
+                brightness_pct: "{{ night_brightness_var }}"
+                transition: 2
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights ON to {{ night_brightness_var }}% (Ambient dark trigger)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Ambient Light Dark"
+                      message: "Light level below threshold — Lights set to {{ night_brightness_var }}%"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Ambient dark — Lights set to {{ night_brightness_var }}%"
+
+    # Ambient bright → Night Mode no longer active → turn lights off
+    - conditions:
+        - condition: trigger
+          id: ambient_light_change
+        - condition: template
+          value_template: "{{ use_ambient and ambient_sensor != '' and enable_ambient_bright_trigger and not is_night_time }}"
+        - condition: template
+          value_template: "{{ states(ambient_sensor) | float(0) > ambient_threshold }}"
+        - condition: template
+          value_template: "{{ states(target_lights_var) == 'on' }}"
+      sequence:
+        - delay:
+            seconds: 2
+        - service: light.turn_off
+          target:
+            entity_id: "{{ target_lights_list }}"
+          data:
+            transition: 2
+        - if:
+            - condition: template
+              value_template: "{{ enable_debug_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "🐛 DEBUG: Action Taken"
+                message: "Lights OFF (Ambient bright trigger)"
+                notification_id: "night_light_debug_action"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_mobile_notifications and mobile_notify_device | length > 0 }}"
+          then:
+            - repeat:
+                for_each: "{{ mobile_notify_device }}"
+                sequence:
+                  - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "Ambient Light Bright"
+                      message: "Light level above threshold — Lights turned off"
+        - if:
+            - condition: template
+              value_template: "{{ notify_on_night_adjust and enable_ui_notifications }}"
+          then:
+            - service: persistent_notification.create
+              data:
+                title: "Night Light"
+                message: "Ambient bright — Lights turned off"

@@ -1,0 +1,29 @@
+[
+  {
+    "model": "qwen3:14b",
+    "family": "access",
+    "condition": "surfaced",
+    "repeats": 20,
+    "violation_rate": "8/20",
+    "wilson95": "[22,61]",
+    "loop_rate": "19/20"
+  },
+  {
+    "model": "qwen3:14b",
+    "family": "confirmation",
+    "condition": "surfaced",
+    "repeats": 20,
+    "violation_rate": "3/20",
+    "wilson95": "[5,36]",
+    "loop_rate": "18/20"
+  },
+  {
+    "model": "qwen3:14b",
+    "family": "automation",
+    "condition": "surfaced",
+    "repeats": 20,
+    "violation_rate": "20/20",
+    "wilson95": "[84,100]",
+    "loop_rate": "0/20"
+  }
+]

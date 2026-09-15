@@ -1,0 +1,150 @@
+blueprint:
+  name: To-do List Sync (one-way items, two-way completion)
+  description: >-
+    Syncs a source to-do list (e.g. Cookidoo) with a target shopping list
+    (e.g. Bring!). New items are copied to the target list; completing an item
+    works in both directions. Items are matched via a single CJK character
+    derived from the source item's UID, appended to the item description.
+    The target list must support item descriptions.
+  domain: automation
+  input:
+    quelle:
+      name: Source list
+      description: The list items are taken from (e.g. Cookidoo).
+      selector:
+        entity:
+          filter:
+            domain: todo
+    ziel:
+      name: Target list
+      description: The list you shop from (e.g. Bring!). Must support descriptions.
+      selector:
+        entity:
+          filter:
+            domain: todo
+
+mode: single
+max_exceeded: silent
+
+variables:
+  quelle: !input quelle
+  ziel: !input ziel
+
+triggers:
+  - trigger: state
+    entity_id: !input quelle
+  - trigger: state
+    entity_id: !input ziel
+  - trigger: time_pattern
+    minutes: "/5"
+
+actions:
+  # ---------- fetch ----------
+  - action: todo.get_items
+    target:
+      entity_id: !input quelle
+    data:
+      status:
+        - needs_action
+    response_variable: r_q
+
+  - action: todo.get_items
+    target:
+      entity_id: !input quelle
+    data:
+      status:
+        - completed
+    response_variable: r_q_done
+
+  - action: todo.get_items
+    target:
+      entity_id: !input ziel
+    response_variable: r_z
+
+  # ---------- evaluate ----------
+  - variables:
+      q: "{{ (r_q.values() | list)[0]['items'] }}"
+      q_done: "{{ (r_q_done.values() | list)[0]['items'] }}"
+      z: "{{ (r_z.values() | list)[0]['items'] }}"
+
+      offen: >-
+        {{ z | selectattr('status','eq','needs_action')
+             | map(attribute='description', default='') | join(' § ') }}
+
+      erledigt: >-
+        {{ z | selectattr('status','eq','completed')
+             | map(attribute='description', default='') | join(' § ') }}
+
+      neu: >-
+        {% set ns = namespace(l=[]) %}
+        {% for i in q %}
+          {% set cp = 0x4E00 + (((i.uid | md5)[:4] | int(base=16)) % 20992) %}
+          {% set m = cp | pack('>H') | base64_encode | base64_decode('utf-16-be') %}
+          {% if m not in offen and m not in erledigt %}
+            {% set ns.l = ns.l + [{
+                 'summary': i.summary,
+                 'description': i.description | default('', true),
+                 'mark': m }] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.l }}
+
+      fertig: >-
+        {% set ns = namespace(l=[]) %}
+        {% for i in q %}
+          {% set cp = 0x4E00 + (((i.uid | md5)[:4] | int(base=16)) % 20992) %}
+          {% set m = cp | pack('>H') | base64_encode | base64_decode('utf-16-be') %}
+          {% if m in erledigt %}{% set ns.l = ns.l + [i.uid] %}{% endif %}
+        {% endfor %}
+        {{ ns.l }}
+
+      q_done_marks: >-
+        {% set ns = namespace(l=[]) %}
+        {% for i in q_done %}
+          {% set cp = 0x4E00 + (((i.uid | md5)[:4] | int(base=16)) % 20992) %}
+          {% set ns.l = ns.l + [cp | pack('>H') | base64_encode | base64_decode('utf-16-be')] %}
+        {% endfor %}
+        {{ ns.l }}
+
+      z_schliessen: >-
+        {% set ns = namespace(l=[]) %}
+        {% for b in z if b.status == 'needs_action' %}
+          {% set d = b.description | default('', true) %}
+          {% set hit = namespace(x=false) %}
+          {% for m in q_done_marks if m in d %}{% set hit.x = true %}{% endfor %}
+          {% if hit.x %}{% set ns.l = ns.l + [b.uid] %}{% endif %}
+        {% endfor %}
+        {{ ns.l }}
+
+  # ---------- source -> target: add ----------
+  - repeat:
+      for_each: "{{ neu }}"
+      sequence:
+        - action: todo.add_item
+          target:
+            entity_id: "{{ ziel }}"
+          data:
+            item: "{{ repeat.item.summary }}"
+            description: "{{ (repeat.item.description ~ ' ' ~ repeat.item.mark) | trim }}"
+
+  # ---------- target -> source: complete ----------
+  - repeat:
+      for_each: "{{ fertig }}"
+      sequence:
+        - action: todo.update_item
+          target:
+            entity_id: "{{ quelle }}"
+          data:
+            item: "{{ repeat.item }}"
+            status: completed
+
+  # ---------- source -> target: complete ----------
+  - repeat:
+      for_each: "{{ z_schliessen }}"
+      sequence:
+        - action: todo.update_item
+          target:
+            entity_id: "{{ ziel }}"
+          data:
+            item: "{{ repeat.item }}"
+            status: completed

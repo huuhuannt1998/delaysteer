@@ -1,0 +1,24 @@
+{
+  "frame_size": 305,
+  "n_drawn": 40,
+  "seed": 20260910,
+  "sampling": "uniform without replacement over every blueprint with retrievable YAML",
+  "selection_depends_on_attack_outcome": false,
+  "annotation_sha256": "e25cc7d9cdeded1898f624d65ce9efa2b3b167b7ff5a8bbe9d299b112136bd33",
+  "rates": {
+    "reads_sensor_state": "21/40",
+    "age_bounded": "10/40",
+    "timeout_present": "9/40",
+    "timeout_triggers_recovery": "9/40",
+    "fallback_latitude": "7/40",
+    "policy_edit_permitted": "10/40",
+    "high_impact_action": "4/40",
+    "age_bounded_AMONG_sensor_gated": "5/21"
+  },
+  "eligible": "2/40",
+  "ineligible_reasons": {
+    "no high-impact action to commit": 18,
+    "no sensor-gated decision": 19,
+    "gating fact outside the tool surface": 1
+  }
+}

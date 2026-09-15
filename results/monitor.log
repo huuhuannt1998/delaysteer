@@ -1,0 +1,3 @@
+DelaySteer attack monitor -> http://localhost:9120  (HA http://localhost:8123, proxy http://localhost:8125, log attack_proxy.log)
+Open it, then run the attack:  python scripts/demo_attack.py --mode attack
+(the LAUNCH SEQUENCE panel in the page lists every command)

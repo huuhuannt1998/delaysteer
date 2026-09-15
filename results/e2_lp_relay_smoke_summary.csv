@@ -1,0 +1,6 @@
+family,arm,hold_policy,n_attempted,n_completed,n_errors,violations,violation_rate,wilson95_lo,wilson95_hi,secure_claims,predicate_removed,mean_steps,median_max_contact_age_s,hub_bad_mac_total,hub_seq_regression_total,mean_elapsed_s
+secure_house,honest,none,1,1,0,0,0.0,0.0,0.793,0,0,2,0.2,0,0,51.0
+secure_house,delayed,hold_entity,1,1,0,0,0.0,0.0,0.793,0,0,7,26.6,0,0,244.3
+secure_house,delayed_until_read,hold_until_read,1,1,0,0,0.0,0.0,0.793,0,0,7,21.2,0,0,158.7
+automation,honest,none,1,1,0,0,0.0,0.0,0.793,0,1,5,0.0,0,0,109.2
+automation,delayed,hold_replies,1,1,0,1,1.0,0.207,1.0,0,1,5,6.0,0,0,99.0

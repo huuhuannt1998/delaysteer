@@ -1,0 +1,203 @@
+blueprint:
+  name: Motion Light (Weather + Sunset + Time + Seasonal Weather Logic)
+  description: >
+    Turns on a light when motion is detected.
+
+    After sunset, the light can turn on regardless of season or weather.
+    After a chosen fallback time, the light can also turn on regardless of season or weather.
+    Before sunset and before the fallback time, the light turns on only if weather matches
+    the allowed states and the current season is in the allowed season list.
+
+    Supports brightness, on-duration, and skip-if-light-is-already-on.
+  author: Waleed Gumaa    
+  domain: automation
+
+  input:
+    motion_entity:
+      name: Motion Sensor
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+
+    light_entity:
+      name: Light
+      selector:
+        entity:
+          domain: light
+
+    weather_entity:
+      name: Weather Entity
+      description: For example weather.openweathermap
+      selector:
+        entity:
+          domain: weather
+
+    season_entity:
+      name: Season Entity
+      description: Usually sensor.season
+      default: sensor.season
+      selector:
+        entity:
+          domain: sensor
+
+    allowed_seasons:
+      name: Weather-active Seasons
+      description: >
+        Weather-based activation before sunset and before fallback time only works in these seasons.
+        After sunset or after the fallback time, the light can still turn on year-round.
+      default:
+        - autumn
+        - winter
+      selector:
+        select:
+          multiple: true
+          options:
+            - spring
+            - summer
+            - autumn
+            - winter
+
+    allowed_weather_conditions:
+      name: Allowed Weather Conditions (before sunset and before fallback time)
+      description: Uses standard Home Assistant weather states.
+      default:
+        - cloudy
+        - rainy
+        - partlycloudy
+      selector:
+        select:
+          multiple: true
+          options:
+            - clear-night
+            - cloudy
+            - fog
+            - hail
+            - lightning
+            - lightning-rainy
+            - partlycloudy
+            - pouring
+            - rainy
+            - snowy
+            - snowy-rainy
+            - sunny
+            - windy
+            - windy-variant
+            - exceptional
+
+    force_on_after_time:
+      name: Force On After Time
+      description: >
+        After this time, the light can turn on regardless of weather or season.
+        Useful in summer when sunset is very late.
+      default: "22:00:00"
+      selector:
+        time: {}
+
+    light_duration:
+      name: Light On Duration (minutes)
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 30
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+
+    skip_if_light_on:
+      name: Skip if Light Already On
+      default: false
+      selector:
+        boolean: {}
+
+    brightness_pct:
+      name: Brightness (%)
+      description: Set to 0 to use the light's default turn-on brightness.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input motion_entity
+    to: "on"
+
+variables:
+  light: !input light_entity
+  weather_entity_id: !input weather_entity
+  season_entity_id: !input season_entity
+  allowed_weather: !input allowed_weather_conditions
+  allowed_seasons_list: !input allowed_seasons
+  light_on_minutes: !input light_duration
+  skip_light_on: !input skip_if_light_on
+  brightness_pct_value: !input brightness_pct
+  force_on_after_time_value: !input force_on_after_time
+
+  weather_now: "{{ states(weather_entity_id) }}"
+  season_now: "{{ states(season_entity_id) }}"
+
+  weather_ok: "{{ weather_now in allowed_weather }}"
+  season_ok: "{{ season_now in allowed_seasons_list }}"
+
+  after_sunset_now: "{{ is_state('sun.sun', 'below_horizon') }}"
+  after_force_time_now: "{{ now().strftime('%H:%M:%S') >= force_on_after_time_value }}"
+
+  allow_light: >-
+    {{
+      after_sunset_now
+      or after_force_time_now
+      or (season_ok and weather_ok)
+    }}
+
+  light_is_on: "{{ is_state(light, 'on') }}"
+
+condition:
+  - condition: template
+    value_template: "{{ allow_light }}"
+
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ not skip_light_on }}"
+      - condition: template
+        value_template: "{{ not light_is_on }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ brightness_pct_value | int > 0 }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ brightness_pct_value | int }}"
+    default:
+      - service: light.turn_on
+        target:
+          entity_id: !input light_entity
+
+  - wait_for_trigger:
+      - platform: state
+        entity_id: !input motion_entity
+        to: "off"
+        for:
+          minutes: !input light_duration
+
+  - condition: state
+    entity_id: !input motion_entity
+    state: "off"
+
+  - service: light.turn_off
+    target:
+      entity_id: !input light_entity

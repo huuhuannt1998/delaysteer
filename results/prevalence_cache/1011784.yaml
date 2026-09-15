@@ -1,0 +1,829 @@
+blueprint:
+  name: Everything Remote V1.3
+  description: >
+    Automation for the Everything Remote (ESP32 ESPHome).
+
+    - Supports single, double and long press for all 20 buttons.  
+    - All buttons are in the order from top left to bottom (see readme picture).  
+    - Each button section is collapsible and has an optional name field for naming the main function.  
+    - The power button wakes the device from deep sleep (no HA event).  
+
+  domain: automation
+  input:
+    device_name:
+      name: "Device name"
+      description: >
+        ESPHome device name (e.g. "everything_remote").
+        Must match the 'name' field in the ESPHome config.
+      default: "everything_remote"
+      selector:
+        text: {}
+
+    section_back:
+      name: "⬅️ Back"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        back_name:
+          name: "Button name (GPIO2)"
+          description: 'Display name for this button - GPIO2'
+          default: "Back"
+          selector:
+            text: {}
+        back_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        back_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        back_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_home:
+      name: "🏠 Home"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        home_name:
+          name: "Button name (GPIO4)"
+          description: 'Display name for this button - GPIO4'
+          default: "Home"
+          selector:
+            text: {}
+        home_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        home_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        home_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_play_pause:
+      name: "⏯️ Play Pause"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        play_pause_name:
+          name: "Button name (GPIO5)"
+          description: 'Display name for this button - GPIO5'
+          default: "Play Pause"
+          selector:
+            text: {}
+        play_pause_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        play_pause_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        play_pause_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_up:
+      name: "⬆️ Up"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        up_name:
+          name: "Button name (GPIO18)"
+          description: 'Display name for this button - GPIO18'
+          default: "Up"
+          selector:
+            text: {}
+        up_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        up_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        up_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_down:
+      name: "⬇️ Down"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        down_name:
+          name: "Button name (GPIO25)"
+          description: 'Display name for this button - GPIO25'
+          default: "Down"
+          selector:
+            text: {}
+        down_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        down_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        down_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_left:
+      name: "⬅️ Left"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        left_name:
+          name: "Button name (GPIO19)"
+          description: 'Display name for this button - GPIO19'
+          default: "Left"
+          selector:
+            text: {}
+        left_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        left_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        left_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_right:
+      name: "➡️ Right"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        right_name:
+          name: "Button name (GPIO23)"
+          description: 'Display name for this button - GPIO23'
+          default: "Right"
+          selector:
+            text: {}
+        right_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        right_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        right_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_select:
+      name: "🔘 Select"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        select_name:
+          name: "Button name (GPIO22)"
+          description: 'Display name for this button - GPIO22'
+          default: "Select"
+          selector:
+            text: {}
+        select_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        select_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        select_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_volume_up:
+      name: "🔊 Volume Up"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        volume_up_name:
+          name: "Button name (GPIO12)"
+          description: 'Display name for this button - GPIO12'
+          default: "Volume Up"
+          selector:
+            text: {}
+        volume_up_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        volume_up_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        volume_up_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_volume_down:
+      name: "🔉 Volume Down"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        volume_down_name:
+          name: "Button name (GPIO15)"
+          description: 'Display name for this button - GPIO15'
+          default: "Volume Down"
+          selector:
+            text: {}
+        volume_down_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        volume_down_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        volume_down_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_channel_up:
+      name: "📺 Channel Up"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        channel_up_name:
+          name: "Button name (GPIO14)"
+          description: 'Display name for this button - GPIO14'
+          default: "Channel Up"
+          selector:
+            text: {}
+        channel_up_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        channel_up_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        channel_up_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_channel_down:
+      name: "📺 Channel Down"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        channel_down_name:
+          name: "Button name (GPIO17)"
+          description: 'Display name for this button - GPIO17'
+          default: "Channel Down"
+          selector:
+            text: {}
+        channel_down_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        channel_down_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        channel_down_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_mute:
+      name: "🔇 Mute"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        mute_name:
+          name: "Button name (GPIO13)"
+          description: 'Display name for this button - GPIO13'
+          default: "Mute"
+          selector:
+            text: {}
+        mute_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        mute_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        mute_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_settings:
+      name: "⚙️ Settings"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        settings_name:
+          name: "Button name (GPIO16)"
+          description: 'Display name for this button - GPIO16'
+          default: "Settings"
+          selector:
+            text: {}
+        settings_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        settings_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        settings_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+    section_shortcut_1:
+      name: "1️⃣ Shortcut 1"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        shortcut_1_name:
+          name: "Button name (GPIO34)"
+          description: 'Display name for this button - GPIO34'
+          default: "Shortcut 1"
+          selector:
+            text: {}
+        shortcut_1_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        shortcut_1_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        shortcut_1_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_shortcut_2:
+      name: "2️⃣ Shortcut 2"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        shortcut_2_name:
+          name: "Button name (GPIO35)"
+          description: 'Display name for this button - GPIO35'
+          default: "Shortcut 2"
+          selector:
+            text: {}
+        shortcut_2_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        shortcut_2_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        shortcut_2_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_shortcut_3:
+      name: "3️⃣ Shortcut 3"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        shortcut_3_name:
+          name: "Button name (GPIO32)"
+          description: 'Display name for this button - GPIO32'
+          default: "Shortcut 3"
+          selector:
+            text: {}
+        shortcut_3_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        shortcut_3_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        shortcut_3_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_shortcut_4:
+      name: "4️⃣ Shortcut 4"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        shortcut_4_name:
+          name: "Button name (GPIO33)"
+          description: 'Display name for this button - GPIO33'
+          default: "Shortcut 4"
+          selector:
+            text: {}
+        shortcut_4_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        shortcut_4_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        shortcut_4_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_brightness_up:
+      name: "🔆 Brightness Up"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        brightness_up_name:
+          name: "Button name (GPIO27)"
+          description: 'Display name for this button - GPIO27'
+          default: "Brightness Up"
+          selector:
+            text: {}
+        brightness_up_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        brightness_up_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        brightness_up_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+    section_brightness_down:
+      name: "🔅 Brightness Down"
+      icon: mdi:gesture-tap-button
+      description: ""
+      collapsed: true
+      input:
+        brightness_down_name:
+          name: "Button name (GPIO26)"
+          description: 'Display name for this button - GPIO26'
+          default: "Brightness Down"
+          selector:
+            text: {}
+        brightness_down_single_action:
+          name: "Single click"
+          default: []
+          selector:
+            action: {}
+        brightness_down_double_action:
+          name: "Double click"
+          default: []
+          selector:
+            action: {}
+        brightness_down_long_action:
+          name: "Long press"
+          default: []
+          selector:
+            action: {}
+
+variables:
+  device_name: !input device_name
+
+triggers:
+  - trigger: event
+    event_type: esphome.remote_button_pressed
+
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.device == device_name }}"
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'back' and trigger.event.data.type == 'single' }}"
+        sequence: !input back_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'back' and trigger.event.data.type == 'double' }}"
+        sequence: !input back_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'back' and trigger.event.data.type == 'long' }}"
+        sequence: !input back_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'home' and trigger.event.data.type == 'single' }}"
+        sequence: !input home_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'home' and trigger.event.data.type == 'double' }}"
+        sequence: !input home_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'home' and trigger.event.data.type == 'long' }}"
+        sequence: !input home_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'play_pause' and trigger.event.data.type == 'single' }}"
+        sequence: !input play_pause_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'play_pause' and trigger.event.data.type == 'double' }}"
+        sequence: !input play_pause_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'play_pause' and trigger.event.data.type == 'long' }}"
+        sequence: !input play_pause_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'up' and trigger.event.data.type == 'single' }}"
+        sequence: !input up_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'up' and trigger.event.data.type == 'double' }}"
+        sequence: !input up_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'up' and trigger.event.data.type == 'long' }}"
+        sequence: !input up_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'down' and trigger.event.data.type == 'single' }}"
+        sequence: !input down_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'down' and trigger.event.data.type == 'double' }}"
+        sequence: !input down_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'down' and trigger.event.data.type == 'long' }}"
+        sequence: !input down_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'left' and trigger.event.data.type == 'single' }}"
+        sequence: !input left_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'left' and trigger.event.data.type == 'double' }}"
+        sequence: !input left_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'left' and trigger.event.data.type == 'long' }}"
+        sequence: !input left_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'right' and trigger.event.data.type == 'single' }}"
+        sequence: !input right_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'right' and trigger.event.data.type == 'double' }}"
+        sequence: !input right_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'right' and trigger.event.data.type == 'long' }}"
+        sequence: !input right_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'select' and trigger.event.data.type == 'single' }}"
+        sequence: !input select_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'select' and trigger.event.data.type == 'double' }}"
+        sequence: !input select_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'select' and trigger.event.data.type == 'long' }}"
+        sequence: !input select_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'volume_up' and trigger.event.data.type == 'single' }}"
+        sequence: !input volume_up_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'volume_up' and trigger.event.data.type == 'double' }}"
+        sequence: !input volume_up_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'volume_up' and trigger.event.data.type == 'long' }}"
+        sequence: !input volume_up_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'volume_down' and trigger.event.data.type == 'single' }}"
+        sequence: !input volume_down_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'volume_down' and trigger.event.data.type == 'double' }}"
+        sequence: !input volume_down_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'volume_down' and trigger.event.data.type == 'long' }}"
+        sequence: !input volume_down_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'mute' and trigger.event.data.type == 'single' }}"
+        sequence: !input mute_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'mute' and trigger.event.data.type == 'double' }}"
+        sequence: !input mute_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'mute' and trigger.event.data.type == 'long' }}"
+        sequence: !input mute_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'channel_up' and trigger.event.data.type == 'single' }}"
+        sequence: !input channel_up_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'channel_up' and trigger.event.data.type == 'double' }}"
+        sequence: !input channel_up_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'channel_up' and trigger.event.data.type == 'long' }}"
+        sequence: !input channel_up_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'channel_down' and trigger.event.data.type == 'single' }}"
+        sequence: !input channel_down_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'channel_down' and trigger.event.data.type == 'double' }}"
+        sequence: !input channel_down_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'channel_down' and trigger.event.data.type == 'long' }}"
+        sequence: !input channel_down_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'settings' and trigger.event.data.type == 'single' }}"
+        sequence: !input settings_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'settings' and trigger.event.data.type == 'double' }}"
+        sequence: !input settings_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'settings' and trigger.event.data.type == 'long' }}"
+        sequence: !input settings_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'brightness_up' and trigger.event.data.type == 'single' }}"
+        sequence: !input brightness_up_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'brightness_up' and trigger.event.data.type == 'double' }}"
+        sequence: !input brightness_up_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'brightness_up' and trigger.event.data.type == 'long' }}"
+        sequence: !input brightness_up_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'brightness_down' and trigger.event.data.type == 'single' }}"
+        sequence: !input brightness_down_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'brightness_down' and trigger.event.data.type == 'double' }}"
+        sequence: !input brightness_down_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'brightness_down' and trigger.event.data.type == 'long' }}"
+        sequence: !input brightness_down_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_1' and trigger.event.data.type == 'single' }}"
+        sequence: !input shortcut_1_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_1' and trigger.event.data.type == 'double' }}"
+        sequence: !input shortcut_1_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_1' and trigger.event.data.type == 'long' }}"
+        sequence: !input shortcut_1_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_2' and trigger.event.data.type == 'single' }}"
+        sequence: !input shortcut_2_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_2' and trigger.event.data.type == 'double' }}"
+        sequence: !input shortcut_2_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_2' and trigger.event.data.type == 'long' }}"
+        sequence: !input shortcut_2_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_3' and trigger.event.data.type == 'single' }}"
+        sequence: !input shortcut_3_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_3' and trigger.event.data.type == 'double' }}"
+        sequence: !input shortcut_3_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_3' and trigger.event.data.type == 'long' }}"
+        sequence: !input shortcut_3_long_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_4' and trigger.event.data.type == 'single' }}"
+        sequence: !input shortcut_4_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_4' and trigger.event.data.type == 'double' }}"
+        sequence: !input shortcut_4_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.button == 'shortcut_4' and trigger.event.data.type == 'long' }}"
+        sequence: !input shortcut_4_long_action
+
+mode: queued
+max: 10

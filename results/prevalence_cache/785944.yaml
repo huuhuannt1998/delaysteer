@@ -1,0 +1,174 @@
+blueprint:
+  name: Mini Button with Dimming
+  description: Control multiple lights or actions with a mini button, including single, double, triple, quintuple, and many presses, as well as hold for dimming.
+  domain: automation
+  input:
+    mini_button_sensor:
+      name: Mini Button Sensor
+      description: The sensor entity that reports the mini button's actions
+      selector:
+        entity:
+          domain: sensor
+    single_press_entity:
+      name: Single Press Entity
+      description: The entity to control on single press (usually a light)
+      selector:
+        entity: {}
+    double_press_entity:
+      name: Double Press Entity
+      description: The entity to control on double press
+      selector:
+        entity: {}
+    triple_press_entity:
+      name: Triple Press Entity
+      description: The entity to control on triple press
+      selector:
+        entity: {}
+    quintuple_press_action:
+      name: Quintuple Press Action
+      description: The action to perform on quintuple press (e.g., script.toggle_living_room_lights)
+      selector:
+        text: {}
+    many_press_entity:
+      name: Many Press Entity
+      description: The entity to control on many presses
+      selector:
+        entity: {}
+    last_state_input:
+      name: Last State Input Text
+      description: Input text entity to store the last button state
+      selector:
+        entity:
+          domain: input_text
+    last_controlled_entity_input:
+      name: Last Controlled Entity Input Text
+      description: Input text entity to store the last controlled entity
+      selector:
+        entity:
+          domain: input_text
+
+mode: parallel
+
+trigger:
+  - platform: state
+    entity_id: !input mini_button_sensor
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state != '' }}"
+        sequence:
+          - service: input_text.set_value
+            target:
+              entity_id: !input last_state_input
+            data:
+              value: "{{ trigger.to_state.state }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'single' }}"
+        sequence:
+          - service: homeassistant.toggle
+            target:
+              entity_id: !input single_press_entity
+          - service: input_text.set_value
+            target:
+              entity_id: !input last_controlled_entity_input
+            data:
+              value: "{{ single_press_entity }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'double' }}"
+        sequence:
+          - service: homeassistant.toggle
+            target:
+              entity_id: !input double_press_entity
+          - service: input_text.set_value
+            target:
+              entity_id: !input last_controlled_entity_input
+            data:
+              value: "{{ double_press_entity }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'triple' }}"
+        sequence:
+          - service: homeassistant.toggle
+            target:
+              entity_id: !input triple_press_entity
+          - service: input_text.set_value
+            target:
+              entity_id: !input last_controlled_entity_input
+            data:
+              value: "{{ triple_press_entity }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'quintuple' }}"
+        sequence:
+          - service: "{{ quintuple_press_action.split('.')[0] }}"
+            service_data:
+              entity_id: "{{ quintuple_press_action.split('.')[1:] | join('.') }}"
+          - service: input_text.set_value
+            target:
+              entity_id: !input last_controlled_entity_input
+            data:
+              value: "{{ quintuple_press_action }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'many' }}"
+        sequence:
+          - service: homeassistant.toggle
+            target:
+              entity_id: !input many_press_entity
+          - service: input_text.set_value
+            target:
+              entity_id: !input last_controlled_entity_input
+            data:
+              value: "{{ many_press_entity }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'hold' }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ states(states(last_controlled_entity_input)) == 'on' and
+                         (state_attr(states(last_controlled_entity_input), 'brightness') | int > 127) }}
+                sequence:
+                  - repeat:
+                      while:
+                        - condition: template
+                          value_template: "{{ states(last_state_input) == 'hold' }}"
+                      sequence:
+                        - service: light.turn_on
+                          target:
+                            entity_id: "{{ states(last_controlled_entity_input) }}"
+                          data:
+                            brightness_step_pct: -15
+                            transition: 0.15
+                        - delay: 0.2
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ states(states(last_controlled_entity_input)) == 'off' or
+                         (state_attr(states(last_controlled_entity_input), 'brightness') | int <= 127) }}
+                sequence:
+                  - repeat:
+                      while:
+                        - condition: template
+                          value_template: "{{ states(last_state_input) == 'hold' }}"
+                      sequence:
+                        - service: light.turn_on
+                          target:
+                            entity_id: "{{ states(last_controlled_entity_input) }}"
+                          data:
+                            brightness_step_pct: 15
+                            transition: 0.15
+                        - delay: 0.2

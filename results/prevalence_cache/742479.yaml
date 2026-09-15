@@ -1,0 +1,10 @@
+#Based on HA community blueprint: https://community.home-assistant.io/t/pool-pump-scheduler/331369
+blueprint:
+  name: Pool Pump and Heat Controller
+  description: 'This blueprint controls both your swimming pool pump and heater based on multiple input variables.'
+  domain: automation
+  input:
+    pool_pump:
+      name: Pool Pump
+      description: A switch that controls the pool pump
+      selector:

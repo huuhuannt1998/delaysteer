@@ -1,0 +1,9 @@
+blueprint:
+
+
+  # INTRODUCTION
+  name: Advanced Circadian Lighting
+  description: >-
+    This automation adjusts light brightness, temperature, and color hue,
+    based on presence, current time and sun position.
+

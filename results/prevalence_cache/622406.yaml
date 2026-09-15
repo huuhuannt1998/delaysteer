@@ -1,0 +1,10 @@
+
+blueprint:
+  name: Link On/Off/Brightness State of Multiple Devices
+  description: >
+
+    ## Synchronize Entities for On, Off, and Brightness Control
+
+    This blueprint allows you to synchronize multiple entities for controlling their on/off state and brightness level. It simplifies the experience of managing devices by ensuring they respond consistently, regardless of which entity you use.
+
+    ### Overview

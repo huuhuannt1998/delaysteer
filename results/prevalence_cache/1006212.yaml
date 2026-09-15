@@ -1,0 +1,333 @@
+blueprint:
+  name: Shelly BLU RC Button 4 ZB (Zigbee2MQTT Event Entity)
+  description: >
+    Automate a Shelly BLU RC Button 4 ZB (SBBT-104CUS) using the Zigbee2MQTT
+    event entity exposed in Home Assistant. Supports normalized actions for
+    single, double, triple, single_long, double_long, triple_long, and hold
+    per button.
+
+  domain: automation
+  homeassistant:
+    min_version: 2026.4.0
+
+  input:
+    action_entity:
+      name: Action event entity
+      description: >
+        Select the Zigbee2MQTT Home Assistant event entity for this remote
+        (for example: event.office_button_action).
+      selector:
+        entity:
+          domain: event
+
+    # Button 1
+    button_1_single:
+      name: Button 1 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_1_double:
+      name: Button 1 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_1_triple:
+      name: Button 1 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_1_single_long:
+      name: Button 1 - Single Long Press
+      default: []
+      selector:
+        action: {}
+    button_1_double_long:
+      name: Button 1 - Double Long Press
+      default: []
+      selector:
+        action: {}
+    button_1_triple_long:
+      name: Button 1 - Triple Long Press
+      default: []
+      selector:
+        action: {}
+    button_1_hold:
+      name: Button 1 - Hold
+      default: []
+      selector:
+        action: {}
+
+    # Button 2
+    button_2_single:
+      name: Button 2 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_2_double:
+      name: Button 2 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_2_triple:
+      name: Button 2 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_2_single_long:
+      name: Button 2 - Single Long Press
+      default: []
+      selector:
+        action: {}
+    button_2_double_long:
+      name: Button 2 - Double Long Press
+      default: []
+      selector:
+        action: {}
+    button_2_triple_long:
+      name: Button 2 - Triple Long Press
+      default: []
+      selector:
+        action: {}
+    button_2_hold:
+      name: Button 2 - Hold
+      default: []
+      selector:
+        action: {}
+
+    # Button 3
+    button_3_single:
+      name: Button 3 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_3_double:
+      name: Button 3 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_3_triple:
+      name: Button 3 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_3_single_long:
+      name: Button 3 - Single Long Press
+      default: []
+      selector:
+        action: {}
+    button_3_double_long:
+      name: Button 3 - Double Long Press
+      default: []
+      selector:
+        action: {}
+    button_3_triple_long:
+      name: Button 3 - Triple Long Press
+      default: []
+      selector:
+        action: {}
+    button_3_hold:
+      name: Button 3 - Hold
+      default: []
+      selector:
+        action: {}
+
+    # Button 4
+    button_4_single:
+      name: Button 4 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_4_double:
+      name: Button 4 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_4_triple:
+      name: Button 4 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_4_single_long:
+      name: Button 4 - Single Long Press
+      default: []
+      selector:
+        action: {}
+    button_4_double_long:
+      name: Button 4 - Double Long Press
+      default: []
+      selector:
+        action: {}
+    button_4_triple_long:
+      name: Button 4 - Triple Long Press
+      default: []
+      selector:
+        action: {}
+    button_4_hold:
+      name: Button 4 - Hold
+      default: []
+      selector:
+        action: {}
+
+mode: restart
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id: !input action_entity
+    not_from:
+      - unavailable
+      - unknown
+    not_to:
+      - unavailable
+      - unknown
+
+variables:
+  action_entity: !input action_entity
+  action_type: "{{ trigger.to_state.attributes.event_type | default('') }}"
+
+actions:
+  - choose:
+      # Button 1
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_single' }}"
+        sequence: !input button_1_single
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_double' }}"
+        sequence: !input button_1_double
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_triple' }}"
+        sequence: !input button_1_triple
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_single_long' }}"
+        sequence: !input button_1_single_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_double_long' }}"
+        sequence: !input button_1_double_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_triple_long' }}"
+        sequence: !input button_1_triple_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '1_hold' }}"
+        sequence: !input button_1_hold
+
+      # Button 2
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_single' }}"
+        sequence: !input button_2_single
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_double' }}"
+        sequence: !input button_2_double
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_triple' }}"
+        sequence: !input button_2_triple
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_single_long' }}"
+        sequence: !input button_2_single_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_double_long' }}"
+        sequence: !input button_2_double_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_triple_long' }}"
+        sequence: !input button_2_triple_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '2_hold' }}"
+        sequence: !input button_2_hold
+
+      # Button 3
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_single' }}"
+        sequence: !input button_3_single
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_double' }}"
+        sequence: !input button_3_double
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_triple' }}"
+        sequence: !input button_3_triple
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_single_long' }}"
+        sequence: !input button_3_single_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_double_long' }}"
+        sequence: !input button_3_double_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_triple_long' }}"
+        sequence: !input button_3_triple_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '3_hold' }}"
+        sequence: !input button_3_hold
+
+      # Button 4
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_single' }}"
+        sequence: !input button_4_single
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_double' }}"
+        sequence: !input button_4_double
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_triple' }}"
+        sequence: !input button_4_triple
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_single_long' }}"
+        sequence: !input button_4_single_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_double_long' }}"
+        sequence: !input button_4_double_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_triple_long' }}"
+        sequence: !input button_4_triple_long
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == '4_hold' }}"
+        sequence: !input button_4_hold
+

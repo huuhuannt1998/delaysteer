@@ -1,0 +1,206 @@
+blueprint:
+  name: Sonoff SNZB-01M Event Controller
+  description:
+    "Control actions for all 16 events (Single, Double, Triple, Long) of
+    the  Sonoff SNZB-01M (Orb) using the Event entity in Zigbee2MQTT (Z2M).
+
+    "
+  domain: automation
+  input:
+    sonoff_event_entity:
+      name: Sonoff Event Entity
+      description: The event entity for the switch (e.g. event.switch_sonoff_action)
+      selector:
+        entity:
+          domain:
+            - event
+          multiple: false
+          reorder: false
+    button_1_single:
+      name: Button 1 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_1_double:
+      name: Button 1 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_1_triple:
+      name: Button 1 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_1_long:
+      name: Button 1 - Long Press
+      default: []
+      selector:
+        action: {}
+    button_2_single:
+      name: Button 2 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_2_double:
+      name: Button 2 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_2_triple:
+      name: Button 2 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_2_long:
+      name: Button 2 - Long Press
+      default: []
+      selector:
+        action: {}
+    button_3_single:
+      name: Button 3 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_3_double:
+      name: Button 3 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_3_triple:
+      name: Button 3 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_3_long:
+      name: Button 3 - Long Press
+      default: []
+      selector:
+        action: {}
+    button_4_single:
+      name: Button 4 - Single Press
+      default: []
+      selector:
+        action: {}
+    button_4_double:
+      name: Button 4 - Double Press
+      default: []
+      selector:
+        action: {}
+    button_4_triple:
+      name: Button 4 - Triple Press
+      default: []
+      selector:
+        action: {}
+    button_4_long:
+      name: Button 4 - Long Press
+      default: []
+      selector:
+        action: {}
+  source_url: https://github.com/akcryptoguy/blueprints/blob/main/ha-blueprint-sonoff-orb-4-button.yaml
+mode: restart
+max_exceeded: silent
+trigger:
+  - platform: state
+    entity_id: !input sonoff_event_entity
+condition:
+  - condition: template
+    value_template: >
+      {{ trigger.from_state.state not in ['unavailable','unknown'] }}
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'single_button_1'
+              }}"
+        sequence: !input button_1_single
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'double_button_1'
+              }}"
+        sequence: !input button_1_double
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'triple_button_1'
+              }}"
+        sequence: !input button_1_triple
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'long_button_1'
+              }}"
+        sequence: !input button_1_long
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'single_button_2'
+              }}"
+        sequence: !input button_2_single
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'double_button_2'
+              }}"
+        sequence: !input button_2_double
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'triple_button_2'
+              }}"
+        sequence: !input button_2_triple
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'long_button_2'
+              }}"
+        sequence: !input button_2_long
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'single_button_3'
+              }}"
+        sequence: !input button_3_single
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'double_button_3'
+              }}"
+        sequence: !input button_3_double
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'triple_button_3'
+              }}"
+        sequence: !input button_3_triple
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'long_button_3'
+              }}"
+        sequence: !input button_3_long
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'single_button_4'
+              }}"
+        sequence: !input button_4_single
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'double_button_4'
+              }}"
+        sequence: !input button_4_double
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'triple_button_4'
+              }}"
+        sequence: !input button_4_triple
+      - conditions:
+          - condition: template
+            value_template:
+              "{{ trigger.to_state.attributes.event_type == 'long_button_4'
+              }}"
+        sequence: !input button_4_long

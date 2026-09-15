@@ -1,0 +1,330 @@
+blueprint:
+  name: Chore Scheduler
+  description: |
+    Automatically-resetting tasks for regular chores that use only the task's description for configuration!
+
+    Built for the stock Local To-Do integration; mileage may vary. `todo.update_item` must support `due_date` and `rename`, and completed items must include a completion date.
+
+    Any items without `Frequency:` config are ignored. Tasks reset some time before they are due again, giving an upcoming reminder and allowing early completion.
+
+    Examples:
+
+    ```
+    # Clean The Cat's Litter Tray
+
+    Frequency: 2 days
+    ```
+
+    Resets every other day. Complete it any time on Monday, and it will reset on Tuesday with a due date of Wednesday.
+
+    ---------------------------------
+
+    ```
+    # Check the car's oil levels
+
+    Frequency: 1 month
+    Only: weekend
+    ```
+
+    Once per month, on Saturday or Sunday. A task due on a weekday is moved forward to the next available weekend day.
+
+    ---------------------------------
+
+    ```
+    # Vacuum Upstairs
+
+    Frequency: 1 week
+    Only: weekend
+    Cycle:
+    - Vacuum Upstairs
+    - Vacuum Downstairs
+    ```
+
+    Once every 7 days, only on Saturday or Sunday. Every time it resets, the title swaps between "Upstairs" and "Downstairs".
+
+    `Frequency:`, `Only:`, and `Cycle:` are case-insensitive, except that cycle titles use exact case-sensitive matching.
+
+    Full configuration syntax, reset timing, cycle edge cases, compatibility notes, and feedback:
+    https://github.com/SteffanDonal/sd-hass-blueprints/tree/main/automations/chores#scheduler
+  domain: automation
+  homeassistant:
+    min_version: 2023.11.3
+
+  input:
+    todo_entity:
+      name: To-do list
+      description: The to-do list containing recurring chores.
+      selector:
+        entity:
+          filter:
+            - domain: todo
+
+variables:
+  selected_todo_entity: !input todo_entity
+
+triggers:
+  - trigger: time
+    at: "06:00:00"
+
+conditions: []
+
+actions:
+  - action: todo.get_items
+    metadata: {}
+    target:
+      entity_id: !input todo_entity
+    data:
+      status:
+        - needs_action
+        - completed
+    response_variable: todo_items
+
+  - repeat:
+      for_each: "{{ todo_items[selected_todo_entity]['items'] | list }}"
+      sequence:
+        - variables:
+            it: "{{ repeat.item }}"
+            is_completed: "{{ it.status == 'completed' }}"
+
+            freq_match: |-
+              {{
+                (it.description | default(''))
+                | regex_findall(
+                    'Frequency:\s*([0-9]*\.?[0-9]+)\s*(days?|weeks?|months?|years?)',
+                    ignorecase=True
+                  )
+              }}
+            freq_value: >-
+              {{
+                (freq_match[0][0] | float(0))
+                if (freq_match | length) > 0
+                else none
+              }}
+            freq_unit: >-
+              {{
+                (freq_match[0][1] | lower)
+                if (freq_match | length) > 0
+                else ''
+              }}
+            freq_days: |-
+              {% if freq_value is none %}
+                {{ none }}
+              {% elif freq_unit.startswith('day') %}
+                {{ freq_value }}
+              {% elif freq_unit.startswith('week') %}
+                {{ freq_value * 7.0 }}
+              {% elif freq_unit.startswith('month') %}
+                {{ freq_value * 30.4375 }}
+              {% elif freq_unit.startswith('year') %}
+                {{ freq_value * 365.25 }}
+              {% else %}
+                {{ none }}
+              {% endif %}
+
+            only_match: |-
+              {{
+                (it.description | default(''))
+                | regex_findall(
+                    'Only:\s*(Weekend|Weekdays?)',
+                    ignorecase=True
+                  )
+              }}
+            only_constraint: |-
+              {{
+                (only_match[0] | lower)
+                if (only_match | length) > 0
+                else ''
+              }}
+
+            cycle_block_match: |-
+              {{
+                (it.description | default(''))
+                | regex_findall(
+                    '(?m)^Cycle:[ \t]*\r?\n((?:[ \t]*-[ \t]*[^\r\n]+(?:\r?\n|$))+)',
+                    ignorecase=True
+                  )
+              }}
+            cycle_block: |-
+              {{
+                cycle_block_match[0]
+                if (cycle_block_match | length) > 0
+                else ''
+              }}
+            cycle_items: |-
+              {{
+                (
+                  cycle_block
+                  | regex_findall(
+                      '(?m)^[ \t]*-[ \t]*([^\r\n]+?)[ \t]*$'
+                    )
+                )
+                if cycle_block
+                else []
+              }}
+            current_title: "{{ it.summary | default('', true) }}"
+            cycle_current_index: |-
+              {% set ns = namespace(value=-1) %}
+              {% for cycle_item in cycle_items %}
+                {% if cycle_item == current_title %}
+                  {% set ns.value = loop.index0 %}
+                {% endif %}
+              {% endfor %}
+              {{ ns.value }}
+            next_cycle_title: |-
+              {% set count = cycle_items | length %}
+              {% set index = cycle_current_index | int(-1) %}
+              {% if count == 0 %}
+                {{ none }}
+              {% elif index < 0 or index >= (count - 1) %}
+                {{ cycle_items[0] }}
+              {% else %}
+                {{ cycle_items[index + 1] }}
+              {% endif %}
+
+            completed_raw: "{{ it.completed | default('') }}"
+            completed_ts: |-
+              {% if completed_raw %}
+                {{ as_timestamp(as_datetime(completed_raw)) }}
+              {% else %}
+                {{ as_timestamp(now()) }}
+              {% endif %}
+            completed_day_ts: |-
+              {{
+                as_timestamp(
+                  as_datetime(
+                    (as_datetime(completed_ts) | as_local).date().isoformat()
+                  )
+                )
+              }}
+            today_day_ts: |-
+              {{
+                as_timestamp(
+                  as_datetime(
+                    (now() | as_local).date().isoformat()
+                  )
+                )
+              }}
+
+            base_due_ts: |-
+              {% if not is_completed or freq_days is none %}
+                {{ none }}
+              {% else %}
+                {{ completed_day_ts + (freq_days * 86400) }}
+              {% endif %}
+
+            next_due_ts: |-
+              {% if base_due_ts is none %}
+                {{ none }}
+              {% else %}
+                {% set weekday = (as_datetime(base_due_ts) | as_local).weekday() %}
+
+                {% if only_constraint == 'weekend' %}
+                  {% if weekday < 5 %}
+                    {{ base_due_ts + ((5 - weekday) * 86400) }}
+                  {% else %}
+                    {{ base_due_ts }}
+                  {% endif %}
+
+                {% elif only_constraint in ['weekday', 'weekdays'] %}
+                  {% if weekday == 5 %}
+                    {{ base_due_ts + (2 * 86400) }}
+                  {% elif weekday == 6 %}
+                    {{ base_due_ts + (1 * 86400) }}
+                  {% else %}
+                    {{ base_due_ts }}
+                  {% endif %}
+
+                {% else %}
+                  {{ base_due_ts }}
+                {% endif %}
+              {% endif %}
+
+            new_due_date: |-
+              {% if next_due_ts is none %}
+                {{ none }}
+              {% else %}
+                {{ (as_local(as_datetime(next_due_ts))).date().isoformat() }}
+              {% endif %}
+
+            reset_days: |-
+              {% set f = freq_days %}
+              {% if f is none %}
+                {{ none }}
+              {% elif f <= 2 %}
+                {{ 1.0 }}
+              {% elif f <= 14 %}
+                {{ (f / 2.0) + 1.0 }}
+              {% elif f <= 56 %}
+                {{ 7.0 }}
+              {% elif f <= 112 %}
+                {{ 14.0 }}
+              {% elif f <= 224 %}
+                {{ 28.0 }}
+              {% elif f <= 546 %}
+                {{ 84.0 }}
+              {% else %}
+                {{ 112.0 }}
+              {% endif %}
+
+            reset_day_ts: |-
+              {% if next_due_ts is none or reset_days is none %}
+                {{ none }}
+              {% else %}
+                {{
+                  as_timestamp(
+                    as_datetime(
+                      (
+                        as_datetime(next_due_ts - (reset_days * 86400))
+                        | as_local
+                      ).date().isoformat()
+                    )
+                  )
+                }}
+              {% endif %}
+
+            should_reset: |-
+              {{
+                is_completed
+                and (next_due_ts is not none)
+                and (reset_day_ts is not none)
+                and (reset_day_ts <= today_day_ts)
+              }}
+
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: |-
+                    {{
+                      should_reset
+                      and new_due_date is not none
+                      and next_cycle_title is not none
+                    }}
+              sequence:
+                - action: todo.update_item
+                  target:
+                    entity_id: !input todo_entity
+                  data:
+                    item: "{{ it.uid }}"
+                    status: needs_action
+                    due_date: "{{ new_due_date }}"
+                    rename: "{{ next_cycle_title }}"
+
+            - conditions:
+                - condition: template
+                  value_template: |-
+                    {{
+                      should_reset
+                      and new_due_date is not none
+                    }}
+              sequence:
+                - action: todo.update_item
+                  target:
+                    entity_id: !input todo_entity
+                  data:
+                    item: "{{ it.uid }}"
+                    status: needs_action
+                    due_date: "{{ new_due_date }}"
+
+          default: []
+
+mode: single

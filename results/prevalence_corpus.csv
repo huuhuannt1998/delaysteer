@@ -1,0 +1,306 @@
+topic_id,title,views,created_at,bp_domain,n_services,high_impact,hi_access,hi_posture,hi_services,sensor_gated,temporal,vulnerable_shape
+1003088,Universal timer with a set reset time or reset at 00:01 (daily reset),281,2026-04-10T11:49:35.779Z,automation,2,0,0,0,,1,none,0
+1003146,"Zigbee2MQTT - 4-Button Switch (Conditions, Debounce & Collapsible UI)",461,2026-04-10T15:47:51.899Z,automation,0,0,0,0,,0,none,0
+1003289,Advanced Circadian Lighting v2.0,810,2026-04-11T07:12:32.170Z,automation,5,0,0,0,,0,age_check,0
+1003465,"Airzone Climate Manager - Intelligent HVAC Control Blueprint (5 Zones, Multi-Slot, Solar Boost, EV Aware)",317,2026-04-11T22:36:20.465Z,automation,2,0,0,0,,0,none,0
+1004142,📲 Shelly Elevate Device Buttons (Shelly WallDisplayXL),505,2026-04-14T11:56:13.955Z,automation,0,0,0,0,,1,none,0
+1004910,Bathroom Automation System (mmWave Required),551,2026-04-16T15:47:15.383Z,automation,1,0,0,0,,1,none,0
+1005033,NSPanel Easy - Blueprint-configured NSPanel customization,1992,2026-04-17T06:55:40.364Z,automation,5,0,0,0,,0,age_check,0
+1005084,Reliable motion trigger,360,2026-04-17T11:33:05.123Z,automation,2,0,0,0,,1,dwell_only,0
+1005144,🎛️ ZHA - Tuya Smart Scene Button (Knob) for Media Players & Music Assistant,212,2026-04-17T16:03:37.337Z,automation,2,0,0,0,,0,none,0
+1005218,"🎛️ IKEA Styrbar Multi-Device Controller - Support for E2001, E2002 & E2313",900,2026-04-17T21:11:40.488Z,automation,5,0,0,0,,0,none,0
+1005228,"Bambu Lab 3D Printer Progress Update Notifications, Status & Energy Tracker (Duration. Costs, Camera & Snooze)",1213,2026-04-17T22:32:23.679Z,automation,4,1,0,1,automation.turn_off,0,none,0
+1005830,Range Actions: Run action when value enters a specific range(s),102,2026-04-20T11:54:24.722Z,automation,1,0,0,0,,1,none,0
+1006038,Apollo Air-1 LED Color based on combined Air Quality,91,2026-04-21T07:02:34.549Z,automation,2,0,0,0,,1,dwell_only,0
+1006050,cctvQL — Motion Alert with Natural Language Camera Summary,195,2026-04-21T07:46:54.874Z,automation,1,0,0,0,,1,none,0
+1006054,cctvQL — Scheduled Camera Report (Daily / Nightly Digest),116,2026-04-21T07:52:05.519Z,automation,1,0,0,0,,0,none,0
+1006055,cctvQL — PTZ to Preset on Motion (with Auto-Return Home),132,2026-04-21T07:57:11.349Z,automation,1,0,0,0,,1,none,0
+1006212,Shelly BLU RC Button 4 US ZB Z2M,314,2026-04-21T20:27:41.041Z,automation,0,0,0,0,,0,none,0
+1007417,Robot Mower Scheduler,1769,2026-04-27T03:23:07.701Z,automation,9,0,0,0,,1,age_check,0
+1007514,Zigbee2MQTT - IKEA Symfonisk Gen2 [E2123] Media Control,687,2026-04-27T12:54:26.023Z,automation,8,0,0,0,,1,none,0
+1007746,Control home assistant using Meshtastic,421,2026-04-28T14:56:45.873Z,automation,1,0,0,0,,1,none,0
+1007840,Lutron Pico Blueprint,179,2026-04-28T23:45:16.293Z,automation,0,0,0,0,,1,none,0
+1008454,Low Battery Warning,603,2026-05-01T11:30:23.588Z,automation,0,0,0,0,,1,none,0
+1009593,Blueprint for Graber 12 Channel Premium Remote,89,2026-05-07T12:30:36.266Z,automation,0,0,0,0,,0,none,0
+1009949,SCBRC Simple roller control with dual button device (Open/Close/stop + 50% with double click),76,2026-05-10T12:43:04.037Z,automation,4,1,1,0,cover.open_cover|cover.set_cover_position,0,none,0
+1010010,Touch panel for home assistant (OXRS),714,2026-05-10T23:57:40.726Z,automation,14,1,1,1,climate.turn_off|cover.open_cover|cover.set_cover_position,0,none,0
+1010017,Advanced Ring Keypad V2 Blueprint for Home Assistant (Alarmo),1077,2026-05-11T03:49:16.074Z,automation,8,1,1,0,alarm_control_panel.alarm_disarm,1,none,1
+1010174,Gardena 6-Way Mechanical Irrigation Controller,1534,2026-05-12T13:52:29.807Z,automation,3,0,0,0,,0,none,0
+1010399,Z2M - Aqara Wireless mini switch with any click option,190,2026-05-14T15:33:18.950Z,automation,0,0,0,0,,0,none,0
+1010503,Smart travel blueprint,263,2026-05-15T13:25:19.629Z,automation,9,0,0,0,,0,none,0
+1010779,Aqara H2 EU switch blueprint,624,2026-05-18T10:45:40.701Z,automation,0,0,0,0,,1,none,0
+1010929,Waste Collection Reminder,785,2026-05-19T12:06:55.814Z,automation,0,0,0,0,,0,none,0
+1011309,🪴 Hydroponic Tower Watering Blueprint (Day/Night + Weather-Adaptive Intervals),258,2026-05-22T13:40:46.975Z,automation,1,0,0,0,,0,age_check,0
+1011784,Everything-Remote-Blueprint,192,2026-05-26T17:30:23.174Z,automation,0,0,0,0,,1,none,0
+1011789,AWTRIX - Claude Usage Display,203,2026-05-26T18:31:03.259Z,automation,1,0,0,0,,1,dwell_only,0
+1011839,Bidirectional light sync,308,2026-05-27T09:18:15.578Z,automation,2,0,0,0,,1,none,0
+1011891,Solar Surplus Heater Control — maximise self-consumption with priority chaining,335,2026-05-27T19:29:03.795Z,automation,3,0,0,0,,1,age_check,0
+1012003,Automation Failure Notification,292,2026-05-28T15:50:32.727Z,automation,0,0,0,0,,0,age_check,0
+1012039,"[Blueprint] Smart ERV / HRV Controller with IAQ Sensors, Manual Timers, and Efficiency Guardrails",245,2026-05-28T22:45:02.814Z,automation,4,0,0,0,,1,dwell_only,0
+1012121,[Blueprint] Samotech devices Linked Sync Group - mirror 2-5 dimmers/switches on the same circuit (ZHA + Z2M),61,2026-05-29T16:34:31.239Z,automation,2,0,0,0,,0,none,0
+1012122,[Blueprint] Samotech SM323 v2 Direct Mirror Pair - ~200ms two-device dimmer companion (ZHA + Z2M),77,2026-05-29T16:39:10.526Z,automation,2,0,0,0,,0,none,0
+1012124,[Blueprint] Samotech Pull Cord Bathroom Auto-Off: timed turn-off for UK Zone 2 bathrooms (ZHA + Z2M),53,2026-05-29T16:47:45.366Z,automation,2,0,0,0,,0,none,0
+1012173,☀️ Sun-Aware Shutter Control - Automatically close shutters based on sun position,1746,2026-05-30T07:42:57.902Z,automation,4,1,1,0,cover.set_cover_position,1,age_check,0
+1012181,ESPHome Smart Sprinkler Controller with Multi-Zone Hardware Queuing & Weather-Aware Automation,385,2026-05-30T09:46:33.884Z,automation,6,0,0,0,,0,none,0
+1012370,Better Label Selector,189,2026-06-01T00:24:44.797Z,script,0,0,0,0,,0,none,0
+1012490,"Outdoor Lights — Sunset Fade-in / Overnight Fade-out (color, brightness, durations + summer-skip gate)",361,2026-06-02T02:01:13.386Z,automation,2,0,0,0,,0,none,0
+1012675,Dynamic light gradient controller - automatically generates light gradients between multiple bulbs,264,2026-06-03T16:04:51.611Z,automation,0,0,0,0,,0,none,0
+1012833,[Automation] Meross Alarm Hub Loop (MSH400 / MSH450) - 100% Local Trigger⁠,157,2026-06-04T21:15:15.531Z,automation,1,0,0,0,,1,none,0
+1013061,Full control dimmer for RGB+CCT lights using Z2M Smart Knob,375,2026-06-07T01:06:22.633Z,automation,5,0,0,0,,0,none,0
+1013224,🔌 Smart Climate Switch with Occupancy Control,225,2026-06-08T09:49:42.429Z,automation,2,0,0,0,,1,dwell_only,0
+1013322,📵 Child WiFi Blocker - Block your child's WiFi at bedtime via UniFi,461,2026-06-09T03:21:50.617Z,automation,2,0,0,0,,1,none,0
+1013338,Seasonal Climate Controller,872,2026-06-09T07:05:20.591Z,automation,7,1,0,1,climate.turn_off,0,age_check,0
+1013472,Matter - IKEA Bilresa Scrollwheel Media Control,1361,2026-06-10T11:12:39.956Z,automation,6,0,0,0,,1,none,0
+1013477,Recently Active: A Template Blueprint With an On/Off State Plus an Off Delay All-In-One,254,2026-06-10T12:25:46.479Z,template,0,0,0,0,,0,none,0
+1013598,Stop Freezing in the Dark: Build Unbreakable Sensors with the Failover Blueprint,800,2026-06-11T15:50:44.090Z,template,0,0,0,0,,0,none,0
+1013987,Aqara FP300 Blueprint (light+temp control),710,2026-06-15T09:46:26.315Z,automation,3,0,0,0,,0,none,0
+1014116,Dual Presence Sensors Light Control (Avoid Pet False Positives) with Illuminance,224,2026-06-16T13:11:50.757Z,automation,2,0,0,0,,1,dwell_only,0
+1014263,"Sensor Watchdog: Catch Silent Freezes and Auto-Recover Offline Devices (Routers, Switchs, Hubs, Bridges, Cameras, Device",483,2026-06-17T21:35:35.994Z,automation,5,0,0,0,,0,age_check,0
+1014504,"Motion Light Blueprint - Weather, Sunset, Time, and Seasonal Logic",442,2026-06-20T06:57:28.993Z,automation,2,0,0,0,,1,none,0
+1014532,Automatically-resetting tasks: To-Do List Chore Scheduler,184,2026-06-20T13:02:56.176Z,automation,2,0,0,0,,0,age_check,0
+1014746,Linked Entities Pro: Keep entities synced. No loops. No drift. No recursion-guard blind spots,261,2026-06-22T12:22:50.602Z,automation,1,0,0,0,,0,age_check,0
+1014995,Adaptive Fan Speed Control,650,2026-06-24T18:11:50.324Z,automation,4,0,0,0,,0,none,0
+1015002,🪟 Heatwave Windows / Fenêtres Canicule — Open or close windows based on multi-sensor temperature comparison,812,2026-06-24T18:48:04.236Z,automation,0,0,0,0,,1,dwell_only,0
+1015056,Climate ventilation advisory with optional notifications and TTS,430,2026-06-25T09:56:30.378Z,automation,2,0,0,0,,1,dwell_only,0
+1015081,Third Reality Smart Button Model 3RSB01085Z Configurable Automation,213,2026-06-25T14:35:45.739Z,automation,0,0,0,0,,0,none,0
+1015640,ESPHome Play RTTTL Script Blueprint,158,2026-06-30T16:36:44.360Z,script,0,0,0,0,,0,none,0
+1015768,"Battery Sentinel: Report `low` and `offline` Batteries from a Label. Watch Only What Matters, Not Another One-Trick Noti",484,2026-07-01T19:15:20.921Z,template,1,0,0,0,,0,age_check,0
+1015834,ZHA-Tradfri-ON/OFF- for lights and switches,205,2026-07-02T08:38:16.951Z,automation,3,0,0,0,,0,none,0
+1016373,[Blueprint] Reolink Presence - Presence-Controlled Doorbell Tablet Automation with Intercom Support,467,2026-07-06T16:36:39.710Z,automation,2,0,0,0,,1,none,0
+1016447,[Blueprint] Intelligent Wall Tablet Screen Control (On/Off on Motion),322,2026-07-07T09:19:57.157Z,automation,2,0,0,0,,1,none,0
+1016827,"Home Energy Autopilot — charge your battery when power is cheap, discharge when it's expensive (any dynamic tariff, any ",219,2026-07-10T05:56:00.498Z,automation,0,0,0,0,,1,none,0
+1017244,A blueprint to play chimes or make announcements on Sonos,306,2026-07-13T16:41:00.187Z,automation,1,0,0,0,,0,none,0
+1017326,🦷 ADHD-Friendly Toothbrushing Notification System (Morning & Evening),486,2026-07-14T12:45:08.254Z,automation,2,0,0,0,,1,dwell_only,0
+1017469,Detect Home Assistant's Frozen Devices and Entities - 🥶 Entity Sentinel,884,2026-07-15T13:39:45.763Z,template,1,0,0,0,,0,age_check,0
+1017530,📱 Appliance Live Activity countdown,583,2026-07-15T23:04:20.996Z,automation,0,0,0,0,,0,age_check,0
+1017538,:puzzle_piece: ESPHome Device Update,991,2026-07-16T01:07:35.491Z,automation,2,0,0,0,,1,dwell_only,0
+1018027,Octopus energy - Spin the wheel - automatically!,550,2026-07-19T20:57:44.260Z,automation,2,0,0,0,,1,none,0
+1018037,Octopus Energy: Auto-enrol in Octoplus Saving Sessions,199,2026-07-19T21:48:04.703Z,automation,1,0,0,0,,1,none,0
+1018059,"Home Energy Autopilot — charge the battery when power is cheap, run the house off it when it's expensive",347,2026-07-20T04:49:53.153Z,automation,0,0,0,0,,1,none,0
+1018387,Fully automatic zone-based list notifications for users,541,2026-07-22T18:41:59.770Z,automation,2,0,0,0,,1,dwell_only,0
+1018541,IKEA STYRBAR E2313 | Two Light Controller with Colour Matching,148,2026-07-23T22:35:18.627Z,automation,2,0,0,0,,0,none,0
+1018686,✨ Smooth Hold-to-Dim / Brighten✨,499,2026-07-25T11:44:43.264Z,automation,2,0,0,0,,0,none,0
+1018714,[RELEASE] MQTT Connection State Monitor for Home Assistant,393,2026-07-25T15:27:16.667Z,automation,1,0,0,0,,0,age_check,0
+1018758,ZV9001K12-DIM-Z5 (Sunricher 5-channel Z-Wave remote) Blueprint,38,2026-07-26T09:53:22.433Z,automation,1,0,0,0,,0,none,0
+1018979,"Play daily podcast from RSS feed – Mediaplayer or Sonos, Manual Bypass and Daily Limit",111,2026-07-27T19:57:41.946Z,automation,7,0,0,0,,0,none,0
+1018983,Scheduled vacuum daily notification,163,2026-07-27T20:03:11.571Z,automation,2,0,0,0,,0,none,0
+1019230,Label-based Zone & List Notifications,186,2026-07-29T19:57:48.125Z,automation,4,0,0,0,,0,none,0
+1019355,A blueprint to adjust lights throughout the day based on a time range,197,2026-07-30T22:11:28.295Z,automation,1,0,0,0,,1,age_check,0
+1019392,"WLED Holiday, Custom Event & Weather Preset Scheduler v5.1",203,2026-07-31T06:14:48.505Z,automation,3,0,0,0,,0,none,0
+1019579,ZHA zigbee Smart Scene Button Wheel RSH-SC20 aka TuyaTS004F light control,99,2026-08-01T22:21:45.444Z,automation,3,0,0,0,,0,none,0
+1019793,AWTRIX NG (next generation firmware),1410,2026-08-03T19:11:18.495Z,automation,1,0,0,0,,0,none,0
+1020113,⛈️ AWTRIX NG - Weather Warnings Deutscher Wetterdienst (DWD),163,2026-08-06T09:20:35.334Z,automation,1,0,0,0,,1,none,0
+1020215,"To-do List Sync — one-way items, two-way completion",148,2026-08-06T21:12:55.464Z,automation,3,0,0,0,,0,none,0
+1020247,Light Group Cycler Blueprint,87,2026-08-07T05:02:13.393Z,script,3,0,0,0,,0,none,0
+1020248,ZHA - Tuya ZG-101Z/D Smart Knob Automation Blueprint (fork),120,2026-08-07T05:09:25.008Z,automation,0,0,0,0,,0,none,0
+1020378,"AWTRIX NG Sensor Display – colour thresholds, progress bar, scrolling text & weather overlay [DE]",202,2026-08-08T06:43:31.131Z,automation,1,0,0,0,,0,none,0
+1020525,Vent-Axia extractor boost on/off when risk of mould,58,2026-08-09T15:17:42.392Z,automation,2,0,0,0,,1,dwell_only,0
+1020570,"Sync Two Covers – keep two roller shutters perfectly in sync (bidirectional, loop-safe)",63,2026-08-09T20:27:45.284Z,automation,4,1,1,0,cover.open_cover|cover.set_cover_position,1,age_check,0
+1020575,"Open Cover on Door Open – balcony door raises the shutter, with optional position restore",82,2026-08-09T20:31:08.247Z,automation,3,1,1,0,cover.open_cover|cover.set_cover_position,1,none,1
+1020578,İkea Bilresa Dual Button Smart Fan & Oscillation Control (Tested with Xiaomi Fan 2 Lite),79,2026-08-09T20:54:52.409Z,automation,3,0,0,0,,0,none,0
+1020823,Automatic switch restart,140,2026-08-11T21:35:01.637Z,automation,4,0,0,0,,1,none,0
+1020847,"Adaptive Cover Controller – Intelligent Sun Protection for Curtains, Blinds & Shutters",267,2026-08-12T07:10:13.204Z,automation,3,1,1,0,cover.set_cover_position,1,none,1
+1021280,"🔒 Alarmo Link - Arm and Disarm Alarmo from a Private Link - No Account, No App",114,2026-08-15T16:20:13.717Z,automation,3,0,0,0,,0,none,0
+1021388,[Velair Blueprint] Occupancy home and away,122,2026-08-16T14:05:40.320Z,automation,2,0,0,0,,1,dwell_only,0
+1021389,[Velair Blueprint] Pause a zone while windows are open,50,2026-08-16T14:06:25.484Z,automation,4,0,0,0,,1,dwell_only,0
+1021393,Activity-based lighting + profiles,100,2026-08-16T14:46:55.472Z,automation,2,0,0,0,,1,none,0
+1021397,Profile-based lighting,108,2026-08-16T14:54:28.244Z,automation,1,0,0,0,,1,none,0
+1021407,MAX Messenger Notifications — Camera Photo / Video / Photo+Video,120,2026-08-16T16:16:36.455Z,automation,4,0,0,0,,0,none,0
+1021556,Unified Notifications,166,2026-08-17T19:55:27.818Z,script,3,0,0,0,,0,none,0
+1021836,⚡ Anker SOLIX 4 Pro - Local Zero Export with Eco-Mode & Hardware Protection,199,2026-08-19T21:18:35.696Z,automation,0,0,0,0,,0,none,0
+1021947,Midea C-Sense/Comfort Sense/Follow Me via HA IR,52,2026-08-20T21:20:26.708Z,automation,1,0,0,0,,1,none,0
+1022031,Universal HomeSeer In-Wall Switch Control (Z-Wave JS),34,2026-08-21T17:15:56.589Z,automation,3,0,0,0,,0,none,0
+1022126,Unavailable Alarm Notification,64,2026-08-22T09:36:59.825Z,automation,1,0,0,0,,0,none,0
+254841,Notify or do something when an appliance like a dishwasher or washing machine finishes,228937,2020-12-13T14:03:32.035Z,automation,0,0,0,0,,1,dwell_only,0
+255193,Wake-up light alarm with sunrise effect,336745,2020-12-14T12:17:55.047Z,automation,1,0,0,0,,0,age_check,0
+255239,Simple Mobile Notification when device becomes unavailable,8781,2020-12-14T13:47:57.409Z,automation,0,0,0,0,,0,none,0
+255540,ZHA - Aqara Wireless Mini Switch,69380,2020-12-15T01:05:36.035Z,automation,0,0,0,0,,0,none,0
+256656,Mi Magic Cube - Deconz (45+ actions!),30769,2020-12-17T14:57:36.839Z,automation,0,0,0,0,,0,none,0
+273473,KNX - relative dimming for lights,19721,2021-01-27T08:40:15.266Z,automation,3,0,0,0,,0,none,0
+274735,Zigbee2MQTT - Tuya 4-button Scene Switch (TS0044),84976,2021-01-30T16:39:39.691Z,automation,0,0,0,0,,1,none,0
+276581,ZWave-JS - Homeseer HS-WD200+ Dimmer,4257,2021-02-04T05:40:16.795Z,automation,1,0,0,0,,0,none,0
+276859,ZHA - IKEA TRADFRI - 2 Button Remote - OnOff and Brightness,7809,2021-02-04T20:12:55.552Z,automation,2,0,0,0,,0,none,0
+277704,ZWave-JS Inovelli LZW36 Fan Switch/Dimmer,4534,2021-02-06T19:27:09.428Z,automation,1,0,0,0,,0,none,0
+292610,ZEN32 Scene Controller - Z-Wave JS,26912,2021-03-22T20:25:44.833Z,automation,1,0,0,0,,0,none,0
+300080,"ZHA Sonoff Button (press, double press, hold actions)",28139,2021-04-16T13:00:06.038Z,automation,0,0,0,0,,0,none,0
+300533,Blueprint for automatic renewal of a Let's Encrypt certificate,11486,2021-04-17T22:07:13.314Z,automation,2,0,0,0,,1,age_check,0
+305237,ZwaveJS - Heatit Z-Push button 8 Scene Controller,4203,2021-05-04T19:59:52.054Z,automation,1,0,0,0,,0,none,0
+306939,"Automatic renewal of let's encrypt addon, and restart of nginx",9352,2021-05-10T21:42:44.630Z,automation,2,0,0,0,,1,age_check,0
+310138,Offline detection for Z2M devices with last_seen,52865,2021-05-22T10:31:07.870Z,automation,0,0,0,0,,0,age_check,0
+329686,Z2M - Philips Hue Tap Switch,10555,2021-08-13T14:16:04.616Z,automation,0,0,0,0,,1,none,0
+330332,🌤 WUnderground data uploader,16064,2021-08-16T05:14:35.502Z,automation,0,0,0,0,,1,none,0
+349461,Synchronize Ring Alarm Keypad v2 with Alarmo,47658,2021-10-23T12:00:40.629Z,automation,3,0,0,0,,0,none,0
+369425,Plant moisture notification,9387,2021-12-21T01:27:06.623Z,automation,0,0,0,0,,0,none,0
+378710,"Playing Alexa Echo Announcments, TTS Messages, or Sounds only in rooms that are occupied. BLUEPRINT",4460,2022-01-11T23:20:37.388Z,automation,1,0,0,0,,0,none,0
+382180,Moes Smart Knob Lights Control,37355,2022-01-20T11:37:01.431Z,automation,0,0,0,0,,0,none,0
+383543,Advanced Circadian Lighting,24128,2022-01-23T16:24:48.352Z,,0,0,0,0,,0,none,0
+384482,"ZHA - IKEA four button remote (Styrbar) for lights (E2001, E2002)",89722,2022-01-25T22:01:26.913Z,automation,2,0,0,0,,0,none,0
+388850,Aqara Cube ZHA - Simplified face-based device control,35270,2022-02-05T10:59:33.175Z,automation,1,0,0,0,,0,none,0
+395248,ZHA - IKEA four button remote (Styrbar) for lights and switches,12101,2022-02-21T15:32:57.668Z,automation,4,0,0,0,,0,none,0
+409161,"Update notifications (Core, OS, Addons, HACS, etc)",64120,2022-04-07T01:49:47.110Z,automation,0,0,0,0,,0,none,0
+413228,Automatic Room Occupancy - Room-based occupancy based on activity,18460,2022-04-19T12:54:40.792Z,automation,2,0,0,0,,1,age_check,0
+413705,Philips HUE Smart Button - 5 press actions + hold-to-dim,46068,2022-04-20T18:00:24.132Z,automation,5,0,0,0,,1,age_check,0
+429770,Zigbee2MQTT enOcean PTM 215Z (Friends of Hue) switch,25137,2022-06-10T14:18:27.844Z,automation,0,0,0,0,,1,none,0
+466383,Blueprint for monitoring plants,4339,2022-09-28T13:11:52.293Z,automation,0,0,0,0,,1,dwell_only,0
+469873,🔥 Advanced Heating Control,394178,2022-10-05T09:07:08.703Z,automation,10,0,0,0,,1,age_check,0
+478954,:toilet: Toilet Exhaust Fan - Time Delay - Trigger Wait Time - Time,31134,2022-10-23T08:06:15.915Z,automation,3,0,0,0,,0,none,0
+481048,:bulb: Sensor Light - Motion Sensor - Door Sensor - Sun Elevation - LUX Value - Scenes - Time - Light Control - Device T,633327,2022-10-28T09:28:04.563Z,automation,9,0,0,0,,0,none,0
+481543,:eight_spoked_asterisk: Toggle Switch - Turn ON & OFF Entities,14777,2022-10-29T17:24:34.282Z,automation,2,0,0,0,,0,none,0
+489620,"[Z2M] Inovelli Blue Series Switch LED Notification Script (VZM31-SN, VZM35-SN)",12639,2022-11-16T05:27:03.160Z,,0,0,0,0,,0,none,0
+492872,Enbrighten Z-Wave Light Switch Mutli Clicks,2169,2022-11-23T05:06:53.656Z,automation,0,0,0,0,,0,none,0
+500577,Sonoff NSPanel Blueprint - Configure your own custom NSPanel easy via a Blueprint,260247,2022-12-09T22:35:10.590Z,automation,5,0,0,0,,1,age_check,0
+509992,:shower: Bathroom Humidity Exhaust Fan,188414,2022-12-30T05:39:06.280Z,automation,4,0,0,0,,0,none,0
+512399,ZHA - MOES ZigBee Wireless Scene Switch | 3 button remote (TS0043) powered by Tuya,6439,2023-01-03T20:41:43.046Z,automation,0,0,0,0,,0,none,0
+512487,Notify Mobile Companion App Devices,31727,2023-01-03T23:30:35.828Z,script,0,0,0,0,,0,age_check,0
+514527,Shelly i4 4 Buttons actions,17419,2023-01-07T07:06:46.931Z,automation,0,0,0,0,,0,none,0
+527354,:high_brightness: Smart Light - Entity - Sun Elevation - Ambient & Time Triggers,122645,2023-01-30T11:14:01.756Z,automation,9,0,0,0,,0,none,0
+529472,Zigbee2MQTT STYRBAR,3197,2023-02-03T09:03:56.951Z,automation,2,0,0,0,,1,none,0
+551552,"🔔 Notifications - Actionable Mobile Notifications Script, with optional Timeout Feature and Camera Snapshots [works with",51607,2023-03-24T03:37:22.467Z,script,0,0,0,0,,0,none,0
+559523,Zigbee2MQTT - IKEA Symfonisk Gen2 [E2123] Media Control v1.55a,33815,2023-04-12T20:55:41.729Z,automation,6,0,0,0,,1,none,0
+559732,Frigate Mobile App Notifications 2.0,279964,2022-11-03T06:56:46.475Z,automation,6,1,0,1,automation.turn_off,0,age_check,0
+565392,"Advanced control of any light entity from KNX (state, brightness, dim, temperature, color + states feedback)",16329,2023-04-28T10:42:20.795Z,automation,6,0,0,0,,0,age_check,0
+579538,Lutron Caséta Pico 4/5 Button Remote Advanced Actions (Core Integration),8865,2023-06-08T06:03:55.228Z,automation,0,0,0,0,,0,none,0
+579927,ZHA - Inovelli Blue Series 2-1 Switch LED Notification Script,5080,2023-06-08T22:46:04.549Z,script,1,0,0,0,,0,none,0
+583610,PVPC Optimizer (only for Spain): Turn on devices based on the PVPC electricity tariff,4409,2023-06-19T15:16:27.979Z,automation,2,0,0,0,,0,none,0
+584240,"Close/open curtain (cover, blinds) based on sun and weather",22387,2023-06-21T11:56:20.674Z,automation,1,1,1,0,cover.set_cover_position,1,none,1
+590081,IKEA Remotes - Control anything,102039,2023-07-09T18:06:16.800Z,automation,0,0,0,0,,0,none,0
+591182,IKEA Remotes - Control Light,43180,2023-07-12T21:52:54.952Z,automation,2,0,0,0,,0,none,0
+599838,Adjustable Wake-up to Android alarm,24619,2023-08-06T11:52:43.973Z,automation,0,0,0,0,,0,none,0
+601531,ZHA - Inovelli Blue Series Animated Notifications to single or multiple switches simultaneously!,2195,2023-08-10T16:27:38.810Z,script,2,0,0,0,,0,none,0
+602716,Notify Alexa devices using Alexa Media Player,31771,2023-08-14T03:00:21.213Z,script,1,0,0,0,,0,none,0
+604156,Camera - Send & Save snapshot to mobile device when motion is detected with Conditions. Now with Custom Triggers!,76592,2023-08-18T02:19:05.935Z,,0,0,0,0,,0,none,0
+607107,Tesla controlled charge rate based on power sensor,14612,2023-08-26T04:12:54.971Z,automation,1,0,0,0,,1,none,0
+612326,:calendar: Calendar Notifications & Actions,112387,2023-09-09T12:09:04.253Z,automation,0,0,0,0,,0,none,0
+612617,:round_pushpin: State Notifications & Actions,46044,2023-09-10T09:33:31.056Z,automation,0,0,0,0,,0,none,0
+619672,Energy Disaggregation or Non-Intrusive Load Monitoring (NILM) blueprint,9482,2023-09-28T10:18:17.072Z,automation,2,0,0,0,,1,dwell_only,0
+622406,Created a blueprint for linking On/Off/Brightness for smart switch and shelly dimmers,3827,2023-10-05T05:22:21.614Z,,0,0,0,0,,0,none,0
+635422,ZHA Sonoff SNZB-01P wireless button short_double_long press action,9486,2023-11-03T03:39:53.035Z,automation,0,0,0,0,,0,none,0
+636946,Actionable Task Reminder - A Powerful Task Reminder Automation,17447,2023-11-06T01:54:15.252Z,automation,0,0,0,0,,1,age_check,0
+636995,Ikea Rodret dimmer with triple click,9270,2023-11-06T08:22:20.894Z,automation,0,0,0,0,,0,none,0
+644842,Advanced Bathroom Fan Timer,2970,2023-11-23T05:39:19.235Z,automation,4,0,0,0,,0,none,0
+650166,:vibration_mode: Appliance Notifications & Actions - Washing Machine - Clothes Dryer - Dish Washer - ETC,167618,2023-12-04T13:06:21.232Z,automation,4,0,0,0,,0,none,0
+652571,📲 Contact Sensor (Door or Window) Left Open Notification,55643,2023-12-08T18:27:06.108Z,automation,0,0,0,0,,1,dwell_only,0
+653754,🪫 Low Battery Notifications & Actions,212419,2023-12-11T01:49:29.804Z,automation,3,0,0,0,,0,none,0
+662836,"Linked Entities - keep mutlple entities state in sync (lights, switches, etc.)",16578,2023-12-29T08:14:41.014Z,automation,4,0,0,0,,1,dwell_only,0
+663302,Zigbee2MQTT - Tuya 4-button Scene Switch (TS0044) - rdeangel,16621,2023-12-30T00:37:43.398Z,automation,0,0,0,0,,0,none,0
+673507,🎉 Party Lights - Randomly loop through color and brightness values,34015,2024-01-15T10:56:37.651Z,automation,4,0,0,0,,1,none,0
+674206,Easy configuration for an Onvis HS2 Smart Button (5-Button),5732,2024-01-16T13:45:32.445Z,automation,0,0,0,0,,0,none,0
+676340,UPDATED: Notify all mobile devices and HA dashboard with one script!,8062,2024-01-20T04:59:30.273Z,script,2,0,0,0,,0,none,0
+678152,💨 Adaptive fan speed control based on temperature and speed range,18822,2024-01-23T06:35:27.903Z,automation,2,0,0,0,,1,none,0
+678736,Track repetitive tasks with NFC tags,12827,2024-01-24T08:59:34.133Z,automation,1,0,0,0,,0,none,0
+680539,"Cover Control Automation (CCA) - Intelligent Automation for Blinds, Awnings & Shutters | Calendar, Sun Shading, Force Fu",214595,2024-01-27T20:12:46.045Z,automation,9,1,1,0,cover.open_cover|cover.set_cover_position,1,age_check,0
+681056,"Control LEDs and LED Effects on Inovelli Black, Red, Blue, and White Series Devices by Floor, Area, Group, Device ID, or",16996,2024-01-28T19:42:37.065Z,script,8,0,0,0,,0,none,0
+688273,:magic_wand: Manual Light Control With Auto OFF,35519,2024-02-11T11:30:43.696Z,automation,6,0,0,0,,0,none,0
+696229,Zigbee2MQTT - Philips Hue Tap Dial Switch by SmartHomeGeeks.io,11042,2024-02-27T09:06:10.372Z,automation,3,0,0,0,,1,none,0
+722652,ZHA - Fan speed display on Inovelli Blue Series 2-1 Switch,1116,2024-04-28T03:34:57.092Z,automation,1,0,0,0,,0,none,0
+726235,AWTRIX 3 - Blueprint for creating simple apps for dummies,51361,2024-05-06T16:54:18.113Z,automation,0,0,0,0,,0,none,0
+727643,⛈️ AWTRIX 3 - Deutscher Wetterdienst (DWD) Weather Warnings,3222,2024-05-09T21:42:39.204Z,automation,1,0,0,0,,1,none,0
+728100,📢 Notifications & Announcements,52006,2024-05-11T06:47:36.420Z,automation,2,0,0,0,,0,none,0
+730391,⛩️ Automatic Gate : don't ever use your remote again,24957,2024-05-18T13:14:55.685Z,automation,9,1,1,1,automation.turn_off|lock.open,1,age_check,0
+732517,[Script] Cycle fan speed,1683,2024-05-24T19:23:42.033Z,script,3,0,0,0,,0,none,0
+734618,Blueprint - Zigbee2MQTT - Tuya 3-button Scene Switch (TS0043),2346,2024-05-31T06:59:38.401Z,automation,0,0,0,0,,1,none,0
+742479,Pool Pump and Heat Controller,3210,2024-06-23T13:37:40.322Z,automation,0,0,0,0,,0,none,0
+744631,Automated Plant Watering v1,7826,2024-06-30T02:16:31.796Z,automation,3,1,0,1,valve.open_valve,1,none,1
+746683,PV Überschussladen/ load excess Alfen Eve Wallbox,4556,2024-07-06T08:56:39.402Z,automation,0,0,0,0,,0,none,0
+760429,Telegram Bot: Conversation with Assist (and others like OpenAI),8771,2024-08-16T07:06:55.064Z,automation,2,0,0,0,,0,none,0
+768065,IKEA SOMRIG Shortcut Button (E2213) for Matter,2815,2024-09-06T19:45:56.213Z,automation,0,0,0,0,,0,none,0
+774469,Moes 4-Button Scene Controller - Zigbee2MQTT (Model: TS0044),9633,2024-09-25T06:52:30.125Z,automation,0,0,0,0,,0,none,0
+777660,KNX - Media Player Control 🎶,7254,2024-10-02T07:03:16.493Z,automation,16,0,0,0,,0,none,0
+779544,Simple Blueprint : Zigbee2MQTT Frient Keypad for Alarm control panel (ex: Alarmo),10821,2024-10-06T21:44:12.699Z,automation,5,1,1,1,alarm_control_panel.alarm_arm_home|alarm_control_panel.alarm_disarm,0,none,0
+779965,"A blueprint for the IKEA SYMFONISK Sound remote, gen 2 (E2123) - with volume hold",6726,2024-10-07T20:58:21.281Z,automation,0,0,0,0,,0,none,0
+783075,📢 [Alarm] Keypad Frient (KEPZB-110) for Alarmo or Other Systems with ZHA,7681,2024-10-16T11:02:07.365Z,automation,5,1,1,1,alarm_control_panel.alarm_arm_home|alarm_control_panel.alarm_disarm,0,none,0
+783849,Daily Automatic Light Color Adjustment,1633,2024-10-18T07:47:32.843Z,automation,1,0,0,0,,1,age_check,0
+783988,ZHA - iCasa Black Remote (ICZB-RM11S),819,2024-10-18T14:28:24.559Z,automation,2,0,0,0,,0,none,0
+785335,"Camera, Frigate: Intelligent AI-powered notifications",49727,2024-10-22T08:00:08.839Z,automation,3,0,0,0,,0,age_check,0
+785944,Aqara/Xiaomi Wireless mini switch WXKG11LM,3133,2024-10-23T12:01:57.979Z,automation,3,0,0,0,,1,none,0
+786301,Import/Sync Calendar Events,2530,2024-10-24T13:23:56.546Z,automation,2,0,0,0,,0,none,0
+787423,ZBMINIR2 detach relay mode,9183,2024-10-27T17:27:04.798Z,automation,2,0,0,0,,0,none,0
+791388,deCONZ - Philips Hue Dimmer Switch (model v2 / RWL022),4127,2024-11-06T20:10:52.397Z,automation,0,0,0,0,,0,none,0
+796494,🚨 Custom Blinking Lights Blueprint,14290,2024-11-18T14:30:02.888Z,automation,4,0,0,0,,0,none,0
+798883,"INNR zigbee remote RC210 blueprint, to use with ZHA",1105,2024-11-23T20:10:27.621Z,automation,4,0,0,0,,0,none,0
+820470,Reminders - Create and List Tasks with Conversational Commands,6604,2025-01-02T12:44:22.318Z,automation,2,0,0,0,,0,age_check,0
+828766,"Philips Hue Tap Dial Switch (Z2M / ZHA) Custom, Light and Media mode [RDM002]",8508,2025-01-14T18:51:21.036Z,automation,12,0,0,0,,0,none,0
+838071,"💙 Blueprints for Voice Commands (Weather, Calendar, Music Assistant)",27219,2025-01-29T09:43:07.457Z,automation,1,0,0,0,,0,none,0
+841036,Z2M - Aqara Rotary Knob H1 – Adjustable Brightness & Color Temperature (Z2M),2725,2025-02-03T19:52:22.210Z,automation,1,0,0,0,,0,age_check,0
+843686,:honeybee: Bee In The Hive Sensor,13187,2025-02-08T01:34:08.618Z,automation,2,0,0,0,,1,dwell_only,0
+843983,Voice PE - Mute media players on 'listening',2135,2025-02-08T14:15:49.341Z,automation,1,0,0,0,,0,none,0
+846232,"🚗 Tesla Dynamic Charging (Ford, Mercedes… any EV) Automation",14333,2025-02-12T13:08:38.221Z,automation,2,0,0,0,,1,none,0
+856444,Sonoff TRVZB External Temperature Sensor Calibration,25976,2025-02-28T22:58:09.613Z,automation,1,0,0,0,,1,none,0
+867586,ZHA - 1-Button (TS004F),2191,2025-03-22T09:46:29.195Z,automation,0,0,0,0,,0,none,0
+870864,"Frigate Telegram notifications, perfected - but with quite some work on your side",6396,2025-03-29T17:38:58.374Z,automation,3,0,0,0,,0,none,0
+871550,:airplane: Holiday & Away Lighting,25219,2025-03-31T10:05:37.103Z,automation,4,0,0,0,,0,none,0
+878257,PV Optimization for GoodWe Solar Systems,6645,2025-04-15T19:38:33.700Z,automation,2,0,0,0,,1,age_check,0
+887614,Camera Notification V0.8 with Actionable Buttons Android IOS - Frigate LLM Vision AI,23918,2025-05-09T22:09:24.186Z,automation,6,1,0,1,automation.turn_off,1,none,1
+887934,Linked Lights - Keep Lights in Sync,2349,2025-05-10T19:45:29.522Z,automation,3,0,0,0,,1,none,0
+898289,Jellyfin Webhook v2,5501,2025-06-04T23:26:02.198Z,automation,3,0,0,0,,0,none,0
+899043,Zero Feed-in Control for PV Systems – Blueprint for Hoymiles + OpenDTU,1946,2025-06-07T10:20:47.633Z,automation,2,0,0,0,,1,age_check,0
+899287,:battery: Battery Charger Notifications & Actions,5931,2025-06-08T06:12:11.144Z,automation,5,0,0,0,,0,none,0
+899334,VPD and Temperature-Based Controller for Home Assistant,1354,2025-06-08T09:14:45.360Z,automation,2,0,0,0,,1,none,0
+902962,Advanced Ventilation/AC Management Blueprint,5922,2025-06-19T04:41:27.718Z,automation,9,1,0,1,climate.turn_off,1,none,1
+911310,🌡️ HVAC Health Monitor Blueprint - Detect System Performance Issues,2118,2025-07-15T21:29:45.090Z,automation,7,0,0,0,,1,age_check,0
+916571,Vibration Sensor Filter Blueprint for Appliances (e.g. washing machines/dryers/dishwashers),3844,2025-08-01T18:30:00.990Z,automation,4,0,0,0,,1,none,0
+923409,:star2: Motion-Controlled Lighting 4.8 – The Next-Level Light Maestro,4462,2025-08-23T10:49:27.849Z,automation,6,0,0,0,,1,none,0
+925904,Goodwe export limiter together with HomeWizard P1,911,2025-08-31T08:18:02.248Z,automation,1,0,0,0,,1,none,0
+930003,"Pool Pump, Heat and Salt Water System Controller",831,2025-09-12T19:30:26.292Z,automation,6,1,0,1,climate.turn_off,0,age_check,0
+930764,Music Assistant DJ Announcer Blueprint for Home Assistant – Automated DJ-Style Music Playback,3231,2025-09-15T02:59:04.696Z,script,5,0,0,0,,0,age_check,0
+930806,(Yet another) IKEA Styrbar (E2001/E2002) - control Multiple Light/Switch Entities (Zigbee2MQTT v2.0 Compatible),1851,2025-09-15T08:00:13.707Z,automation,2,0,0,0,,0,none,0
+934966,"[Blueprint] Bambu Lab 3D Printer – Cost Notification (Telegram, Bambu HACS)",2426,2025-09-27T21:52:35.649Z,automation,4,0,0,0,,1,none,0
+935363,Scheduler Blueprint,1116,2025-09-29T08:00:13.975Z,automation,2,0,0,0,,0,none,0
+937467,"Frigate AI Notification - Multi-Camera, Include/Exclude Zones, LLMVision, Low Noise",5545,2025-10-05T19:42:03.183Z,automation,9,1,0,1,automation.turn_off,0,age_check,0
+940901,:globe_with_meridians: Zone Presence of People & Devices,10397,2025-10-16T08:37:58.268Z,automation,2,0,0,0,,0,none,0
+942940,Radiator Fan Controller - Control your radiator fans,655,2025-10-22T11:53:44.876Z,automation,2,0,0,0,,1,none,0
+943155,Sunrise Light Simulator,5261,2025-10-23T02:38:40.525Z,automation,1,0,0,0,,1,none,0
+943919,Filter positive or negative value changes in a sensor entity,1631,2025-10-25T08:07:28.119Z,template,0,0,0,0,,1,none,0
+944273,Solakon ONE Zero Export Control ⚡ (Dynamic Nulleinspeisung/Zero Export with SOC Logic),4053,2025-10-26T09:51:46.012Z,automation,7,0,0,0,,0,none,0
+944318,"Modern Sunrise Wake-Up Blueprint (Kelvin/RGB): Start/End Sliders, Quiet Hours, Workday — Evolution of Sbyx",4184,2025-10-26T11:50:27.972Z,automation,1,0,0,0,,0,age_check,0
+945368,:camera: Immich memories blueprint,1130,2025-10-29T08:28:58.551Z,automation,1,0,0,0,,0,none,0
+945798,KNX - Weather Report 🌦️,1159,2025-11-02T17:56:48.955Z,automation,2,0,0,0,,1,none,0
+945813,Home Assistant - Reload Integrations Automatically,3533,2025-11-02T21:01:11.751Z,automation,2,0,0,0,,0,none,0
+948502,Aqara W100 Blueprint for Thermostat mode,4371,2025-11-07T12:19:42.052Z,automation,4,0,0,0,,1,none,0
+950033,"Yet another Philips ""Hue Tap dial switch"" Blueprint (z2m)",1971,2025-11-11T12:48:46.848Z,automation,1,0,0,0,,0,none,0
+953189,Anniversaries Notifier,831,2025-11-20T08:15:11.087Z,automation,1,0,0,0,,0,none,0
+954667,SONOFF ORB 4in1 Easy Setup,4434,2025-11-24T10:49:39.441Z,automation,0,0,0,0,,1,none,0
+957196,IKEA Tradfri Bulb Reset / Pairing Mode Sequence,1438,2025-11-30T21:01:48.411Z,script,2,0,0,0,,0,none,0
+958295,🚨 Alarm System with Keypad support (Z2M / ZHA / Dashboard) [KEPZB-110],4730,2025-12-03T21:07:07.029Z,automation,9,1,1,1,alarm_control_panel.alarm_arm_home|alarm_control_panel.alarm_disarm,1,none,1
+959816,[Blueprint] MiBoxer FUT089Z – Full Zone Control (Lights / Switches / Scenes),1145,2025-12-07T12:17:49.661Z,automation,6,0,0,0,,0,none,0
+960128,🌦 Weather Condition Alert Message (rain/snow/etc within a time window),4666,2025-12-08T05:49:01.851Z,automation,6,0,0,0,,0,none,0
+962231,Telegram Bot To‑Do List,1376,2025-12-13T14:29:18.919Z,automation,8,0,0,0,,1,none,0
+962344,"IKEA BILRESA Matter Button 👈 [Blueprint] for Ikea *Matter over Thread* Button (Actions, Scripts, and Entities)!",34678,2025-12-13T21:32:11.450Z,automation,0,0,0,0,,0,none,0
+963357,🌙 Smart Night Light by LTek,902,2025-12-16T18:16:23.865Z,automation,3,0,0,0,,1,age_check,0
+964276,Grocy Meal Plan to Calendar Sync (with Duplicate Check),405,2025-12-19T12:56:44.198Z,automation,2,0,0,0,,0,none,0
+965365,Ikea Bilresa scroll wheel blueprint (Matter) - The Original,51561,2025-12-22T13:25:33.738Z,automation,7,0,0,0,,1,age_check,0
+965815,IKEA Bilresa Dual Button Remote,41795,2025-12-23T18:00:38.871Z,automation,0,0,0,0,,1,none,0
+965834,🌅 Adaptive Lighting Scheduler,2930,2025-12-23T18:54:07.394Z,automation,2,0,0,0,,0,none,0
+966025,Anniversaries template sensor blueprint (to replace Anniversaries integration),1698,2025-12-24T11:33:19.505Z,template,1,0,0,0,,0,none,0
+966723,Sonoff SNZB‑01M Remote (ZHA) — 16‑Action Event-Based Control,6654,2025-12-26T17:31:19.684Z,automation,0,0,0,0,,1,none,0
+966744,"💡 Clean & Simple Universal Occupancy Lighting for PIR & Radar Sensors (examples: Aqara FP300, Eve Motion)",3725,2025-12-26T18:58:41.819Z,automation,2,0,0,0,,0,none,0
+967636,"🚗 Smart Garage - Control Doors, Lighting, and Alerts",4038,2025-12-28T23:58:01.982Z,automation,9,1,1,0,cover.open_cover,1,dwell_only,1
+967985,🔥 Smart Smoke System – The Ultimate Fire Alarm Linker,3901,2025-12-29T21:38:36.722Z,automation,7,1,0,1,siren.turn_off,1,age_check,0
+969171,Inovelli Bulk Configuration (Zigbee2MQTT),628,2026-01-01T23:51:41.005Z,automation,3,0,0,0,,0,none,0
+971222,ZHA - Tuya ZG-101Z/D Smart Knob Automation Blueprint,1680,2026-01-06T15:34:40.539Z,automation,0,0,0,0,,0,none,0
+972431,⏲️ Z2M Knob — Gesture Action Controller (Moes ZG-101ZD & similar AliExpress-sold knobs) with filter of false events,2120,2026-01-09T03:39:10.111Z,automation,4,0,0,0,,0,none,0
+975664,Shelly Detached Input Blueprint – Switch & Button Mode with Fallback Script (v1.3),1513,2026-01-16T20:30:33.882Z,automation,3,0,0,0,,1,none,0
+976364,IKEA Bilresa E2489 2-button remote (Z2M),3546,2026-01-18T16:50:42.838Z,automation,2,0,0,0,,0,none,0
+976397,IKEA MYGGSPRAY E2494 Motion Sensor (Matter) - Flexible Action Script,7074,2026-01-18T18:37:25.036Z,automation,0,0,0,0,,1,none,0
+976506,IKEA E2490 BILRESA Scroll Wheel,14914,2026-01-18T23:39:03.902Z,automation,0,0,0,0,,0,none,0
+977875,Z2M - Philips Hue Dimmer Switch - Ultimate Controller (Device Triggers + Double Clicks,3052,2026-01-22T12:59:10.616Z,automation,0,0,0,0,,0,none,0
+978334,🚪 IKEA MYGGBETT E2492 Door/Window Sensor (Matter),3584,2026-01-23T17:29:54.930Z,automation,0,0,0,0,,1,dwell_only,0
+978723,🌬️ IKEA ALPSTUGA E2495 Air Quality Sensor (Matter),6802,2026-01-24T19:47:35.154Z,automation,3,0,0,0,,0,none,0
+978974,"[Z2M] IKEA BILRESA (E2489) - Full Custom Actions (Single, Double, Long Press)",5524,2026-01-25T10:46:24.774Z,automation,0,0,0,0,,0,none,0
+980063,SONOFF Orb 4-in-1 (SZNB-01M) Zigbee2MQTT,2815,2026-01-27T23:46:06.925Z,automation,0,0,0,0,,1,none,0
+981560,ZHA - AwoX / Eglo Connect.Z Remote (ERCU_3groups_Zm) - Complete Action-Based Blueprint,533,2026-01-31T22:35:31.550Z,automation,0,0,0,0,,0,none,0
+982305,IKEA Bilresa Scrollwheel (Matter) – Ultimate Light Controller (Atomic Edition),12628,2026-02-02T21:58:12.847Z,automation,2,0,0,0,,1,none,0
+983749,IKEA BILRESA scroll wheel (Matter) - Yet another blueprint,21382,2026-02-06T17:19:44.947Z,automation,2,0,0,0,,0,age_check,0
+986147,Configure Aqara smart controllers in an automation,592,2026-02-12T21:33:52.735Z,automation,0,0,0,0,,0,none,0
+986704,ZHA - TS004F Rotary Knob with dual-mode support,1596,2026-02-15T13:02:06.867Z,,0,0,0,0,,0,none,0
+986783,Smart Ventilation based on Absolute Humidity,1176,2026-02-16T13:36:25.666Z,automation,0,0,0,0,,0,none,0
+987984,Simple Presence Simulation,1072,2026-02-17T21:50:12.471Z,automation,0,0,0,0,,0,none,0
+989184,Blueprint: Awtrix 3 | Show Custom Entity,1047,2026-02-21T13:17:30.021Z,automation,1,0,0,0,,0,none,0
+989969,"[Blueprint] 🪟 Ventilation Recommendation v0.4.3 – Smart ventilation alerts via Push, Alexa & HA UI (Beta)",741,2026-02-23T17:35:37.787Z,automation,6,0,0,0,,1,age_check,0
+991955,Aqara Cube zigbee2mqtt (35 actions),550,2026-03-01T22:36:18.827Z,automation,0,0,0,0,,0,none,0
+992123,📹 Magic Snapshot / Video sequence ===> Telegram,469,2026-03-02T15:41:07.707Z,automation,6,0,0,0,,1,none,0
+992532,[V2] Automatically unlock your door when getting in bluetooth range,1348,2026-03-03T19:28:33.962Z,automation,3,1,1,0,lock.unlock,1,none,1
+993226,Third Reality Smart Button (Model: 3RSB22BZ) - Configurable Automation,776,2026-03-06T03:45:24.394Z,automation,0,0,0,0,,0,none,0
+993493,Philips Hue Tap Dial - Media Controls (Native Hue Hub),923,2026-03-06T21:15:15.601Z,automation,9,0,0,0,,0,none,0
+994758,"🫧 LaundryMinder - Washer & Dryer Cycle Notifications, Handoff Reminders, 3 Detection Methods",2884,2026-03-11T03:09:17.295Z,automation,4,0,0,0,,0,age_check,0
+997537,ESPHome Device Auto Bulk Update,1535,2026-03-20T17:21:38.703Z,automation,1,0,0,0,,1,none,0

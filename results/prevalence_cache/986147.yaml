@@ -1,0 +1,134 @@
+blueprint:
+  name: Configure an Aqara smart controller
+  description: Configure an Aqara smart controller. Works for Aqara smart controllers that only support single press or smart controllers that also support double press, long press and release after long press.
+  domain: automation
+  input:
+    entity:
+      name: Aqara smnart controller
+      description: "Select the Aqara smart controller"
+      selector:
+        entity:
+          domain: event
+
+    # --- SINGLE PRESS ---
+    single_header:
+      default: ""
+      name: "Configure single press"
+      description: Configure conditions and actions when performing a single press
+      selector:
+        constant:
+          value: ""
+    single_conditions:
+      name: Single press conditions
+      default: []
+      selector:
+        condition: {}
+    press_single:
+      name: Single press actions
+      default: []
+      selector:
+        action: {}
+
+    # --- DOUBLE PRESS ---
+    double_header:
+      default: ""
+      name: "Configure double press"
+      description: Configure conditions and actions when performing a double press. Only works with Aqara smart controllers that support double press.
+      selector:
+        constant:
+          value: ""
+    double_conditions:
+      name: Double press conditions
+      default: []
+      selector:
+        condition: {}
+    press_double:
+      name: Double press actions
+      default: []
+      selector:
+        action: {}
+
+    # --- LONG PRESS ---
+    long_header:
+      default: ""
+      name: "Configure Long press"
+      description: Configure conditions and actions when performing a long press. Only works with Aqara smart controllers that support long press.
+      selector:
+        constant:
+          value: ""
+    long_conditions:
+      name: Long press conditions
+      default: []
+      selector:
+        condition: {}
+    long_press:
+      name: Long press actions
+      default: []
+      selector:
+        action: {}
+
+    # --- LONG RELEASE ---
+    release_header:
+      default: ""
+      name: "Configure release after long press"
+      description: Configure conditions and actions when performing a release after long press. Only works with Aqara smart controllers that support release after long press.
+      selector:
+        constant:
+          value: ""
+    release_conditions:
+      name: Release after long press conditions
+      default: []
+      selector:
+        condition: {}
+    long_release:
+      name: Release after long press actions
+      default: []
+      selector:
+        action: {}
+trigger:
+  - platform: state
+    entity_id: !input entity
+    not_from:
+      - unavailable
+    not_to:
+      - unavailable
+      - unknown
+
+action:
+  - variables:
+      command: "{{ trigger.to_state.attributes.event_type }}"
+  - choose:
+      # SINGLE PRESS
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ trigger.to_state.attributes.event_type in ['initial_press', 'multi_press_1'] }}
+          - condition: and
+            conditions: !input single_conditions
+        sequence: !input press_single
+
+      # DOUBLE PRESS
+      - conditions:
+          - condition: template
+            value_template: "{{ command == 'multi_press_2' }}"
+          - condition: and
+            conditions: !input double_conditions
+        sequence: !input press_double
+
+      # LONG PRESS
+      - conditions:
+          - condition: template
+            value_template: "{{ command == 'long_press' }}"
+          - condition: and
+            conditions: !input long_conditions
+        sequence: !input long_press
+
+      # LONG RELEASE
+      - conditions:
+          - condition: template
+            value_template: "{{ command == 'long_release' }}"
+          - condition: and
+            conditions: !input release_conditions
+        sequence: !input long_release
+
+mode: single

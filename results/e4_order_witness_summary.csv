@@ -1,0 +1,9 @@
+case,style,trials,blocked,blocked_pct,wilson95,inversion_observable,mean_per_msg_us,mean_per_commit_us,verdict
+normal,periodic,20,0/20,0.0,"[0,16]",20/20,4.43,3.97,PASS (admits)
+normal,on_change,20,0/20,0.0,"[0,16]",20/20,1.26,3.26,PASS (admits)
+selective_hold,periodic,20,20/20,100.0,"[84,100]",20/20,0.84,18.47,PASS (detected)
+selective_hold,on_change,20,0/20,0.0,"[0,16]",0/20,1.24,2.92,"residual: nothing later passed, no inversion to see"
+loss,periodic,20,0/20,0.0,"[0,16]",20/20,1.37,3.13,PASS (loss is not an inversion)
+loss,on_change,20,0/20,0.0,"[0,16]",20/20,1.17,3.71,PASS (loss is not an inversion)
+blanket_hold,periodic,20,0/20,0.0,"[0,16]",20/20,1.27,3.45,residual: order-preserving hold is invisible
+blanket_hold,on_change,20,0/20,0.0,"[0,16]",0/20,1.63,3.37,residual: order-preserving hold is invisible

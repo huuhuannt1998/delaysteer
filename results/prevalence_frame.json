@@ -1,0 +1,9 @@
+{
+  "n_classified": 4,
+  "n_applicable": 0,
+  "n_vulnerable_shape": 0,
+  "fraction_reported": false,
+  "why_no_fraction": "n=4 is the complete set of Home Assistant core blueprints available offline; the community Blueprint Exchange requires network access. A fraction over this denominator is not a prevalence measurement.",
+  "what_would_make_it_one": "a few hundred community blueprints, sampling frame stated, two independent annotators for inter-rater agreement (design 11.2)",
+  "status": "OPEN -- classifier delivered, sample inadequate"
+}

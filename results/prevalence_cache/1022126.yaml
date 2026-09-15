@@ -1,0 +1,43 @@
+blueprint:
+  name: Send Notification On Alarm Unavailable
+  description: Sends a notification to an Entity of your choice when the Selected Alarm goes int o an "Unavailable" State.
+  domain: automation
+  author: Kaylanpro_5662YT
+  input:
+    alarm_entity:
+      name: Selected Alarm
+      description: Select the alarm entity to monitor.
+      selector:
+        entity:
+          domain: alarm_control_panel
+    notification_message:
+      name: Notification Message
+      description: Message to send when the alarm becomes unavailable.
+      default: "Warning: The alarm system is unavailable."
+      selector:
+        text:
+    devices_to_send:
+      name: Devices to Send
+      description: Select the device that should receive the notification.
+      selector:
+        device:
+          multiple: true
+
+description: Only activates when alarm is unavailable
+mode: single
+triggers:
+  - trigger: state
+    entity_id:
+      - !input alarm_entity
+    from: null
+    to:
+      - unavailable
+conditions: []
+actions:
+  - action: notify.send_message
+    metadata: {}
+    target:
+      device_id: !input devices_to_send
+    data:
+      title: Alarm Unavailable
+      message: !input notification_message

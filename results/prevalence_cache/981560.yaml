@@ -1,0 +1,117 @@
+blueprint:
+  name: "ZHA - AwoX / Eglo ERCU_3groups_Zm Custom Actions"
+  description: >
+    Este Blueprint traduce los eventos de clusters del mando Eglo Connect.Z (AwoX)
+    en acciones personalizables. Permite usar cada botón para cualquier servicio
+    de Home Assistant (luces, scripts, escenas, etc.).
+  domain: automation
+  author: "Mstheeduar"
+  input:
+    remote:
+      name: Selecciona el mando
+      selector:
+        device:
+          integration: zha
+          model: ERCU_3groups_Zm
+    button_on:
+      name: "Botón ON"
+      default: []
+      selector: { action: {} }
+    button_off:
+      name: "Botón OFF"
+      default: []
+      selector: { action: {} }
+    button_up:
+      name: "Brillo Arriba"
+      default: []
+      selector: { action: {} }
+    button_down:
+      name: "Brillo Abajo"
+      default: []
+      selector: { action: {} }
+    button_red:
+      name: "Botón Rojo"
+      default: []
+      selector: { action: {} }
+    button_green:
+      name: "Botón Verde"
+      default: []
+      selector: { action: {} }
+    button_blue:
+      name: "Botón Azul"
+      default: []
+      selector: { action: {} }
+    button_warm:
+      name: "Blanco Cálido"
+      default: []
+      selector: { action: {} }
+    button_cold:
+      name: "Blanco Frío"
+      default: []
+      selector: { action: {} }
+    button_mix:
+      name: "Botón Mezcla (Centro rueda)"
+      default: []
+      selector: { action: {} }
+    button_fav_1:
+      name: "Favorito 1"
+      default: []
+      selector: { action: {} }
+    button_fav_2:
+      name: "Favorito 2"
+      default: []
+      selector: { action: {} }
+
+mode: restart
+
+trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+
+action:
+  - variables:
+      command: "{{ trigger.event.data.command }}"
+      cluster: "{{ trigger.event.data.cluster_id }}"
+      hue: "{{ trigger.event.data.params.hue | default(0) }}"
+      level: "{{ trigger.event.data.params.level | default(0) }}"
+      mireds: "{{ trigger.event.data.params.color_temp_mireds | default(0) }}"
+      scene: "{{ trigger.event.data.params.scene_id | default(0) }}"
+
+  - choose:
+      # Encendido y Apagado (Cluster 6)
+      - conditions: "{{ command == 'on' and cluster == 6 }}"
+        sequence: !input button_on
+      - conditions: "{{ command == 'off' and cluster == 6 }}"
+        sequence: !input button_off
+
+      # Control de Brillo (Cluster 8)
+      - conditions: "{{ cluster == 8 and level == 254 }}"
+        sequence: !input button_up
+      - conditions: "{{ cluster == 8 and level == 1 }}"
+        sequence: !input button_down
+
+      # Colores Fijos (Cluster 768 - Hue)
+      - conditions: "{{ cluster == 768 and hue == 254 }}"
+        sequence: !input button_red
+      - conditions: "{{ cluster == 768 and hue == 84 }}"
+        sequence: !input button_green
+      - conditions: "{{ cluster == 768 and hue == 169 }}"
+        sequence: !input button_blue
+
+      # Temperatura de Color (Cluster 768 - Mireds)
+      - conditions: "{{ cluster == 768 and mireds == 454 }}"
+        sequence: !input button_warm
+      - conditions: "{{ cluster == 768 and mireds == 153 }}"
+        sequence: !input button_cold
+
+      # Botón Mezcla / Colorloop (Enhanced Hue)
+      - conditions: "{{ command == 'enhanced_move_hue' }}"
+        sequence: !input button_mix
+
+      # Botones de Favoritos (Cluster 5 - Escenas)
+      - conditions: "{{ cluster == 5 and scene == 1 }}"
+        sequence: !input button_fav_1
+      - conditions: "{{ cluster == 5 and scene == 2 }}"
+        sequence: !input button_fav_2

@@ -1,0 +1,430 @@
+blueprint:
+  name: Two-light controller with colour matching (Z2M 4-button remote)
+  description: >
+    Controls two lights from a Zigbee2MQTT 4-button remote (IKEA STYRBAR E2313
+    and similar), with the second light inheriting the brightness and colour of
+    the first.
+
+
+    Left and right buttons toggle a light each. When a light is switched on
+    while the other is already on, it matches the other light's brightness and
+    colour (either hs colour or colour temperature). When both are off, it comes
+    on at a configurable brightness.
+
+
+    Up and down step the brightness of whichever lights are currently on, each
+    relative to its own level. Holding up or down sets a warm or cool colour
+    temperature on those same lights.
+
+
+    Optionally the two lights are kept in sync while both are on, so changing
+    the colour of one from anywhere (dashboard, voice, another automation)
+    mirrors it to the other.
+
+
+    Notes on compatibility. Colour is only copied when the receiving light
+    supports the relevant mode, so pairing a colour bulb with a
+    colour-temperature-only fitting is safe and simply falls back to matching
+    brightness. Colour commands are sent as a separate call after the light is
+    on, then verified and retried up to three times, because many Zigbee bulbs
+    silently drop a colour set in the same command that switches them on.
+  domain: automation
+  homeassistant:
+    min_version: "2024.10.0"
+  source_url: https://github.com/pqpxo/ha-blueprints/blob/main/IKEA%20STYRBAR%20E2313/two_light_controller.yaml
+  input:
+    controller_section:
+      name: Controller
+      icon: mdi:remote
+      input:
+        controller:
+          name: (Zigbee2MQTT) Controller name
+          description: >
+            The device's friendly name as configured in Zigbee2MQTT, for example
+            Office Lights Switch.
+          selector:
+            text:
+        base_topic:
+          name: (Zigbee2MQTT) Base MQTT topic
+          description: The base topic configured in Zigbee2MQTT.
+          default: zigbee2mqtt
+          selector:
+            text:
+
+    lights_section:
+      name: Lights
+      icon: mdi:lightbulb-group
+      input:
+        light_left:
+          name: Left button light
+          description: Toggled by the left arrow button.
+          selector:
+            entity:
+              filter:
+                domain: light
+        light_right:
+          name: Right button light
+          description: Toggled by the right arrow button.
+          selector:
+            entity:
+              filter:
+                domain: light
+
+    behaviour_section:
+      name: Behaviour
+      icon: mdi:tune
+      collapsed: true
+      input:
+        brightness_step:
+          name: Brightness step
+          description: Amount each short press of up or down changes brightness by.
+          default: 20
+          selector:
+            number:
+              min: 1
+              max: 50
+              step: 1
+              unit_of_measurement: "%"
+        default_brightness:
+          name: Brightness when both lights are off
+          description: >
+            Level used when switching on a light with nothing to copy from.
+          default: 100
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+        warm_kelvin:
+          name: Warm colour temperature
+          description: Applied to lights that are on when the up button is held.
+          default: 2000
+          selector:
+            number:
+              min: 1500
+              max: 7000
+              step: 50
+              unit_of_measurement: K
+        cool_kelvin:
+          name: Cool colour temperature
+          description: Applied to lights that are on when the down button is held.
+          default: 6666
+          selector:
+            number:
+              min: 1500
+              max: 7000
+              step: 50
+              unit_of_measurement: K
+        colour_sync:
+          name: Keep colours in sync
+          description: >
+            While both lights are on, mirror a colour change on either one to
+            the other. Turn this off if you want to set the two lights to
+            different colours independently.
+          default: true
+          selector:
+            boolean:
+        transition:
+          name: Transition
+          description: >
+            Transition time for on, off and brightness changes. Colour commands
+            are always sent without a transition, as many bulbs ignore colour
+            when one is attached.
+          default: 0.3
+          selector:
+            number:
+              min: 0
+              max: 5
+              step: 0.1
+              unit_of_measurement: s
+
+mode: parallel
+max: 10
+max_exceeded: silent
+
+trigger_variables:
+  base_topic: !input base_topic
+  controller: !input controller
+
+triggers:
+  - trigger: mqtt
+    topic: "{{ base_topic ~ '/' ~ controller }}"
+    id: button
+  - trigger: state
+    id: colour_sync
+    entity_id:
+      - !input light_left
+      - !input light_right
+    attribute: hs_color
+  - trigger: state
+    id: colour_sync
+    entity_id:
+      - !input light_left
+      - !input light_right
+    attribute: color_temp_kelvin
+
+variables:
+  light_left: !input light_left
+  light_right: !input light_right
+  step: !input brightness_step
+  default_bri: !input default_brightness
+  warm_k: !input warm_kelvin
+  cool_k: !input cool_kelvin
+  sync_enabled: !input colour_sync
+  tr: !input transition
+  colour_modes:
+    - hs
+    - xy
+    - rgb
+    - rgbw
+    - rgbww
+
+actions:
+  - choose:
+
+      # ------------------------------------------------------------------
+      # Remote button pressed
+      # ------------------------------------------------------------------
+      - conditions:
+          - condition: trigger
+            id: button
+          - condition: template
+            value_template: "{{ trigger.payload_json.action is defined }}"
+        sequence:
+          - variables:
+              act: "{{ trigger.payload_json.action }}"
+              tgt: >-
+                {{ light_left if trigger.payload_json.action == 'arrow_left_click'
+                   else light_right }}
+              src: >-
+                {{ light_right if trigger.payload_json.action == 'arrow_left_click'
+                   else light_left }}
+              lights_on: >-
+                {{ [light_left, light_right] | select('is_state', 'on') | list }}
+
+          - choose:
+
+              # --- left or right arrow: toggle, matching the other light ---
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ act in ['arrow_left_click', 'arrow_right_click'] }}
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ is_state(tgt, 'on') }}"
+                        sequence:
+                          - action: light.turn_off
+                            target:
+                              entity_id: "{{ tgt }}"
+                            data:
+                              transition: "{{ tr }}"
+                    default:
+                      - variables:
+                          src_on: "{{ is_state(src, 'on') }}"
+                          src_bri: "{{ state_attr(src, 'brightness') | int(255) }}"
+                          src_hs: "{{ state_attr(src, 'hs_color') }}"
+                          src_kelvin: "{{ state_attr(src, 'color_temp_kelvin') }}"
+                          # Capability checks are deliberately computed inline.
+                          # supported_color_modes is a list of StrEnum members;
+                          # storing it in a variable renders it to text that
+                          # cannot be parsed back into a list.
+                          copy_colour: >-
+                            {{ is_state(src, 'on')
+                               and state_attr(src, 'color_mode') in colour_modes
+                               and state_attr(src, 'hs_color') is not none
+                               and (state_attr(tgt, 'supported_color_modes')
+                                    | default([], true))
+                                   | select('in', colour_modes)
+                                   | list | count > 0 }}
+                          copy_temp: >-
+                            {{ is_state(src, 'on')
+                               and state_attr(src, 'color_mode') == 'color_temp'
+                               and state_attr(src, 'color_temp_kelvin') is not none
+                               and 'color_temp' in (
+                                   state_attr(tgt, 'supported_color_modes')
+                                   | default([], true)) }}
+
+                      # 1. switch on at the right brightness
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: "{{ src_on }}"
+                            sequence:
+                              - action: light.turn_on
+                                target:
+                                  entity_id: "{{ tgt }}"
+                                data:
+                                  brightness: "{{ src_bri }}"
+                                  transition: "{{ tr }}"
+                        default:
+                          - action: light.turn_on
+                            target:
+                              entity_id: "{{ tgt }}"
+                            data:
+                              brightness_pct: "{{ default_bri }}"
+                              transition: "{{ tr }}"
+
+                      # 2. once it is on, send the colour and confirm it stuck
+                      - if:
+                          - condition: template
+                            value_template: "{{ copy_colour or copy_temp }}"
+                        then:
+                          - wait_template: "{{ is_state(tgt, 'on') }}"
+                            timeout: "00:00:02"
+                            continue_on_timeout: true
+                          - delay:
+                              milliseconds: 300
+                          - repeat:
+                              sequence:
+                                - choose:
+                                    - conditions:
+                                        - condition: template
+                                          value_template: "{{ copy_colour }}"
+                                      sequence:
+                                        - action: light.turn_on
+                                          target:
+                                            entity_id: "{{ tgt }}"
+                                          data:
+                                            hs_color: "{{ src_hs }}"
+                                    - conditions:
+                                        - condition: template
+                                          value_template: "{{ copy_temp }}"
+                                      sequence:
+                                        - action: light.turn_on
+                                          target:
+                                            entity_id: "{{ tgt }}"
+                                          data:
+                                            color_temp_kelvin: "{{ src_kelvin }}"
+                                - delay:
+                                    milliseconds: 700
+                              until:
+                                - condition: template
+                                  value_template: >-
+                                    {% set hs = state_attr(tgt, 'hs_color') %}
+                                    {% set k = state_attr(tgt, 'color_temp_kelvin') %}
+                                    {{ repeat.index >= 3
+                                       or (copy_colour and hs is not none
+                                           and (hs[0] - src_hs[0]) | abs < 5
+                                           and (hs[1] - src_hs[1]) | abs < 5)
+                                       or (copy_temp and k is not none
+                                           and (k - src_kelvin) | abs < 100) }}
+
+              # --- up, short press: brighten whatever is on ---
+              - conditions:
+                  - condition: template
+                    value_template: "{{ act == 'on' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ lights_on }}"
+                    data:
+                      brightness_step_pct: "{{ step }}"
+                      transition: "{{ tr }}"
+
+              # --- down, short press: dim whatever is on ---
+              - conditions:
+                  - condition: template
+                    value_template: "{{ act == 'off' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ lights_on }}"
+                    data:
+                      brightness_step_pct: "{{ step * -1 }}"
+                      transition: "{{ tr }}"
+
+              # --- up, hold: warm colour temperature ---
+              - conditions:
+                  - condition: template
+                    value_template: "{{ act == 'brightness_move_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ lights_on }}"
+                    data:
+                      color_temp_kelvin: "{{ warm_k }}"
+
+              # --- down, hold: cool colour temperature ---
+              - conditions:
+                  - condition: template
+                    value_template: "{{ act == 'brightness_move_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ lights_on }}"
+                    data:
+                      color_temp_kelvin: "{{ cool_k }}"
+
+      # ------------------------------------------------------------------
+      # Colour changed elsewhere while both lights are on
+      # ------------------------------------------------------------------
+      - conditions:
+          - condition: trigger
+            id: colour_sync
+          - condition: template
+            value_template: "{{ sync_enabled }}"
+          - condition: template
+            value_template: >-
+              {{ is_state(light_left, 'on') and is_state(light_right, 'on') }}
+        sequence:
+          - variables:
+              src: "{{ trigger.entity_id }}"
+              tgt: >-
+                {{ light_right if trigger.entity_id == light_left
+                   else light_left }}
+
+          # let a burst of attribute updates settle
+          - delay:
+              milliseconds: 500
+
+          - condition: template
+            value_template: >-
+              {{ is_state(light_left, 'on') and is_state(light_right, 'on') }}
+
+          - choose:
+              # source is in a colour mode and the target is out of step
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ state_attr(src, 'color_mode') in colour_modes
+                         and state_attr(src, 'hs_color') is not none
+                         and (state_attr(tgt, 'supported_color_modes')
+                              | default([], true))
+                             | select('in', colour_modes)
+                             | list | count > 0
+                         and (state_attr(tgt, 'color_mode') not in colour_modes
+                              or state_attr(tgt, 'hs_color') is none
+                              or (state_attr(tgt, 'hs_color')[0]
+                                  - state_attr(src, 'hs_color')[0]) | abs >= 5
+                              or (state_attr(tgt, 'hs_color')[1]
+                                  - state_attr(src, 'hs_color')[1]) | abs >= 5) }}
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ tgt }}"
+                    data:
+                      hs_color: "{{ state_attr(src, 'hs_color') }}"
+
+              # source is in colour temperature mode and the target is out of step
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ state_attr(src, 'color_mode') == 'color_temp'
+                         and state_attr(src, 'color_temp_kelvin') is not none
+                         and 'color_temp' in (
+                             state_attr(tgt, 'supported_color_modes')
+                             | default([], true))
+                         and (state_attr(tgt, 'color_mode') != 'color_temp'
+                              or state_attr(tgt, 'color_temp_kelvin') is none
+                              or (state_attr(tgt, 'color_temp_kelvin')
+                                  - state_attr(src, 'color_temp_kelvin'))
+                                 | abs >= 100) }}
+                sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ tgt }}"
+                    data:
+                      color_temp_kelvin: "{{ state_attr(src, 'color_temp_kelvin') }}"

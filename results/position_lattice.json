@@ -1,0 +1,30 @@
+{
+  "tier": "tier0_synthetic",
+  "positions": {
+    "A_T": {
+      "schedules": 63,
+      "successes": 13,
+      "I_k": 1,
+      "min_k_flows": 2,
+      "min_total_hold": 9990.0,
+      "truncated": false
+    },
+    "A_M": {
+      "schedules": 93,
+      "successes": 19,
+      "I_k": 1,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "truncated": false
+    },
+    "A_O": {
+      "schedules": 93,
+      "successes": 19,
+      "I_k": 1,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "truncated": false
+    }
+  },
+  "note": "A_O is a FULL-SEMANTIC ORACLE and is an UPPER BOUND ONLY. The design forbids reporting it as a practical rate: no real adversary has future knowledge of the exogenous schedule. It is here to bound how much the realistic positions leave on the table."
+}

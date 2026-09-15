@@ -1,0 +1,94 @@
+blueprint:
+  name: Bidirectional Light Sync with Zero-Bounce
+  description: >
+    Syncs state, brightness, and color temperature bidirectionally between Light A and Light B
+    with a 1-second transition lockout to prevent feedback loops and slider bouncing.
+  domain: automation
+  input:
+    light_a:
+      name: Light A
+      description: The first light (e.g. your CYD virtual light).
+      selector:
+        entity:
+          domain: light
+    light_b:
+      name: Light B
+      description: The second light (e.g. your physical bedroom lamp).
+      selector:
+        entity:
+          domain: light
+
+mode: single
+max_exceeded: silent
+
+variables:
+  light_a: !input light_a
+  light_b: !input light_b
+
+trigger:
+  - platform: state
+    entity_id: !input light_a
+    id: a_changed
+  - platform: state
+    entity_id: !input light_b
+    id: b_changed
+
+condition:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none and trigger.to_state is not none and
+      trigger.from_state.state != trigger.to_state.state or
+      trigger.from_state.attributes != trigger.to_state.attributes }}
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: a_changed
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input light_a
+                state: "on"
+            then:
+              - target:
+                  entity_id: !input light_b
+                data: >-
+                  {% set b = state_attr(light_a, 'brightness') %}
+                  {% set ct = state_attr(light_a, 'color_temp_kelvin') %}
+                  {% set result = namespace(data={}) %}
+                  {% if b is not none %}{% set result.data = dict(result.data, brightness=b) %}{% endif %}
+                  {% if ct is not none %}{% set result.data = dict(result.data, color_temp_kelvin=ct) %}{% endif %}
+                  {{ result.data }}
+                action: light.turn_on
+            else:
+              - target:
+                  entity_id: !input light_b
+                action: light.turn_off
+          # Lock execution for 1 second to discard transition feedback loops
+          - delay: "00:00:01"
+      - conditions:
+          - condition: trigger
+            id: b_changed
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input light_b
+                state: "on"
+            then:
+              - target:
+                  entity_id: !input light_a
+                data: >-
+                  {% set b = state_attr(light_b, 'brightness') %}
+                  {% set ct = state_attr(light_b, 'color_temp_kelvin') %}
+                  {% set result = namespace(data={}) %}
+                  {% if b is not none %}{% set result.data = dict(result.data, brightness=b) %}{% endif %}
+                  {% if ct is not none %}{% set result.data = dict(result.data, color_temp_kelvin=ct) %}{% endif %}
+                  {{ result.data }}
+                action: light.turn_on
+            else:
+              - target:
+                  entity_id: !input light_a
+                action: light.turn_off
+          # Lock execution for 1 second to discard transition feedback loops
+          - delay: "00:00:01"

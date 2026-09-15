@@ -1,0 +1,377 @@
+run_id,position,entity_class,guard_tier,commit_timing,hold_duration_s,seed,backbone,t_generated,t_received,t_commit,ha_clock_offset_s,true_age_at_commit,observable_age_at_commit,admitted,invariant_violated,ha_last_reported_advanced,payload_sha256,shim_synthesized_frame,zero_effect,modelled_link,notes
+20260812T193146,B,template_virtual,none,untimed,120.0,0,det_ref,1786577508.481,1786576474.429,1786577510.501,-0.447,2.02,1036.072,True,True,,,False,False,False,no guard
+20260812T193146,B,template_virtual,static,untimed,120.0,0,det_ref,1786577512.53,1786577510.507,1786577514.544,-0.447,2.014,4.037,False,False,,,False,False,False,contact STALE (age 2.1s > 2.0s)
+20260812T193146,B,template_virtual,heartbeat,untimed,120.0,0,det_ref,1786577516.691,1786577514.67,1786577518.704,-0.447,2.013,4.034,False,False,,,False,False,False,contact STALE (age 2.0s > 2.0s)
+20260812T193146,B,template_virtual,activepoll,untimed,120.0,0,det_ref,1786577520.748,1786577518.727,1786577522.758,-0.447,2.01,4.03,False,False,,,False,False,False,contact STALE (age 2.0s > 2.0s)
+20260812T193254,B,template_virtual,none,untimed,120.0,0,det_ref,1786577576.84,1786577522.786,1786577578.853,-0.807,2.013,56.067,True,True,,,False,False,False,no guard
+,B,,static,,,,,,,,,,,,,,,,True,,proxy path failed: HTTPStatusError
+,B,,heartbeat,,,,,,,,,,,,,,,,True,,proxy path failed: HTTPStatusError
+,B,,activepoll,,,,,,,,,,,,,,,,True,,proxy path failed: HTTPStatusError
+20260812T193356,B,template_virtual,none,untimed,120.0,0,det_ref,1786577638.548,1786577636.53,1786577640.564,-0.519,2.017,4.034,True,True,,,False,False,False,no guard
+20260812T193356,B,template_virtual,static,untimed,120.0,0,det_ref,1786577642.591,1786577640.57,1786577644.605,-0.519,2.014,4.035,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193356,B,template_virtual,heartbeat,untimed,120.0,0,det_ref,1786577646.718,1786577644.691,1786577648.732,-0.519,2.014,4.042,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193356,B,template_virtual,activepoll,untimed,120.0,0,det_ref,1786577650.787,1786577648.766,1786577652.796,-0.519,2.009,4.03,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193428,A0,integration_backed,none,timed,180.0,0,det_ref,1786577669.091,1786577676.542,1786577676.595,-0.491,7.504,0.053,True,True,,8a819580475f2f49,False,False,True,no guard
+20260812T193428,A0,integration_backed,static,timed,180.0,0,det_ref,1786577708.072,1786577716.564,1786577716.591,-0.491,8.519,0.027,True,True,,5bd16ec3f0db0ba5,False,False,True,admitted
+20260812T193428,A0,integration_backed,heartbeat,timed,180.0,0,det_ref,1786577717.629,1786577726.568,1786577726.589,-0.491,8.96,0.021,True,True,,a320058e18a50f6a,False,False,True,admitted
+,A0,,activepoll,,,0,,,,,,,,,,,,,True,,RemoteDisconnected: Remote end closed connection without response
+20260812T193704,A1,integration_backed,none,untimed,180.0,0,det_ref,1786577827.797,1786577824.784,1786577827.797,-0.756,0.0,3.013,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,1,det_ref,1786577830.829,1786577827.816,1786577830.829,-0.756,0.0,3.012,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,2,det_ref,1786577833.872,1786577830.856,1786577833.872,-0.756,0.0,3.016,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,3,det_ref,1786577836.903,1786577833.892,1786577836.903,-0.756,0.0,3.011,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,4,det_ref,1786577839.937,1786577836.924,1786577839.937,-0.756,0.0,3.013,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,5,det_ref,1786577842.968,1786577839.958,1786577842.968,-0.756,0.0,3.01,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,6,det_ref,1786577845.999,1786577842.989,1786577845.999,-0.756,0.0,3.01,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,7,det_ref,1786577849.03,1786577846.019,1786577849.03,-0.756,0.0,3.011,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,8,det_ref,1786577852.059,1786577849.052,1786577852.059,-0.756,0.0,3.007,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,9,det_ref,1786577855.083,1786577852.076,1786577855.083,-0.756,0.0,3.007,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,10,det_ref,1786577858.107,1786577855.099,1786577858.107,-0.756,0.0,3.008,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,11,det_ref,1786577861.13,1786577858.121,1786577861.13,-0.756,0.0,3.009,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,12,det_ref,1786577864.158,1786577861.148,1786577864.158,-0.756,0.0,3.011,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,13,det_ref,1786577867.184,1786577864.174,1786577867.184,-0.756,0.0,3.01,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,14,det_ref,1786577870.212,1786577867.2,1786577870.212,-0.756,0.0,3.013,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,15,det_ref,1786577873.28,1786577870.265,1786577873.28,-0.756,0.0,3.014,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,16,det_ref,1786577876.312,1786577873.299,1786577876.312,-0.756,0.0,3.013,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,17,det_ref,1786577879.344,1786577876.334,1786577879.344,-0.756,0.0,3.01,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,18,det_ref,1786577882.376,1786577879.368,1786577882.376,-0.756,0.0,3.008,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,none,untimed,180.0,19,det_ref,1786577885.404,1786577882.391,1786577885.404,-0.756,0.0,3.013,True,True,,,False,False,False,no guard
+20260812T193704,A1,integration_backed,static,untimed,180.0,0,det_ref,1786577888.439,1786577885.426,1786577888.439,-0.756,0.0,3.013,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,1,det_ref,1786577891.568,1786577888.556,1786577891.568,-0.756,0.0,3.012,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,2,det_ref,1786577894.606,1786577891.599,1786577894.606,-0.756,0.0,3.007,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,3,det_ref,1786577897.657,1786577894.647,1786577897.657,-0.756,0.0,3.01,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,4,det_ref,1786577900.714,1786577897.699,1786577900.714,-0.756,0.0,3.015,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,5,det_ref,1786577903.765,1786577900.748,1786577903.765,-0.756,0.0,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,6,det_ref,1786577906.827,1786577903.814,1786577906.827,-0.756,0.0,3.013,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,7,det_ref,1786577909.892,1786577906.874,1786577909.892,-0.756,0.0,3.018,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,8,det_ref,1786577912.957,1786577909.948,1786577912.957,-0.756,0.0,3.009,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,9,det_ref,1786577916.026,1786577913.009,1786577916.026,-0.756,0.0,3.017,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,10,det_ref,1786577919.096,1786577916.08,1786577919.096,-0.756,0.0,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,11,det_ref,1786577922.149,1786577919.131,1786577922.149,-0.756,0.0,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,12,det_ref,1786577925.215,1786577922.197,1786577925.215,-0.756,0.0,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,13,det_ref,1786577928.274,1786577925.263,1786577928.274,-0.756,0.0,3.012,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,14,det_ref,1786577931.332,1786577928.317,1786577931.332,-0.756,0.0,3.015,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,15,det_ref,1786577934.393,1786577931.374,1786577934.393,-0.756,0.0,3.019,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,16,det_ref,1786577937.46,1786577934.441,1786577937.46,-0.756,0.0,3.019,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,17,det_ref,1786577940.522,1786577937.502,1786577940.522,-0.756,0.0,3.019,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,18,det_ref,1786577943.595,1786577940.576,1786577943.595,-0.756,0.0,3.02,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,static,untimed,180.0,19,det_ref,1786577946.657,1786577943.644,1786577946.657,-0.756,0.0,3.013,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,0,det_ref,1786577949.71,1786577946.692,1786577949.71,-0.756,0.0,3.019,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,1,det_ref,1786577952.774,1786577949.762,1786577952.774,-0.756,0.0,3.011,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,2,det_ref,1786577955.828,1786577952.816,1786577955.828,-0.756,0.0,3.011,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,3,det_ref,1786577958.894,1786577955.874,1786577958.894,-0.756,0.0,3.019,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,4,det_ref,1786577961.942,1786577958.929,1786577961.942,-0.756,0.0,3.014,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,5,det_ref,1786577964.993,1786577961.974,1786577964.993,-0.756,0.0,3.018,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,6,det_ref,1786577968.056,1786577965.041,1786577968.056,-0.756,0.0,3.015,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,7,det_ref,1786577971.117,1786577968.101,1786577971.117,-0.756,0.0,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,8,det_ref,1786577974.175,1786577971.157,1786577974.175,-0.756,0.0,3.018,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,9,det_ref,1786577977.255,1786577974.24,1786577977.255,-0.756,0.0,3.015,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,10,det_ref,1786577980.309,1786577977.292,1786577980.309,-0.756,0.0,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,11,det_ref,1786577983.368,1786577980.359,1786577983.368,-0.756,0.0,3.01,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,12,det_ref,1786577986.419,1786577983.402,1786577986.419,-0.756,0.0,3.017,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,13,det_ref,1786577989.487,1786577986.469,1786577989.487,-0.756,0.0,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,14,det_ref,1786577992.559,1786577989.541,1786577992.559,-0.756,0.0,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,15,det_ref,1786577995.624,1786577992.607,1786577995.624,-0.756,0.0,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,16,det_ref,1786577998.691,1786577995.675,1786577998.691,-0.756,0.0,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,17,det_ref,1786578001.756,1786577998.741,1786578001.756,-0.756,0.0,3.015,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,18,det_ref,1786578004.804,1786578004.79,1786578004.804,-0.756,0.0,0.014,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,heartbeat,untimed,180.0,19,det_ref,1786578007.865,1786578007.817,1786578007.865,-0.756,0.0,0.048,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,0,det_ref,1786578010.923,1786578010.865,1786578010.923,-0.756,0.0,0.058,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,1,det_ref,1786578013.989,1786578013.899,1786578013.989,-0.756,0.0,0.091,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,2,det_ref,1786578017.055,1786578016.933,1786578017.055,-0.756,0.0,0.121,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,3,det_ref,1786578020.135,1786578019.961,1786578020.135,-0.756,0.0,0.174,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,4,det_ref,1786578023.197,1786578022.998,1786578023.197,-0.756,0.0,0.198,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,5,det_ref,1786578026.253,1786578026.026,1786578026.253,-0.756,0.0,0.226,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,6,det_ref,1786578029.294,1786578029.059,1786578029.294,-0.756,0.0,0.235,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,7,det_ref,1786578032.358,1786578032.087,1786578032.358,-0.756,0.0,0.271,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,8,det_ref,1786578035.442,1786578035.102,1786578035.442,-0.756,0.0,0.34,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,9,det_ref,1786578038.503,1786578038.132,1786578038.503,-0.756,0.0,0.371,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,10,det_ref,1786578041.558,1786578041.156,1786578041.558,-0.756,0.0,0.402,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,11,det_ref,1786578044.623,1786578044.183,1786578044.623,-0.756,0.0,0.439,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,12,det_ref,1786578047.691,1786578047.202,1786578047.691,-0.756,0.0,0.489,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,13,det_ref,1786578050.758,1786578050.277,1786578050.758,-0.756,0.0,0.481,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,14,det_ref,1786578053.824,1786578053.307,1786578053.824,-0.756,0.0,0.517,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,15,det_ref,1786578056.884,1786578056.346,1786578056.884,-0.756,0.0,0.538,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,16,det_ref,1786578059.948,1786578059.378,1786578059.948,-0.756,0.0,0.571,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,17,det_ref,1786578063.019,1786578062.401,1786578063.019,-0.756,0.0,0.618,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,18,det_ref,1786578066.084,1786578065.438,1786578066.084,-0.756,0.0,0.646,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,A1,integration_backed,activepoll,untimed,180.0,19,det_ref,1786578069.153,1786578068.559,1786578069.153,-0.756,0.0,0.594,False,False,,,False,True,False,contact=on (need off)
+20260812T193704,B,template_virtual,none,untimed,180.0,0,det_ref,1786578071.217,1786578069.193,1786578073.227,-0.756,2.01,4.035,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,1,det_ref,1786578075.26,1786578073.237,1786578077.276,-0.756,2.016,4.039,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,2,det_ref,1786578079.302,1786578077.28,1786578081.316,-0.756,2.014,4.036,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,3,det_ref,1786578083.351,1786578081.326,1786578085.368,-0.756,2.018,4.042,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,4,det_ref,1786578087.401,1786578085.373,1786578089.417,-0.756,2.015,4.044,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,5,det_ref,1786578091.457,1786578089.422,1786578093.471,-0.756,2.014,4.049,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,6,det_ref,1786578095.515,1786578093.479,1786578097.531,-0.756,2.016,4.052,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,7,det_ref,1786578099.562,1786578097.536,1786578101.581,-0.756,2.018,4.044,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,8,det_ref,1786578103.611,1786578101.587,1786578105.628,-0.756,2.017,4.041,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,9,det_ref,1786578107.658,1786578105.636,1786578109.678,-0.756,2.02,4.043,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,10,det_ref,1786578111.739,1786578109.693,1786578113.755,-0.756,2.015,4.062,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,11,det_ref,1786578115.786,1786578113.76,1786578117.803,-0.756,2.018,4.043,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,12,det_ref,1786578119.838,1786578117.808,1786578121.862,-0.756,2.023,4.054,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,13,det_ref,1786578123.899,1786578121.869,1786578125.918,-0.756,2.018,4.048,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,14,det_ref,1786578127.95,1786578125.921,1786578129.973,-0.756,2.023,4.051,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,15,det_ref,1786578132.017,1786578129.983,1786578134.037,-0.756,2.019,4.053,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,16,det_ref,1786578136.072,1786578134.043,1786578138.083,-0.756,2.012,4.041,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,17,det_ref,1786578140.115,1786578138.089,1786578142.135,-0.756,2.02,4.046,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,18,det_ref,1786578144.167,1786578142.141,1786578146.181,-0.756,2.014,4.041,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,none,untimed,180.0,19,det_ref,1786578148.214,1786578146.187,1786578150.232,-0.756,2.018,4.045,True,True,,,False,False,False,no guard
+20260812T193704,B,template_virtual,static,untimed,180.0,0,det_ref,1786578152.261,1786578150.235,1786578154.278,-0.756,2.016,4.043,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,1,det_ref,1786578156.341,1786578154.315,1786578158.357,-0.756,2.016,4.042,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,2,det_ref,1786578160.407,1786578158.386,1786578162.424,-0.756,2.017,4.037,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,3,det_ref,1786578164.482,1786578162.458,1786578166.495,-0.756,2.013,4.037,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,4,det_ref,1786578168.553,1786578166.529,1786578170.57,-0.756,2.017,4.041,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,5,det_ref,1786578172.628,1786578170.611,1786578174.645,-0.756,2.017,4.034,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,6,det_ref,1786578176.708,1786578174.682,1786578178.72,-0.756,2.012,4.038,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,7,det_ref,1786578180.771,1786578178.754,1786578182.784,-0.756,2.012,4.03,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,8,det_ref,1786578184.837,1786578182.813,1786578186.851,-0.756,2.015,4.038,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,9,det_ref,1786578188.906,1786578186.886,1786578190.918,-0.756,2.012,4.032,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,10,det_ref,1786578192.974,1786578190.947,1786578194.986,-0.756,2.012,4.039,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,11,det_ref,1786578197.051,1786578195.024,1786578199.069,-0.756,2.018,4.045,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,12,det_ref,1786578201.141,1786578199.114,1786578203.162,-0.756,2.021,4.049,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,13,det_ref,1786578205.232,1786578203.202,1786578207.25,-0.756,2.018,4.048,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,14,det_ref,1786578209.312,1786578207.286,1786578211.325,-0.756,2.014,4.039,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,15,det_ref,1786578213.384,1786578211.356,1786578215.405,-0.756,2.021,4.049,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,16,det_ref,1786578217.46,1786578215.441,1786578219.47,-0.756,2.01,4.029,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,17,det_ref,1786578221.534,1786578219.509,1786578223.55,-0.756,2.016,4.04,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,18,det_ref,1786578225.615,1786578223.589,1786578227.633,-0.756,2.018,4.044,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,static,untimed,180.0,19,det_ref,1786578229.695,1786578227.669,1786578231.709,-0.756,2.014,4.039,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,0,det_ref,1786578233.767,1786578231.743,1786578235.776,-0.756,2.009,4.033,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,1,det_ref,1786578237.847,1786578235.823,1786578239.863,-0.756,2.017,4.041,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,2,det_ref,1786578241.918,1786578239.898,1786578243.937,-0.756,2.02,4.039,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,3,det_ref,1786578245.997,1786578243.971,1786578248.013,-0.756,2.016,4.042,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,4,det_ref,1786578250.056,1786578248.033,1786578252.073,-0.756,2.017,4.04,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,5,det_ref,1786578254.137,1786578252.11,1786578256.154,-0.756,2.018,4.044,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,6,det_ref,1786578258.218,1786578256.191,1786578260.239,-0.756,2.021,4.048,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,7,det_ref,1786578262.301,1786578260.275,1786578264.316,-0.756,2.014,4.041,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,8,det_ref,1786578266.381,1786578264.353,1786578268.4,-0.756,2.019,4.047,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,9,det_ref,1786578270.469,1786578268.438,1786578272.49,-0.756,2.021,4.052,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,10,det_ref,1786578274.545,1786578272.523,1786578276.563,-0.756,2.018,4.04,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,11,det_ref,1786578278.609,1786578276.593,1786578280.625,-0.756,2.016,4.032,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,12,det_ref,1786578282.672,1786578280.65,1786578284.681,-0.756,2.009,4.031,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,13,det_ref,1786578286.726,1786578284.707,1786578288.742,-0.756,2.016,4.035,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,14,det_ref,1786578290.783,1786578288.77,1786578292.8,-0.756,2.017,4.03,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,15,det_ref,1786578294.849,1786578292.832,1786578296.868,-0.756,2.019,4.036,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,16,det_ref,1786578298.917,1786578296.896,1786578300.935,-0.756,2.018,4.039,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,17,det_ref,1786578303.0,1786578300.977,1786578305.013,-0.756,2.013,4.036,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,18,det_ref,1786578307.054,1786578305.04,1786578309.061,-0.756,2.007,4.021,False,False,,,False,False,False,contact STALE (age 4.0s > 2.0s)
+20260812T193704,B,template_virtual,heartbeat,untimed,180.0,19,det_ref,1786578311.101,1786578309.086,1786578313.117,-0.756,2.017,4.031,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,0,det_ref,1786578315.161,1786578313.149,1786578317.178,-0.756,2.016,4.029,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,1,det_ref,1786578319.225,1786578317.206,1786578321.24,-0.756,2.016,4.034,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,2,det_ref,1786578323.289,1786578321.271,1786578325.299,-0.756,2.01,4.028,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,3,det_ref,1786578327.362,1786578325.34,1786578329.37,-0.756,2.008,4.03,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,4,det_ref,1786578331.416,1786578329.393,1786578333.431,-0.756,2.015,4.038,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,5,det_ref,1786578335.476,1786578333.455,1786578337.491,-0.756,2.015,4.036,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,6,det_ref,1786578339.534,1786578337.521,1786578341.551,-0.756,2.017,4.03,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,7,det_ref,1786578343.61,1786578341.588,1786578345.626,-0.756,2.016,4.037,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,8,det_ref,1786578347.673,1786578345.661,1786578349.69,-0.756,2.017,4.029,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,9,det_ref,1786578351.742,1786578349.725,1786578353.761,-0.756,2.019,4.036,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,10,det_ref,1786578355.829,1786578353.804,1786578357.838,-0.756,2.009,4.034,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,11,det_ref,1786578359.885,1786578357.866,1786578361.903,-0.756,2.018,4.036,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,12,det_ref,1786578363.957,1786578361.936,1786578365.974,-0.756,2.017,4.038,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,13,det_ref,1786578368.019,1786578366.002,1786578370.036,-0.756,2.017,4.034,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,14,det_ref,1786578372.095,1786578370.072,1786578374.113,-0.756,2.018,4.041,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,15,det_ref,1786578376.172,1786578374.154,1786578378.187,-0.756,2.015,4.033,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,16,det_ref,1786578380.242,1786578378.217,1786578382.253,-0.756,2.011,4.036,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,17,det_ref,1786578384.309,1786578382.287,1786578386.324,-0.756,2.015,4.037,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,18,det_ref,1786578388.379,1786578386.357,1786578390.39,-0.756,2.011,4.033,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T193704,B,template_virtual,activepoll,untimed,180.0,19,det_ref,1786578392.452,1786578390.428,1786578394.467,-0.756,2.015,4.039,False,False,,,False,False,False,contact STALE (age 4.1s > 2.0s)
+20260812T194634,A0,integration_backed,none,timed,180.0,0,det_ref,1786578395.205,1786578402.569,1786578402.631,-0.626,7.426,0.062,True,True,,46e4abab6d8862a7,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,1,det_ref,1786578436.295,1786578442.641,1786578442.696,-0.626,6.401,0.055,True,True,,0c4896c9144bfaed,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,2,det_ref,1786578445.666,1786578452.642,1786578452.685,-0.626,7.019,0.043,True,True,,4b96fd1580f630c9,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,3,det_ref,1786578455.666,1786578492.695,1786578492.735,-0.626,37.069,0.04,True,True,,0c23cf0b6b40d096,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,4,det_ref,1786578495.773,1786578502.713,1786578502.771,-0.626,6.998,0.059,True,True,,4ff3b3e332105115,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,5,det_ref,1786578505.801,1786578512.721,1786578512.752,-0.626,6.951,0.03,True,True,,af9c67e311a07a5f,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,6,det_ref,1786578515.627,1786578552.785,1786578552.848,-0.626,37.221,0.063,True,True,,c1ce5ad6f2243767,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,7,det_ref,1786578555.821,1786578562.799,1786578562.807,-0.626,6.986,0.008,True,True,,fcd453da5991e5e6,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,8,det_ref,1786578565.776,1786578572.804,1786578572.864,-0.626,7.088,0.06,True,True,,2201c1a8d040638d,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,9,det_ref,1786578575.812,1786578612.882,1786578612.92,-0.626,37.108,0.038,True,True,,3e89f96380872841,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,10,det_ref,1786578615.925,1786578622.888,1786578622.947,-0.626,7.022,0.058,True,True,,86d82d10a6e84304,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,11,det_ref,1786578625.926,1786578632.894,1786578632.91,-0.626,6.984,0.016,True,True,,df506a0a9416ffe7,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,12,det_ref,1786578635.88,1786578672.952,1786578672.987,-0.626,37.107,0.034,True,True,,89cf65b1969a750c,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,13,det_ref,1786578675.958,1786578682.956,1786578682.996,-0.626,7.038,0.039,True,True,,324971258db27ecb,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,14,det_ref,1786578685.96,1786578692.973,1786578693.001,-0.626,7.041,0.028,True,True,,936b691a99df8f90,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,15,det_ref,1786578695.966,1786578733.058,1786578733.077,-0.626,37.111,0.019,True,True,,0aa4a8e894d96368,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,16,det_ref,1786578736.072,1786578743.073,1786578743.113,-0.626,7.041,0.04,True,True,,71d195e712e4c2c6,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,17,det_ref,1786578746.036,1786578753.078,1786578753.117,-0.626,7.081,0.039,True,True,,58c80ededc22f153,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,18,det_ref,1786578756.118,1786578793.142,1786578793.195,-0.626,37.077,0.053,True,True,,0767fa20760f3aec,False,False,True,no guard
+20260812T194634,A0,integration_backed,none,timed,180.0,19,det_ref,1786578796.168,1786578803.159,1786578803.167,-0.626,6.999,0.007,True,True,,8d2804667ea99819,False,False,True,no guard
+20260812T194634,A0,integration_backed,static,timed,180.0,0,det_ref,1786578806.203,1786578813.166,1786578813.207,-0.626,7.004,0.041,True,True,,6460cb6445a6503d,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,1,det_ref,1786578816.23,1786578853.243,1786578853.265,-0.626,37.035,0.021,True,True,,8e86dfe8d1f52221,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,2,det_ref,1786578856.323,1786578863.254,1786578863.276,-0.626,6.953,0.022,True,True,,43560d5979f13cb5,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,3,det_ref,1786578866.369,1786578873.272,1786578873.332,-0.626,6.963,0.059,True,True,,045b57975220368d,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,4,det_ref,1786578876.44,1786578913.332,1786578913.348,-0.626,36.908,0.017,True,True,,99e9ea3d96437669,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,5,det_ref,1786578916.365,1786578923.335,1786578923.388,-0.626,7.023,0.054,True,True,,0e435c3545cb02aa,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,6,det_ref,1786578926.423,1786578933.343,1786578933.388,-0.626,6.965,0.045,True,True,,b4ec6efb4ea8ec56,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,7,det_ref,1786578936.387,1786578973.372,1786578973.414,-0.626,37.027,0.043,True,True,,a4a45d334f5a0c79,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,8,det_ref,1786578976.411,1786578983.382,1786578983.422,-0.626,7.011,0.04,True,True,,8a6606ba541bfae0,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,9,det_ref,1786578986.512,1786578993.385,1786578993.391,-0.626,6.879,0.006,True,True,,ba6b866685e00ddc,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,10,det_ref,1786578996.382,1786579033.427,1786579033.455,-0.626,37.073,0.028,True,True,,7b5ddc8a5d3d216c,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,11,det_ref,1786579036.437,1786579043.434,1786579043.441,-0.626,7.004,0.007,True,True,,f364cbc88a6de321,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,12,det_ref,1786579046.656,1786579053.459,1786579053.508,-0.626,6.852,0.049,True,True,,852ef9b3cbbe2a8d,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,13,det_ref,1786579056.747,1786579093.508,1786579093.551,-0.626,36.804,0.043,True,True,,1d6b04d08297ce59,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,14,det_ref,1786579096.631,1786579103.526,1786579103.585,-0.626,6.954,0.059,True,True,,5c00a4e3086b48b1,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,15,det_ref,1786579106.707,1786579113.536,1786579113.543,-0.626,6.836,0.007,True,True,,dc12830f63a6254b,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,16,det_ref,1786579116.646,1786579158.598,1786579158.657,-0.626,42.011,0.059,True,True,,76756db6f7320e25,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,17,det_ref,1786579161.729,1786579168.605,1786579168.609,-0.626,6.88,0.004,True,True,,f19e7c3aac88c1c4,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,18,det_ref,1786579171.83,1786579178.611,1786579178.637,-0.626,6.807,0.025,True,True,,850d372aa6e77157,False,False,True,admitted
+20260812T194634,A0,integration_backed,static,timed,180.0,19,det_ref,1786579182.139,1786579188.631,1786579188.694,-0.626,6.555,0.062,False,False,,dda170fab1bdcbc5,False,False,True,contact STALE (age 31.1s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,0,det_ref,1786579222.522,1786579228.725,1786579228.787,-0.626,6.265,0.062,False,False,,07786434549f6ea4,False,False,True,contact REPLAYED (value-age 0.31s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,1,det_ref,1786579232.074,1786579238.723,1786579238.741,-0.626,6.667,0.018,False,False,,117ca4913a560280,False,False,True,contact REPLAYED (value-age 0.32s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,2,det_ref,1786579242.174,1786579248.736,1786579248.754,-0.626,6.58,0.018,False,False,,84acbefe8136be8a,False,False,True,contact STALE (age 30.9s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,3,det_ref,1786579282.618,1786579288.812,1786579288.854,-0.626,6.236,0.042,True,True,,d6c4826e1f892fa6,False,False,True,admitted
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,4,det_ref,1786579292.089,1786579298.819,1786579298.882,-0.626,6.793,0.063,False,False,,fcfc8f27e090f574,False,False,True,contact REPLAYED (value-age 0.33s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,5,det_ref,1786579302.096,1786579308.826,1786579308.873,-0.626,6.777,0.047,False,False,,14d95c51cacd672f,False,False,True,contact STALE (age 30.8s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,6,det_ref,1786579342.791,1786579348.901,1786579348.908,-0.626,6.117,0.007,False,False,,7932b47d057384f7,False,False,True,contact REPLAYED (value-age 0.27s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,7,det_ref,1786579352.132,1786579358.918,1786579358.93,-0.626,6.798,0.012,True,True,,ba12f687265dcce4,False,False,True,admitted
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,8,det_ref,1786579362.203,1786579368.922,1786579368.98,-0.626,6.777,0.057,False,False,,cc7333a1295c30cd,False,False,True,contact STALE (age 30.8s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,9,det_ref,1786579402.637,1786579409.012,1786579409.045,-0.626,6.408,0.033,False,False,,fc9fad6a5225ffe3,False,False,True,contact REPLAYED (value-age 0.38s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,10,det_ref,1786579412.224,1786579419.033,1786579419.055,-0.626,6.831,0.022,False,False,,32e646ac8d75509e,False,False,True,contact REPLAYED (value-age 0.30s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,11,det_ref,1786579422.3,1786579429.049,1786579429.059,-0.626,6.759,0.01,False,False,,b5ebf9ea358d7f7c,False,False,True,contact STALE (age 31.0s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,12,det_ref,1786579462.882,1786579469.122,1786579469.18,-0.626,6.298,0.058,False,False,,09e266dbb94a02e7,False,False,True,contact REPLAYED (value-age 0.34s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,13,det_ref,1786579473.183,1786579479.139,1786579479.145,-0.626,5.962,0.005,False,False,,06604b011bfc8fd3,False,False,True,contact REPLAYED (value-age 0.30s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,14,det_ref,1786579482.345,1786579489.163,1786579489.17,-0.626,6.825,0.007,False,False,,aeb8fd913e62b759,False,False,True,contact STALE (age 30.9s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,15,det_ref,1786579522.969,1786579529.24,1786579529.296,-0.626,6.327,0.056,False,False,,9893219bb0c02ec6,False,False,True,contact REPLAYED (value-age 0.28s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,16,det_ref,1786579532.432,1786579539.25,1786579539.306,-0.626,6.874,0.056,False,False,,5e4c51a1807f186d,False,False,True,contact REPLAYED (value-age 0.32s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,17,det_ref,1786579542.519,1786579549.26,1786579549.293,-0.626,6.774,0.033,False,False,,d58b1001d2fb8326,False,False,True,contact STALE (age 31.0s > 2.0s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,18,det_ref,1786579583.246,1786579589.328,1786579589.395,-0.626,6.149,0.068,False,False,,0d722e5a0f6f61f1,False,False,True,contact REPLAYED (value-age 0.35s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,heartbeat,timed,180.0,19,det_ref,1786579592.634,1786579599.339,1786579599.357,-0.626,6.723,0.018,False,False,,9a2663fd43f69a79,False,False,True,contact REPLAYED (value-age 0.25s > heartbeat tolerance 0.25s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,0,det_ref,1786579602.686,1786579609.353,1786579609.383,-0.626,6.697,0.03,False,False,,9f07b847753cdad4,False,False,True,contact STALE (age 31.0s > 2.0s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,1,det_ref,1786579643.301,1786579649.423,1786579649.481,-0.626,6.18,0.058,False,False,,ccd5fe50bc184e4c,False,False,True,contact REPLAYED (value-age 0.29s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,2,det_ref,1786579653.813,1786579659.432,1786579659.484,-0.626,5.671,0.053,False,False,,65057eee867d0ed4,False,False,True,contact REPLAYED (value-age 0.31s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,3,det_ref,1786579662.84,1786579669.439,1786579669.481,-0.626,6.641,0.043,False,False,,17d83c6b4f944736,False,False,True,contact STALE (age 31.1s > 2.0s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,4,det_ref,1786579703.696,1786579709.504,1786579709.542,-0.626,5.846,0.038,False,False,,42c7f7344c69f6ca,False,False,True,contact REPLAYED (value-age 0.28s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,5,det_ref,1786579712.719,1786579719.514,1786579719.558,-0.626,6.839,0.044,False,False,,d2ffb286c1d1025a,False,False,True,contact REPLAYED (value-age 0.34s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,6,det_ref,1786579722.868,1786579729.522,1786579729.58,-0.626,6.712,0.058,False,False,,a55fc985e2781eaa,False,False,True,contact STALE (age 30.9s > 2.0s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,7,det_ref,1786579763.381,1786579769.593,1786579769.615,-0.626,6.234,0.021,False,False,,59d52207fbd4eb86,False,False,True,contact REPLAYED (value-age 0.23s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,8,det_ref,1786579772.798,1786579779.617,1786579779.683,-0.626,6.885,0.066,False,False,,75d9b6e1ed8c2da5,False,False,True,contact REPLAYED (value-age 0.29s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,9,det_ref,1786579782.872,1786579794.642,1786579794.651,-0.626,11.779,0.009,False,False,,fb8d71c7333e828f,False,False,True,contact STALE (age 14.9s > 2.0s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,10,det_ref,1786579812.547,1786579819.696,1786579819.758,-0.626,7.211,0.062,False,False,,e1b110accbd86573,False,False,True,contact REPLAYED (value-age 0.26s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,11,det_ref,1786579822.875,1786579829.703,1786579829.749,-0.626,6.874,0.045,False,False,,13e5382c0e492947,False,False,True,contact REPLAYED (value-age 0.29s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,12,det_ref,1786579833.019,1786579869.759,1786579869.816,-0.626,36.797,0.057,False,False,,faeb2b25b493a704,False,False,True,contact REPLAYED (value-age 0.24s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,13,det_ref,1786579872.915,1786579879.778,1786579879.828,-0.626,6.913,0.051,False,False,,7375ecc394853915,False,False,True,contact REPLAYED (value-age 0.30s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,14,det_ref,1786579883.174,1786579889.797,1786579889.819,-0.626,6.645,0.023,False,False,,67223a4e08452437,False,False,True,contact REPLAYED (value-age 0.22s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,15,det_ref,1786579893.124,1786579899.815,1786579899.879,-0.626,6.755,0.064,False,False,,68896b9f77274428,False,False,True,contact STALE (age 31.0s > 2.0s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,16,det_ref,1786579933.727,1786579939.888,1786579939.895,-0.626,6.168,0.007,False,False,,a82dd5c269628bc4,False,False,True,contact REPLAYED (value-age 0.28s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,17,det_ref,1786579943.056,1786579949.905,1786579949.965,-0.626,6.909,0.06,False,False,,200880570ccdc58c,False,False,True,contact REPLAYED (value-age 0.29s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,18,det_ref,1786579953.229,1786579959.913,1786579959.971,-0.626,6.742,0.058,False,False,,391f04443d3b2296,False,False,True,contact REPLAYED (value-age 0.31s > heartbeat tolerance 0.05s)
+20260812T194634,A0,integration_backed,activepoll,timed,180.0,19,det_ref,1786579994.089,1786579999.968,1786580000.028,-0.626,5.939,0.06,False,False,,c18e48c9474fabe2,False,False,True,contact REPLAYED (value-age 0.30s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,none,untimed,180.0,0,det_ref,1786580003.662,1786580009.977,1786580010.732,-0.756,7.07,0.754,True,True,,278e546ba7759d5a,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,1,det_ref,1786580014.09,1786580050.025,1786580051.369,-0.756,37.279,1.344,True,True,,8196b65cc8c9408f,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,2,det_ref,1786580054.441,1786580060.036,1786580061.523,-0.756,7.082,1.487,True,True,,2b725f39dfd01861,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,3,det_ref,1786580064.829,1786580070.059,1786580070.383,-0.756,5.554,0.323,True,True,,e7126aa2ff27fa61,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,4,det_ref,1786580073.842,1786580110.13,1786580111.136,-0.756,37.294,1.006,True,True,,6534b07992e2e316,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,5,det_ref,1786580114.511,1786580120.134,1786580121.559,-0.756,7.048,1.425,True,True,,3b8da4e64edcc38f,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,6,det_ref,1786580124.935,1786580130.151,1786580130.466,-0.756,5.531,0.315,True,True,,4c4cea2ee7ccea8c,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,7,det_ref,1786580133.917,1786580170.205,1786580171.185,-0.756,37.268,0.98,True,True,,da61c22bd14c5d7e,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,8,det_ref,1786580174.803,1786580180.233,1786580180.333,-0.756,5.53,0.099,True,True,,46b32e7be2058012,False,False,True,no guard
+20260812T201322,A0,integration_backed,none,untimed,180.0,9,det_ref,1786580183.536,1786580190.256,1786580190.589,-0.756,7.053,0.334,True,True,,bf3c0173c2a9b079,False,False,True,no guard
+20260812T201322,A0,integration_backed,static,untimed,180.0,0,det_ref,1786580193.896,1786580230.335,1786580231.176,-0.756,37.28,0.841,True,True,,05de83ef98ac1d12,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,1,det_ref,1786580234.522,1786580240.339,1786580241.569,-0.756,7.047,1.229,True,True,,3b651a305f13cbea,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,2,det_ref,1786580244.803,1786580250.36,1786580251.86,-0.756,7.057,1.5,True,True,,116f0c2ca040eb3a,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,3,det_ref,1786580255.016,1786580290.436,1786580290.779,-0.756,35.763,0.344,True,True,,f1b37bd8338c3a90,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,4,det_ref,1786580294.077,1786580300.459,1786580301.122,-0.756,7.045,0.664,True,True,,d3f445239db21115,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,5,det_ref,1786580304.414,1786580310.475,1786580311.451,-0.756,7.037,0.976,True,True,,6e1647befd009e12,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,6,det_ref,1786580314.793,1786580350.541,1786580350.553,-0.756,35.76,0.012,True,True,,ed839067d4607244,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,7,det_ref,1786580353.75,1786580360.538,1786580360.812,-0.756,7.062,0.274,True,True,,a4071bdd0c9428ab,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,8,det_ref,1786580364.008,1786580370.569,1786580371.057,-0.756,7.049,0.488,True,True,,9a89880fb5f090d4,False,False,True,admitted
+20260812T201322,A0,integration_backed,static,untimed,180.0,9,det_ref,1786580374.279,1786580410.635,1786580411.539,-0.756,37.26,0.904,True,True,,d1d549adcf35eff5,False,False,True,admitted
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,0,det_ref,1786580415.37,1786580420.652,1786580420.907,-0.756,5.537,0.256,False,False,,843b707cf9ad1f26,False,False,True,contact REPLAYED (value-age 0.44s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,1,det_ref,1786580423.879,1786580430.677,1786580430.926,-0.756,7.047,0.25,False,False,,d2558cfdd6f2d703,False,False,True,contact REPLAYED (value-age 0.46s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,2,det_ref,1786580433.93,1786580470.754,1786580471.197,-0.756,37.267,0.443,False,False,,4cf664bce42f88e9,False,False,True,contact REPLAYED (value-age 0.64s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,3,det_ref,1786580474.257,1786580480.771,1786580481.309,-0.756,7.052,0.538,False,False,,52d798641354312c,False,False,True,contact REPLAYED (value-age 0.75s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,4,det_ref,1786580484.364,1786580490.788,1786580491.405,-0.756,7.041,0.617,False,False,,1d94d3e49499f5b5,False,False,True,contact REPLAYED (value-age 0.81s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,5,det_ref,1786580494.4,1786580540.857,1786580542.254,-0.756,47.854,1.396,False,False,,729cc7f0fb0304b0,False,False,True,contact REPLAYED (value-age 1.60s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,6,det_ref,1786580545.282,1786580550.865,1786580552.343,-0.756,7.061,1.478,False,False,,1a87ea5704fff57b,False,False,True,contact REPLAYED (value-age 1.69s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,7,det_ref,1786580555.405,1786580560.875,1786580560.925,-0.756,5.52,0.051,False,False,,09ed1fb7869e1f6e,False,False,True,contact REPLAYED (value-age 0.25s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,8,det_ref,1786580563.921,1786580590.906,1786580592.098,-0.756,28.177,1.192,False,False,,c1f9291bf9c44a60,False,False,True,contact REPLAYED (value-age 1.38s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,heartbeat,untimed,180.0,9,det_ref,1786580595.102,1786580600.898,1786580602.11,-0.756,7.008,1.213,False,False,,5bfc58ef93aeeb06,False,False,True,contact REPLAYED (value-age 1.41s > heartbeat tolerance 0.25s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,0,det_ref,1786580605.093,1786580610.909,1786580612.095,-0.756,7.002,1.186,False,False,,20db521b747b329b,False,False,True,contact REPLAYED (value-age 1.38s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,1,det_ref,1786580615.09,1786580650.947,1786580652.332,-0.756,37.242,1.385,False,False,,23ec17e49f22db58,False,False,True,contact REPLAYED (value-age 1.58s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,2,det_ref,1786580655.392,1786580660.97,1786580662.41,-0.756,7.018,1.44,False,False,,3fa117266fc8b29c,False,False,True,contact REPLAYED (value-age 1.63s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,3,det_ref,1786580665.464,1786580670.986,1786580672.496,-0.756,7.032,1.51,False,False,,3ef3bd24346ce206,False,False,True,contact REPLAYED (value-age 1.68s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,4,det_ref,1786580675.509,1786580711.053,1786580711.23,-0.756,35.721,0.176,False,False,,7261149c57628c89,False,False,True,contact REPLAYED (value-age 0.37s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,5,det_ref,1786580714.291,1786580721.062,1786580721.306,-0.756,7.015,0.244,False,False,,b492dfa38481eeb4,False,False,True,contact REPLAYED (value-age 0.45s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,6,det_ref,1786580724.35,1786580731.082,1786580731.383,-0.756,7.033,0.301,False,False,,5e220d7c2fd3ca89,False,False,True,contact REPLAYED (value-age 0.47s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,7,det_ref,1786580734.372,1786580771.153,1786580771.619,-0.756,37.247,0.466,False,False,,33ed12c68dd46657,False,False,True,contact REPLAYED (value-age 0.94s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,8,det_ref,1786580775.22,1786580781.152,1786580782.235,-0.756,7.015,1.083,False,False,,afb63cb925dece6e,False,False,True,contact REPLAYED (value-age 1.28s > heartbeat tolerance 0.05s)
+20260812T201322,A0,integration_backed,activepoll,untimed,180.0,9,det_ref,1786580785.259,1786580791.169,1786580792.268,-0.756,7.009,1.099,False,False,,7c3da53de19a2b41,False,False,True,contact REPLAYED (value-age 1.28s > heartbeat tolerance 0.05s)
+20260812T202700,A1,integration_backed,none,untimed,180.0,0,det_ref,1786580820.597,1786580820.598,1786580823.615,-0.58,3.018,3.017,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,1,det_ref,1786580823.639,1786580823.641,1786580826.658,-0.58,3.019,3.017,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,2,det_ref,1786580826.685,1786580826.686,1786580829.701,-0.58,3.017,3.015,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,3,det_ref,1786580829.723,1786580829.724,1786580832.739,-0.58,3.016,3.015,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,4,det_ref,1786580832.764,1786580832.766,1786580835.783,-0.58,3.019,3.017,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,5,det_ref,1786580835.805,1786580835.807,1786580838.82,-0.58,3.015,3.014,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,6,det_ref,1786580838.843,1786580838.844,1786580841.854,-0.58,3.011,3.009,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,7,det_ref,1786580841.873,1786580841.875,1786580844.891,-0.58,3.018,3.016,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,8,det_ref,1786580844.914,1786580844.917,1786580847.936,-0.58,3.021,3.018,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,9,det_ref,1786580847.96,1786580847.963,1786580850.977,-0.58,3.017,3.015,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,10,det_ref,1786580850.996,1786580850.998,1786580854.014,-0.58,3.018,3.016,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,11,det_ref,1786580854.037,1786580854.04,1786580857.048,-0.58,3.011,3.008,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,12,det_ref,1786580857.071,1786580857.074,1786580860.087,-0.58,3.016,3.013,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,13,det_ref,1786580860.11,1786580860.112,1786580863.129,-0.58,3.019,3.017,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,14,det_ref,1786580863.151,1786580863.153,1786580866.16,-0.58,3.009,3.007,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,15,det_ref,1786580866.183,1786580866.186,1786580869.203,-0.58,3.019,3.017,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,16,det_ref,1786580869.235,1786580869.238,1786580872.248,-0.58,3.013,3.01,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,17,det_ref,1786580872.27,1786580872.273,1786580875.287,-0.58,3.017,3.014,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,18,det_ref,1786580875.311,1786580875.313,1786580878.328,-0.58,3.017,3.016,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,none,untimed,180.0,19,det_ref,1786580878.348,1786580878.35,1786580881.364,-0.58,3.016,3.014,True,True,,,False,False,False,no guard
+20260812T202700,A1,integration_backed,static,untimed,180.0,0,det_ref,1786580881.389,1786580881.392,1786580884.404,-0.58,3.015,3.013,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,1,det_ref,1786580884.538,1786580884.538,1786580887.546,-0.58,3.008,3.008,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,2,det_ref,1786580887.595,1786580887.596,1786580890.604,-0.58,3.009,3.008,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,3,det_ref,1786580890.639,1786580890.64,1786580893.656,-0.58,3.017,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,4,det_ref,1786580893.704,1786580893.706,1786580896.723,-0.58,3.019,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,5,det_ref,1786580896.773,1786580896.774,1786580899.792,-0.58,3.02,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,6,det_ref,1786580899.843,1786580899.845,1786580902.857,-0.58,3.014,3.012,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,7,det_ref,1786580902.907,1786580902.908,1786580905.925,-0.58,3.018,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,8,det_ref,1786580905.977,1786580905.98,1786580908.996,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,9,det_ref,1786580909.045,1786580909.047,1786580912.064,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,10,det_ref,1786580912.112,1786580912.115,1786580915.131,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,11,det_ref,1786580915.177,1786580915.179,1786580918.196,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,12,det_ref,1786580918.243,1786580918.245,1786580921.262,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,13,det_ref,1786580921.315,1786580921.317,1786580924.334,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,14,det_ref,1786580924.388,1786580924.389,1786580927.407,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,15,det_ref,1786580927.456,1786580927.457,1786580930.475,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,16,det_ref,1786580930.525,1786580930.526,1786580933.542,-0.58,3.016,3.015,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,17,det_ref,1786580933.59,1786580933.591,1786580936.608,-0.58,3.018,3.017,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,18,det_ref,1786580936.671,1786580936.673,1786580939.69,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T202700,A1,integration_backed,static,untimed,180.0,19,det_ref,1786580939.742,1786580939.744,1786580942.76,-0.58,3.018,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,0,det_ref,1786580942.806,1786580942.807,1786580945.818,-0.58,3.011,3.01,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,1,det_ref,1786580945.86,1786580945.861,1786580948.879,-0.58,3.019,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,2,det_ref,1786580948.923,1786580948.924,1786580951.939,-0.58,3.016,3.014,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,3,det_ref,1786580951.983,1786580951.985,1786580955.002,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,4,det_ref,1786580955.056,1786580955.058,1786580958.072,-0.58,3.016,3.014,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,5,det_ref,1786580958.114,1786580958.116,1786580961.133,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,6,det_ref,1786580961.181,1786580961.183,1786580964.2,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,7,det_ref,1786580964.256,1786580964.257,1786580967.274,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,8,det_ref,1786580967.324,1786580967.326,1786580970.344,-0.58,3.02,3.018,False,False,,,False,False,False,contact STALE (age 3.1s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,9,det_ref,1786580970.396,1786580970.397,1786580973.414,-0.58,3.019,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,10,det_ref,1786580973.465,1786580973.467,1786580976.477,-0.58,3.012,3.01,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,11,det_ref,1786580976.506,1786580976.506,1786580979.523,-0.58,3.017,3.017,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,12,det_ref,1786580979.578,1786580979.579,1786580982.595,-0.58,3.017,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,13,det_ref,1786580982.642,1786580982.644,1786580985.658,-0.58,3.016,3.014,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,14,det_ref,1786580985.703,1786580985.706,1786580988.712,-0.58,3.009,3.007,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,15,det_ref,1786580988.744,1786580988.745,1786580991.758,-0.58,3.014,3.013,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,16,det_ref,1786580991.797,1786580991.799,1786580994.815,-0.58,3.017,3.016,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,17,det_ref,1786580994.864,1786580994.865,1786580997.883,-0.58,3.019,3.018,False,False,,,False,False,False,contact STALE (age 3.0s > 2.0s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,18,det_ref,1786580997.926,1786581000.6,1786581000.936,-0.58,3.01,0.336,False,False,,,False,True,False,contact REPLAYED (value-age 0.35s > heartbeat tolerance 0.25s)
+20260812T202700,A1,integration_backed,heartbeat,untimed,180.0,19,det_ref,1786581000.988,1786581003.653,1786581004.0,-0.58,3.012,0.347,False,False,,,False,True,False,contact REPLAYED (value-age 0.37s > heartbeat tolerance 0.25s)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,0,det_ref,1786581004.044,1786581006.688,1786581007.059,-0.58,3.015,0.371,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,1,det_ref,1786581007.111,1786581009.733,1786581010.13,-0.58,3.019,0.397,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,2,det_ref,1786581010.187,1786581012.779,1786581013.207,-0.58,3.02,0.428,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,3,det_ref,1786581013.259,1786581015.814,1786581016.279,-0.58,3.02,0.465,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,4,det_ref,1786581016.335,1786581018.849,1786581019.354,-0.58,3.019,0.505,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,5,det_ref,1786581019.412,1786581021.879,1786581022.431,-0.58,3.019,0.552,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,6,det_ref,1786581022.485,1786581024.925,1786581025.501,-0.58,3.016,0.576,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,7,det_ref,1786581025.543,1786581027.972,1786581028.56,-0.58,3.018,0.588,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,8,det_ref,1786581028.609,1786581031.008,1786581031.626,-0.58,3.017,0.618,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,9,det_ref,1786581031.673,1786581034.045,1786581034.694,-0.58,3.021,0.649,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,10,det_ref,1786581034.746,1786581037.082,1786581037.755,-0.58,3.009,0.673,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,11,det_ref,1786581037.795,1786581040.121,1786581040.808,-0.58,3.014,0.687,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,12,det_ref,1786581040.859,1786581043.161,1786581043.868,-0.58,3.009,0.707,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,13,det_ref,1786581043.915,1786581046.187,1786581046.934,-0.58,3.019,0.746,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,14,det_ref,1786581046.989,1786581049.243,1786581050.007,-0.58,3.018,0.764,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,15,det_ref,1786581050.061,1786581052.274,1786581053.08,-0.58,3.019,0.806,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,16,det_ref,1786581053.143,1786581055.322,1786581056.162,-0.58,3.018,0.84,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,17,det_ref,1786581056.211,1786581058.355,1786581059.229,-0.58,3.018,0.874,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,18,det_ref,1786581059.278,1786581061.4,1786581062.298,-0.58,3.019,0.898,False,False,,,False,True,False,contact=on (need off)
+20260812T202700,A1,integration_backed,activepoll,untimed,180.0,19,det_ref,1786581062.349,1786581064.546,1786581065.368,-0.58,3.019,0.822,False,False,,,False,True,False,contact=on (need off)

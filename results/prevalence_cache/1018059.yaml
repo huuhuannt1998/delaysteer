@@ -1,0 +1,129 @@
+blueprint:
+  name: Home Energy Autopilot — Charge Cheap, Discharge Expensive
+  description: >
+    Automatically charge your home battery when electricity is cheap and run
+    your house off it when it's expensive — using any dynamic hourly tariff
+    (Nord Pool, Tibber, aWATTar, EPEX, …).
+
+    This blueprint is the *brain*: it decides CHARGE / DISCHARGE / IDLE from the
+    current price plus optional battery state-of-charge guards, with a neutral
+    hysteresis band so it doesn't flap at the thresholds. You wire your own
+    battery's control into the three action inputs, so it works with ANY battery
+    (Anker Solix, Marstek, Victron, Sonnen, …) — the brain decides, your actions
+    execute.
+
+    Full build-up & field report (the advanced version — cheapest-hours planning,
+    learned demand, self-monitoring): https://cihanoezkaya.de/en
+  domain: automation
+  author: Cihan Özkaya
+  source_url: https://cihanoezkaya.de/blueprint/energy_autopilot.yaml
+  input:
+    price_sensor:
+      name: Dynamic price sensor
+      description: A sensor whose state is the current electricity price (e.g. in €/kWh).
+      selector:
+        entity:
+          domain: sensor
+    cheap_threshold:
+      name: Cheap threshold — charge at/below this price
+      description: When the current price is at or below this value, the battery charges.
+      default: 0.20
+      selector:
+        number:
+          min: 0
+          max: 2
+          step: 0.01
+          mode: box
+    expensive_threshold:
+      name: Expensive threshold — discharge at/above this price
+      description: When the current price is at or above this value, run the house off the battery.
+      default: 0.30
+      selector:
+        number:
+          min: 0
+          max: 2
+          step: 0.01
+          mode: box
+    battery_soc_sensor:
+      name: Battery state-of-charge sensor (optional)
+      description: Battery SoC in %. Leave empty to skip the SoC guards.
+      default:
+      selector:
+        entity:
+          domain: sensor
+          device_class: battery
+    charge_max_soc:
+      name: Stop charging above this SoC (%)
+      description: Don't charge past this level (avoid overcharging a full battery).
+      default: 95
+      selector:
+        number:
+          min: 5
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+    discharge_min_soc:
+      name: Keep this reserve — don't discharge below this SoC (%)
+      description: Hold a floor so you always have some backup / cover the next peak.
+      default: 20
+      selector:
+        number:
+          min: 0
+          max: 95
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+    charge_action:
+      name: Charge action
+      description: What to do to CHARGE the battery (set your battery to charge / manual mode, etc.).
+      default: []
+      selector:
+        action: {}
+    discharge_action:
+      name: Discharge action
+      description: What to do to DISCHARGE — run the house off the battery.
+      default: []
+      selector:
+        action: {}
+    idle_action:
+      name: Idle / hold action
+      description: What to do in the neutral zone (normal self-use / hold).
+      default: []
+      selector:
+        action: {}
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input price_sensor
+  - platform: time_pattern
+    minutes: "/5"
+
+variables:
+  price_sensor: !input price_sensor
+  cheap_threshold: !input cheap_threshold
+  expensive_threshold: !input expensive_threshold
+  soc_sensor: !input battery_soc_sensor
+  charge_max_soc: !input charge_max_soc
+  discharge_min_soc: !input discharge_min_soc
+  price: "{{ states(price_sensor) | float(9999) }}"
+  soc_known: "{{ soc_sensor not in [none, ''] and is_number(states(soc_sensor)) }}"
+  soc: "{{ states(soc_sensor) | float(-1) if soc_known else -1 }}"
+
+action:
+  - choose:
+      # CHARGE — cheap enough AND (no SoC sensor OR below the charge ceiling)
+      - conditions:
+          - "{{ price <= cheap_threshold }}"
+          - "{{ (not soc_known) or (soc < charge_max_soc) }}"
+        sequence: !input charge_action
+      # DISCHARGE — expensive enough AND (no SoC sensor OR above the reserve floor)
+      - conditions:
+          - "{{ price >= expensive_threshold }}"
+          - "{{ (not soc_known) or (soc > discharge_min_soc) }}"
+        sequence: !input discharge_action
+    # IDLE — neutral zone (between thresholds) or a guard blocked the action
+    default: !input idle_action

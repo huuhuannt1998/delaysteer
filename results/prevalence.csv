@@ -1,0 +1,5 @@
+path,name,high_impact,other_actions,has_sensor_predicate,has_freshness,freshness_evidence,applicable,vulnerable_shape
+/Users/anonymous/Desktop/DelaySteer/config/blueprints/automation/homeassistant/motion_light.yaml,motion_light,,comfort,0,0,,0,0
+/Users/anonymous/Desktop/DelaySteer/config/blueprints/automation/homeassistant/notify_leaving_zone.yaml,notify_leaving_zone,,notification,1,0,,0,0
+/Users/anonymous/Desktop/DelaySteer/config/blueprints/script/homeassistant/confirmable_notification.yaml,confirmable_notification,,notification,0,0,,0,0
+/Users/anonymous/Desktop/DelaySteer/config/blueprints/template/homeassistant/inverted_binary_sensor.yaml,inverted_binary_sensor,,,0,0,,0,0

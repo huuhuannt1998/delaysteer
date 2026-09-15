@@ -1,0 +1,45 @@
+scenario,mutation_id,mutation,backbone,n,attack_violation_rate,attack_violation_wilson95,benign_completion_rate,benign_completion_wilson95,false_block_rate,unsafe_allow_rate,user_escalation_rate,detected_at_startup,detected_at_runtime,safe_to_deploy,n_errors,n_warnings,description
+secure-house,0,baseline,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,False,False,True,0,0,"the correct, unmutated contract"
+secure-house,1,omit_required_fact,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,drop the attack-relevant required fact
+secure-house,2,replace_expected_value,scripted,3,3/3,"[44,100]",0/3,"[0,56]",3/3,3/3,0/6,True,True,True,0,1,require the wrong expected value for the pivotal fact
+secure-house,3,loose_budget,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,True,0,1,freshness budget far above the calibrated benign max
+secure-house,4,tight_budget,scripted,3,0/3,"[0,56]",0/3,"[0,56]",3/3,0/3,0/6,True,True,True,0,1,freshness budget below the platform latency floor
+secure-house,5,wrong_entity,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,bind the pivotal fact to the wrong entity
+secure-house,6,nonpollable_as_pollable,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,False,False,True,0,0,declare a non-pollable fact as pollable
+secure-house,7,untrusted_ts_as_trusted,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,1,0,treat a source-controlled timestamp as trusted
+secure-house,8,compromised_reval,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,revalidate the pivotal fact through the compromised channel
+secure-house,9,unnecessary_fact,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,True,0,1,add a fact the action does not require
+secure-house,10,inconsistent_requirements,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,2,1,duplicate the action with a contradictory requirement
+access,0,baseline,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,False,False,True,0,0,"the correct, unmutated contract"
+access,1,omit_required_fact,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,drop the attack-relevant required fact
+access,2,replace_expected_value,scripted,3,0/3,"[0,56]",0/3,"[0,56]",3/3,0/3,0/6,False,True,True,0,0,require the wrong expected value for the pivotal fact
+access,3,loose_budget,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,True,0,1,freshness budget far above the calibrated benign max
+access,4,tight_budget,scripted,3,0/3,"[0,56]",0/3,"[0,56]",3/3,0/3,0/6,True,True,True,0,1,freshness budget below the platform latency floor
+access,5,wrong_entity,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,bind the pivotal fact to the wrong entity
+access,6,nonpollable_as_pollable,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,1,0,declare a non-pollable fact as pollable
+access,7,untrusted_ts_as_trusted,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,1,0,treat a source-controlled timestamp as trusted
+access,8,compromised_reval,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,revalidate the pivotal fact through the compromised channel
+access,9,unnecessary_fact,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,True,0,1,add a fact the action does not require
+access,10,inconsistent_requirements,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,2,0,duplicate the action with a contradictory requirement
+confirmation,0,baseline,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,3/6,False,False,True,0,0,"the correct, unmutated contract"
+confirmation,1,omit_required_fact,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,drop the attack-relevant required fact
+confirmation,2,replace_expected_value,scripted,3,0/3,"[0,56]",0/3,"[0,56]",3/3,0/3,6/6,False,True,True,0,0,require the wrong expected value for the pivotal fact
+confirmation,3,loose_budget,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,True,0,1,freshness budget far above the calibrated benign max
+confirmation,4,tight_budget,scripted,3,0/3,"[0,56]",0/3,"[0,56]",3/3,0/3,6/6,True,True,True,0,1,freshness budget below the platform latency floor
+confirmation,5,wrong_entity,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,bind the pivotal fact to the wrong entity
+confirmation,6,nonpollable_as_pollable,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,3/6,True,False,False,1,0,declare a non-pollable fact as pollable
+confirmation,7,untrusted_ts_as_trusted,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,3/6,True,False,False,1,0,treat a source-controlled timestamp as trusted
+confirmation,8,compromised_reval,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,revalidate the pivotal fact through the compromised channel
+confirmation,9,unnecessary_fact,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,3/6,True,False,True,0,1,add a fact the action does not require
+confirmation,10,inconsistent_requirements,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,3/6,True,False,False,2,0,duplicate the action with a contradictory requirement
+automation,0,baseline,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,False,False,True,0,0,"the correct, unmutated contract"
+automation,1,omit_required_fact,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,drop the attack-relevant required fact
+automation,2,replace_expected_value,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,True,0,1,require the wrong expected value for the pivotal fact
+automation,3,loose_budget,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,True,0,1,freshness budget far above the calibrated benign max
+automation,4,tight_budget,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,True,0,1,freshness budget below the platform latency floor
+automation,5,wrong_entity,scripted,3,3/3,"[44,100]",3/3,"[44,100]",0/3,3/3,0/6,True,True,False,1,0,bind the pivotal fact to the wrong entity
+automation,6,nonpollable_as_pollable,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,False,False,True,0,0,declare a non-pollable fact as pollable
+automation,7,untrusted_ts_as_trusted,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,1,0,treat a source-controlled timestamp as trusted
+automation,8,compromised_reval,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,1,0,revalidate the pivotal fact through the compromised channel
+automation,9,unnecessary_fact,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,True,0,1,add a fact the action does not require
+automation,10,inconsistent_requirements,scripted,3,0/3,"[0,56]",3/3,"[44,100]",0/3,0/3,0/6,True,False,False,2,1,duplicate the action with a contradictory requirement

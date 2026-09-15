@@ -1,0 +1,255 @@
+# Copyright (C) 2026 James Lander, The Thinking Home (https://xeazy.com)
+# Licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later).
+# See the LICENSE file for the full text.
+#
+# Sensor Failover - a Home Assistant template blueprint from The Thinking Home (xeazy.com)
+# Full write-up, worked examples, and directions:
+# https://xeazy.com/sensor-failover-blueprint/
+#
+# Changelog:
+#   1.0.2 - Adds a last-resort fallback for the all-online-weights-are-zero
+#           case at runtime. When every backup currently reporting has
+#           weight zero (for example weights "100, 0" with the weight-100
+#           sensor offline, leaving only the weight-zero sensor online),
+#           the blueprint now equal-averages the available backups instead
+#           of letting total_weight collapse to zero and falling to
+#           default_value or unavailable. This lets users stage a
+#           "last-resort tier" of weight-zero sensors that contribute
+#           nothing to the average while better-weighted sensors are alive,
+#           and take over only when every weighted sensor is offline. More
+#           than one weight-zero sensor is allowed; if several are the
+#           only ones reporting, they are averaged equally.
+#   1.0.1 - Handles the all-zero-weights edge case gracefully. If every
+#           backup weight is zero, the blueprint now falls back to equal
+#           weighting instead of letting total_weight collapse to zero
+#           and dumping the user to default_value or unavailable.
+#   1.0.0 - Initial release. Wraps a numeric sensor with a pool of backups so a
+#           single flaky source no longer surfaces as unavailable to downstream
+#           automations. Primary's reading is returned when available. When the
+#           primary is offline, online backups are averaged, optionally
+#           weighted. When everything is offline, an optional default value is
+#           returned or the sensor reports unavailable. Exposes active_source
+#           and online_backups attributes for transparency.
+blueprint:
+  name: Sensor Failover
+  description: |
+    # Sensor Failover
+
+    *A numeric sensor that falls back to a pool of backups when the primary goes offline.*
+
+    A free blueprint from **The Thinking Home** at [xeazy.com](https://xeazy.com).
+
+    - 📖 [Read the article](https://xeazy.com/sensor-failover-blueprint/) - the design and worked examples.
+    - 💬 [Discuss in the community](https://xeazy.com/logbook/d/39-sensor-failover-blueprint) - the forum thread for this blueprint.
+    - ⭐ [More blueprints](https://github.com/TheThinkingHome/Automations) - on GitHub.
+
+    ---
+
+    Creates a numeric template sensor that returns the primary's reading whenever it is available, falls back to an average of online backups when the primary is offline, and reports an optional default value (or goes unavailable) when everything is down. The average can be weighted if some backups are more trustworthy than others.
+
+    A sensor is treated as offline in four cases: state is `unavailable`, state is `unknown`, state is blank, or state is not a number. In any of those cases the source is skipped and the next tier is used.
+
+    Originally built to keep a flaky Aqara FP2 lux reading usable by falling back to two other room lux sensors, but generalized to any numeric sensor and any number of backups.
+
+    License: GPL-3.0-or-later. Copyright (C) 2026 James Lander, The Thinking Home ([xeazy.com](https://xeazy.com)).
+  author: James Lander (xeazy.com)
+  domain: template
+  source_url: https://raw.githubusercontent.com/TheThinkingHome/Automations/main/blueprints/template/sensor_failover.yaml
+  homeassistant:
+    min_version: 2026.5.4
+  input:
+    primary_entity:
+      name: Primary entity
+      description: The trusted numeric sensor. Used whenever it is available.
+      selector:
+        entity: {}
+    backup_entities:
+      name: Backup entities
+      description: >
+        Numeric sensors used when the primary is unavailable. Averaged when
+        more than one is online. Backups that are themselves offline are
+        skipped.
+      selector:
+        entity:
+          multiple: true
+    sensor_name:
+      name: Sensor name
+      description: The name for the sensor this blueprint creates.
+      default: Sensor Failover
+      selector:
+        text: {}
+    unique_id:
+      name: Unique ID
+      description: >
+        A unique id so the sensor is registered and you can rename it, place
+        it in an area, or change its device class from the interface. Make it
+        distinct for every sensor you build, for example
+        living_room_lux_failover.
+      selector:
+        text: {}
+    unit_of_measurement:
+      name: Unit of measurement
+      description: The unit shown on the resulting sensor, for example lx, °C, or %.
+      selector:
+        text: {}
+    device_class:
+      name: Device class
+      description: >
+        The device class for the resulting sensor. Controls how the value
+        displays and is grouped. Pick one that matches your source, or type
+        your own. If your numeric sensor measures something obscure, choose
+        the closest match from the Home Assistant sensor device class list.
+      default: illuminance
+      selector:
+        select:
+          custom_value: true
+          options:
+            - illuminance
+            - temperature
+            - humidity
+            - pressure
+            - battery
+            - current
+            - voltage
+            - power
+            - energy
+            - co2
+            - pm25
+            - moisture
+            - signal_strength
+            - frequency
+            - speed
+    state_class:
+      name: State class
+      description: >
+        The state class for statistics. Use measurement for most readings that
+        go up and down (lux, temperature, humidity). Use total_increasing for
+        cumulative counters (energy meters). Use total for resettable counters.
+      default: measurement
+      selector:
+        select:
+          custom_value: true
+          options:
+            - measurement
+            - total_increasing
+            - total
+    backup_weights:
+      name: Backup weights
+      description: >
+        Optional. Comma-separated numbers, one per backup entity, in the same
+        order. Blank means equal weighting. For example, 70, 30 makes the
+        first backup count more than twice as much as the second when both
+        are online. Weight zero means the sensor contributes nothing to the
+        weighted average while better-weighted sensors are online, and is
+        used as a last-resort backup only when every weighted sensor is
+        offline. More than one weight-zero sensor is allowed; if several
+        are the only ones reporting, they are averaged equally.
+      default: ""
+      selector:
+        text: {}
+    default_value:
+      name: Default value
+      description: >
+        Optional. Used when the primary and all backups are offline. Blank
+        means the sensor reports unavailable instead.
+      default: ""
+      selector:
+        text: {}
+
+variables:
+  primary_entity: !input primary_entity
+  backup_entities: !input backup_entities
+  backup_weights: !input backup_weights
+  default_value: !input default_value
+
+sensor:
+  name: !input sensor_name
+  unique_id: !input unique_id
+  unit_of_measurement: !input unit_of_measurement
+  device_class: !input device_class
+  state_class: !input state_class
+  availability: |
+    {% set p_ok = has_value(primary_entity) and states(primary_entity) | is_number %}
+    {% if p_ok %}
+      true
+    {% else %}
+      {% set ns = namespace(any_ok=false) %}
+      {% for entity_id in backup_entities %}
+        {% if has_value(entity_id) and states(entity_id) | is_number %}
+          {% set ns.any_ok = true %}
+        {% endif %}
+      {% endfor %}
+      {% set d = default_value | trim %}
+      {{ ns.any_ok or (d != '' and d | is_number) }}
+    {% endif %}
+  state: |
+    {% set p_ok = has_value(primary_entity) and states(primary_entity) | is_number %}
+    {% if p_ok %}
+      {{ states(primary_entity) | float }}
+    {% else %}
+      {% set weight_tokens = backup_weights.split(',') | map('trim') | reject('eq', '') | list %}
+      {% set ns = namespace(all_numeric=true, any_nonzero=false) %}
+      {% for tok in weight_tokens %}
+        {% if not (tok | is_number) %}
+          {% set ns.all_numeric = false %}
+        {% endif %}
+        {% if tok | float(0) != 0 %}
+          {% set ns.any_nonzero = true %}
+        {% endif %}
+      {% endfor %}
+      {% set use_weights = weight_tokens | length == backup_entities | length and ns.all_numeric and ns.any_nonzero %}
+      {% set acc = namespace(weighted_sum=0.0, total_weight=0.0, available=[]) %}
+      {% for entity_id in backup_entities %}
+        {% if has_value(entity_id) and states(entity_id) | is_number %}
+          {% set w = (weight_tokens[loop.index0] | float(1)) if use_weights else 1 %}
+          {% set acc.weighted_sum = acc.weighted_sum + (states(entity_id) | float * w) %}
+          {% set acc.total_weight = acc.total_weight + w %}
+          {% set acc.available = acc.available + [entity_id] %}
+        {% endif %}
+      {% endfor %}
+      {% if acc.total_weight > 0 %}
+        {{ (acc.weighted_sum / acc.total_weight) | round(2) }}
+      {% elif acc.available | length > 0 %}
+        {% set ns2 = namespace(sum=0.0) %}
+        {% for entity_id in acc.available %}
+          {% set ns2.sum = ns2.sum + (states(entity_id) | float) %}
+        {% endfor %}
+        {{ (ns2.sum / (acc.available | length)) | round(2) }}
+      {% else %}
+        {% set d = default_value | trim %}
+        {% if d != '' and d | is_number %}
+          {{ d | float }}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  attributes:
+    active_source: |
+      {% set p_ok = has_value(primary_entity) and states(primary_entity) | is_number %}
+      {% if p_ok %}
+        primary
+      {% else %}
+        {% set ns = namespace(any_ok=false) %}
+        {% for entity_id in backup_entities %}
+          {% if has_value(entity_id) and states(entity_id) | is_number %}
+            {% set ns.any_ok = true %}
+          {% endif %}
+        {% endfor %}
+        {% if ns.any_ok %}
+          backups
+        {% else %}
+          {% set d = default_value | trim %}
+          {% if d != '' and d | is_number %}
+            default
+          {% else %}
+            none
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    online_backups: |
+      {% set ns = namespace(list=[]) %}
+      {% for entity_id in backup_entities %}
+        {% if has_value(entity_id) and states(entity_id) | is_number %}
+          {% set ns.list = ns.list + [entity_id] %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.list }}

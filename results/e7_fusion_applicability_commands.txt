@@ -1,0 +1,1 @@
+.venv/bin/python scripts/run_e7_fusion_applicability.py --repeats 8 --model qwen3:14b --temperature 0.7 --out results/e7_fusion_applicability

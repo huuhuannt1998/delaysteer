@@ -1,0 +1,118 @@
+blueprint:
+  name: Light Cycle
+  description: >-
+    Cycle through an ordered list of light targets (individual lights or
+    light-group helpers). Each run turns the next target on and turns off
+    only the current target's lights that are not shared with the next
+    target, so shared lights never flicker. The active target is stored as
+    the sole member of a dynamically managed group (group.<object_id>) so
+    other automations can adjust it and this script can find its position on
+    the next run. If the active target is off, running the script turns it
+    back on instead of advancing. Wraps from last target to first. Note: the
+    helper group does not survive a Home Assistant restart; the first run
+    after a restart starts again at the first target.
+  domain: script
+  input:
+    targets:
+      name: Light Targets
+      description: >-
+        Ordered list of light entities or light-group helper entities to
+        cycle through. The order selected here is the cycle order, wrapping
+        from the last target back to the first.
+      selector:
+        entity:
+          filter:
+            - domain: light
+          multiple: true
+    helper_object_id:
+      name: Helper Group Object ID
+      description: >-
+        Object ID of the dynamically managed group that tracks the active
+        target, e.g. "office_light_cycle" creates group.office_light_cycle.
+        Created automatically on first run — do not pre-create a helper.
+        Must be unique for each script made from this blueprint.
+      selector:
+        text:
+
+mode: queued
+max: 10
+
+sequence:
+  # 1. Bind inputs to variables (!input cannot be used inside Jinja templates)
+  - variables:
+      targets: !input targets
+      helper_object_id: !input helper_object_id
+      helper_entity: "group.{{ helper_object_id }}"
+
+  # 2. Nothing to do without targets
+  - if:
+      - condition: template
+        value_template: "{{ targets | count == 0 }}"
+    then:
+      - stop: "No targets configured"
+
+  # 3. Determine current position from the helper group and pick the next
+  #    target. If the current target is off, re-select it (turn it back on
+  #    instead of advancing). Missing helper (first run) or stale member
+  #    (targets changed) both fall back to the first target.
+  - variables:
+      current_target: >-
+        {{ (state_attr(helper_entity, 'entity_id') or [])
+           | select('in', targets) | list | first | default('') }}
+      next_target: >-
+        {{ current_target
+           if current_target and is_state(current_target, 'off')
+           else (targets[(targets.index(current_target) + 1) % (targets | count)]
+                 if current_target in targets else targets[0]) }}
+      # Member lights of the current target that are not part of the next
+      # target — only these are turned off, so shared lights never blink
+      lights_to_turn_off: >-
+        {{ expand([current_target] if current_target else [])
+           | map(attribute='entity_id')
+           | reject('in', expand(next_target) | map(attribute='entity_id') | list)
+           | list }}
+      # Carry the current target's brightness over when advancing so targets
+      # stay in sync; none when turning the same target back on or when the
+      # current target reports no brightness (off, non-dimmable, first run)
+      sync_brightness: >-
+        {{ state_attr(current_target, 'brightness')
+           if current_target and next_target != current_target else none }}
+
+  # 4. Switch targets: turn the next target on (at the previous target's
+  #    brightness when advancing) and turn off the non-shared lights of the
+  #    previous target, in parallel. Shared lights are in neither the off
+  #    list nor at a different brightness, so they never blink.
+  - parallel:
+      - if:
+          - condition: template
+            value_template: "{{ sync_brightness is not none }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ next_target }}"
+            data:
+              transition: 0.3
+              brightness: "{{ sync_brightness }}"
+        else:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ next_target }}"
+            data:
+              transition: 0.3
+      - if:
+          - condition: template
+            value_template: "{{ lights_to_turn_off | count > 0 }}"
+        then:
+          - action: light.turn_off
+            target:
+              entity_id: "{{ lights_to_turn_off }}"
+            data:
+              transition: 0.3
+
+  # 5. Record the new active target so other automations (rotary knob
+  #    brightness, etc.) and the next run of this script can find it
+  - action: group.set
+    data:
+      object_id: "{{ helper_object_id }}"
+      entities:
+        - "{{ next_target }}"

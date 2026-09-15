@@ -1,0 +1,387 @@
+blueprint:
+  name: 🔌 Smart Climate with Occupancy Control v1.6
+  description: Automatically controls a climate appliance based on room occupancy, native time/day schedules, and user proximity configurations. Features a power fail-safe loop, a presence auto-off timeout, and a manual override toggle.
+  domain: automation
+  input:
+    climate_switch:
+      name: Climate Appliance Switch
+      description: The smart plug or switch connected to the climate device.
+      selector:
+        entity:
+          filter:
+            - domain: switch
+    presence_sensor:
+      name: Room Presence Sensor
+      description: Occupancy or motion sensor for the specific room.
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: occupancy
+    assigned_user:
+      name: Assigned Users
+      description: The person or people tied to this climate zone.
+      selector:
+        entity:
+          filter:
+            - domain: person
+          multiple: true
+    user_presence_mode:
+      name: User Presence Match Rule
+      description: "Any: Runs if at least one selected user is home/nearby. All: Requires everyone selected to match."
+      default: "any"
+      selector:
+        select:
+          options:
+            - label: Any user matches
+              value: "any"
+            - label: All users match
+              value: "all"
+    start_time:
+      name: Schedule Start Time
+      description: The time of day the climate appliance is allowed to start running.
+      default: "00:00:00"
+      selector:
+        time: {}
+    end_time:
+      name: Schedule End Time
+      description: The time of day the climate appliance must turn off / stop running.
+      default: "23:59:59"
+      selector:
+        time: {}
+    schedule_days:
+      name: Allowed Days of the Week
+      description: Select which days the schedule constraints are active.
+      default: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: Monday
+              value: Mon
+            - label: Tuesday
+              value: Tue
+            - label: Wednesday
+              value: Wed
+            - label: Thursday
+              value: Thu
+            - label: Friday
+              value: Fri
+            - label: Saturday
+              value: Sat
+            - label: Sunday
+              value: Sun
+    proximity_sensor:
+      name: Proximity Device (Optional)
+      description: Select the Home Assistant Proximity Integration Device tracking your target home zone. Used for pre-heating/cooling.
+      default: ""
+      selector:
+        device:
+          integration: proximity
+    proximity_threshold:
+      name: Proximity Distance Threshold
+      description: Max distance from home allowed to trigger pre-heating/cooling when traveling toward home.
+      default: 2000
+      selector:
+        number:
+          min: 100
+          max: 50000
+          step: 100
+          unit_of_measurement: m
+          mode: box
+    vacancy_timeout:
+      name: Vacancy Timeout (Auto-Off Delay)
+      description: Maximum time an empty room runs before turning off automatically.
+      default:
+        minutes: 20
+      selector:
+        duration:
+    override_switch:
+      name: Override Safety Timeout Helper (Optional)
+      description: Input_boolean toggle. Turning this ON disables the empty room auto-off countdown.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: input_boolean
+            - domain: switch
+    power_sensor:
+      name: Power Sensor (Optional)
+      description: Wattage tracking entity used for the fail-safe operational check.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: power
+    power_threshold:
+      name: Power Threshold (Watts)
+      description: Minimum running wattage to confirm the appliance is working.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 4000
+          step: 1
+          unit_of_measurement: W
+          mode: box
+    notify_device:
+      name: Notification Device
+      description: Mobile app instance that will receive execution push alerts.
+      selector:
+        device:
+          integration: mobile_app
+
+# Top-level variables safely forwarding configurations directly into Jinja templates
+trigger_variables:
+  power_sensor_var: !input power_sensor
+  climate_switch_var: !input climate_switch
+  power_threshold_var: !input power_threshold
+  presence_sensor_var: !input presence_sensor
+  override_switch_var: !input override_switch
+  proximity_device_var: !input proximity_sensor
+  proximity_threshold_var: !input proximity_threshold
+  start_time_var: !input start_time
+  end_time_var: !input end_time
+  schedule_days_var: !input schedule_days
+
+mode: restart
+
+trigger:
+  - trigger: state
+    entity_id: !input presence_sensor
+    id: presence_change
+  - trigger: state
+    entity_id: !input assigned_user
+    id: user_change
+  - trigger: time
+    at: !input start_time
+    id: schedule_start
+  - trigger: time
+    at: !input end_time
+    id: schedule_end
+  # Trigger when proximity matches target preconditions
+  - trigger: template
+    value_template: >
+      {% if proximity_device_var is string and proximity_device_var | length > 0 %}
+        {% set ents = device_entities(proximity_device_var) %}
+        {% set dist_ent = ents | select('search', '_distance') | first | default('') %}
+        {% set dir_ent = ents | select('search', '_direction_of_travel') | first | default('') %}
+        {% if dist_ent != '' and dir_ent != '' %}
+          {{ states(dist_ent) | float(99999) <= (proximity_threshold_var | float(2000)) and states(dir_ent) == 'towards' }}
+        {% else %}
+          {{ false }}
+        {% endif %}
+      {% else %}
+        {{ false }}
+      {% endif %}
+    id: proximity_on
+  # Trigger when proximity clears out of target preconditions
+  - trigger: template
+    value_template: >
+      {% if proximity_device_var is string and proximity_device_var | length > 0 %}
+        {% set ents = device_entities(proximity_device_var) %}
+        {% set dist_ent = ents | select('search', '_distance') | first | default('') %}
+        {% set dir_ent = ents | select('search', '_direction_of_travel') | first | default('') %}
+        {% if dist_ent != '' and dir_ent != '' %}
+          {{ not (states(dist_ent) | float(99999) <= (proximity_threshold_var | float(2000)) and states(dir_ent) == 'towards') }}
+        {% else %}
+          {{ false }}
+        {% endif %}
+      {% else %}
+        {{ false }}
+      {% endif %}
+    id: proximity_off
+  # Operational wattage dropped unexpectedly while active trigger
+  - trigger: template
+    value_template: >
+      {% if power_sensor_var != none and power_sensor_var != [] and power_sensor_var != '' %}
+        {{ is_state(climate_switch_var, 'on') and states(power_sensor_var) | float(0) < (power_threshold_var | float(0)) }}
+      {% else %}
+        {{ false }}
+      {% endif %}
+    for:
+      minutes: 2
+    id: power_dropped
+  # Vacancy limit exceeded without manual override bypass active trigger
+  - trigger: template
+    value_template: >
+      {% set ov = override_switch_var %}
+      {% set override_active = (ov != none and ov != [] and ov != '' and is_state(ov, 'on')) %}
+      {{ is_state(climate_switch_var, 'on') and is_state(presence_sensor_var, 'off') and not override_active }}
+    for: !input vacancy_timeout
+    id: vacancy_timeout_reached
+
+condition: []
+
+action:
+  - variables:
+      appliance: !input climate_switch
+      presence: !input presence_sensor
+      user_list: !input assigned_user
+      presence_mode: !input user_presence_mode
+      power_entity: !input power_sensor
+      p_threshold: !input power_threshold
+      prox_device: !input proximity_sensor
+      prox_max: !input proximity_threshold
+      
+      # Native Embedded Schedule Assessment Math
+      now_time: "{{ now().strftime('%H:%M:%S') }}"
+      current_day: "{{ now().strftime('%a') }}"
+      day_match: "{{ current_day in schedule_days_var }}"
+      time_match: >
+        {% if start_time_var <= end_time_var %}
+          {{ start_time_var <= now_time and now_time <= end_time_var }}
+        {% else %}
+          {{ now_time >= start_time_var or now_time <= end_time_var }}
+        {% endif %}
+      schedule_active: "{{ day_match and time_match }}"
+
+      # Extract proximity entities from the selected proximity device dynamically
+      prox_entities: >
+        {% if prox_device is string and prox_device | length > 0 %}
+          {{ device_entities(prox_device) }}
+        {% else %}
+          []
+        {% endif %}
+      prox_dist_entity: >
+        {{ prox_entities | select('search', '_distance') | first | default('') }}
+      prox_dir_entity: >
+        {{ prox_entities | select('search', '_direction_of_travel') | first | default('') }}
+
+      # Check individual user location criteria (Home OR Approaching via proximity parameters)
+      total_users: "{{ user_list | count }}"
+      matching_users: >
+        {% set ns = namespace(count=0) %}
+        {% for u in user_list %}
+          {% set is_home = is_state(u, 'home') %}
+          {% set is_prox = false %}
+          {% if prox_dist_entity != '' and prox_dir_entity != '' %}
+            {% set dist = states(prox_dist_entity) | float(99999) %}
+            {% set dir = states(prox_dir_entity) %}
+            {% set is_prox = (dist <= prox_max | float and dir == 'towards') %}
+          {% endif %}
+          {% if is_home or is_prox %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.count }}
+
+      users_ok: >
+        {% if presence_mode == 'any' %}
+          {{ matching_users | int > 0 }}
+        {% else %}
+          {{ matching_users | int == total_users | int }}
+        {% endif %}
+
+      # Pre-heating/cooling check: Schedule is active, user is nearby/home, but room is vacant
+      pre_operating: >
+        {% set prox_triggered = false %}
+        {% if prox_dist_entity != '' and prox_dir_entity != '' %}
+          {% set dist = states(prox_dist_entity) | float(99999) %}
+          {% set dir = states(prox_dir_entity) %}
+          {% set prox_triggered = (dist <= prox_max | float and dir == 'towards') %}
+        {% endif %}
+        {{ schedule_active and users_ok and (is_state(presence, 'off') and prox_triggered) }}
+
+      # Core functional blueprint constraints
+      should_be_on: "{{ schedule_active and users_ok and (is_state(presence, 'on') or pre_operating) }}"
+
+  - choose:
+      # ACTION 1: Wattage fail-safe triggered due to drop in load
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'power_dropped' and is_state(appliance, 'on') }}"
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input climate_switch
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "⚠️ Appliance Operation Failure"
+            message: "The climate switch was shut off because the appliance stopped drawing power while running."
+            data:
+              group: smart_climate_control
+
+      # ACTION 2: Empty room timeout reached without override protection active
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'vacancy_timeout_reached' and is_state(appliance, 'on') }}"
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input climate_switch
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "🛑 Safety Auto-Off Activated"
+            message: "The climate switch was turned off automatically because the room remained empty."
+            data:
+              group: smart_climate_control
+
+      # ACTION 3: Environmental parameters met (Time window verified, user present or approaching)
+      - conditions:
+          - condition: template
+            value_template: "{{ should_be_on and is_state(appliance, 'off') }}"
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: !input climate_switch
+          
+          - if:
+              - condition: template
+                value_template: "{{ power_entity != none and power_entity != [] and power_entity != '' }}"
+            then:
+              - wait_for_trigger:
+                  - trigger: template
+                    value_template: "{{ states(power_entity) | float(0) >= p_threshold | float }}"
+                timeout:
+                  minutes: 1
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ wait.trigger == none }}"
+                    sequence:
+                      - action: switch.turn_off
+                        target:
+                          entity_id: !input climate_switch
+                      - device_id: !input notify_device
+                        domain: mobile_app
+                        type: notify
+                        title: "🚨 Climate Fail-Safe Tripped"
+                        message: "The smart plug turned on, but the appliance drew 0W. Shutting down switch to protect components."
+                        data:
+                          group: smart_climate_control
+                default:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "💨 Climate Appliance Activated"
+                    message: "The device is active and running at {{ states(power_entity) }}W via {{ 'Proximity Pre-Op' if pre_operating else 'Room Presence' }}."
+                    data:
+                      group: smart_climate_control
+            else:
+              - device_id: !input notify_device
+                domain: mobile_app
+                type: notify
+                title: "💨 Climate Appliance Activated"
+                message: "The device has been turned on via {{ 'Proximity Pre-Op' if pre_operating else 'Room Presence' }}."
+                data:
+                  group: smart_climate_control
+
+      # ACTION 4: Schedule window ended or all target users left the zone parameters
+      - conditions:
+          - condition: template
+            value_template: "{{ not should_be_on and is_state(appliance, 'on') }}"
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input climate_switch
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "🛑 Climate Appliance Deactivated"
+            message: "The device was turned off due to schedule completion or lack of proximity/presence."
+            data:
+              group: smart_climate_control

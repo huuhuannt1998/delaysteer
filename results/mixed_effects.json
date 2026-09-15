@@ -1,0 +1,133 @@
+{
+  "note": "Random effects requested by the design: home, day, template, model. This substrate has one virtual home plus one live Home Assistant instance and no multi-day design, so home and day are not axes here and are omitted rather than faked. Template and model are used.",
+  "n_runs": 351,
+  "n_runs_before_exclusion": 351,
+  "n_models": 5,
+  "excluded_models": [],
+  "n_templates": 12,
+  "activation_logistic_mixed": {
+    "log_odds_attack": 2.8624,
+    "posterior_sd": 0.1942,
+    "odds_ratio": 17.5,
+    "or_ci95": [
+      11.96,
+      25.61
+    ],
+    "spec": "logit(activation) ~ attack, crossed random intercepts for model and template; variational Bayes"
+  },
+  "logit_scale_variance_components": {
+    "model": 3.50814,
+    "template": 0.0945
+  },
+  "slope_heterogeneity_test": {
+    "spec": "LR test, logit(y) ~ attack*C(model) vs attack + C(model)",
+    "lr_stat": 52.85,
+    "df": 4,
+    "p": 9.148028062070269e-11
+  },
+  "per_model_odds_ratios": {
+    "llama3.1:8b": {
+      "odds_ratio": 1.0,
+      "ci95": [
+        0.37,
+        2.7
+      ],
+      "n": 72,
+      "continuity_correction": false
+    },
+    "mistral-nemo:12b": {
+      "odds_ratio": 5.29,
+      "ci95": [
+        0.25,
+        114.2
+      ],
+      "n": 72,
+      "continuity_correction": true
+    },
+    "qwen2.5:7b": {
+      "odds_ratio": 49.0,
+      "ci95": [
+        6.03,
+        398.3
+      ],
+      "n": 72,
+      "continuity_correction": false
+    },
+    "qwen3.6:27b": {
+      "odds_ratio": 36.12,
+      "ci95": [
+        1.95,
+        670.7
+      ],
+      "n": 43,
+      "continuity_correction": true
+    },
+    "qwen3:14b": {
+      "odds_ratio": 990.0,
+      "ci95": [
+        86.62,
+        11315.2
+      ],
+      "n": 92,
+      "continuity_correction": false
+    }
+  },
+  "activation_re_model": {
+    "fixed_effect_attack": 0.426,
+    "std_err": 0.0394,
+    "z": 10.8,
+    "p": 3.4265420519527594e-27,
+    "ci95": [
+      0.3487,
+      0.5033
+    ],
+    "group_var": 0.04995,
+    "n_groups": 5,
+    "spec": "y ~ attack + (1|model), linear mixed model on the 0/1 outcome"
+  },
+  "activation_re_template": {
+    "fixed_effect_attack": 0.4252,
+    "std_err": 0.046,
+    "z": 9.237,
+    "p": 2.5319330084760536e-20,
+    "ci95": [
+      0.335,
+      0.5155
+    ],
+    "group_var": 0.00047,
+    "n_groups": 12,
+    "spec": "y ~ attack + (1|template), linear mixed model on the 0/1 outcome"
+  },
+  "activation_logit_model_fixed": {
+    "log_odds_attack": 2.9886,
+    "odds_ratio": 19.857,
+    "or_ci95": [
+      9.664,
+      40.801
+    ],
+    "p": 4.1505568344819264e-16,
+    "spec": "logit(y) ~ attack + C(model); model as fixed effect"
+  },
+  "contrasts": {
+    "prereg_1_delaysteer_vs_best_single": {
+      "status": "not estimable",
+      "reason": "The Stage-2 gate resolved against composition, so there is no multi-delay arm to contrast with the best single delay. Reported as not estimable rather than as a null."
+    },
+    "prereg_2_attested_vs_none": {
+      "cells": 12,
+      "none_admits_only": 6,
+      "Attested_admits_only": 0,
+      "none_admitted": 12,
+      "Attested_admitted": 6,
+      "exact_mcnemar_p": 0.03125
+    },
+    "prereg_3_attested_vs_lite": {
+      "cells": 12,
+      "Lite_admits_only": 4,
+      "Attested_admits_only": 0,
+      "Lite_admitted": 10,
+      "Attested_admitted": 6,
+      "exact_mcnemar_p": 0.125
+    }
+  }
+}

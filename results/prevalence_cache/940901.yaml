@@ -1,0 +1,365 @@
+blueprint:
+  name: Zone Presence of People & Devices
+  description: >
+    # 🌐 Zone Presence of People & Devices
+    
+    **Version: 1.1**
+
+
+    Smart tracking for smarter living! 🎯
+    
+    
+    **If you like my blueprints, and would like to show your support or just say thank you?** [Click Here](https://www.paypal.com/donate/?hosted_button_id=WAZS3QSDTPGA8) 🙂
+    
+    
+    <details>
+    <summary><b>The Automation Process:</b> 👈</summary>
+
+      - **Presence Detection:**
+        - The blueprint monitors selected people or devices within the chosen zone.
+        - It checks whether the required **minimum count** is met for being **inside** or **outside** the zone.
+
+      - **Toggle Helper Control:**
+
+        Useful if you want a presence helper that can be updated in one location but used in many automations.
+
+        - When conditions are met:
+          - Turns the **Toggle Helper** ON after the configured delay.
+        - When conditions are no longer met:
+          - Turns the **Toggle Helper** OFF after the configured delay.
+
+      - **Bypass:**
+
+        - Allows you to enable or disable the automation.
+
+      - **Custom Actions (Optional):**
+        - Run additional actions when the automation turns ON or OFF.
+    </details>
+    
+    
+    Need help? 
+
+    - FAQ: [Click Here](https://community.home-assistant.io/t/940901/2)
+  
+    - Community Support Including Updates: [Click Here](https://community.home-assistant.io/t/940901)
+
+
+    Required = *
+  domain: automation
+  input:
+    trigger:
+      name: "Trigger *"
+      icon: mdi:cog-outline
+      collapsed: true
+      input:
+        zone:
+          name: Zone to Monitor *
+          description: >
+            The zone where presence should be checked (e.g., Home, Work).
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: zone
+        zone_condition:
+          name: Zone Condition
+          description: >
+            Choose whether the automation should turn ON when the selected people/devices are **inside** the zone or **outside** the zone.
+          default: inside_zone
+          selector:
+            select:
+              options:
+                - label: Inside Zone
+                  value: "inside_zone"
+                - label: Outside Zone
+                  value: "outside_zone"
+        tracking_mode:
+          name: Tracking Mode
+          description: >
+            Select if you want to track `People` or `Devices`.
+          default: people
+          selector:
+            select:
+              options:
+                - label: People
+                  value: "people"
+                - label: Devices
+                  value: "devices"
+        people:
+          name: People to Track
+          description: >
+            The person entities to monitor. Only used if Tracking Mode is set to People.
+
+
+            Home Assistant can track the location of your people entities, which are typically linked to one or more devices (phone, tablet, watch, etc.).
+            To utilize this option, ensure you have set up person entities in Home Assistant and that each person is assigned to the correct device(s).
+
+
+            **Tip** - While you can assign multiple devices to a person, only one reliable device (usually a phone with location services enabled) is needed for accurate presence tracking.
+            Using multiple devices may cause conflicts if their locations differ.
+            For best results, assign one primary device per person, or switch to **Devices** tracking mode and select the single device that is always with them.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: person
+              multiple: true
+        devices:
+          name: Devices to Track
+          description: >
+            The device entities to monitor. Only used if Tracking Mode is set to Devices.
+
+
+            Home Assistant can track the location of your devices (such as mobile phones) within designated zones using the Home Assistant mobile app or other device trackers.
+            To use this option, set up the relevant zones and configure your devices for tracking in Home Assistant.
+
+
+            **Tip** - For reliable device presence tracking, it is best to use one device that is always with you (usually a phone) rather than multiple devices, to avoid conflicts.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: device_tracker
+              multiple: true
+        min_count:
+          name: Minimum Required
+          description: >
+            The minimum number of selected people or devices that must match the zone condition (inside or outside the selected zone) for the automation to trigger ON.
+
+
+            **Example** - If you have four people or devices and the zone condition is set to **Inside Zone**, you might set this to 1. If the zone condition is **Outside Zone**, you would likely set it to 4.
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 10
+              step: 1
+    presence_helper_settings:
+      name: "Presence Helper"
+      icon: mdi:account-multiple-check-outline
+      collapsed: true
+      input:
+        include_presence_helper:
+          name: Presence Helper Option (Optional)
+          description: >
+            Enable or disable the use of a presence helper for tracking.
+
+
+            This is useful if you want a single presence helper (toggle helper) that can be updated in one place but reused across multiple automations.
+
+
+            **Example** - Use the presence helper as a bypass switch or in a global condition in one of my other blueprints, such as the Sensor Light blueprint **State Control**, or in your own custom automations, either within this automation's custom actions or elsewhere.
+          default: disable_presence_helper
+          selector:
+            select:
+              options:
+                - label: Enable presence helper option
+                  value: "enable_presence_helper"
+                - label: Disable presence helper option
+                  value: "disable_presence_helper"
+        presence_helper:
+          name: Presence Helper
+          description: >
+            The presence helper (toggle helper) that will be toggled ON and OFF.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+        presence_helper_on_delay:
+          name: Delay Before Turning ON
+          description: >
+            Delay in minutes before turning ON the presence helper after conditions are met.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 1
+              unit_of_measurement: minutes
+        presence_helper_off_delay:
+          name: Delay Before Turning OFF
+          description: >
+            Delay in minutes to wait before turning OFF the presence helper after conditions are no longer met.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 1
+              unit_of_measurement: minutes
+    bypass_settings:
+      name: "Bypass"
+      icon: mdi:cog-pause-outline
+      collapsed: true
+      input:
+        include_bypass:
+          name: Bypass Option (Optional)
+          description: >
+            Enable or disable the use of a bypass switch to temporarily disable this automation.
+          default: disable_bypass
+          selector:
+            select:
+              options:
+                - label: Enable bypass option
+                  value: "enable_bypass"
+                - label: Disable bypass option
+                  value: "disable_bypass"
+        bypass_entity:
+          name: Bypass Switch
+          description: >
+            Select a toggle helper (input_boolean) that will bypass this automation while it is ON.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+    custom_actions_settings:
+      name: "Custom Actions"
+      icon: mdi:code-tags
+      collapsed: true
+      input:
+        include_custom_actions:
+          name: Use the Custom Action Options (Optional)
+          description: >
+            Enable the use of custom actions, allowing you to add any actions you would like to run when the automation turns ON or OFF.
+          default: []
+          selector:
+            select:
+              options:
+                - label: Enable Custom Actions - ON
+                  value: "enable_on_custom_actions"
+                - label: Enable Custom Actions - OFF
+                  value: "enable_off_custom_actions"
+              multiple: true
+        on_custom_actions:
+          name: Custom Actions - Start
+          description: >
+            The actions to run when the automation turns ON.
+          default: []
+          selector:
+            action:
+        off_custom_actions:
+          name: Custom Actions - End
+          description: >
+            The actions to run when the automation turns OFF.
+          default: []
+          selector:
+            action:
+
+mode: restart
+
+variables:
+  zone_entity: !input zone
+  zone_name: "{{ zone_entity.split('.')[-1] }}"
+  zone_condition: !input zone_condition
+  tracking_mode: !input tracking_mode
+  people: !input people
+  devices: !input devices
+  min_count: !input min_count
+  include_presence_helper: !input include_presence_helper
+  presence_helper: !input presence_helper
+  presence_helper_on_delay: !input presence_helper_on_delay
+  presence_helper_off_delay: !input presence_helper_off_delay
+  include_bypass: !input include_bypass
+  bypass_entity: !input bypass_entity
+  include_custom_actions: !input include_custom_actions
+  on_custom_actions: !input on_custom_actions
+  off_custom_actions: !input off_custom_actions
+
+triggers:
+  - trigger: state
+    id: "t0"
+    entity_id: !input people
+    to: null
+  - trigger: state
+    id: "t1"
+    entity_id: !input devices
+    to: null
+
+# All Conditions
+condition:
+
+# Trigger conditions
+  - condition: or
+    conditions:
+      - condition: and # trigger for people
+        conditions:
+          - condition: template
+            value_template: "{{ tracking_mode == 'people' }}" 
+          - condition: trigger
+            id: 't0'
+      - condition: and # trigger for devices
+        conditions:
+          - condition: template
+            value_template: "{{ tracking_mode == 'devices' }}" 
+          - condition: trigger
+            id: 't1'
+
+# Check Bypass
+  - condition: or
+    conditions:
+      - "{{ include_bypass == 'disable_bypass' }}"
+      - "{{ bypass_entity == [] }}"
+      - "{{ (include_bypass == 'enable_bypass') and (states[bypass_entity].state == 'off') }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% if tracking_mode == 'people' %}
+                {{ (state_attr(zone_entity, 'persons') | list | select('in', people) | list | length) >= min_count if zone_condition == 'inside_zone'
+                  else (people | reject('in', state_attr(zone_entity, 'persons') | list) | list | length) >= min_count }}
+              {% else %}
+                {{ expand(devices) | selectattr('state', 'eq', zone_name) | list | length >= min_count if zone_condition == 'inside_zone'
+                  else expand(devices) | rejectattr('state', 'eq', zone_name) | list | length >= min_count }}
+              {% endif %}
+        sequence:
+          - alias: "Parallel actions to turn on"
+            parallel:
+              - sequence:
+                  - choose:
+                    - alias: "Check if toggle helper is enabled and helper is OFF"
+                      conditions:
+                        - condition: template
+                          value_template: "{{ include_presence_helper == 'enable_presence_helper' }}"
+                        - condition: template
+                          value_template: "{{ is_state(presence_helper, 'off') }}"
+                      sequence:
+                        - delay:
+                            minutes: "{{ presence_helper_on_delay }}"
+                        - action: homeassistant.turn_on
+                          target:
+                            entity_id: "{{ presence_helper }}"
+              - sequence:
+                  - choose:
+                    - alias: "Perform the custom ON action"
+                      conditions:
+                        - condition: template
+                          value_template: "{{ 'enable_on_custom_actions' in include_custom_actions }}"
+                      sequence: !input on_custom_actions
+    default:
+      - alias: "Parallel actions to turn off"
+        parallel:
+          - sequence:
+              - choose:
+                - alias: "Check if toggle helper is enabled and helper is ON"
+                  conditions:
+                    - condition: template
+                      value_template: "{{ include_presence_helper == 'enable_presence_helper' }}"
+                    - condition: template
+                      value_template: "{{ is_state(presence_helper, 'on') }}"
+                  sequence:
+                    - delay:
+                        minutes: "{{ presence_helper_off_delay }}"
+                    - action: homeassistant.turn_off
+                      target:
+                        entity_id: "{{ presence_helper }}"
+          - sequence:
+              - choose:
+                - alias: "Perform the custom OFF action"
+                  conditions:
+                    - condition: template
+                      value_template: "{{ 'enable_off_custom_actions' in include_custom_actions }}"
+                  sequence: !input off_custom_actions

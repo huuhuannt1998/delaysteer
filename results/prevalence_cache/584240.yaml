@@ -1,0 +1,315 @@
+# see https://community.home-assistant.io/t/close-open-curtain-cover-blinds-based-on-sun-and-weather/584240
+
+blueprint:
+  name: cover sun
+  description: Close cover when sun is shining and open when stops. This considers weather (sunny, partly cloudy), sun position (elevation, azimuth) and temperature.
+  domain: automation
+  source_url: https://gist.github.com/daniel-sc/074465be04dd9a793cba5b841ab63f83
+  input:
+    cover_entity:
+      name: cover
+      selector:
+        entity:
+          domain: cover
+    sun_position_start:
+      name: Sun azimuth position start
+      description: Sun azimuth. When sun is over this value, shutter could closed.
+      default: 89
+      selector:
+        number:
+          min: 0
+          max: 360
+          unit_of_measurement: °
+    sun_position_end:
+      name: Sun azimuth position end
+      description: Sun azimuth. when sun is over this value, shutter should open.
+      default: 200
+      selector:
+        number:
+          min: 0
+          max: 360
+          unit_of_measurement: °
+    sun_elevation_start:
+      name: Sun elevation to start
+      description: Sun elevation. When sun is over this value, shutter could be closed.
+      default: 32
+      selector:
+        number:
+          min: -100
+          max: 360
+          unit_of_measurement: °
+    outdoor_temp:
+      name: Temperature threshold
+      description: Temperature above which the shutters will close. Based on Temperature source (see below).
+      default: 16
+      selector:
+        number:
+          min: 0
+          max: 30
+          unit_of_measurement: °C
+    close_position:
+      name: Closing position of curtain
+      description: "Target position for closed curtain. Note: 100 is open!"
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 99
+    no_open_after:
+      name: Night time begin
+      description: >
+        Any open/close action that would happen during the configured night time is ignored.
+        The automation does not re-evaluate automatically at night time end.
+        By default, night time handling is disabled because night time begin and end are the same value.
+      default: "00:00:00"
+      selector:
+        time:
+    no_open_before:
+      name: Night time end
+      description: >
+        Any open/close action that would happen during the configured night time is ignored.
+        The automation does not re-evaluate automatically at night time end.
+        By default, night time handling is disabled because night time begin and end are the same value.
+      default: "00:00:00"
+      selector:
+        time:
+    random_delay_max:
+      name: Random command delay max
+      description: Randomly delay cover commands between 0 and this many seconds. This can help avoid simultaneous Zigbee commands when multiple automations trigger at the same time. Set to 0 to disable.
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 300
+          step: 1
+          unit_of_measurement: seconds
+    weather:
+      name: Weather service
+      default: "weather.forecast_home"
+      selector:
+        entity:
+          domain: weather
+    temperature_entity:
+      name: Temperature source
+      default: "weather.forecast_home"
+      selector:
+        entity:
+          filter:
+            - domain:
+              - weather
+            - device_class:
+              - temperature
+    close_weather_conditions:
+      name: Weather conditions
+      description: Close curtain on all of the selected weather conditions (if all other conditions are met)
+      default:
+        - sunny
+        - partlycloudy
+      selector:
+        select:
+          multiple: true
+          options:
+            - "clear-night"
+            - "cloudy"
+            - "fog"
+            - "hail"
+            - "lightning"
+            - "lightning-rainy"
+            - "partlycloudy"
+            - "pouring"
+            - "rainy"
+            - "snowy"
+            - "snowy-rainy"
+            - "sunny"
+            - "windy"
+            - "windy-variant"
+            - "exceptional"
+variables:
+  sun_elevation_close: !input sun_elevation_start
+  sun_azimuth_close: !input sun_position_start
+  sun_azimuth_open: !input sun_position_end
+  temp_close: !input outdoor_temp
+  curtain_entity_id: !input cover_entity
+  curtain_target_position: !input close_position
+  no_open_after_time: !input no_open_after
+  no_open_before_time: !input no_open_before
+  random_delay_max_seconds: !input random_delay_max
+  is_night: "{{ no_open_after_time is not none and no_open_before_time is not none and (( today_at(no_open_after_time) < now() < today_at(no_open_before_time)) or (today_at(no_open_after_time) > today_at(no_open_before_time) and (now() > today_at(no_open_after_time) or now() < today_at(no_open_before_time)))) }}"
+  weather_entity_id: !input weather
+  temperature_entity_id: !input temperature_entity
+  weather_close: !input close_weather_conditions
+  curtain_current_position: "{{ state_attr(curtain_entity_id, 'current_position') if state_attr(curtain_entity_id, 'current_position') is not none else state_attr(curtain_entity_id, 'position') }}"
+  current_temp: >
+    {% set t = state_attr(temperature_entity_id, 'temperature') %}
+    {{ (t if t is not none else states(temperature_entity_id)) | float(none) }}
+
+mode: queued # We rely on trigger changes, so 'single' and 'restart' are not possible. 'parallel' might work.
+
+trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: !input sun_elevation_start
+    id: t_sun_elevation_above
+
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: !input sun_elevation_start
+    id: t_sun_elevation_below
+
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: azimuth
+    above: !input sun_position_start
+    id: t_sun_azimuth_start_above
+
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: azimuth
+    above: !input sun_position_end
+    id: t_sun_azimuth_end_above
+
+  - platform: state
+    entity_id: !input weather
+    to: !input close_weather_conditions
+    not_from: !input close_weather_conditions
+    id: t_weather_sunny
+
+  - platform: state
+    entity_id: !input weather
+    not_to: !input close_weather_conditions
+    from: !input close_weather_conditions
+    id: t_weather_not_sunny
+
+  # temperature_entity can either be:
+  # - a weather entity, where temperature is an attribute
+  # - a sensor entity, where temperature is the state
+  - platform: numeric_state
+    entity_id: !input temperature_entity
+    value_template: >
+      {{ state.attributes.get('temperature', state.state) | float(none) }}
+    above: !input outdoor_temp
+    id: t_temp_above
+
+  - platform: numeric_state
+    entity_id: !input temperature_entity
+    value_template: >
+      {{ state.attributes.get('temperature', state.state) | float(none) }}
+    below: !input outdoor_temp
+    id: t_temp_below
+
+condition:
+  # During night time, triggers are ignored
+  - condition: template
+    value_template: "{{ not is_night }}"
+  - condition: or
+    conditions:
+      # do close when current cover position is above curtain_target_position
+      - condition: and
+        conditions:
+          - condition: template
+            value_template: "{{ curtain_current_position > curtain_target_position }}"
+          - condition: template
+            value_template: "{{ states(weather_entity_id) in weather_close }}"
+          - condition: template
+            value_template: "{{ state_attr('sun.sun', 'elevation') >= sun_elevation_close }}"
+          - condition: template
+            value_template: "{{ (sun_azimuth_close <= sun_azimuth_open and sun_azimuth_close <= state_attr('sun.sun', 'azimuth') <= sun_azimuth_open) or (sun_azimuth_close > sun_azimuth_open and (state_attr('sun.sun', 'azimuth') >= sun_azimuth_close or state_attr('sun.sun', 'azimuth') <= sun_azimuth_open)) }}"
+          - condition: template
+            value_template: "{{ current_temp is number and current_temp >= temp_close }}"
+      # do open (when it (first) leaves the closed conditions (prevent e.g. opening at night when any trigger fires)):
+      - condition: and
+        conditions:
+          - condition: template
+            value_template: "{{ curtain_current_position <= curtain_target_position }}"
+          - condition: or
+            conditions:
+              - condition: and
+                conditions:
+                  - condition: trigger
+                    id: t_weather_not_sunny
+                  - condition: template
+                    value_template: "{{ state_attr('sun.sun', 'elevation') >= sun_elevation_close }}"
+                  - condition: template
+                    value_template: "{{ (sun_azimuth_close <= sun_azimuth_open and sun_azimuth_close <= state_attr('sun.sun', 'azimuth') <= sun_azimuth_open) or (sun_azimuth_close > sun_azimuth_open and (state_attr('sun.sun', 'azimuth') >= sun_azimuth_close or state_attr('sun.sun', 'azimuth') <= sun_azimuth_open)) }}"
+                  - condition: template
+                    value_template: "{{ current_temp is number and current_temp >= temp_close }}"
+
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ states(weather_entity_id) in weather_close }}"
+                  - condition: trigger
+                    id: t_sun_elevation_below
+                  - condition: template
+                    value_template: "{{ (sun_azimuth_close <= sun_azimuth_open and sun_azimuth_close <= state_attr('sun.sun', 'azimuth') <= sun_azimuth_open) or (sun_azimuth_close > sun_azimuth_open and (state_attr('sun.sun', 'azimuth') >= sun_azimuth_close or state_attr('sun.sun', 'azimuth') <= sun_azimuth_open)) }}"
+                  - condition: template
+                    value_template: "{{ current_temp is number and current_temp >= temp_close }}"
+
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ states(weather_entity_id) in weather_close }}"
+                  - condition: template
+                    value_template: "{{ state_attr('sun.sun', 'elevation') >= sun_elevation_close }}"
+                  - condition: trigger
+                    id: t_sun_azimuth_end_above
+                  - condition: template
+                    value_template: "{{ current_temp is number and current_temp >= temp_close }}"
+
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ states(weather_entity_id) in weather_close }}"
+                  - condition: template
+                    value_template: "{{ state_attr('sun.sun', 'elevation') >= sun_elevation_close }}"
+                  - condition: template
+                    value_template: "{{ (sun_azimuth_close <= sun_azimuth_open and sun_azimuth_close <= state_attr('sun.sun', 'azimuth') <= sun_azimuth_open) or (sun_azimuth_close > sun_azimuth_open and (state_attr('sun.sun', 'azimuth') >= sun_azimuth_close or state_attr('sun.sun', 'azimuth') <= sun_azimuth_open)) }}"
+                  - condition: trigger
+                    id: t_temp_below
+
+action:
+  - choose:
+      # close cover
+      - conditions:
+          - condition: template
+            value_template: "{{ curtain_current_position > curtain_target_position }}"
+          - condition: template
+            value_template: "{{ states(weather_entity_id) in weather_close }}"
+          - condition: template
+            value_template: "{{ state_attr('sun.sun', 'elevation') >= sun_elevation_close }}"
+          - condition: template
+            value_template: "{{ (sun_azimuth_close <= sun_azimuth_open and sun_azimuth_close <= state_attr('sun.sun', 'azimuth') <= sun_azimuth_open) or (sun_azimuth_close > sun_azimuth_open and (state_attr('sun.sun', 'azimuth') >= sun_azimuth_close or state_attr('sun.sun', 'azimuth') <= sun_azimuth_open)) }}"
+          - condition: template
+            value_template: "{{ current_temp is number and current_temp >= temp_close }}"
+        sequence:
+          - delay:
+              seconds: "{{ range(0, random_delay_max_seconds | int + 1) | random }}"
+          - service: cover.set_cover_position
+            data:
+              position: "{{ curtain_target_position }}"
+            target:
+              entity_id: "{{ curtain_entity_id }}"
+      # open cover (conditions are somewhat redundant here, as 'condition' is more specific..)
+      - conditions:
+          - condition: template
+            value_template: "{{ curtain_current_position <= curtain_target_position }}"
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ states(weather_entity_id) not in weather_close }}"
+              - condition: template
+                value_template: "{{ state_attr('sun.sun', 'elevation') < sun_elevation_close }}"
+              - condition: template
+                value_template: "{{ (sun_azimuth_close <= sun_azimuth_open and (sun_azimuth_close > state_attr('sun.sun', 'azimuth') or state_attr('sun.sun', 'azimuth') > sun_azimuth_open)) or (sun_azimuth_close > sun_azimuth_open and (state_attr('sun.sun', 'azimuth') < sun_azimuth_close and state_attr('sun.sun', 'azimuth') > sun_azimuth_open)) }}"
+              - condition: template
+                value_template: "{{ current_temp is number and current_temp < temp_close }}"
+        sequence:
+          - delay:
+              seconds: "{{ range(0, random_delay_max_seconds | int + 1) | random }}"
+          - service: cover.set_cover_position
+            data:
+              position: 100
+            target:
+              entity_id: "{{ curtain_entity_id }}"

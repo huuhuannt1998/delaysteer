@@ -1,0 +1,16 @@
+entity,trial,http_status,service_result,poll_rtt_s,value_age_before_s,value_age_after_s,last_reported_advanced,pollable_in_practice
+binary_sensor.front_door_contact,0,200,[],0.0087,949216.905,949216.92,False,False
+binary_sensor.front_door_contact,1,200,[],0.0017,949216.922,949216.925,False,False
+binary_sensor.front_door_contact,2,200,[],0.0016,949216.926,949216.929,False,False
+binary_sensor.front_door_contact,3,200,[],0.0016,949216.93,949216.933,False,False
+binary_sensor.front_door_contact,4,200,[],0.0018,949216.934,949216.937,False,False
+lock.front_door,0,200,[],0.003,949216.943,949216.948,False,False
+lock.front_door,1,200,[],0.0017,949216.949,949216.952,False,False
+lock.front_door,2,200,[],0.0013,949216.952,949216.955,False,False
+lock.front_door,3,200,[],0.0022,949216.956,949216.959,False,False
+lock.front_door,4,200,[],0.0012,949216.96,949216.963,False,False
+alarm_control_panel.home_alarm,0,200,[],0.0014,949217.985,949217.988,False,False
+alarm_control_panel.home_alarm,1,200,[],0.0024,949217.988,949217.992,False,False
+alarm_control_panel.home_alarm,2,200,[],0.0011,949217.994,949217.996,False,False
+alarm_control_panel.home_alarm,3,200,[],0.0019,949217.998,949218.001,False,False
+alarm_control_panel.home_alarm,4,200,[],0.001,949218.003,949218.007,False,False

@@ -1,0 +1,517 @@
+blueprint:
+  name: AWTRIX Sensor-Anzeige
+  description: >
+    Zeigt einen Home-Assistant-Sensor als eigene App auf einem AWTRIX-NG-Panel
+    an. Aktualisiert sich automatisch bei jeder Änderung des Sensorwerts,
+    direkt per MQTT - keine Berry-App und kein Statestream nötig.
+
+
+    Enthält: Textfarbe mit Schwellenwerten (z. B. grün/orange/rot je nach
+    Wert), Laufschrift-Feinsteuerung, Hintergrundeffekt, Wetter-Overlay,
+    Fortschrittsbalken, automatisches Ausblenden bei veralteten Werten und
+    optional den geräteweiten App-Übergang.
+  domain: automation
+  author: Ingmar
+  source_url: https://raw.githubusercontent.com/Heronidas/ha-awtrix_ng-sensor-display/main/awtrix_sensor.yaml
+  homeassistant:
+    min_version: "2024.10.0"
+
+  input:
+    quelle:
+      name: Sensor
+      icon: mdi:eye-outline
+      input:
+        sensor_entity:
+          name: Sensor
+          description: Der Home-Assistant-Sensor, dessen Wert auf dem Panel erscheinen soll.
+          selector:
+            entity:
+              domain: sensor
+
+    geraet:
+      name: AWTRIX-Panel
+      icon: mdi:led-strip-variant
+      input:
+        awtrix_device:
+          name: Panel
+          description: Auswahl aus der Geräteliste - kein manuelles Eintippen des MQTT-Topics nötig.
+          selector:
+            device:
+              filter:
+                - integration: mqtt
+                  manufacturer: Blueforcer
+                  model: AWTRIX NG
+        app_name:
+          name: App-Name
+          description: Interner Name für diese Anzeige auf dem Panel. Nur Buchstaben, Zahlen, "_" und "-", keine Leerzeichen.
+          selector:
+            text: {}
+
+    anzeige:
+      name: Text & Anzeige
+      icon: mdi:format-text
+      input:
+        unit:
+          name: Einheit
+          description: Wird direkt an den Wert angehängt, z. B. "°C" oder "%".
+          default: ""
+          selector:
+            text: {}
+        icon_id:
+          name: Icon
+          description: LaMetric-Icon-ID, die bereits auf dem Panel installiert ist. Leer lassen für kein Icon.
+          default: ""
+          selector:
+            text: {}
+        center:
+          name: Text zentrieren
+          description: Nur wirksam, solange der Text steht (siehe "Text, der passt" bei Laufschrift).
+          default: true
+          selector:
+            boolean: {}
+        text_case:
+          name: Groß-/Kleinschreibung
+          default: "inherit"
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: "inherit"
+                  label: "Geräte-Standard übernehmen"
+                - value: "upper"
+                  label: "GROSSBUCHSTABEN erzwingen"
+                - value: "asTyped"
+                  label: "Genau so anzeigen wie eingegeben"
+        duration_sec:
+          name: Anzeigedauer
+          description: Wie lange diese App pro Durchlauf zu sehen ist. 0 = Geräte-Standard verwenden.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              unit_of_measurement: s
+              mode: box
+
+    laufschrift:
+      name: Laufschrift
+      icon: mdi:format-pilcrow-arrow-right
+      collapsed: true
+      input:
+        scroll_mode:
+          name: Verhalten bei langem Text
+          description: Was passiert, wenn der Text nicht komplett aufs Panel passt.
+          default: "wrap"
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: "wrap"
+                  label: "Durchlaufen, dann von vorn beginnen"
+                - value: "loop"
+                  label: "Gleichmäßig durchlaufend, ohne Sprung"
+                - value: "bounce"
+                  label: "Hin und her pendeln"
+                - value: "static"
+                  label: "Nicht scrollen, Rest abschneiden"
+        scroll_speed:
+          name: Tempo
+          description: 100 % = normales Tempo, 0 % hält den Text an.
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 300
+              step: 10
+              unit_of_measurement: "%"
+              mode: slider
+        scroll_direction:
+          name: Laufrichtung
+          default: "left"
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: "left"
+                  label: "Von rechts nach links"
+                - value: "right"
+                  label: "Von links nach rechts"
+        scroll_entry:
+          name: Start des ersten Durchlaufs
+          default: "inline"
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: "inline"
+                  label: "Sofort an Ort und Stelle sichtbar"
+                - value: "offscreen"
+                  label: "Läuft von außerhalb ins Bild"
+        scroll_when_fits:
+          name: "Wenn der Text passt"
+          description: Betrifft nur kurzen Text, der gar nicht scrollen müsste.
+          default: "static"
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: "static"
+                  label: "Ruhig stehen bleiben"
+                - value: "scroll"
+                  label: "Trotzdem einmal durchlaufen"
+        scroll_gap:
+          name: Abstand zwischen Wiederholungen
+          description: Nur bei "Gleichmäßig durchlaufend" sichtbar.
+          default: 8
+          selector:
+            number:
+              min: 0
+              max: 64
+              unit_of_measurement: px
+              mode: box
+        scroll_hold_ms:
+          name: Pause vor dem Start
+          description: Gilt auch an jedem Wendepunkt beim Hin-und-her-Pendeln.
+          default: 1000
+          selector:
+            number:
+              min: 0
+              max: 5000
+              step: 100
+              unit_of_measurement: ms
+              mode: box
+
+    farben:
+      name: Farben
+      icon: mdi:palette-swatch
+      input:
+        text_color:
+          name: Standardfarbe
+          description: Gilt immer, außer ein Schwellenwert unten greift oder "Regenbogen-Effekt" (bei Effekte & Overlay) ist aktiv.
+          default: [255, 255, 255]
+          selector:
+            color_rgb: {}
+        use_thresholds:
+          name: Farbe nach Schwellenwert wechseln
+          description: Ersetzt die Standardfarbe automatisch, sobald der Sensorwert eine der beiden Schwellen unten erreicht - z. B. grün/orange/rot je nach Temperatur.
+          default: false
+          selector:
+            boolean: {}
+        threshold_low:
+          name: Untere Schwelle
+          description: Ab diesem Wert (und darunter) gilt "Farbe niedrig".
+          default: 0
+          selector:
+            number:
+              min: -1000
+              max: 1000
+              mode: box
+        color_low:
+          name: Farbe niedrig
+          default: [80, 170, 255]
+          selector:
+            color_rgb: {}
+        threshold_high:
+          name: Obere Schwelle
+          description: Ab diesem Wert (und darüber) gilt "Farbe hoch".
+          default: 100
+          selector:
+            number:
+              min: -1000
+              max: 1000
+              mode: box
+        color_high:
+          name: Farbe hoch
+          default: [255, 60, 60]
+          selector:
+            color_rgb: {}
+
+    effekte:
+      name: Effekte & Overlay
+      icon: mdi:auto-fix
+      collapsed: true
+      input:
+        effect_id:
+          name: Hintergrundeffekt
+          description: >-
+            Animierter Ambiente-Hintergrund, solange diese App zu sehen ist.
+            Nicht zu verwechseln mit dem Übergang zwischen Apps (siehe ganz
+            unten bei "Geräteweite Einstellungen") - das ist etwas anderes.
+            Diese Liste ist ein bestes Best-Effort; sollte ein Name auf
+            deiner Firmware nicht existieren, sag Bescheid.
+          default: ""
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: ""
+                  label: "Kein Effekt"
+                - value: "Plasma"
+                  label: "Plasma"
+                - value: "PlasmaCloud"
+                  label: "PlasmaCloud"
+                - value: "Matrix"
+                  label: "Matrix"
+                - value: "Fireworks"
+                  label: "Fireworks"
+                - value: "Ripple"
+                  label: "Ripple"
+                - value: "Radar"
+                  label: "Radar"
+                - value: "Snake"
+                  label: "Snake"
+                - value: "PingPong"
+                  label: "PingPong"
+                - value: "BrickBreaker"
+                  label: "BrickBreaker"
+                - value: "Checkerboard"
+                  label: "Checkerboard"
+                - value: "ColorWaves"
+                  label: "ColorWaves"
+                - value: "LookingEyes"
+                  label: "LookingEyes"
+                - value: "MovingLine"
+                  label: "MovingLine"
+                - value: "Pacifica"
+                  label: "Pacifica"
+                - value: "SwirlIn"
+                  label: "SwirlIn"
+                - value: "SwirlOut"
+                  label: "SwirlOut"
+                - value: "TheaterChase"
+                  label: "TheaterChase"
+                - value: "TwinklingStars"
+                  label: "TwinklingStars"
+        rainbow:
+          name: Regenbogen-Effekt für den Text
+          description: Überschreibt Standard- und Schwellenwertfarben mit einem animierten Farbverlauf.
+          default: false
+          selector:
+            boolean: {}
+        effect_speed:
+          name: Tempo (Effekt & Overlay)
+          description: Gilt für Hintergrundeffekt UND Wetter-Overlay gemeinsam. 1.0 = normal.
+          default: 1.0
+          selector:
+            number:
+              min: 0.1
+              max: 10.0
+              step: 0.1
+              mode: slider
+        overlay:
+          name: Wetter-Overlay
+          description: Animierte Auflage über die gesamte Anzeige - z. B. praktisch bei einem Temperatur- oder Wettersensor.
+          default: ""
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - value: ""
+                  label: "Kein Overlay (Geräte-Standard)"
+                - value: "rain"
+                  label: "Regen"
+                - value: "snow"
+                  label: "Schnee"
+                - value: "drizzle"
+                  label: "Nieselregen"
+                - value: "storm"
+                  label: "Sturm"
+                - value: "thunder"
+                  label: "Gewitter"
+                - value: "frost"
+                  label: "Frost"
+
+    balken:
+      name: Balken & Ablaufzeit
+      icon: mdi:progress-clock
+      collapsed: true
+      input:
+        show_progress:
+          name: Fortschrittsbalken anzeigen
+          description: Praktisch für Prozentwerte, z. B. Luftfeuchte, Akkustand oder Druckfortschritt.
+          default: false
+          selector:
+            boolean: {}
+        progress_min:
+          name: Balken entspricht diesem Wert bei 0 %
+          default: 0
+          selector:
+            number:
+              min: -1000
+              max: 1000
+              mode: box
+        progress_max:
+          name: Balken entspricht diesem Wert bei 100 %
+          default: 100
+          selector:
+            number:
+              min: -1000
+              max: 1000
+              mode: box
+        lifetime_min:
+          name: Ablaufzeit
+          description: Liefert der Sensor so lange keinen neuen Wert, verschwindet die App vom Panel. 0 = nie ausblenden.
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 1440
+              unit_of_measurement: min
+              mode: box
+
+    geraeteeinstellungen:
+      name: Geräteweite Einstellungen
+      icon: mdi:cog-outline
+      collapsed: true
+      input:
+        apply_device_settings:
+          name: Übergang zwischen Apps mitsetzen
+          description: >-
+            Ändert bei jeder Aktualisierung zusätzlich, wie das Panel
+            zwischen Apps wechselt - wirkt sich auf ALLE Apps auf dem Panel
+            aus, nicht nur auf diese eine. Standardmäßig aus, damit diese
+            Automation nichts Geräteweites verändert, ohne dass du es willst.
+          default: false
+          selector:
+            boolean: {}
+        transition_effect:
+          name: Übergangsart
+          description: Nur wirksam, wenn oben aktiviert.
+          default: "Random"
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - "Random"
+                - "Slide"
+                - "Dim"
+                - "Zoom"
+                - "Rotate"
+                - "Pixelate"
+                - "Curtain"
+                - "Ripple"
+                - "Blink"
+                - "Reload"
+                - "Fade"
+                - "Cover"
+                - "Uncover"
+                - "Split"
+                - "Blinds"
+                - "Blocks"
+                - "Flash"
+                - "Diamond"
+                - "Wave"
+                - "Rain"
+                - "Melt"
+                - "Interlace"
+
+mode: single
+max_exceeded: silent
+
+variables:
+  unit: !input unit
+  icon_id: !input icon_id
+  text_color: !input text_color
+  center: !input center
+  text_case: !input text_case
+  duration_sec: !input duration_sec
+  scroll_mode: !input scroll_mode
+  scroll_speed: !input scroll_speed
+  scroll_direction: !input scroll_direction
+  scroll_entry: !input scroll_entry
+  scroll_when_fits: !input scroll_when_fits
+  scroll_gap: !input scroll_gap
+  scroll_hold_ms: !input scroll_hold_ms
+  effect_id: !input effect_id
+  effect_speed: !input effect_speed
+  overlay: !input overlay
+  rainbow: !input rainbow
+  show_progress: !input show_progress
+  progress_min: !input progress_min
+  progress_max: !input progress_max
+  lifetime_min: !input lifetime_min
+  use_thresholds: !input use_thresholds
+  threshold_low: !input threshold_low
+  color_low: !input color_low
+  threshold_high: !input threshold_high
+  color_high: !input color_high
+  app_name: !input app_name
+  awtrix_device: !input awtrix_device
+  apply_device_settings: !input apply_device_settings
+  transition_effect: !input transition_effect
+  # Liest den MQTT-Prefix live von der eigenen "MQTT prefix"-Sensor-Entität
+  # des gewählten AWTRIX-Geräts aus - passt sich automatisch an, falls du das
+  # Panel jemals umbenennst oder neu einrichtest.
+  mqtt_topic: >-
+    {% set prefix_entity = device_entities(awtrix_device) | select('match', '^sensor\..*_mqtt_prefix$') | list | first %}
+    {{ states(prefix_entity) if prefix_entity else 'awtrix' }}
+
+triggers:
+  - trigger: state
+    entity_id: !input sensor_entity
+
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input sensor_entity
+        state: ["unknown", "unavailable", "none"]
+
+actions:
+  - action: mqtt.publish
+    data:
+      topic: "{{ mqtt_topic }}/cmd/apps/pushed/{{ app_name }}"
+      payload: >-
+        {% set payload = {
+          'text': trigger.to_state.state ~ unit,
+          'textCenter': center,
+          'textCase': text_case,
+          'scroll': {
+            'mode': scroll_mode,
+            'speed': scroll_speed | int(100),
+            'direction': scroll_direction,
+            'entry': scroll_entry,
+            'whenFits': scroll_when_fits,
+            'gap': scroll_gap | int(8),
+            'holdMs': scroll_hold_ms | int(1000)
+          },
+          'effect': effect_id,
+          'effectSpeed': effect_speed | float(1.0),
+          'overlay': overlay,
+          'lifetimeMs': (lifetime_min | int(0)) * 60000,
+          'lifetimeExpiry': 'remove'
+        } %}
+        {% if icon_id %}
+          {% set payload = dict(payload, icon=icon_id) %}
+        {% endif %}
+        {% set value = trigger.to_state.state | float(0) %}
+        {% if use_thresholds and value <= (threshold_low | float(0)) %}
+          {% set active_color = color_low %}
+        {% elif use_thresholds and value >= (threshold_high | float(100)) %}
+          {% set active_color = color_high %}
+        {% else %}
+          {% set active_color = text_color %}
+        {% endif %}
+        {% if rainbow %}
+          {% set payload = dict(payload, palette='Rainbow', textColor='palette') %}
+        {% else %}
+          {% set payload = dict(payload, textColor=[active_color[0] | int, active_color[1] | int, active_color[2] | int]) %}
+        {% endif %}
+        {% if duration_sec | int(0) > 0 %}
+          {% set payload = dict(payload, durationMs=(duration_sec | int(0)) * 1000) %}
+        {% endif %}
+        {% if show_progress %}
+          {% set span = (progress_max | float(100)) - (progress_min | float(0)) %}
+          {% set raw_pct = ((value - (progress_min | float(0))) / span * 100) | round(0) | int if span != 0 else 0 %}
+          {% set pct = 0 if raw_pct < 0 else (100 if raw_pct > 100 else raw_pct) %}
+          {% set payload = dict(payload, progress=pct, progressColor=[active_color[0] | int, active_color[1] | int, active_color[2] | int]) %}
+        {% endif %}
+        {{ payload | tojson }}
+  - if:
+      - "{{ apply_device_settings }}"
+    then:
+      - action: mqtt.publish
+        data:
+          topic: "{{ mqtt_topic }}/cmd/settings"
+          payload: >-
+            {{ {'transitionEffect': transition_effect} | tojson }}

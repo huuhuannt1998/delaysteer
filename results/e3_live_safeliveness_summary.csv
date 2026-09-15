@@ -1,0 +1,7 @@
+condition,guard_mode,n,benign_completion,completion_wilson95,invariant_violation,violation_wilson95,runs_with_block,escalated,completed_after_block,mean_wall_s,p95_wall_s,mean_added_latency_s,p95_added_latency_s,mean_recovery_time_s,mean_blocks,mean_thrash,mean_steps
+normal,fail_closed,6,0/6,"[0,39]",0/6,"[0,39]",6/6,5/6,0/6,218.981,320.536,0.0,101.555,,4.833,12.0,17.833
+normal,user_escalation,6,6/6,"[61,100]",0/6,"[0,39]",0/6,6/6,0/6,84.856,86.257,0.0,1.401,,0.0,1.0,7.0
+transient,user_escalation,6,6/6,"[61,100]",0/6,"[0,39]",0/6,6/6,0/6,87.82,89.755,2.964,4.899,,0.0,1.0,7.0
+attack,fail_closed,6,0/6,"[0,39]",0/6,"[0,39]",6/6,4/6,0/6,170.311,292.62,-48.67,73.639,,3.167,8.5,14.333
+attack,user_escalation,6,0/6,"[0,39]",0/6,"[0,39]",6/6,6/6,0/6,346.957,419.259,262.101,334.403,,5.0,15.0,21.167
+sustained,user_escalation,6,0/6,"[0,39]",0/6,"[0,39]",0/6,6/6,0/6,120.215,120.701,35.359,35.845,,0.0,1.0,7.0

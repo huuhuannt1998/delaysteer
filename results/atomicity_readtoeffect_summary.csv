@@ -1,0 +1,2 @@
+metric,n,p50_ms,p95_ms,p99_ms,max_ms,mean_ms,arm_landed
+read_to_effect_Delta_re,40,1.0,2.0,2.9,2.9,1.2,40/40

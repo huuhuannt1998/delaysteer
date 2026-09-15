@@ -49,3 +49,18 @@ manuscripts/
 PROJECT_DOSSIER.md
 AUDIT_EVIDENCE.md
 MA5_SIMUHOME_RESULT.md
+# The manuscript folder was renamed 12-page-manuscript -> 30-page-manuscript on the
+# venue change to ACM TIOT. Neither name was matched by the rule above, so the paper
+# was unprotected here by an accident of naming. Both are listed, and a glob catches
+# the next rename; the paper is under double-anonymous review and must not appear in
+# a repository that carries the author's account name.
+*-page-manuscript/
+12-page-manuscript/
+30-page-manuscript/
+# Review and submission-strategy documents: reviewer reports, panel findings and the
+# venue-options memo are paper content, not code.
+paper-review/
+OPTIONS-FOR-ADVISOR.md
+# A standalone summary of the paper for an advisor -- it carries the manuscript's title
+# and argument, so it is paper content that happens to sit under results/.
+results/advisor_summary.*

@@ -1,0 +1,9 @@
+class,mode,pollable,cadence_s,epsilon_s,max_slip_age_s,residual_window_s,fail_closed,benign_false_block,cite,note
+Matter mains/router,passive,True,1.0,1.0,1.0,1.0,0,0,matter-spec,Subscribe MinIntervalFloor sub-second; mains device force-readable
+Matter mains/router,active,True,1.0,0.1,0.0,0.1,0,0,matter-spec,Subscribe MinIntervalFloor sub-second; mains device force-readable
+Z-Wave FLiRS lock,passive,True,1.0,1.0,1.0,1.0,0,0,silabs-flirs,FLiRS beam-wake 250ms-1s; lock reachable in ~1s
+Z-Wave FLiRS lock,active,True,1.0,1.0,0.0,1.0,0,0,silabs-flirs,FLiRS beam-wake 250ms-1s; lock reachable in ~1s
+Zigbee sleepy contact,passive,False,3600.0,3600.0,3600.0,3600.0,0,0,zcl-report,battery end-device; on-change + ~1/hour keepalive; sleepy
+Zigbee sleepy contact,active,False,3600.0,,0.0,0.0,1,1,zcl-report,battery end-device; on-change + ~1/hour keepalive; sleepy
+Z-Wave sleepy sensor,passive,False,10800.0,10800.0,10800.0,10800.0,0,0,silabs-wakeup,Wake Up CC default ~3h; only briefly reachable on wake
+Z-Wave sleepy sensor,active,False,10800.0,,0.0,0.0,1,1,silabs-wakeup,Wake Up CC default ~3h; only briefly reachable on wake

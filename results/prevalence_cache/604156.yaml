@@ -1,0 +1,10 @@
+blueprint:
+  name: Camera - Send & Save Camera snapshot when if a binary sensor's state turns
+    'off' to 'on', with Conditions
+  description: This automation blueprint creates a camera snapshot if motion is detected,
+    or if a binary sensor's state turns 'off' to 'on', and sends a notification to
+    your phone with the picture. Clicking the notification will navigate to dashboard
+    URL. [More Info](https://community.home-assistant.io/t/camera-send-save-snapshot-to-mobile-device-when-motion-is-detected-with-conditions/604156)
+    (v2.3) [Automation]
+  author: TheFalseReality
+  homeassistant:

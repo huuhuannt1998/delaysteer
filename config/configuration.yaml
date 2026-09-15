@@ -1,70 +1,152 @@
-# DelaySteer Home Assistant testbed — VIRTUAL / lab-safe devices only.
+# DelaySteer Home Assistant — VIRTUAL / lab-safe smart home.
 # Safety constraint (mission mis_01KSTTRBFAJVXG3X445T1RQZGK): never a live lock/alarm.
 #
-# Devices are backed by helper entities (input_boolean / template) so they respond
-# to the same real HA services the planner calls (lock.lock, alarm_control_panel.*),
-# making the HAWebSocketAdapter a faithful drop-in for the virtual home.
+# Every device is backed by helper entities (input_boolean / input_number) and exposed
+# through template/manual/generic platforms, so each responds to the same real HA
+# services an agent calls (light.turn_on, lock.lock, cover.open_cover, climate.set_*).
+# A full multi-room virtual home (living room, kitchen, bedrooms, bathroom, garage,
+# outdoor) PLUS the SmartThings-cloud bridge (st_* devices) at the bottom.
 
 default_config:
+
+# Lab-only compromised integration: holds back event-bus updates from inside the hub
+# (the delay-only adversary realized as a malicious local integration; see appendix).
+delay_attacker:
 
 homeassistant:
   name: DelaySteer
   unit_system: metric
   time_zone: America/New_York
 
-# --- backing helper state ---
+# ============================================================================
+# HELPER STATE  (on/off backing for lights, switches, locks, covers, fans, sensors)
+# ============================================================================
 input_boolean:
-  front_door_lock_engaged:
-    name: Front door lock engaged
-  front_door_open:
-    name: Front door open
-  hallway_motion:
-    name: Hallway motion
-  kitchen_leak:
-    name: Kitchen leak
-  hallway_light_on:
-    name: Hallway light on
-  bedroom_heater:
-    name: Bedroom heater
-  front_porch_camera_motion:
-    name: Front porch camera motion
+  # -- entry / security (original) --
+  front_door_lock_engaged: {name: Front door lock engaged}
+  front_door_open: {name: Front door open}
+  hallway_motion: {name: Hallway motion}
+  kitchen_leak: {name: Kitchen leak}
+  hallway_light_on: {name: Hallway light on}
+  bedroom_heater: {name: Bedroom heater}
+  front_porch_camera_motion: {name: Front porch camera motion}
+  # -- living room --
+  lr_ceiling: {name: Living room ceiling light}
+  lr_lamp: {name: Living room lamp}
+  lr_tv: {name: Living room TV}
+  lr_fan: {name: Living room fan}
+  lr_blinds: {name: Living room blinds open}
+  lr_motion: {name: Living room motion}
+  lr_heater: {name: Living room heater}
+  # -- kitchen --
+  kitchen_light: {name: Kitchen light}
+  coffee_maker: {name: Coffee maker}
+  dishwasher: {name: Dishwasher}
+  kitchen_motion: {name: Kitchen motion}
+  kitchen_window: {name: Kitchen window open}
+  # -- master bedroom --
+  bedroom_ceiling: {name: Bedroom ceiling light}
+  bedroom_lamp: {name: Bedroom lamp}
+  bedroom_fan: {name: Bedroom fan}
+  bedroom_blinds: {name: Bedroom blinds open}
+  bedroom_motion: {name: Bedroom motion}
+  bedroom_window: {name: Bedroom window open}
+  # -- kids room --
+  kids_light: {name: Kids room light}
+  # -- bathroom --
+  bathroom_light: {name: Bathroom light}
+  bathroom_fan: {name: Bathroom exhaust fan}
+  bathroom_leak: {name: Bathroom leak}
+  # -- garage --
+  garage_light: {name: Garage light}
+  garage_door_open: {name: Garage door open}
+  garage_door_contact: {name: Garage door contact}
+  garage_motion: {name: Garage motion}
+  garage_side_lock: {name: Garage side door lock engaged}
+  # -- outdoor --
+  porch_light: {name: Front porch light}
+  backyard_light: {name: Backyard light}
+  garden_sprinkler: {name: Garden sprinkler}
+  back_door_lock: {name: Back door lock engaged}
+  back_door_open: {name: Back door open}
 
-# --- sensors / binary sensors ---
+# ============================================================================
+# NUMERIC HELPERS  (settable temperature / humidity feeding the sensors below)
+# ============================================================================
+input_number:
+  bedroom_temp: {name: Bedroom temperature, min: 5, max: 35, step: 0.5, initial: 20, unit_of_measurement: "°C"}
+  lr_temp: {name: Living room temperature, min: 5, max: 35, step: 0.5, initial: 22, unit_of_measurement: "°C"}
+  lr_humidity: {name: Living room humidity, min: 0, max: 100, step: 1, initial: 45, unit_of_measurement: "%"}
+  kitchen_temp: {name: Kitchen temperature, min: 5, max: 35, step: 0.5, initial: 23, unit_of_measurement: "°C"}
+  bedroom_humidity: {name: Bedroom humidity, min: 0, max: 100, step: 1, initial: 50, unit_of_measurement: "%"}
+  garage_temp: {name: Garage temperature, min: -5, max: 40, step: 0.5, initial: 18, unit_of_measurement: "°C"}
+  outdoor_temp: {name: Outdoor temperature, min: -20, max: 45, step: 0.5, initial: 16, unit_of_measurement: "°C"}
+  outdoor_humidity: {name: Outdoor humidity, min: 0, max: 100, step: 1, initial: 60, unit_of_measurement: "%"}
+
+# ============================================================================
+# TEMPLATE SENSORS + BINARY SENSORS  (motion / contact / leak / temp / humidity)
+# ============================================================================
 template:
   - binary_sensor:
-      - name: "Front Door Contact"
-        device_class: door
-        state: "{{ is_state('input_boolean.front_door_open', 'on') }}"
-      - name: "Hallway Motion"
-        device_class: motion
-        state: "{{ is_state('input_boolean.hallway_motion', 'on') }}"
-      - name: "Kitchen Leak"
-        device_class: moisture
-        state: "{{ is_state('input_boolean.kitchen_leak', 'on') }}"
-      # Camera event source (proposal §10): camera-detected motion at the porch.
-      - name: "Front Porch Camera Motion"
-        device_class: motion
-        state: "{{ is_state('input_boolean.front_porch_camera_motion', 'on') }}"
+      - {name: "Front Door Contact", device_class: door, state: "{{ is_state('input_boolean.front_door_open','on') }}"}
+      - {name: "Back Door Contact", device_class: door, state: "{{ is_state('input_boolean.back_door_open','on') }}"}
+      - {name: "Hallway Motion", device_class: motion, state: "{{ is_state('input_boolean.hallway_motion','on') }}"}
+      - {name: "Kitchen Leak", device_class: moisture, state: "{{ is_state('input_boolean.kitchen_leak','on') }}"}
+      - {name: "Front Porch Camera Motion", device_class: motion, state: "{{ is_state('input_boolean.front_porch_camera_motion','on') }}"}
+      - {name: "Living Room Motion", device_class: motion, state: "{{ is_state('input_boolean.lr_motion','on') }}"}
+      - {name: "Kitchen Motion", device_class: motion, state: "{{ is_state('input_boolean.kitchen_motion','on') }}"}
+      - {name: "Bedroom Motion", device_class: motion, state: "{{ is_state('input_boolean.bedroom_motion','on') }}"}
+      - {name: "Garage Motion", device_class: motion, state: "{{ is_state('input_boolean.garage_motion','on') }}"}
+      - {name: "Kitchen Window", device_class: window, state: "{{ is_state('input_boolean.kitchen_window','on') }}"}
+      - {name: "Bedroom Window", device_class: window, state: "{{ is_state('input_boolean.bedroom_window','on') }}"}
+      - {name: "Garage Door Contact", device_class: garage_door, state: "{{ is_state('input_boolean.garage_door_contact','on') }}"}
+      - {name: "Bathroom Leak", device_class: moisture, state: "{{ is_state('input_boolean.bathroom_leak','on') }}"}
   - sensor:
-      - name: "Bedroom Temperature"
-        unit_of_measurement: "°C"
-        state: "20.0"
+      - {name: "Bedroom Temperature", unit_of_measurement: "°C", device_class: temperature, state: "{{ states('input_number.bedroom_temp') }}"}
+      - {name: "Living Room Temperature", unit_of_measurement: "°C", device_class: temperature, state: "{{ states('input_number.lr_temp') }}"}
+      - {name: "Living Room Humidity", unit_of_measurement: "%", device_class: humidity, state: "{{ states('input_number.lr_humidity') }}"}
+      - {name: "Kitchen Temperature", unit_of_measurement: "°C", device_class: temperature, state: "{{ states('input_number.kitchen_temp') }}"}
+      - {name: "Bedroom Humidity", unit_of_measurement: "%", device_class: humidity, state: "{{ states('input_number.bedroom_humidity') }}"}
+      - {name: "Garage Temperature", unit_of_measurement: "°C", device_class: temperature, state: "{{ states('input_number.garage_temp') }}"}
+      - {name: "Outdoor Temperature", unit_of_measurement: "°C", device_class: temperature, state: "{{ states('input_number.outdoor_temp') }}"}
+      - {name: "Outdoor Humidity", unit_of_measurement: "%", device_class: humidity, state: "{{ states('input_number.outdoor_humidity') }}"}
+  # ---- Lights / locks / covers / fans / switches (helper-backed). Migrated 2026-09-10 (E3)
+  #      from the legacy 'platform: template' keys, which HA 2026.8 (image :stable) no longer
+  #      loads; entity ids are unchanged (slug(name) == the legacy object id). Original file:
+  #      configuration.yaml.pre-e3-legacy-template.bak ----
+  - light:
+      - {name: "Hallway", state: "{{ is_state('input_boolean.hallway_light_on','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.hallway_light_on}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.hallway_light_on}}}
+      - {name: "Living Room Ceiling", state: "{{ is_state('input_boolean.lr_ceiling','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.lr_ceiling}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.lr_ceiling}}}
+      - {name: "Living Room Lamp", state: "{{ is_state('input_boolean.lr_lamp','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.lr_lamp}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.lr_lamp}}}
+      - {name: "Kitchen", state: "{{ is_state('input_boolean.kitchen_light','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.kitchen_light}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.kitchen_light}}}
+      - {name: "Bedroom Ceiling", state: "{{ is_state('input_boolean.bedroom_ceiling','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.bedroom_ceiling}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.bedroom_ceiling}}}
+      - {name: "Bedroom Lamp", state: "{{ is_state('input_boolean.bedroom_lamp','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.bedroom_lamp}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.bedroom_lamp}}}
+      - {name: "Kids Room", state: "{{ is_state('input_boolean.kids_light','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.kids_light}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.kids_light}}}
+      - {name: "Bathroom", state: "{{ is_state('input_boolean.bathroom_light','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.bathroom_light}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.bathroom_light}}}
+      - {name: "Garage", state: "{{ is_state('input_boolean.garage_light','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.garage_light}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.garage_light}}}
+      - {name: "Front Porch", state: "{{ is_state('input_boolean.porch_light','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.porch_light}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.porch_light}}}
+      - {name: "Backyard", state: "{{ is_state('input_boolean.backyard_light','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.backyard_light}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.backyard_light}}}
+  - lock:
+      - {name: "Front Door", state: "{{ is_state('input_boolean.front_door_lock_engaged','on') }}", lock: {action: input_boolean.turn_on, target: {entity_id: input_boolean.front_door_lock_engaged}}, unlock: {action: input_boolean.turn_off, target: {entity_id: input_boolean.front_door_lock_engaged}}}
+      - {name: "Back Door", state: "{{ is_state('input_boolean.back_door_lock','on') }}", lock: {action: input_boolean.turn_on, target: {entity_id: input_boolean.back_door_lock}}, unlock: {action: input_boolean.turn_off, target: {entity_id: input_boolean.back_door_lock}}}
+      - {name: "Garage Side Door", state: "{{ is_state('input_boolean.garage_side_lock','on') }}", lock: {action: input_boolean.turn_on, target: {entity_id: input_boolean.garage_side_lock}}, unlock: {action: input_boolean.turn_off, target: {entity_id: input_boolean.garage_side_lock}}}
+  - cover:
+      - {name: "Living Room Blinds", state: "{{ 'open' if is_state('input_boolean.lr_blinds','on') else 'closed' }}", open_cover: {action: input_boolean.turn_on, target: {entity_id: input_boolean.lr_blinds}}, close_cover: {action: input_boolean.turn_off, target: {entity_id: input_boolean.lr_blinds}}}
+      - {name: "Bedroom Blinds", state: "{{ 'open' if is_state('input_boolean.bedroom_blinds','on') else 'closed' }}", open_cover: {action: input_boolean.turn_on, target: {entity_id: input_boolean.bedroom_blinds}}, close_cover: {action: input_boolean.turn_off, target: {entity_id: input_boolean.bedroom_blinds}}}
+      - {name: "Garage Door", device_class: garage, state: "{{ 'open' if is_state('input_boolean.garage_door_open','on') else 'closed' }}", open_cover: {action: input_boolean.turn_on, target: {entity_id: input_boolean.garage_door_open}}, close_cover: {action: input_boolean.turn_off, target: {entity_id: input_boolean.garage_door_open}}}
+  - fan:
+      - {name: "Living Room Fan", state: "{{ 'on' if is_state('input_boolean.lr_fan','on') else 'off' }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.lr_fan}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.lr_fan}}}
+      - {name: "Bedroom Fan", state: "{{ 'on' if is_state('input_boolean.bedroom_fan','on') else 'off' }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.bedroom_fan}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.bedroom_fan}}}
+      - {name: "Bathroom Fan", state: "{{ 'on' if is_state('input_boolean.bathroom_fan','on') else 'off' }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.bathroom_fan}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.bathroom_fan}}}
+  - switch:
+      - {name: "Coffee Maker", state: "{{ is_state('input_boolean.coffee_maker','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.coffee_maker}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.coffee_maker}}}
+      - {name: "Dishwasher", state: "{{ is_state('input_boolean.dishwasher','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.dishwasher}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.dishwasher}}}
+      - {name: "Living Room Tv", state: "{{ is_state('input_boolean.lr_tv','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.lr_tv}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.lr_tv}}}
+      - {name: "Garden Sprinkler", state: "{{ is_state('input_boolean.garden_sprinkler','on') }}", turn_on: {action: input_boolean.turn_on, target: {entity_id: input_boolean.garden_sprinkler}}, turn_off: {action: input_boolean.turn_off, target: {entity_id: input_boolean.garden_sprinkler}}}
 
-# --- smart lock (template, backed by helper) ---
-lock:
-  - platform: template
-    name: Front Door
-    value_template: "{{ is_state('input_boolean.front_door_lock_engaged', 'on') }}"
-    lock:
-      service: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.front_door_lock_engaged
-    unlock:
-      service: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.front_door_lock_engaged
-
-# --- alarm panel (manual platform; no code required for arming) ---
+# ============================================================================
+# ALARM PANEL  (manual; no code required for arming)
+# ============================================================================
 alarm_control_panel:
   - platform: manual
     name: Home Alarm
@@ -76,23 +158,9 @@ alarm_control_panel:
       arming_time: 0
       delay_time: 0
 
-# --- hallway light (template, backed by helper) ---
-light:
-  - platform: template
-    lights:
-      hallway:
-        friendly_name: Hallway
-        value_template: "{{ is_state('input_boolean.hallway_light_on', 'on') }}"
-        turn_on:
-          service: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.hallway_light_on
-        turn_off:
-          service: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.hallway_light_on
-
-# --- thermostat ---
+# ============================================================================
+# THERMOSTATS  (generic_thermostat)
+# ============================================================================
 climate:
   - platform: generic_thermostat
     name: Bedroom
@@ -101,3 +169,239 @@ climate:
     min_temp: 7
     max_temp: 28
     target_temp: 20
+  - platform: generic_thermostat
+    name: Living Room
+    heater: input_boolean.lr_heater
+    target_sensor: sensor.living_room_temperature
+    min_temp: 7
+    max_temp: 28
+    target_temp: 21
+
+# ============================================================================
+# APPLIANCE / PLUG SWITCHES  (template) + SmartThings-cloud bridge (REST)
+# ============================================================================
+switch:
+  # ---- SmartThings-hosted virtual devices, REST-bridged into HA (the paper's real-cloud
+  #      stack; the delay-only attack ages the HA->agent read on the Hermes->HA hop).
+  #      PAT lives in the gitignored secrets.yaml. NOTE: st_pat MUST be the full header
+  #      value "Bearer <PAT>" (it is used verbatim as the Authorization header below);
+  #      .env's SMARTTHINGS_TOKEN is the RAW token (scripts add "Bearer " in code). ----
+  - platform: rest
+    name: ST Lock
+    resource: https://api.smartthings.com/v1/devices/741834dc-c0ce-4ef6-acdb-04564f4588e7/commands
+    state_resource: https://api.smartthings.com/v1/devices/741834dc-c0ce-4ef6-acdb-04564f4588e7/status
+    headers:
+      Authorization: !secret st_pat
+      Content-Type: application/json
+    body_on: '{"commands":[{"component":"main","capability":"switch","command":"on"}]}'
+    body_off: '{"commands":[{"component":"main","capability":"switch","command":"off"}]}'
+    is_on_template: "{{ value_json.components.main.switch.switch.value == 'on' }}"
+    scan_interval: 30
+  - platform: rest
+    name: ST Alarm
+    resource: https://api.smartthings.com/v1/devices/501d0ac9-9648-4731-9886-22a61b9bd112/commands
+    state_resource: https://api.smartthings.com/v1/devices/501d0ac9-9648-4731-9886-22a61b9bd112/status
+    headers:
+      Authorization: !secret st_pat
+      Content-Type: application/json
+    body_on: '{"commands":[{"component":"main","capability":"switch","command":"on"}]}'
+    body_off: '{"commands":[{"component":"main","capability":"switch","command":"off"}]}'
+    is_on_template: "{{ value_json.components.main.switch.switch.value == 'on' }}"
+    scan_interval: 30
+  - platform: rest
+    name: ST Light
+    resource: https://api.smartthings.com/v1/devices/eb3d1780-3eec-47a6-ac68-98c78e9922ec/commands
+    state_resource: https://api.smartthings.com/v1/devices/eb3d1780-3eec-47a6-ac68-98c78e9922ec/status
+    headers:
+      Authorization: !secret st_pat
+      Content-Type: application/json
+    body_on: '{"commands":[{"component":"main","capability":"switch","command":"on"}]}'
+    body_off: '{"commands":[{"component":"main","capability":"switch","command":"off"}]}'
+    is_on_template: "{{ value_json.components.main.switch.switch.value == 'on' }}"
+    scan_interval: 30
+
+binary_sensor:
+  - platform: rest
+    name: ST Contact
+    resource: https://api.smartthings.com/v1/devices/c6a2f562-4461-4fbd-867a-48ca0a3bd516/status
+    headers:
+      Authorization: !secret st_pat
+    value_template: "{{ 'on' if value_json.components.main.switch.switch.value == 'on' else 'off' }}"
+    device_class: door
+    scan_interval: 30
+  - platform: rest
+    name: ST Leak
+    resource: https://api.smartthings.com/v1/devices/87030d7f-925f-4dbc-99d9-ff75b24d10f3/status
+    headers:
+      Authorization: !secret st_pat
+    value_template: "{{ 'on' if value_json.components.main.switch.switch.value == 'on' else 'off' }}"
+    device_class: moisture
+    scan_interval: 30
+  - platform: rest
+    name: ST Motion
+    resource: https://api.smartthings.com/v1/devices/cb7f405c-65e8-43be-bf1c-7add2f7fb3e3/status
+    headers:
+      Authorization: !secret st_pat
+    value_template: "{{ 'on' if value_json.components.main.switch.switch.value == 'on' else 'off' }}"
+    device_class: motion
+    scan_interval: 30
+  - platform: rest
+    name: ST Arrival
+    resource: https://api.smartthings.com/v1/devices/61af57d1-5f5b-41c1-94d2-d818131557e1/status
+    headers:
+      Authorization: !secret st_pat
+    value_template: "{{ 'on' if value_json.components.main.switch.switch.value == 'on' else 'off' }}"
+    device_class: presence
+    scan_interval: 30
+
+# ============================================================================
+# DASHBOARD  (room-grouped YAML dashboard, shown in the sidebar as "My Home")
+# ============================================================================
+lovelace:
+  mode: storage
+  dashboards:
+    home-rooms:
+      mode: yaml
+      title: My Home
+      icon: mdi:home-assistant
+      show_in_sidebar: true
+      filename: dashboards/rooms.yaml
+
+# ============================================================================
+# AUTOMATIONS  (motion lighting, leak alert, intrusion alert, evening lights)
+# ============================================================================
+automation:
+  - alias: Hallway motion lighting
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hallway_motion
+        to: "on"
+        id: motion_on
+      - platform: state
+        entity_id: binary_sensor.hallway_motion
+        to: "off"
+        for: {minutes: 2}
+        id: motion_clear
+    action:
+      - choose:
+          - conditions: "{{ trigger.id == 'motion_on' }}"
+            sequence:
+              - service: light.turn_on
+                target: {entity_id: light.hallway}
+          - conditions: "{{ trigger.id == 'motion_clear' }}"
+            sequence:
+              - service: light.turn_off
+                target: {entity_id: light.hallway}
+
+  - alias: Living room motion lighting
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.living_room_motion
+        to: "on"
+        id: motion_on
+      - platform: state
+        entity_id: binary_sensor.living_room_motion
+        to: "off"
+        for: {minutes: 3}
+        id: motion_clear
+    action:
+      - choose:
+          - conditions: "{{ trigger.id == 'motion_on' }}"
+            sequence:
+              - service: light.turn_on
+                target: {entity_id: light.living_room_ceiling}
+          - conditions: "{{ trigger.id == 'motion_clear' }}"
+            sequence:
+              - service: light.turn_off
+                target: {entity_id: light.living_room_ceiling}
+
+  - alias: Kitchen motion lighting
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_motion
+        to: "on"
+        id: motion_on
+      - platform: state
+        entity_id: binary_sensor.kitchen_motion
+        to: "off"
+        for: {minutes: 3}
+        id: motion_clear
+    action:
+      - choose:
+          - conditions: "{{ trigger.id == 'motion_on' }}"
+            sequence:
+              - service: light.turn_on
+                target: {entity_id: light.kitchen}
+          - conditions: "{{ trigger.id == 'motion_clear' }}"
+            sequence:
+              - service: light.turn_off
+                target: {entity_id: light.kitchen}
+
+  - alias: Garage motion lighting
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.garage_motion
+        to: "on"
+        id: motion_on
+      - platform: state
+        entity_id: binary_sensor.garage_motion
+        to: "off"
+        for: {minutes: 3}
+        id: motion_clear
+    action:
+      - choose:
+          - conditions: "{{ trigger.id == 'motion_on' }}"
+            sequence:
+              - service: light.turn_on
+                target: {entity_id: light.garage}
+          - conditions: "{{ trigger.id == 'motion_clear' }}"
+            sequence:
+              - service: light.turn_off
+                target: {entity_id: light.garage}
+
+  - alias: Water leak alert
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.kitchen_leak
+          - binary_sensor.bathroom_leak
+          - binary_sensor.st_leak
+        to: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Water leak detected"
+          message: "Leak at {{ trigger.to_state.attributes.friendly_name }} ({{ now().strftime('%H:%M') }}). Dishwasher turned off as a precaution."
+      - service: switch.turn_off
+        target: {entity_id: switch.dishwasher}
+
+  - alias: Intrusion - door opened while armed
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.front_door_contact
+          - binary_sensor.st_contact
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: alarm_control_panel.home_alarm
+        state:
+          - armed_night
+          - armed_away
+          - armed_home
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Security alert"
+          message: "{{ trigger.to_state.attributes.friendly_name }} opened while the alarm is armed."
+
+  - alias: Evening porch and backyard lights
+    trigger:
+      - platform: sun
+        event: sunset
+    action:
+      - service: light.turn_on
+        target:
+          entity_id:
+            - light.front_porch
+            - light.backyard

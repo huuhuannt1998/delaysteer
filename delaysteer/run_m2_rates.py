@@ -34,7 +34,12 @@ def main() -> int:
     ap.add_argument("--models", default="mistral:7b,deepseek-coder-v2:16b,qwen3:14b")
     ap.add_argument("--homes", default="virtual")
     ap.add_argument("--repeats", type=int, default=5)
-    ap.add_argument("--temperature", type=float, default=0.7)
+    ap.add_argument("--temperature", type=float, default=None,
+                    help="default: DELAYSTEER_TEMPERATURE, else 0.0. NOTE: this is a "
+                         "RATE study -- at T=0 every repeat is identical and the rate "
+                         "is meaningless. Pass >0 (historically 0.7) for a real sweep.")
+    ap.add_argument("--out", default="m2_rates",
+                    help="output basename under results/ (default m2_rates; use a new name to keep the frozen file additive-safe)")
     args = ap.parse_args()
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     homes = [h.strip() for h in args.homes.split(",") if h.strip()]
@@ -50,23 +55,31 @@ def main() -> int:
                     viol += int(r["violation"])
                     secure += int(r["secure_claim"])
                     loop += int(r["steps"] >= cap)
+                    print(f"    run {i+1}/{args.repeats} {m} {scen[:4]}/{abl}: "
+                          f"viol={int(r['violation'])} secure={int(r['secure_claim'])} "
+                          f"steps={r['steps']} (running {viol}/{i+1})", flush=True)
                 row = {"home": hk, "model": m, "scenario": scen, "ablation": abl,
                        "repeats": args.repeats, "violation_rate": f"{viol}/{args.repeats}",
                        "secure_rate": f"{secure}/{args.repeats}", "loop_rate": f"{loop}/{args.repeats}"}
                 ROWS.append(row)
+                # incremental write + progress (crash-safe for long high-seed runs)
+                print(f"  [{hk} {m} {scen}/{abl}] viol {row['violation_rate']}  loop {row['loop_rate']}", flush=True)
+                _od = Path("results"); _od.mkdir(exist_ok=True)
+                with (_od / f"{args.out}.csv").open("w", newline="") as _f:
+                    _w = csv.DictWriter(_f, fieldnames=list(row.keys())); _w.writeheader(); _w.writerows(ROWS)
 
     out = Path("results"); out.mkdir(exist_ok=True)
-    with (out / "m2_rates.csv").open("w", newline="") as f:
+    with (out / f"{args.out}.csv").open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(ROWS[0].keys()))
         w.writeheader(); w.writerows(ROWS)
-    (out / "m2_rates.json").write_text(json.dumps(ROWS, indent=2))
+    (out / f"{args.out}.json").write_text(json.dumps(ROWS, indent=2))
 
     print(f"\n=== M2 violation RATES (temp {args.temperature}, {args.repeats} samples/cell) ===")
     print(f"{'home':<8}{'model':<22}{'scenario':<15}{'abl':<6}{'viol':<7}{'secure':<8}{'loop'}")
     for r in ROWS:
         print(f"{r['home']:<8}{r['model']:<22}{r['scenario'][:13]:<15}{r['ablation']:<6}"
               f"{r['violation_rate']:<7}{r['secure_rate']:<8}{r['loop_rate']}")
-    print(f"\nwrote results/m2_rates.csv ({len(ROWS)} cells)")
+    print(f"\nwrote results/{args.out}.csv ({len(ROWS)} cells)")
     return 0
 
 

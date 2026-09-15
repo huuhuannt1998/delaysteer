@@ -52,9 +52,15 @@ def _inner(home_kind, config):
 
 
 def run_auto(home_kind, with_delay, ablation, label,
-             model=None, backbone_override=None, backbone=None):
+             model=None, backbone_override=None, backbone=None, temperature=None, seed=None,
+             surface_staleness=False):
     cfg = Config(backbone="automation_weakening")
     apply_ablation(cfg, ablation)
+    cfg.surface_staleness = surface_staleness  # P7: planner-side freshness heuristic
+    if temperature is not None:
+        cfg.temperature = temperature
+    if seed is not None:
+        cfg.seed = seed
     home, inner = _inner(home_kind, cfg)
     if home_kind == "smartthings":
         inner.reset()
@@ -83,7 +89,7 @@ def run_auto(home_kind, with_delay, ablation, label,
     stats = getattr(gate, "stats", None)
     return {"label": label, "predicate_enabled": auto.predicate_enabled,
             "probes": probe_log, "violation": not inv.ok,
-            "blocked": stats.blocked if stats else 0}
+            "blocked": stats.blocked if stats else 0, "steps": outcome.steps}
 
 
 def main() -> int:

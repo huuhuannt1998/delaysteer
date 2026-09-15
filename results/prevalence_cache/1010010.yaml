@@ -1,0 +1,1981 @@
+blueprint:
+  name: OXRS Touchpanel setup
+  description: Configures up to 5 OXRS touch panel screens from Home Assistant entities via MQTT.
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    common:
+      name: Common
+      collapsed: true
+      icon: mdi:lan-connect
+      input:
+        device_client_id:
+          name: MQTT device client id
+          description: The OXRS device client id used in conf/<id>, cmnd/<id>, and stat/<id>.
+          default: oxrs-01
+          selector:
+            text:
+        thermostat_use_area_name:
+          name: Show area name for thermostats
+          description: Use the Home Assistant area name instead of the entity name for climate tiles when an area is assigned.
+          default: false
+          selector:
+            boolean:
+        temperature_sensor_use_area_name:
+          name: Show area name for temperature and humidity sensors
+          description: Use the Home Assistant area name instead of the entity name for temperature or humidity sensor tiles when an area is assigned.
+          default: false
+          selector:
+            boolean:
+    panel_options:
+      name: Panel options
+      description: Optional device settings and footer content. Nothing in this group is sent unless the related option is enabled.
+      icon: mdi:tablet-dashboard
+      collapsed: true
+      input:
+        display_timeout_enabled:
+          name: Set display timeout
+          default: false
+          selector:
+            boolean:
+        display_timeout_seconds:
+          name: Display timeout seconds
+          default: 60
+          selector:
+            number:
+              min: 0
+              max: 3600
+              unit_of_measurement: s
+              mode: box
+        backlight_enabled:
+          name: Set backlight brightness
+          default: false
+          selector:
+            boolean:
+        backlight_brightness:
+          name: Backlight brightness
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 100
+              unit_of_measurement: "%"
+              mode: slider
+        footer_enabled:
+          name: Enable footer updates
+          description: Sends footer content on setup and updates it once per minute. Entity footer fields also update when the selected entity changes.
+          default: false
+          selector:
+            boolean:
+        date_format:
+          name: Date format
+          description: Format for date display in footer. Use Python strftime format (e.g. %d.%m.%Y for 13.05.2026).
+          default: "%a %d %b"
+          selector:
+            text:
+        footer_left_mode:
+          name: Footer left content
+          default: date
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Empty
+                  value: empty
+                - label: Page name
+                  value: name
+                - label: Date
+                  value: date
+                - label: Time
+                  value: time
+                - label: Entity value
+                  value: entity
+        footer_left_entity:
+          name: Footer left entity
+          default: ""
+          selector:
+            entity:
+        footer_center_mode:
+          name: Footer center content
+          default: name
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Empty
+                  value: empty
+                - label: Page name
+                  value: name
+                - label: Date
+                  value: date
+                - label: Time
+                  value: time
+                - label: Entity value
+                  value: entity
+        footer_center_entity:
+          name: Footer center entity
+          default: ""
+          selector:
+            entity:
+        footer_right_mode:
+          name: Footer right content
+          default: time
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Empty
+                  value: empty
+                - label: Page name
+                  value: name
+                - label: Date
+                  value: date
+                - label: Time
+                  value: time
+                - label: Entity value
+                  value: entity
+        footer_right_entity:
+          name: Footer right entity
+          default: ""
+          selector:
+            entity:
+    page_1:
+      name: Page 1
+      description: Configure up to 6 tiles for page 1. Leave empty to skip.
+      icon: mdi:numeric-1-box-multiple-outline
+      collapsed: true
+      input:
+        page_1_label:
+          name: Page 1 label
+          default: Home
+          selector:
+            text:
+        page_1_enabled:
+          name: Enable page 1
+          default: true
+          selector:
+            boolean:
+        page_1_tile_1_entity:
+          name: Tile 1 entity
+          default: ""
+          selector:
+            entity:
+        page_1_tile_1_secondary_entity: { name: Tile 1 secondary sensor, default: "", selector: { entity: {} } }
+        page_1_tile_2_entity:
+          name: Tile 2 entity
+          default: ""
+          selector:
+            entity:
+        page_1_tile_2_secondary_entity: { name: Tile 2 secondary sensor, default: "", selector: { entity: {} } }
+        page_1_tile_3_entity:
+          name: Tile 3 entity
+          default: ""
+          selector:
+            entity:
+        page_1_tile_3_secondary_entity: { name: Tile 3 secondary sensor, default: "", selector: { entity: {} } }
+        page_1_tile_4_entity:
+          name: Tile 4 entity
+          default: ""
+          selector:
+            entity:
+        page_1_tile_4_secondary_entity: { name: Tile 4 secondary sensor, default: "", selector: { entity: {} } }
+        page_1_tile_5_entity:
+          name: Tile 5 entity
+          default: ""
+          selector:
+            entity:
+        page_1_tile_5_secondary_entity: { name: Tile 5 secondary sensor, default: "", selector: { entity: {} } }
+        page_1_tile_6_entity:
+          name: Tile 6 entity
+          default: ""
+          selector:
+            entity:
+        page_1_tile_6_secondary_entity: { name: Tile 6 secondary sensor, default: "", selector: { entity: {} } }
+    page_2:
+      name: Page 2
+      description: Configure up to 6 tiles for page 2. Leave empty to skip.
+      icon: mdi:numeric-2-box-multiple-outline
+      collapsed: true
+      input:
+        page_2_label:
+          name: Page 2 label
+          default: Page 2
+          selector:
+            text:
+        page_2_enabled:
+          name: Enable page 2
+          default: false
+          selector:
+            boolean:
+        page_2_tile_1_entity:
+          name: Tile 1 entity
+          default: ""
+          selector:
+            entity:
+        page_2_tile_1_secondary_entity: { name: Tile 1 secondary sensor, default: "", selector: { entity: {} } }
+        page_2_tile_2_entity:
+          name: Tile 2 entity
+          default: ""
+          selector:
+            entity:
+        page_2_tile_2_secondary_entity: { name: Tile 2 secondary sensor, default: "", selector: { entity: {} } }
+        page_2_tile_3_entity:
+          name: Tile 3 entity
+          default: ""
+          selector:
+            entity:
+        page_2_tile_3_secondary_entity: { name: Tile 3 secondary sensor, default: "", selector: { entity: {} } }
+        page_2_tile_4_entity:
+          name: Tile 4 entity
+          default: ""
+          selector:
+            entity:
+        page_2_tile_4_secondary_entity: { name: Tile 4 secondary sensor, default: "", selector: { entity: {} } }
+        page_2_tile_5_entity:
+          name: Tile 5 entity
+          default: ""
+          selector:
+            entity:
+        page_2_tile_5_secondary_entity: { name: Tile 5 secondary sensor, default: "", selector: { entity: {} } }
+        page_2_tile_6_entity:
+          name: Tile 6 entity
+          default: ""
+          selector:
+            entity:
+        page_2_tile_6_secondary_entity: { name: Tile 6 secondary sensor, default: "", selector: { entity: {} } }
+    page_3:
+      name: Page 3
+      description: Configure up to 6 tiles for page 3. Leave empty to skip.
+      icon: mdi:numeric-3-box-multiple-outline
+      collapsed: true
+      input:
+        page_3_label:
+          name: Page 3 label
+          default: Page 3
+          selector:
+            text:
+        page_3_enabled:
+          name: Enable page 3
+          default: false
+          selector:
+            boolean:
+        page_3_tile_1_entity:
+          name: Tile 1 entity
+          default: ""
+          selector:
+            entity:
+        page_3_tile_1_secondary_entity: { name: Tile 1 secondary sensor, default: "", selector: { entity: {} } }
+        page_3_tile_2_entity:
+          name: Tile 2 entity
+          default: ""
+          selector:
+            entity:
+        page_3_tile_2_secondary_entity: { name: Tile 2 secondary sensor, default: "", selector: { entity: {} } }
+        page_3_tile_3_entity:
+          name: Tile 3 entity
+          default: ""
+          selector:
+            entity:
+        page_3_tile_3_secondary_entity: { name: Tile 3 secondary sensor, default: "", selector: { entity: {} } }
+        page_3_tile_4_entity:
+          name: Tile 4 entity
+          default: ""
+          selector:
+            entity:
+        page_3_tile_4_secondary_entity: { name: Tile 4 secondary sensor, default: "", selector: { entity: {} } }
+        page_3_tile_5_entity:
+          name: Tile 5 entity
+          default: ""
+          selector:
+            entity:
+        page_3_tile_5_secondary_entity: { name: Tile 5 secondary sensor, default: "", selector: { entity: {} } }
+        page_3_tile_6_entity:
+          name: Tile 6 entity
+          default: ""
+          selector:
+            entity:
+        page_3_tile_6_secondary_entity: { name: Tile 6 secondary sensor, default: "", selector: { entity: {} } }
+    page_4:
+      name: Page 4
+      description: Configure up to 6 tiles for page 4. Leave empty to skip.
+      icon: mdi:numeric-4-box-multiple-outline
+      collapsed: true
+      input:
+        page_4_label:
+          name: Page 4 label
+          default: Page 4
+          selector:
+            text:
+        page_4_enabled:
+          name: Enable page 4
+          default: false
+          selector:
+            boolean:
+        page_4_tile_1_entity:
+          name: Tile 1 entity
+          default: ""
+          selector:
+            entity:
+        page_4_tile_1_secondary_entity: { name: Tile 1 secondary sensor, default: "", selector: { entity: {} } }
+        page_4_tile_2_entity:
+          name: Tile 2 entity
+          default: ""
+          selector:
+            entity:
+        page_4_tile_2_secondary_entity: { name: Tile 2 secondary sensor, default: "", selector: { entity: {} } }
+        page_4_tile_3_entity:
+          name: Tile 3 entity
+          default: ""
+          selector:
+            entity:
+        page_4_tile_3_secondary_entity: { name: Tile 3 secondary sensor, default: "", selector: { entity: {} } }
+        page_4_tile_4_entity:
+          name: Tile 4 entity
+          default: ""
+          selector:
+            entity:
+        page_4_tile_4_secondary_entity: { name: Tile 4 secondary sensor, default: "", selector: { entity: {} } }
+        page_4_tile_5_entity:
+          name: Tile 5 entity
+          default: ""
+          selector:
+            entity:
+        page_4_tile_5_secondary_entity: { name: Tile 5 secondary sensor, default: "", selector: { entity: {} } }
+        page_4_tile_6_entity:
+          name: Tile 6 entity
+          default: ""
+          selector:
+            entity:
+        page_4_tile_6_secondary_entity: { name: Tile 6 secondary sensor, default: "", selector: { entity: {} } }
+    page_5:
+      name: Page 5
+      description: Configure up to 6 tiles for page 5. Leave empty to skip.
+      icon: mdi:numeric-5-box-multiple-outline
+      collapsed: true
+      input:
+        page_5_label:
+          name: Page 5 label
+          default: Page 5
+          selector:
+            text:
+        page_5_enabled:
+          name: Enable page 5
+          default: false
+          selector:
+            boolean:
+        page_5_tile_1_entity:
+          name: Tile 1 entity
+          default: ""
+          selector:
+            entity:
+        page_5_tile_1_secondary_entity: { name: Tile 1 secondary sensor, default: "", selector: { entity: {} } }
+        page_5_tile_2_entity:
+          name: Tile 2 entity
+          default: ""
+          selector:
+            entity:
+        page_5_tile_2_secondary_entity: { name: Tile 2 secondary sensor, default: "", selector: { entity: {} } }
+        page_5_tile_3_entity:
+          name: Tile 3 entity
+          default: ""
+          selector:
+            entity:
+        page_5_tile_3_secondary_entity: { name: Tile 3 secondary sensor, default: "", selector: { entity: {} } }
+        page_5_tile_4_entity:
+          name: Tile 4 entity
+          default: ""
+          selector:
+            entity:
+        page_5_tile_4_secondary_entity: { name: Tile 4 secondary sensor, default: "", selector: { entity: {} } }
+        page_5_tile_5_entity:
+          name: Tile 5 entity
+          default: ""
+          selector:
+            entity:
+        page_5_tile_5_secondary_entity: { name: Tile 5 secondary sensor, default: "", selector: { entity: {} } }
+        page_5_tile_6_entity:
+          name: Tile 6 entity
+          default: ""
+          selector:
+            entity:
+        page_5_tile_6_secondary_entity: { name: Tile 6 secondary sensor, default: "", selector: { entity: {} } }
+
+mode: parallel
+max: 20
+
+trigger_variables:
+  device_client_id: !input device_client_id
+  oxrs_prefix: oxrs
+
+variables:
+  device_client_id: !input device_client_id
+  page_1_label: !input page_1_label
+  page_2_label: !input page_2_label
+  page_3_label: !input page_3_label
+  page_4_label: !input page_4_label
+  page_5_label: !input page_5_label
+  thermostat_use_area_name: !input thermostat_use_area_name
+  temperature_sensor_use_area_name: !input temperature_sensor_use_area_name
+  display_timeout_enabled: !input display_timeout_enabled
+  display_timeout_seconds: !input display_timeout_seconds
+  backlight_enabled: !input backlight_enabled
+  backlight_brightness: !input backlight_brightness
+  footer_enabled: !input footer_enabled
+  date_format: !input date_format
+  footer_left_mode: !input footer_left_mode
+  footer_left_entity: !input footer_left_entity
+  footer_center_mode: !input footer_center_mode
+  footer_center_entity: !input footer_center_entity
+  footer_right_mode: !input footer_right_mode
+  footer_right_entity: !input footer_right_entity
+  page_1_enabled: !input page_1_enabled
+  page_2_enabled: !input page_2_enabled
+  page_3_enabled: !input page_3_enabled
+  page_4_enabled: !input page_4_enabled
+  page_5_enabled: !input page_5_enabled
+  page_1_tile_1_entity: !input page_1_tile_1_entity
+  page_1_tile_2_entity: !input page_1_tile_2_entity
+  page_1_tile_3_entity: !input page_1_tile_3_entity
+  page_1_tile_4_entity: !input page_1_tile_4_entity
+  page_1_tile_5_entity: !input page_1_tile_5_entity
+  page_1_tile_6_entity: !input page_1_tile_6_entity
+  page_2_tile_1_entity: !input page_2_tile_1_entity
+  page_2_tile_2_entity: !input page_2_tile_2_entity
+  page_2_tile_3_entity: !input page_2_tile_3_entity
+  page_2_tile_4_entity: !input page_2_tile_4_entity
+  page_2_tile_5_entity: !input page_2_tile_5_entity
+  page_2_tile_6_entity: !input page_2_tile_6_entity
+  page_3_tile_1_entity: !input page_3_tile_1_entity
+  page_3_tile_2_entity: !input page_3_tile_2_entity
+  page_3_tile_3_entity: !input page_3_tile_3_entity
+  page_3_tile_4_entity: !input page_3_tile_4_entity
+  page_3_tile_5_entity: !input page_3_tile_5_entity
+  page_3_tile_6_entity: !input page_3_tile_6_entity
+  page_4_tile_1_entity: !input page_4_tile_1_entity
+  page_4_tile_2_entity: !input page_4_tile_2_entity
+  page_4_tile_3_entity: !input page_4_tile_3_entity
+  page_4_tile_4_entity: !input page_4_tile_4_entity
+  page_4_tile_5_entity: !input page_4_tile_5_entity
+  page_4_tile_6_entity: !input page_4_tile_6_entity
+  page_5_tile_1_entity: !input page_5_tile_1_entity
+  page_5_tile_2_entity: !input page_5_tile_2_entity
+  page_5_tile_3_entity: !input page_5_tile_3_entity
+  page_5_tile_4_entity: !input page_5_tile_4_entity
+  page_5_tile_5_entity: !input page_5_tile_5_entity
+  page_5_tile_6_entity: !input page_5_tile_6_entity
+  page_1_tile_1_secondary_entity: !input page_1_tile_1_secondary_entity
+  page_1_tile_2_secondary_entity: !input page_1_tile_2_secondary_entity
+  page_1_tile_3_secondary_entity: !input page_1_tile_3_secondary_entity
+  page_1_tile_4_secondary_entity: !input page_1_tile_4_secondary_entity
+  page_1_tile_5_secondary_entity: !input page_1_tile_5_secondary_entity
+  page_1_tile_6_secondary_entity: !input page_1_tile_6_secondary_entity
+  page_2_tile_1_secondary_entity: !input page_2_tile_1_secondary_entity
+  page_2_tile_2_secondary_entity: !input page_2_tile_2_secondary_entity
+  page_2_tile_3_secondary_entity: !input page_2_tile_3_secondary_entity
+  page_2_tile_4_secondary_entity: !input page_2_tile_4_secondary_entity
+  page_2_tile_5_secondary_entity: !input page_2_tile_5_secondary_entity
+  page_2_tile_6_secondary_entity: !input page_2_tile_6_secondary_entity
+  page_3_tile_1_secondary_entity: !input page_3_tile_1_secondary_entity
+  page_3_tile_2_secondary_entity: !input page_3_tile_2_secondary_entity
+  page_3_tile_3_secondary_entity: !input page_3_tile_3_secondary_entity
+  page_3_tile_4_secondary_entity: !input page_3_tile_4_secondary_entity
+  page_3_tile_5_secondary_entity: !input page_3_tile_5_secondary_entity
+  page_3_tile_6_secondary_entity: !input page_3_tile_6_secondary_entity
+  page_4_tile_1_secondary_entity: !input page_4_tile_1_secondary_entity
+  page_4_tile_2_secondary_entity: !input page_4_tile_2_secondary_entity
+  page_4_tile_3_secondary_entity: !input page_4_tile_3_secondary_entity
+  page_4_tile_4_secondary_entity: !input page_4_tile_4_secondary_entity
+  page_4_tile_5_secondary_entity: !input page_4_tile_5_secondary_entity
+  page_4_tile_6_secondary_entity: !input page_4_tile_6_secondary_entity
+  page_5_tile_1_secondary_entity: !input page_5_tile_1_secondary_entity
+  page_5_tile_2_secondary_entity: !input page_5_tile_2_secondary_entity
+  page_5_tile_3_secondary_entity: !input page_5_tile_3_secondary_entity
+  page_5_tile_4_secondary_entity: !input page_5_tile_4_secondary_entity
+  page_5_tile_5_secondary_entity: !input page_5_tile_5_secondary_entity
+  page_5_tile_6_secondary_entity: !input page_5_tile_6_secondary_entity
+  page_labels:
+    1: !input page_1_label
+    2: !input page_2_label
+    3: !input page_3_label
+    4: !input page_4_label
+    5: !input page_5_label
+  page_enabled_map:
+    1: !input page_1_enabled
+    2: !input page_2_enabled
+    3: !input page_3_enabled
+    4: !input page_4_enabled
+    5: !input page_5_enabled
+  tile_defs: >-
+    {{ [
+      {'screen': 1, 'tile': 1, 'entity': page_1_tile_1_entity, 'secondary': page_1_tile_1_secondary_entity},
+      {'screen': 1, 'tile': 2, 'entity': page_1_tile_2_entity, 'secondary': page_1_tile_2_secondary_entity},
+      {'screen': 1, 'tile': 3, 'entity': page_1_tile_3_entity, 'secondary': page_1_tile_3_secondary_entity},
+      {'screen': 1, 'tile': 4, 'entity': page_1_tile_4_entity, 'secondary': page_1_tile_4_secondary_entity},
+      {'screen': 1, 'tile': 5, 'entity': page_1_tile_5_entity, 'secondary': page_1_tile_5_secondary_entity},
+      {'screen': 1, 'tile': 6, 'entity': page_1_tile_6_entity, 'secondary': page_1_tile_6_secondary_entity},
+      {'screen': 2, 'tile': 1, 'entity': page_2_tile_1_entity, 'secondary': page_2_tile_1_secondary_entity},
+      {'screen': 2, 'tile': 2, 'entity': page_2_tile_2_entity, 'secondary': page_2_tile_2_secondary_entity},
+      {'screen': 2, 'tile': 3, 'entity': page_2_tile_3_entity, 'secondary': page_2_tile_3_secondary_entity},
+      {'screen': 2, 'tile': 4, 'entity': page_2_tile_4_entity, 'secondary': page_2_tile_4_secondary_entity},
+      {'screen': 2, 'tile': 5, 'entity': page_2_tile_5_entity, 'secondary': page_2_tile_5_secondary_entity},
+      {'screen': 2, 'tile': 6, 'entity': page_2_tile_6_entity, 'secondary': page_2_tile_6_secondary_entity},
+      {'screen': 3, 'tile': 1, 'entity': page_3_tile_1_entity, 'secondary': page_3_tile_1_secondary_entity},
+      {'screen': 3, 'tile': 2, 'entity': page_3_tile_2_entity, 'secondary': page_3_tile_2_secondary_entity},
+      {'screen': 3, 'tile': 3, 'entity': page_3_tile_3_entity, 'secondary': page_3_tile_3_secondary_entity},
+      {'screen': 3, 'tile': 4, 'entity': page_3_tile_4_entity, 'secondary': page_3_tile_4_secondary_entity},
+      {'screen': 3, 'tile': 5, 'entity': page_3_tile_5_entity, 'secondary': page_3_tile_5_secondary_entity},
+      {'screen': 3, 'tile': 6, 'entity': page_3_tile_6_entity, 'secondary': page_3_tile_6_secondary_entity},
+      {'screen': 4, 'tile': 1, 'entity': page_4_tile_1_entity, 'secondary': page_4_tile_1_secondary_entity},
+      {'screen': 4, 'tile': 2, 'entity': page_4_tile_2_entity, 'secondary': page_4_tile_2_secondary_entity},
+      {'screen': 4, 'tile': 3, 'entity': page_4_tile_3_entity, 'secondary': page_4_tile_3_secondary_entity},
+      {'screen': 4, 'tile': 4, 'entity': page_4_tile_4_entity, 'secondary': page_4_tile_4_secondary_entity},
+      {'screen': 4, 'tile': 5, 'entity': page_4_tile_5_entity, 'secondary': page_4_tile_5_secondary_entity},
+      {'screen': 4, 'tile': 6, 'entity': page_4_tile_6_entity, 'secondary': page_4_tile_6_secondary_entity},
+      {'screen': 5, 'tile': 1, 'entity': page_5_tile_1_entity, 'secondary': page_5_tile_1_secondary_entity},
+      {'screen': 5, 'tile': 2, 'entity': page_5_tile_2_entity, 'secondary': page_5_tile_2_secondary_entity},
+      {'screen': 5, 'tile': 3, 'entity': page_5_tile_3_entity, 'secondary': page_5_tile_3_secondary_entity},
+      {'screen': 5, 'tile': 4, 'entity': page_5_tile_4_entity, 'secondary': page_5_tile_4_secondary_entity},
+      {'screen': 5, 'tile': 5, 'entity': page_5_tile_5_entity, 'secondary': page_5_tile_5_secondary_entity},
+      {'screen': 5, 'tile': 6, 'entity': page_5_tile_6_entity, 'secondary': page_5_tile_6_secondary_entity}
+    ] }}
+  configured_entities: >-
+    {% set ns = namespace(items=[]) %}
+    {% for tile in tile_defs %}
+      {% if tile.entity and tile.entity != '' and page_enabled_map.get(tile.screen, page_enabled_map.get(tile.screen | string, false)) %}
+        {% set ns.items = ns.items + [tile.entity] %}
+        {% if tile.secondary is defined and tile.secondary and tile.secondary != '' and tile.entity.split('.')[0] == 'sensor' and tile.secondary.split('.')[0] == 'sensor' %}
+          {% set ns.items = ns.items + [tile.secondary] %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.items }}
+  footer_payload: >-
+    {%- macro clean(value) -%}
+      {{- (value | string
+        | replace('Ä', 'Ae')
+        | replace('Ö', 'Oe')
+        | replace('Ü', 'Ue')
+        | replace('ä', 'ae')
+        | replace('ö', 'oe')
+        | replace('ü', 'ue')
+        | replace('ß', 'ss')) -}}
+    {%- endmacro -%}
+    {%- macro entity_value(entity) -%}
+      {%- if entity and entity != '' -%}
+        {%- set raw_value = states(entity) -%}
+        {%- if raw_value in ['unknown', 'unavailable'] -%}
+          {{- '' -}}
+        {%- elif is_number(raw_value) -%}
+          {%- set rounded_value = raw_value | float(0) | round(2) -%}
+          {%- set value_text = ((rounded_value | int) | string) if rounded_value == (rounded_value | int) else (rounded_value | string) -%}
+          {%- set units = state_attr(entity, 'unit_of_measurement') or '' -%}
+          {{- value_text ~ units -}}
+        {%- else -%}
+          {{- clean(raw_value) -}}
+        {%- endif -%}
+      {%- else -%}
+        {{- '' -}}
+      {%- endif -%}
+    {%- endmacro -%}
+    {%- macro footer_value(mode, screen, entity, date_fmt) -%}
+      {%- if mode == 'name' -%}
+        {{- clean(page_labels.get(screen, 'Page ' ~ screen) | string) -}}
+      {%- elif mode == 'date' -%}
+        {{- now().strftime(date_fmt) -}}
+      {%- elif mode == 'time' -%}
+        {{- now().strftime('%H:%M') -}}
+      {%- elif mode == 'entity' -%}
+        {{- entity_value(entity) -}}
+      {%- else -%}
+        {{- '' -}}
+      {%- endif -%}
+    {%- endmacro -%}
+    {%- set ns = namespace(screens=[]) -%}
+    {%- for screen in range(1, 6) -%}
+      {%- if page_enabled_map.get(screen, page_enabled_map.get(screen | string, false)) -%}
+        {%- set footer = {
+          'left': footer_value(footer_left_mode, screen, footer_left_entity, date_format),
+          'center': footer_value(footer_center_mode, screen, footer_center_entity, date_format),
+          'right': footer_value(footer_right_mode, screen, footer_right_entity, date_format)
+        } -%}
+        {%- set ns.screens = ns.screens + [{'screen': screen, 'footer': footer}] -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {{- {'screens': ns.screens} | to_json(ensure_ascii=False) -}}
+
+triggers:
+  - trigger: homeassistant
+    event: start
+    id: ha_start
+  - trigger: event
+    event_type: automation_reloaded
+    id: automation_reloaded
+  - trigger: mqtt
+    topic: "{{ oxrs_prefix }}/stat/{{ device_client_id }}/lwt"
+    id: panel_lwt
+  - trigger: mqtt
+    topic: "{{ oxrs_prefix }}/stat/{{ device_client_id }}"
+    id: panel_stat
+  - trigger: time_pattern
+    minutes: "/1"
+    id: footer_update
+  - trigger: event
+    event_type: state_changed
+    id: footer_update
+    event_data:
+      entity_id: !input footer_left_entity
+  - trigger: event
+    event_type: state_changed
+    id: footer_update
+    event_data:
+      entity_id: !input footer_center_entity
+  - trigger: event
+    event_type: state_changed
+    id: footer_update
+    event_data:
+      entity_id: !input footer_right_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_1_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_1_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_2_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_2_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_3_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_3_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_4_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_4_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_5_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_5_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_6_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_1_tile_6_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_1_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_1_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_2_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_2_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_3_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_3_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_4_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_4_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_5_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_5_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_6_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_2_tile_6_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_1_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_1_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_2_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_2_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_3_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_3_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_4_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_4_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_5_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_5_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_6_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_3_tile_6_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_1_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_1_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_2_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_2_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_3_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_3_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_4_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_4_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_5_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_5_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_6_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_4_tile_6_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_1_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_1_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_2_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_2_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_3_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_3_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_4_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_4_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_5_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_5_secondary_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_6_entity
+  - trigger: event
+    event_type: state_changed
+    id: entity_state_changed
+    event_data:
+      entity_id: !input page_5_tile_6_secondary_entity
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id in ['ha_start', 'panel_lwt', 'automation_reloaded'] }}
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ display_timeout_enabled }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {{ {'noActivitySecondsToSleep': display_timeout_seconds | int(60)} | to_json(ensure_ascii=False) }}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ backlight_enabled }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {{ {'backlight': {'brightness': backlight_brightness | int(100)}} | to_json(ensure_ascii=False) }}
+          - action: mqtt.publish
+            data:
+              topic: "oxrs/conf/{{ device_client_id }}"
+              retain: true
+              payload: >-
+                {{ {'screens': []} | to_json(ensure_ascii=False) }}
+          - delay:
+              milliseconds: 100
+          - action: mqtt.publish
+            data:
+              topic: "oxrs/conf/{{ device_client_id }}"
+              retain: true
+              payload: >-
+                {% set ns = namespace(screens=[]) %}
+                {% for screen in range(1, 6) %}
+                  {% if page_enabled_map.get(screen, page_enabled_map.get(screen | string, false)) %}
+                    {% set tiles = namespace(items=[]) %}
+                    {% for tile in tile_defs | selectattr('screen', 'equalto', screen) %}
+                      {% if tile.entity and tile.entity != '' %}
+                        {% set entity = tile.entity %}
+                        {% set domain = entity.split('.')[0] %}
+                        {% set style = 'button' %}
+                        {% if domain in ['sensor', 'binary_sensor'] %}
+                          {% set style = 'indicator' %}
+                        {% elif domain == 'cover' %}
+                          {% set style = 'buttonUpDownLevel' %}
+                        {% elif domain == 'switch' %}
+                          {% set style = 'button' %}
+                        {% elif domain == 'climate' %}
+                          {% set style = 'thermostat' %}
+                        {% elif domain == 'light' %}
+                          {% set supported_modes = state_attr(entity, 'supported_color_modes') or [] %}
+                          {% set has_rgb = 'hs' in supported_modes or 'xy' in supported_modes or 'rgb' in supported_modes %}
+                          {% set has_ct = 'color_temp' in supported_modes %}
+                          {% if has_rgb and has_ct %}
+                            {% set style = 'colorPickerRgbCct' %}
+                          {% elif has_rgb %}
+                            {% set style = 'colorPickerRgb' %}
+                          {% elif has_ct %}
+                            {% set style = 'colorPickerCct' %}
+                          {% elif supported_modes | length > 1 or (supported_modes | length == 1 and supported_modes[0] != 'onoff') %}
+                            {% set style = 'buttonUpDownLevel' %}
+                          {% else %}
+                            {% set style = 'button' %}
+                          {% endif %}
+                        {% endif %}
+                        {% set area_label = area_name(entity) %}
+                        {% set use_area_label = (domain == 'climate' and thermostat_use_area_name) or (domain == 'sensor' and state_attr(entity, 'device_class') in ['temperature', 'humidity'] and temperature_sensor_use_area_name) %}
+                        {% set raw_tile_label = area_label if use_area_label and area_label else (state_attr(entity, 'friendly_name') or entity) %}
+                        {% set tile_label = (raw_tile_label
+                          | replace('Ä', 'Ae')
+                          | replace('Ö', 'Oe')
+                          | replace('Ü', 'Ue')
+                          | replace('ä', 'ae')
+                          | replace('ö', 'oe')
+                          | replace('ü', 'ue')
+                          | replace('ß', 'ss')) %}
+                        {% set icon_value = '' if domain == 'climate' else '_bulb' if domain == 'light' else state_attr(entity, 'icon') %}
+                        {% if style == 'buttonUpDownLevel' and icon_value %}
+                          {% set tile_payload = {'tile': tile.tile, 'style': style, 'label': tile_label, 'tag': entity, 'icon': icon_value, 'levelBottom': 0, 'levelTop': 100} %}
+                        {% elif style == 'buttonUpDownLevel' %}
+                          {% set tile_payload = {'tile': tile.tile, 'style': style, 'label': tile_label, 'tag': entity, 'levelBottom': 0, 'levelTop': 100} %}
+                        {% elif icon_value %}
+                          {% set tile_payload = {'tile': tile.tile, 'style': style, 'label': tile_label, 'tag': entity, 'icon': icon_value} %}
+                        {% else %}
+                          {% set tile_payload = {'tile': tile.tile, 'style': style, 'label': tile_label, 'tag': entity} %}
+                        {% endif %}
+                        {% set tiles.items = tiles.items + [tile_payload] %}
+                      {% endif %}
+                    {% endfor %}
+                    {% if tiles.items | length > 0 %}
+                      {% set ns.screens = ns.screens + [
+                        {
+                          'screen': screen,
+                          'label': (page_labels[screen]
+                            | replace('Ä', 'Ae')
+                            | replace('Ö', 'Oe')
+                            | replace('Ü', 'Ue')
+                            | replace('ä', 'ae')
+                            | replace('ö', 'oe')
+                            | replace('ü', 'ue')
+                            | replace('ß', 'ss')),
+                          'screenLayout': {'horizontal': 2, 'vertical': 3},
+                          'tiles': tiles.items
+                        }
+                      ] %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                {{ {'screens': ns.screens} | to_json(ensure_ascii=False) }}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ footer_enabled }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: "{{ footer_payload }}"
+          - action: mqtt.publish
+            data:
+              topic: "oxrs/cmnd/{{ device_client_id }}"
+              payload: >-
+                {{ {'screen': {'load': 1}} | to_json(ensure_ascii=False) }}
+          - delay:
+              milliseconds: 500
+          - repeat:
+              for_each: "{{ tile_defs }}"
+              sequence:
+                - condition: template
+                  value_template: "{{ repeat.item.entity and repeat.item.entity != '' and page_enabled_map.get(repeat.item.screen, page_enabled_map.get(repeat.item.screen | string, false)) }}"
+                - action: mqtt.publish
+                  data:
+                    topic: "oxrs/cmnd/{{ device_client_id }}"
+                    payload: >-
+                      {% set entity = repeat.item.entity %}
+                      {% set domain = entity.split('.')[0] %}
+                      {% set secondary = repeat.item.secondary if repeat.item.secondary is defined else '' %}
+                      {% set tile_update = namespace(value={
+                        'screen': repeat.item.screen,
+                        'tile': repeat.item.tile
+                      }) %}
+                      {% if domain == 'sensor' %}
+                        {% set secondary_domain = secondary.split('.')[0] if secondary else '' %}
+                        {% set raw_sensor_value = states(entity) %}
+                        {% if is_number(raw_sensor_value) %}
+                          {% set rounded_sensor_value = raw_sensor_value | float(0) | round(2) %}
+                          {% set sensor_text = ((rounded_sensor_value | int) | string) if rounded_sensor_value == (rounded_sensor_value | int) else (rounded_sensor_value | string) %}
+                        {% else %}
+                          {% set sensor_text = (raw_sensor_value
+                            | replace('Ä', 'Ae')
+                            | replace('Ö', 'Oe')
+                            | replace('Ü', 'Ue')
+                            | replace('ä', 'ae')
+                            | replace('ö', 'oe')
+                            | replace('ü', 'ue')
+                            | replace('ß', 'ss')) %}
+                        {% endif %}
+                        {% set sensor_units = state_attr(entity, 'unit_of_measurement') or '' %}
+                        {% if secondary_domain == 'sensor' %}
+                          {% set raw_secondary_value = states(secondary) %}
+                          {% if is_number(raw_secondary_value) %}
+                            {% set rounded_secondary_value = raw_secondary_value | float(0) | round(2) %}
+                            {% set secondary_text = ((rounded_secondary_value | int) | string) if rounded_secondary_value == (rounded_secondary_value | int) else (rounded_secondary_value | string) %}
+                          {% else %}
+                            {% set secondary_text = (raw_secondary_value
+                              | replace('Ä', 'Ae')
+                              | replace('Ö', 'Oe')
+                              | replace('Ü', 'Ue')
+                              | replace('ä', 'ae')
+                              | replace('ö', 'oe')
+                              | replace('ü', 'ue')
+                              | replace('ß', 'ss')) %}
+                          {% endif %}
+                          {% set secondary_units = state_attr(secondary, 'unit_of_measurement') or '' %}
+                          {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'number': {'value': sensor_text, 'units': sensor_units, 'subValue': secondary_text, 'subUnits': secondary_units}, 'subLabel': ''} %}
+                        {% else %}
+                          {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'number': {'value': sensor_text, 'units': sensor_units}, 'subLabel': ''} %}
+                        {% endif %}
+                      {% elif domain == 'binary_sensor' %}
+                        {% set sensor_text = (states(entity)
+                          | replace('Ä', 'Ae')
+                          | replace('Ö', 'Oe')
+                          | replace('Ü', 'Ue')
+                          | replace('ä', 'ae')
+                          | replace('ö', 'oe')
+                          | replace('ü', 'ue')
+                          | replace('ß', 'ss')) %}
+                        {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'text': sensor_text, 'subLabel': ''} %}
+                      {% elif domain == 'cover' %}
+                        {% set cover_level = state_attr(entity, 'current_position') %}
+                        {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'open') else 'off', 'level': (cover_level | int(0)) if cover_level is not none else 0, 'subLabel': ''} %}
+                      {% elif domain == 'climate' %}
+                        {% set target_temp = state_attr(entity, 'temperature') %}
+                        {% set current_temp = state_attr(entity, 'current_temperature') %}
+                        {% set target_value = ((target_temp * 10) | int(0)) if target_temp is not none else 200 %}
+                        {% set current_value = ((current_temp * 10) | int(0)) if current_temp is not none else target_value %}
+                        {% set target_units = '°C' if target_temp is not none and not is_state(entity, 'off') else '' %}
+                        {% set current_units = '°C' if current_temp is not none else '' %}
+                        {% set mode = 1 if is_state(entity, 'off') else 2 %}
+                        {% set tile_update.value = {
+                          'screen': repeat.item.screen,
+                          'tile': repeat.item.tile,
+                          'number': {
+                            'value': (target_temp | round(1) | string) if target_temp is not none and mode != 1 else '',
+                            'units': target_units,
+                            'subValue': (current_temp | round(1) | string) if current_temp is not none else '',
+                            'subUnits': current_units
+                          },
+                          'state': 'off' if is_state(entity, 'off') else 'on',
+                          'thermostat': {
+                            'modeList': ['Off', 'On'],
+                            'mode': mode,
+                            'targetTemperature': target_value,
+                            'currentTemperature': current_value,
+                            'units': target_units
+                          },
+                          'subLabel': ''
+                        } %}
+                      {% elif domain == 'light' %}
+                        {% set supported_modes = state_attr(entity, 'supported_color_modes') or [] %}
+                        {% set has_rgb = 'hs' in supported_modes or 'xy' in supported_modes or 'rgb' in supported_modes %}
+                        {% set has_ct = 'color_temp' in supported_modes %}
+                        {% if has_rgb or has_ct %}
+                          {% set brightness = state_attr(entity, 'brightness') or 0 %}
+                          {% set brightness_pct = ((brightness * 100 / 255) | round(0)) | int(0) %}
+                          {% set color_mode = state_attr(entity, 'color_mode') %}
+                          {% if has_ct and color_mode == 'color_temp' %}
+                            {% set color_temp = state_attr(entity, 'color_temp_kelvin') or 4000 %}
+                            {% set tile_update.value = {
+                              'screen': repeat.item.screen,
+                              'tile': repeat.item.tile,
+                              'state': 'on' if is_state(entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorKelvin',
+                                'colorKelvin': color_temp,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% elif has_rgb %}
+                            {% set rgb_color = state_attr(entity, 'rgb_color') or [255, 255, 255] %}
+                            {% set tile_update.value = {
+                              'screen': repeat.item.screen,
+                              'tile': repeat.item.tile,
+                              'state': 'on' if is_state(entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorRgb',
+                                'colorRgb': {
+                                  'r': rgb_color[0] | int(0),
+                                  'g': rgb_color[1] | int(0),
+                                  'b': rgb_color[2] | int(0)
+                                },
+                                'colorKelvin': 0,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% elif has_ct %}
+                            {% set color_temp = state_attr(entity, 'color_temp_kelvin') or 4000 %}
+                            {% set tile_update.value = {
+                              'screen': repeat.item.screen,
+                              'tile': repeat.item.tile,
+                              'state': 'on' if is_state(entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorKelvin',
+                                'colorKelvin': color_temp,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% else %}
+                            {% set brightness_pct = ((brightness * 100 / 255) | round(0)) | int(0) %}
+                            {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'on') else 'off', 'level': brightness_pct, 'subLabel': ''} %}
+                          {% endif %}
+                        {% else %}
+                          {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'on') else 'off', 'subLabel': ''} %}
+                        {% endif %}
+                      {% else %}
+                        {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'on') else 'off', 'subLabel': ''} %}
+                      {% endif %}
+                      {{ {'tiles': [tile_update.value]} | to_json(ensure_ascii=False) }}
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'footer_update' and footer_enabled }}"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: "oxrs/cmnd/{{ device_client_id }}"
+              payload: "{{ footer_payload }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'panel_stat' and trigger.payload_json.type == 'screen' and trigger.payload_json.event == 'change' and footer_enabled }}"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: "oxrs/cmnd/{{ device_client_id }}"
+              payload: "{{ footer_payload }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'panel_stat' and trigger.payload_json.type == 'screen' and trigger.payload_json.state == 'loaded' }}"
+        sequence:
+          - delay:
+              milliseconds: 100
+          - repeat:
+              for_each: "{{ tile_defs }}"
+              sequence:
+                - condition: template
+                  value_template: "{{ repeat.item.entity and repeat.item.entity != '' and page_enabled_map.get(repeat.item.screen, page_enabled_map.get(repeat.item.screen | string, false)) }}"
+                - action: mqtt.publish
+                  data:
+                    topic: "oxrs/cmnd/{{ device_client_id }}"
+                    payload: >-
+                      {% set entity = repeat.item.entity %}
+                      {% set domain = entity.split('.')[0] %}
+                      {% set secondary = repeat.item.secondary if repeat.item.secondary is defined else '' %}
+                      {% set tile_update = namespace(value={
+                        'screen': repeat.item.screen,
+                        'tile': repeat.item.tile
+                      }) %}
+                      {% if domain == 'sensor' %}
+                        {% set secondary_domain = secondary.split('.')[0] if secondary else '' %}
+                        {% set raw_sensor_value = states(entity) %}
+                        {% if is_number(raw_sensor_value) %}
+                          {% set rounded_sensor_value = raw_sensor_value | float(0) | round(2) %}
+                          {% set sensor_text = ((rounded_sensor_value | int) | string) if rounded_sensor_value == (rounded_sensor_value | int) else (rounded_sensor_value | string) %}
+                        {% else %}
+                          {% set sensor_text = (raw_sensor_value
+                            | replace('Ä', 'Ae')
+                            | replace('Ö', 'Oe')
+                            | replace('Ü', 'Ue')
+                            | replace('ä', 'ae')
+                            | replace('ö', 'oe')
+                            | replace('ü', 'ue')
+                            | replace('ß', 'ss')) %}
+                        {% endif %}
+                        {% set sensor_units = state_attr(entity, 'unit_of_measurement') or '' %}
+                        {% if secondary_domain == 'sensor' %}
+                          {% set raw_secondary_value = states(secondary) %}
+                          {% if is_number(raw_secondary_value) %}
+                            {% set rounded_secondary_value = raw_secondary_value | float(0) | round(2) %}
+                            {% set secondary_text = ((rounded_secondary_value | int) | string) if rounded_secondary_value == (rounded_secondary_value | int) else (rounded_secondary_value | string) %}
+                          {% else %}
+                            {% set secondary_text = (raw_secondary_value
+                              | replace('Ä', 'Ae')
+                              | replace('Ö', 'Oe')
+                              | replace('Ü', 'Ue')
+                              | replace('ä', 'ae')
+                              | replace('ö', 'oe')
+                              | replace('ü', 'ue')
+                              | replace('ß', 'ss')) %}
+                          {% endif %}
+                          {% set secondary_units = state_attr(secondary, 'unit_of_measurement') or '' %}
+                          {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'number': {'value': sensor_text, 'units': sensor_units, 'subValue': secondary_text, 'subUnits': secondary_units}, 'subLabel': ''} %}
+                        {% else %}
+                          {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'number': {'value': sensor_text, 'units': sensor_units}, 'subLabel': ''} %}
+                        {% endif %}
+                      {% elif domain == 'binary_sensor' %}
+                        {% set sensor_text = (states(entity)
+                          | replace('Ä', 'Ae')
+                          | replace('Ö', 'Oe')
+                          | replace('Ü', 'Ue')
+                          | replace('ä', 'ae')
+                          | replace('ö', 'oe')
+                          | replace('ü', 'ue')
+                          | replace('ß', 'ss')) %}
+                        {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'text': sensor_text, 'subLabel': ''} %}
+                      {% elif domain == 'cover' %}
+                        {% set cover_level = state_attr(entity, 'current_position') %}
+                        {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'open') else 'off', 'level': (cover_level | int(0)) if cover_level is not none else 0, 'subLabel': ''} %}
+                      {% elif domain == 'climate' %}
+                        {% set target_temp = state_attr(entity, 'temperature') %}
+                        {% set current_temp = state_attr(entity, 'current_temperature') %}
+                        {% set target_value = ((target_temp * 10) | int(0)) if target_temp is not none else 200 %}
+                        {% set current_value = ((current_temp * 10) | int(0)) if current_temp is not none else target_value %}
+                        {% set target_units = '°C' if target_temp is not none and not is_state(entity, 'off') else '' %}
+                        {% set current_units = '°C' if current_temp is not none else '' %}
+                        {% set mode = 1 if is_state(entity, 'off') else 2 %}
+                        {% set tile_update.value = {
+                          'screen': repeat.item.screen,
+                          'tile': repeat.item.tile,
+                          'number': {
+                            'value': (target_temp | round(1) | string) if target_temp is not none and mode != 1 else '',
+                            'units': target_units,
+                            'subValue': (current_temp | round(1) | string) if current_temp is not none else '',
+                            'subUnits': current_units
+                          },
+                          'state': 'off' if is_state(entity, 'off') else 'on',
+                          'thermostat': {
+                            'modeList': ['Off', 'On'],
+                            'mode': mode,
+                            'targetTemperature': target_value,
+                            'currentTemperature': current_value,
+                            'units': target_units
+                          },
+                          'subLabel': ''
+                        } %}
+                      {% elif domain == 'light' %}
+                        {% set supported_modes = state_attr(entity, 'supported_color_modes') or [] %}
+                        {% set has_rgb = 'hs' in supported_modes or 'xy' in supported_modes or 'rgb' in supported_modes %}
+                        {% set has_ct = 'color_temp' in supported_modes %}
+                        {% if has_rgb or has_ct %}
+                          {% set brightness = state_attr(entity, 'brightness') or 0 %}
+                          {% set brightness_pct = ((brightness * 100 / 255) | round(0)) | int(0) %}
+                          {% set color_mode = state_attr(entity, 'color_mode') %}
+                          {% if has_ct and color_mode == 'color_temp' %}
+                            {% set color_temp = state_attr(entity, 'color_temp_kelvin') or 4000 %}
+                            {% set tile_update.value = {
+                              'screen': repeat.item.screen,
+                              'tile': repeat.item.tile,
+                              'state': 'on' if is_state(entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorKelvin',
+                                'colorKelvin': color_temp,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% elif has_rgb %}
+                            {% set rgb_color = state_attr(entity, 'rgb_color') or [255, 255, 255] %}
+                            {% set tile_update.value = {
+                              'screen': repeat.item.screen,
+                              'tile': repeat.item.tile,
+                              'state': 'on' if is_state(entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorRgb',
+                                'colorRgb': {
+                                  'r': rgb_color[0] | int(0),
+                                  'g': rgb_color[1] | int(0),
+                                  'b': rgb_color[2] | int(0)
+                                },
+                                'colorKelvin': 0,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% elif has_ct %}
+                            {% set color_temp = state_attr(entity, 'color_temp_kelvin') or 4000 %}
+                            {% set tile_update.value = {
+                              'screen': repeat.item.screen,
+                              'tile': repeat.item.tile,
+                              'state': 'on' if is_state(entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorKelvin',
+                                'colorKelvin': color_temp,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% else %}
+                            {% set brightness_pct = ((brightness * 100 / 255) | round(0)) | int(0) %}
+                            {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'on') else 'off', 'level': brightness_pct, 'subLabel': ''} %}
+                          {% endif %}
+                        {% else %}
+                          {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'on') else 'off', 'subLabel': ''} %}
+                        {% endif %}
+                      {% else %}
+                        {% set tile_update.value = {'screen': repeat.item.screen, 'tile': repeat.item.tile, 'state': 'on' if is_state(entity, 'on') else 'off', 'subLabel': ''} %}
+                      {% endif %}
+                      {{ {'tiles': [tile_update.value]} | to_json(ensure_ascii=False) }}
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'panel_stat'
+                 and (trigger.payload_json.type != 'screen'
+                      or trigger.payload_json.state not in ['unloaded', 'loaded']) }}
+        sequence:
+          - variables:
+              event_screen: "{{ trigger.payload_json.screen | default(0) | int(0) }}"
+              event_tile: "{{ trigger.payload_json.tile | default(0) | int(0) }}"
+              event_tag: "{{ trigger.payload_json.tag | default('', true) }}"
+              event_type: "{{ trigger.payload_json.type | default('', true) }}"
+              event_action: "{{ trigger.payload_json.event | default('', true) }}"
+              matched_entity: >-
+                {%- set by_tag = tile_defs | selectattr('entity', 'equalto', event_tag) | list -%}
+                {%- if event_tag != '' and by_tag | length > 0 -%}
+                  {{- by_tag[0].entity -}}
+                {%- else -%}
+                  {%- set by_pos = tile_defs | selectattr('screen', 'equalto', event_screen) | selectattr('tile', 'equalto', event_tile) | list -%}
+                  {{- by_pos[0].entity if by_pos | length > 0 else '' -}}
+                {%- endif -%}
+              matched_domain: "{{ matched_entity.split('.')[0] if matched_entity else '' }}"
+          - condition: template
+            value_template: "{{ matched_entity != '' }}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'light' and event_type == 'level' }}"
+                sequence:
+                  - variables:
+                      event_level: "{{ trigger.payload_json.state | default(0, true) | int(0) }}"
+                      event_brightness: "{{ ((event_level * 255 / 100) | round(0)) | int(0) }}"
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ event_level <= 0 }}"
+                        sequence:
+                          - action: light.turn_off
+                            target:
+                              entity_id: "{{ matched_entity }}"
+                    default:
+                      - action: light.turn_on
+                        target:
+                          entity_id: "{{ matched_entity }}"
+                        data:
+                          brightness: "{{ event_brightness }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'cover' and event_type == 'level' }}"
+                sequence:
+                  - action: cover.set_cover_position
+                    target:
+                      entity_id: "{{ matched_entity }}"
+                    data:
+                      position: "{{ trigger.payload_json.state | default(0, true) | int(0) }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain in ['light', 'switch', 'input_boolean', 'fan'] and event_type == 'button' and event_action == 'single' }}"
+                sequence:
+                  - action: homeassistant.toggle
+                    target:
+                      entity_id: "{{ matched_entity }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain in ['scene', 'script'] and event_type == 'button' and event_action == 'single' }}"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ matched_domain == 'scene' }}"
+                        sequence:
+                          - action: scene.turn_on
+                            target:
+                              entity_id: "{{ matched_entity }}"
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ matched_domain == 'script' }}"
+                        sequence:
+                          - action: script.turn_on
+                            target:
+                              entity_id: "{{ matched_entity }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'button' and event_type == 'button' and event_action == 'single' }}"
+                sequence:
+                  - action: button.press
+                    target:
+                      entity_id: "{{ matched_entity }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'cover' }}"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ trigger.payload_json.event | default('single') in ['up', 'open', 'single'] }}"
+                        sequence:
+                          - action: cover.open_cover
+                            target:
+                              entity_id: "{{ matched_entity }}"
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ trigger.payload_json.event | default('single') in ['down', 'close'] }}"
+                        sequence:
+                          - action: cover.close_cover
+                            target:
+                              entity_id: "{{ matched_entity }}"
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ trigger.payload_json.event | default('single') in ['hold', 'stop'] }}"
+                        sequence:
+                          - action: cover.stop_cover
+                            target:
+                              entity_id: "{{ matched_entity }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'light' and event_type in ['colorPicker', 'tile'] }}"
+                sequence:
+                  - variables:
+                      color_rgb: "{{ trigger.payload_json.state.colorRgb if trigger.payload_json.state.colorRgb is defined else {'r': 255, 'g': 0, 'b': 0} }}"
+                      color_brightness_raw: "{{ trigger.payload_json.state.brightness | default(100, true) | int(0) if trigger.payload_json.state.brightness is defined else trigger.payload_json.brightness | default(100, true) | int(0) }}"
+                      color_brightness: >-
+                        {% set brightness_raw = color_brightness_raw | int(0) %}
+                        {% if brightness_raw <= 100 %}
+                          {{ ((brightness_raw * 255 / 100) | round(0)) | int(0) }}
+                        {% else %}
+                          {{ [brightness_raw, 255] | min }}
+                        {% endif %}
+                      color_kelvin: "{{ trigger.payload_json.state.colorKelvin | default(0, true) | int(0) if trigger.payload_json.state.colorKelvin is defined else trigger.payload_json.colorTemp | default(0, true) | int(0) }}"
+                      color_red: "{{ color_rgb.r | default(0, true) | int(0) }}"
+                      color_green: "{{ color_rgb.g | default(0, true) | int(0) }}"
+                      color_blue: "{{ color_rgb.b | default(0, true) | int(0) }}"
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ color_brightness_raw | int(0) == 0 or color_brightness | int(0) == 0 }}"
+                        sequence:
+                          - action: light.turn_off
+                            target:
+                              entity_id: "{{ matched_entity }}"
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ color_kelvin | int(0) > 0 }}"
+                        sequence:
+                          - action: light.turn_on
+                            target:
+                              entity_id: "{{ matched_entity }}"
+                            data:
+                              brightness: "{{ color_brightness }}"
+                              color_temp_kelvin: "{{ color_kelvin }}"
+                    default:
+                      - action: light.turn_on
+                        target:
+                          entity_id: "{{ matched_entity }}"
+                        data:
+                          brightness: "{{ color_brightness }}"
+                          rgb_color:
+                            - "{{ color_red }}"
+                            - "{{ color_green }}"
+                            - "{{ color_blue }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'climate' and event_type in ['thermostat', 'tile'] }}"
+                sequence:
+                  - variables:
+                      target_temperature: >-
+                        {% set state_payload = trigger.payload_json.state if trigger.payload_json.state is defined else {} %}
+                        {{ (state_payload.targetTemperature | default(trigger.payload_json.targetTemperature | default(200, true), true) | int(0)) / 10.0 }}
+                      thermostat_mode: >-
+                        {% set state_payload = trigger.payload_json.state if trigger.payload_json.state is defined else {} %}
+                        {{ state_payload.mode | default(trigger.payload_json.mode | default(1, true), true) | int(1) }}
+                      hvac_on_mode: >-
+                        {% set hvac_modes = state_attr(matched_entity, 'hvac_modes') or [] %}
+                        {% if 'heat' in hvac_modes %}
+                          heat
+                        {% else %}
+                          {% set ns = namespace(mode='heat') %}
+                          {% for hvac_mode in hvac_modes %}
+                            {% if hvac_mode != 'off' and ns.mode == 'heat' %}
+                              {% set ns.mode = hvac_mode %}
+                            {% endif %}
+                          {% endfor %}
+                          {{ ns.mode }}
+                        {% endif %}
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ thermostat_mode | int(1) in [0, 1] }}"
+                        sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ not is_state(matched_entity, 'off') }}"
+                                sequence:
+                                  - action: climate.set_hvac_mode
+                                    continue_on_error: true
+                                    target:
+                                      entity_id: "{{ matched_entity }}"
+                                    data:
+                                      hvac_mode: "off"
+                                  - action: climate.turn_off
+                                    continue_on_error: true
+                                    target:
+                                      entity_id: "{{ matched_entity }}"
+                    default:
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: "{{ is_state(matched_entity, 'off') }}"
+                            sequence:
+                              - action: climate.set_hvac_mode
+                                target:
+                                  entity_id: "{{ matched_entity }}"
+                                data:
+                                  hvac_mode: "{{ hvac_on_mode | trim }}"
+                      - action: climate.set_temperature
+                        target:
+                          entity_id: "{{ matched_entity }}"
+                        data:
+                          temperature: "{{ target_temperature }}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain in ['sensor', 'binary_sensor'] }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set by_pos = tile_defs | selectattr('screen', 'equalto', event_screen | int(0)) | selectattr('tile', 'equalto', event_tile | int(0)) | list %}
+                        {% set secondary = by_pos[0].secondary if by_pos | length > 0 and by_pos[0].secondary is defined else '' %}
+                        {% set secondary_domain = secondary.split('.')[0] if secondary else '' %}
+                        {% set raw_sensor_value = states(matched_entity) %}
+                        {% if is_number(raw_sensor_value) %}
+                          {% set rounded_sensor_value = raw_sensor_value | float(0) | round(2) %}
+                          {% set sensor_text = ((rounded_sensor_value | int) | string) if rounded_sensor_value == (rounded_sensor_value | int) else (rounded_sensor_value | string) %}
+                        {% else %}
+                          {% set sensor_text = (raw_sensor_value
+                            | replace('Ä', 'Ae')
+                            | replace('Ö', 'Oe')
+                            | replace('Ü', 'Ue')
+                            | replace('ä', 'ae')
+                            | replace('ö', 'oe')
+                            | replace('ü', 'ue')
+                            | replace('ß', 'ss')) %}
+                        {% endif %}
+                        {% if matched_domain == 'sensor' %}
+                          {% set sensor_units = state_attr(matched_entity, 'unit_of_measurement') or '' %}
+                          {% if secondary_domain == 'sensor' %}
+                            {% set raw_secondary_value = states(secondary) %}
+                            {% if is_number(raw_secondary_value) %}
+                              {% set rounded_secondary_value = raw_secondary_value | float(0) | round(2) %}
+                              {% set secondary_text = ((rounded_secondary_value | int) | string) if rounded_secondary_value == (rounded_secondary_value | int) else (rounded_secondary_value | string) %}
+                            {% else %}
+                              {% set secondary_text = (raw_secondary_value
+                                | replace('Ä', 'Ae')
+                                | replace('Ö', 'Oe')
+                                | replace('Ü', 'Ue')
+                                | replace('ä', 'ae')
+                                | replace('ö', 'oe')
+                                | replace('ü', 'ue')
+                                | replace('ß', 'ss')) %}
+                            {% endif %}
+                            {% set secondary_units = state_attr(secondary, 'unit_of_measurement') or '' %}
+                            {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'number': {'value': sensor_text, 'units': sensor_units, 'subValue': secondary_text, 'subUnits': secondary_units}, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                          {% else %}
+                            {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'number': {'value': sensor_text, 'units': sensor_units}, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                          {% endif %}
+                        {% else %}
+                          {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'text': sensor_text, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                        {% endif %}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'cover' }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set cover_level = state_attr(matched_entity, 'current_position') %}
+                        {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'state': 'on' if is_state(matched_entity, 'open') else 'off', 'level': (cover_level | int(0)) if cover_level is not none else 0, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'climate' }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set target_temp = target_temperature if target_temperature is defined else state_attr(matched_entity, 'temperature') %}
+                        {% set current_temp = state_attr(matched_entity, 'current_temperature') %}
+                        {% set target_value = ((target_temp * 10) | int(0)) if target_temp is not none else 200 %}
+                        {% set current_value = ((current_temp * 10) | int(0)) if current_temp is not none else target_value %}
+                        {% set mode = thermostat_mode if thermostat_mode is defined else 1 if is_state(matched_entity, 'off') else 2 %}
+                        {% set mode = 1 if (mode | int(1)) in [0, 1] else 2 %}
+                        {% set target_units = '°C' if target_temp is not none and mode != 1 else '' %}
+                        {% set current_units = '°C' if current_temp is not none else '' %}
+                        {{ {'tiles': [{
+                          'screen': event_screen,
+                          'tile': event_tile,
+                          'number': {
+                            'value': (target_temp | round(1) | string) if target_temp is not none and mode != 1 else '',
+                            'units': target_units,
+                            'subValue': (current_temp | round(1) | string) if current_temp is not none else '',
+                            'subUnits': current_units
+                          },
+                          'state': 'off' if mode == 1 else 'on',
+                          'thermostat': {
+                            'modeList': ['Off', 'On'],
+                            'mode': mode,
+                            'targetTemperature': target_value,
+                            'currentTemperature': current_value,
+                            'units': target_units
+                          },
+                          'subLabel': ''
+                        }]} | to_json(ensure_ascii=False) }}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain == 'light' }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set supported_modes = state_attr(matched_entity, 'supported_color_modes') or [] %}
+                        {% set has_rgb = 'hs' in supported_modes or 'xy' in supported_modes or 'rgb' in supported_modes %}
+                        {% set has_ct = 'color_temp' in supported_modes %}
+                        {% set brightness = state_attr(matched_entity, 'brightness') or 0 %}
+                        {% if has_rgb or has_ct %}
+                          {% set brightness_pct = ((brightness * 100 / 255) | round(0)) | int(0) %}
+                          {% set color_mode = state_attr(matched_entity, 'color_mode') %}
+                          {% if has_ct and color_mode == 'color_temp' %}
+                            {% set color_temp = state_attr(matched_entity, 'color_temp_kelvin') or 4000 %}
+                            {% set tile_update = {
+                              'screen': event_screen,
+                              'tile': event_tile,
+                              'state': 'on' if is_state(matched_entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorKelvin',
+                                'colorKelvin': color_temp,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% else %}
+                            {% set rgb_color = state_attr(matched_entity, 'rgb_color') or [255, 255, 255] %}
+                            {% set tile_update = {
+                              'screen': event_screen,
+                              'tile': event_tile,
+                              'state': 'on' if is_state(matched_entity, 'on') else 'off',
+                              'colorPicker': {
+                                'mode': 'colorRgb',
+                                'colorRgb': {
+                                  'r': rgb_color[0] | int(0),
+                                  'g': rgb_color[1] | int(0),
+                                  'b': rgb_color[2] | int(0)
+                                },
+                                'colorKelvin': 0,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% endif %}
+                          {{ {'tiles': [tile_update]} | to_json(ensure_ascii=False) }}
+                        {% else %}
+                          {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'state': 'on' if is_state(matched_entity, 'on') else 'off', 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                        {% endif %}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ matched_domain in ['switch', 'input_boolean', 'fan', 'scene', 'script', 'button'] }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'state': 'on' if is_state(matched_entity, 'on') else 'off', 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'entity_state_changed' }}"
+        sequence:
+          - variables:
+              changed_entity: "{{ trigger.event.data.entity_id | default('', true) }}"
+              changed_state: "{{ trigger.event.data.new_state.state if trigger.event.data.new_state is not none else '' }}"
+              changed_domain: "{{ changed_entity.split('.')[0] if changed_entity else '' }}"
+              matched_entity: >-
+                {%- set by_primary = tile_defs | selectattr('entity', 'equalto', changed_entity) | list -%}
+                {%- set by_secondary = namespace(items=[]) -%}
+                {%- for tile in tile_defs -%}
+                  {%- if tile.secondary is defined and tile.secondary == changed_entity and tile.entity.split('.')[0] == 'sensor' and changed_entity.split('.')[0] == 'sensor' -%}
+                    {%- set by_secondary.items = by_secondary.items + [tile] -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {{- by_primary[0].entity if by_primary | length > 0 else by_secondary.items[0].entity if by_secondary.items | length > 0 else '' -}}
+              event_screen: >-
+                {%- set by_primary = tile_defs | selectattr('entity', 'equalto', changed_entity) | list -%}
+                {%- set by_secondary = namespace(items=[]) -%}
+                {%- for tile in tile_defs -%}
+                  {%- if tile.secondary is defined and tile.secondary == changed_entity and tile.entity.split('.')[0] == 'sensor' and changed_entity.split('.')[0] == 'sensor' -%}
+                    {%- set by_secondary.items = by_secondary.items + [tile] -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {{- by_primary[0].screen if by_primary | length > 0 else by_secondary.items[0].screen if by_secondary.items | length > 0 else 0 -}}
+              event_tile: >-
+                {%- set by_primary = tile_defs | selectattr('entity', 'equalto', changed_entity) | list -%}
+                {%- set by_secondary = namespace(items=[]) -%}
+                {%- for tile in tile_defs -%}
+                  {%- if tile.secondary is defined and tile.secondary == changed_entity and tile.entity.split('.')[0] == 'sensor' and changed_entity.split('.')[0] == 'sensor' -%}
+                    {%- set by_secondary.items = by_secondary.items + [tile] -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {{- by_primary[0].tile if by_primary | length > 0 else by_secondary.items[0].tile if by_secondary.items | length > 0 else 0 -}}
+          - condition: template
+            value_template: >-
+              {{ matched_entity
+                 and (event_screen | int(0)) > 0
+                 and page_enabled_map.get(event_screen | int(0), page_enabled_map.get((event_screen | int(0)) | string, false))
+                 and trigger.event.data.new_state is not none
+                 and (trigger.event.data.old_state is none
+                      or trigger.event.data.old_state.state != trigger.event.data.new_state.state
+                      or changed_domain == 'climate') }}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ changed_domain in ['sensor', 'binary_sensor'] }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set matched_domain = matched_entity.split('.')[0] if matched_entity else '' %}
+                        {% set by_pos = tile_defs | selectattr('screen', 'equalto', event_screen | int(0)) | selectattr('tile', 'equalto', event_tile | int(0)) | list %}
+                        {% set secondary = by_pos[0].secondary if by_pos | length > 0 and by_pos[0].secondary is defined else '' %}
+                        {% set secondary_domain = secondary.split('.')[0] if secondary else '' %}
+                        {% set raw_text = states(matched_entity) %}
+                        {% if is_number(raw_text) %}
+                          {% set rounded_sensor_value = raw_text | float(0) | round(2) %}
+                          {% set sensor_text = ((rounded_sensor_value | int) | string) if rounded_sensor_value == (rounded_sensor_value | int) else (rounded_sensor_value | string) %}
+                        {% else %}
+                          {% set sensor_text = (raw_text
+                            | replace('Ä', 'Ae')
+                            | replace('Ö', 'Oe')
+                            | replace('Ü', 'Ue')
+                            | replace('ä', 'ae')
+                            | replace('ö', 'oe')
+                            | replace('ü', 'ue')
+                            | replace('ß', 'ss')) %}
+                        {% endif %}
+                        {% if matched_domain == 'sensor' %}
+                          {% set sensor_units = state_attr(matched_entity, 'unit_of_measurement') or '' %}
+                          {% if secondary_domain == 'sensor' %}
+                            {% set raw_secondary_value = states(secondary) %}
+                            {% if is_number(raw_secondary_value) %}
+                              {% set rounded_secondary_value = raw_secondary_value | float(0) | round(2) %}
+                              {% set secondary_text = ((rounded_secondary_value | int) | string) if rounded_secondary_value == (rounded_secondary_value | int) else (rounded_secondary_value | string) %}
+                            {% else %}
+                              {% set secondary_text = (raw_secondary_value
+                                | replace('Ä', 'Ae')
+                                | replace('Ö', 'Oe')
+                                | replace('Ü', 'Ue')
+                                | replace('ä', 'ae')
+                                | replace('ö', 'oe')
+                                | replace('ü', 'ue')
+                                | replace('ß', 'ss')) %}
+                            {% endif %}
+                            {% set secondary_units = state_attr(secondary, 'unit_of_measurement') or '' %}
+                            {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'number': {'value': sensor_text, 'units': sensor_units, 'subValue': secondary_text, 'subUnits': secondary_units}, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                          {% else %}
+                            {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'number': {'value': sensor_text, 'units': sensor_units}, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                          {% endif %}
+                        {% else %}
+                          {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'text': sensor_text, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                        {% endif %}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ changed_domain == 'cover' }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set cover_level = state_attr(matched_entity, 'current_position') %}
+                        {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'state': 'on' if changed_state == 'open' else 'off', 'level': (cover_level | int(0)) if cover_level is not none else 0, 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ changed_domain == 'climate' }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set target_temp = state_attr(matched_entity, 'temperature') %}
+                        {% set current_temp = state_attr(matched_entity, 'current_temperature') %}
+                        {% set target_value = ((target_temp * 10) | int(0)) if target_temp is not none else 200 %}
+                        {% set current_value = ((current_temp * 10) | int(0)) if current_temp is not none else target_value %}
+                        {% set mode = 1 if changed_state == 'off' else 2 %}
+                        {% set target_units = '°C' if target_temp is not none and mode != 1 else '' %}
+                        {% set current_units = '°C' if current_temp is not none else '' %}
+                        {{ {'tiles': [{
+                          'screen': event_screen,
+                          'tile': event_tile,
+                          'number': {
+                            'value': (target_temp | round(1) | string) if target_temp is not none and mode != 1 else '',
+                            'units': target_units,
+                            'subValue': (current_temp | round(1) | string) if current_temp is not none else '',
+                            'subUnits': current_units
+                          },
+                          'state': 'off' if changed_state == 'off' else 'on',
+                          'thermostat': {
+                            'modeList': ['Off', 'On'],
+                            'mode': mode,
+                            'targetTemperature': target_value,
+                            'currentTemperature': current_value,
+                            'units': target_units
+                          },
+                          'subLabel': ''
+                        }]} | to_json(ensure_ascii=False) }}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ changed_domain == 'light' }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {% set supported_modes = state_attr(matched_entity, 'supported_color_modes') or [] %}
+                        {% set has_rgb = 'hs' in supported_modes or 'xy' in supported_modes or 'rgb' in supported_modes %}
+                        {% set has_ct = 'color_temp' in supported_modes %}
+                        {% set brightness = state_attr(matched_entity, 'brightness') or 0 %}
+                        {% if has_rgb or has_ct %}
+                          {% set brightness_pct = ((brightness * 100 / 255) | round(0)) | int(0) %}
+                          {% set color_mode = state_attr(matched_entity, 'color_mode') %}
+                          {% if has_ct and color_mode == 'color_temp' %}
+                            {% set color_temp = state_attr(matched_entity, 'color_temp_kelvin') or 4000 %}
+                            {% set tile_update = {
+                              'screen': event_screen,
+                              'tile': event_tile,
+                              'state': 'on' if changed_state == 'on' else 'off',
+                              'colorPicker': {
+                                'mode': 'colorKelvin',
+                                'colorKelvin': color_temp,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% else %}
+                            {% set rgb_color = state_attr(matched_entity, 'rgb_color') or [255, 255, 255] %}
+                            {% set tile_update = {
+                              'screen': event_screen,
+                              'tile': event_tile,
+                              'state': 'on' if changed_state == 'on' else 'off',
+                              'colorPicker': {
+                                'mode': 'colorRgb',
+                                'colorRgb': {
+                                  'r': rgb_color[0] | int(0),
+                                  'g': rgb_color[1] | int(0),
+                                  'b': rgb_color[2] | int(0)
+                                },
+                                'colorKelvin': 0,
+                                'brightness': brightness_pct
+                              },
+                              'subLabel': ''
+                            } %}
+                          {% endif %}
+                          {{ {'tiles': [tile_update]} | to_json(ensure_ascii=False) }}
+                        {% else %}
+                          {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'state': 'on' if changed_state == 'on' else 'off', 'subLabel': ''}]} | to_json(ensure_ascii=False) }}
+                        {% endif %}
+              - conditions:
+                  - condition: template
+                    value_template: "{{ changed_domain in ['switch', 'input_boolean', 'fan', 'scene', 'script', 'button'] }}"
+                sequence:
+                  - action: mqtt.publish
+                    data:
+                      topic: "oxrs/cmnd/{{ device_client_id }}"
+                      payload: >-
+                        {{ {'tiles': [{'screen': event_screen, 'tile': event_tile, 'state': 'on' if changed_state == 'on' else 'off', 'subLabel': ''}]} | to_json(ensure_ascii=False) }}

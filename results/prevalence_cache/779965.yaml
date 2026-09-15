@@ -1,0 +1,202 @@
+blueprint:
+  name: ZHA - IKEA SYMFONISK Sound remote, gen 2 (E2123) - with volume hold.
+  description: Set individual, custom commands for each button on the SYMFONISK Sound remote, gen 2. Including single, double and long press for the shortcut buttons and long press for the volume buttons (firmware version 0x01000035).
+
+#  source_url: https://community.home-assistant.io/t/something-something-something/123456
+
+
+  domain: automation
+  
+  input:
+    remote:
+      name: Remote
+      description: IKEA SYMFONISK Sound remote, gen 2 to use.
+      selector:
+        device:
+          integration: zha
+          manufacturer: IKEA of Sweden
+          model: SYMFONISK sound remote gen2
+          multiple: false
+
+
+# BUTTON ACTIONS...
+
+    action_play:
+      name: Play button press
+      description: Action to run on play button press.
+      default: []
+      selector:
+        action: {}
+
+    action_vol_up:
+      name: Volume Up button press
+      description: Action to run on volume up button press.
+      default: []
+      selector:
+        action: {}
+    action_vol_down:
+      name: Volume Down button press
+      description: Action to run on volume down button press.
+      default: []
+      selector:
+        action: {}
+
+    action_vol_up_hold:
+      name: Volume Up button hold
+      description: Action to run on volume up button hold (repeats the action until released).
+      default: []
+      selector:
+        action: {}
+    action_vol_down_hold:
+      name: Volume Down button hold
+      description: Action to run on volume down button hold (repeats the action until released).
+      default: []
+      selector:
+        action: {}
+
+    action_next:
+      name: Next button press
+      description: Action to run on next button press.
+      default: []
+      selector:
+        action: {}
+    action_previous:
+      name: Previous button press
+      description: Action to run on previous button press.
+      default: []
+      selector:
+        action: {}
+
+    single_dot_single_press:
+      name: Shortcut 1 single button press
+      description: Action to run on shortcut 1 button single press.
+      default: []
+      selector:
+        action: {}
+    single_dot_double_press:
+      name: Shortcut 1 button double press
+      description: Action to run on shortcut 1 button double press.
+      default: []
+      selector:
+        action: {}
+    single_dot_long_press:
+      name: Shortcut 1 button hold
+      description: Action to run on shortcut 1 button hold.
+      default: []
+      selector:
+        action: {}
+
+    double_dot_single_press:
+      name: Shortcut 2 single button press
+      description: Action to run on shortcut 2 button single press.
+      default: []
+      selector:
+        action: {}
+    double_dot_double_press:
+      name: Shortcut 2 button double press
+      description: Action to run on shortcut 2 button double press.
+      default: []
+      selector:
+        action: {}
+    double_dot_long_press:
+      name: Shortcut 2 button hold
+      description: Action to run on shortcut 2 button hold.
+      default: []
+      selector:
+        action: {}
+
+
+mode: single
+max_exceeded: silent
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input remote
+    
+action:
+- variables:
+    command: '{{ trigger.event.data.command }}'
+    cluster_id: '{{ trigger.event.data.cluster_id }}'
+    endpoint_id: '{{ trigger.event.data.endpoint_id }}'
+#    args: '{{ trigger.event.data.args }}'
+
+
+# BUTTON TRIGGERS...
+
+- choose:
+
+  - conditions:
+    - '{{ command == ''toggle'' }}'
+    - '{{ cluster_id == 6 }}'
+    - '{{ endpoint_id == 1 }}'
+    sequence: !input action_play
+    
+  - conditions:
+    - '{{ command == ''move_with_on_off'' }}'
+    - '{{ cluster_id == 8 }}'
+    - '{{ endpoint_id == 1 }}'
+    - '{{ trigger.event.data.params.move_mode == 0}}'
+    sequence: !input action_vol_up
+  - conditions:
+    - '{{ command == ''move_with_on_off'' }}'
+    - '{{ cluster_id == 8 }}'
+    - '{{ endpoint_id == 1 }}'
+    - '{{ trigger.event.data.params.move_mode == 1 }}'
+    sequence: !input action_vol_down
+
+  - conditions:
+    - '{{ command == ''move'' }}'
+    - '{{ cluster_id == 8 }}'
+    - '{{ endpoint_id == 1 }}'
+    - '{{ trigger.event.data.params.move_mode == 0}}'
+    - '{{ trigger.event.data.params.options_mask == 0}}'
+    sequence: !input action_vol_up_hold
+  - conditions:
+    - '{{ command == ''move'' }}'
+    - '{{ cluster_id == 8 }}'
+    - '{{ endpoint_id == 1 }}'
+    - '{{ trigger.event.data.params.move_mode == 1 }}'
+    - '{{ trigger.event.data.params.options_mask == 0}}'
+    sequence: !input action_vol_down_hold
+
+  - conditions:
+    - '{{ command == ''step'' }}'
+    - '{{ cluster_id == 8 }}'
+    - '{{ endpoint_id == 1 }}'
+    - '{{ trigger.event.data.params.step_mode == 0 }}'
+    sequence: !input action_next
+  - conditions:
+    - '{{ command == ''step'' }}'
+    - '{{ cluster_id == 8 }}'
+    - '{{ endpoint_id == 1 }}'
+    - '{{ trigger.event.data.params.step_mode == 1 }}'
+    sequence: !input action_previous
+
+  - conditions:
+    - '{{ command == ''short_release'' }}'
+    - '{{ endpoint_id == 2 }}'
+    sequence: !input single_dot_single_press
+  - conditions:
+    - '{{ command == ''multi_press_complete'' }}'
+    - '{{ endpoint_id == 2 }}'
+    sequence: !input single_dot_double_press
+  - conditions:
+    - '{{ command == ''long_press'' }}'
+    - '{{ endpoint_id == 2 }}'
+    sequence: !input single_dot_long_press
+
+
+  - conditions:
+    - '{{ command == ''short_release'' }}'
+    - '{{ endpoint_id == 3 }}'
+    sequence: !input double_dot_single_press
+  - conditions:
+    - '{{ command == ''multi_press_complete'' }}'
+    - '{{ endpoint_id == 3 }}'
+    sequence: !input double_dot_double_press
+  - conditions:
+    - '{{ command == ''long_press'' }}'
+    - '{{ endpoint_id == 3 }}'
+    sequence: !input double_dot_long_press
+

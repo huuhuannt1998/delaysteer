@@ -1,0 +1,105 @@
+blueprint:
+  name: Aqara H2 4-Button Custom Actions
+  description: Triggert separate Aktionen für alle 4 Taster des Aqara H2 via Matter. Läuft parallel, damit sich lang laufende Aktionen nicht blockieren.
+  domain: automation
+  homeassistant:
+    min_version: "2026.2.3"
+  source_url: https://raw.githubusercontent.com/dostmar/HomeAssistant/refs/heads/main/Blueprints/Arara/Aqara_H2_EU_Switch_4_Buttons.yaml
+  input:
+    button_1:
+      name: Virtueller Button 1
+      selector:
+        entity:
+          integration: matter
+          domain: event
+          device_class: button
+    actions_1:
+      name: Aktionen für Button 1
+      default: []
+      selector:
+        action: {}
+
+    button_2:
+      name: Virtueller Button 2
+      selector:
+        entity:
+          integration: matter
+          domain: event
+          device_class: button
+    actions_2:
+      name: Aktionen für Button 2
+      default: []
+      selector:
+        action: {}
+
+    button_3:
+      name: Virtueller Button 3
+      selector:
+        entity:
+          integration: matter
+          domain: event
+          device_class: button
+    actions_3:
+      name: Aktionen für Button 3
+      default: []
+      selector:
+        action: {}
+
+    button_4:
+      name: Virtueller Button 4
+      selector:
+        entity:
+          integration: matter
+          domain: event
+          device_class: button
+    actions_4:
+      name: Aktionen für Button 4
+      default: []
+      selector:
+        action: {}
+
+trigger:
+  - platform: state
+    entity_id: !input button_1
+    id: b1
+  - platform: state
+    entity_id: !input button_2
+    id: b2
+  - platform: state
+    entity_id: !input button_3
+    id: b3
+  - platform: state
+    entity_id: !input button_4
+    id: b4
+
+condition:
+  - condition: template
+    value_template: "{{ trigger.from_state is not none and trigger.to_state is not none }}"
+  - condition: template
+    value_template: "{{ trigger.from_state.state != 'unavailable' }}"
+  - condition: template
+    value_template: "{{ trigger.to_state.state != 'unavailable' }}"
+  - condition: template
+    value_template: "{{ trigger.to_state.attributes.event_type == 'initial_press' }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: b1
+        sequence: !input actions_1
+      - conditions:
+          - condition: trigger
+            id: b2
+        sequence: !input actions_2
+      - conditions:
+          - condition: trigger
+            id: b3
+        sequence: !input actions_3
+      - conditions:
+          - condition: trigger
+            id: b4
+        sequence: !input actions_4
+
+mode: parallel
+max: 5

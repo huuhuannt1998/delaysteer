@@ -1,0 +1,1098 @@
+blueprint:
+  name: Pool Pump, Heat and Salt Water System Controller
+  description: > 
+    This blueprint controls your swimming pool pump, heater and Salter Water System based on multiple input variables.
+    
+    **Version: 2026.06.17**
+  domain: automation
+  author: mvaneijken
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    basic_configuration:
+      name: Basic Configuration
+      description: 'The basic configuration section contains the entities that are used in this automation.'
+      input:
+        pool_pump:
+          name: Pool Pump
+          description: A switch that controls the pool pump
+          selector:
+            entity:
+              domain: switch
+              multiple: false
+        pool_heater:
+          name: Pool Heater
+          description: Climate device that is warming-up the pool
+          default:
+          selector:
+            entity:
+              domain: climate
+        salt_water_system:
+          name: Salt Water System
+          description: A switch that controls the salt water system
+          default:
+          selector:
+            entity:
+              domain: switch
+        time_trigger_enabled:
+          name: Time trigger enabled
+          description: Run this blueprint automation based on a time trigger
+          default: true
+          selector:
+            boolean:
+        time_trigger_interval:
+          name: Time trigger interval
+          description: Configure the time interval which this blueprint automation should be evaluated. Defaults every minute when the time trigger is enabled.
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 60
+              unit_of_measurement: Minutes
+              mode: slider
+              step: 1
+        trigger_entity:
+          name: Trigger Entity
+          description: (Optional) Choose one or more button(s), binary sensor(s) and/or input boolean(s) that can be used to trigger this blueprint. .
+          default:
+            - input_button.trigger_zwembad_controller
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - button
+                - input_button
+                - binary_sensor
+                - input_boolean
+    pump_configuration:
+      name: Pump configuration options
+      description: 'The pump configuration section contains the configuration options for the pool pump.'
+      icon: mdi:water-pump
+      input:
+        pump_daily_run:
+          name: Enable daily pool pump run.
+          description: Make sure that the pump runs at least a desired amount of hours regardless if the heater should run or not. Configure the pump settings below. A "Pump History statistics sensor" is mandatory for this.
+          default: false
+          selector:
+            boolean:
+        pump_switch_history_stats:
+          name: (Daily run option) Pump History statistics sensor
+          description: Entity that records the running hours for the pump to make sure that the pump runs the desired amount of hours each day. This assures  that the pump will run until the minimum daily run time time is reached.
+          default:
+          selector:
+            entity:
+              device_class: duration
+              domain: sensor
+        mandatory_pump_start_time:
+          name: (Daily run option) Pump run hours check time.
+          description: Time to check if the pump has reached the desired run hours. When this is not reached, the pump will always start. This is only executed when "Pump History statistics sensor" is set.
+          default: "16:00:00"
+          selector:
+            time:
+        min_pump_running_hours:
+          name: (Daily run option) Pump minimal daily running time
+          description: Pump minimal running time in hours.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 24
+              unit_of_measurement: Hours
+              mode: slider
+              step: 1
+        min_pump_running_hours_helper:
+          name: (Optional daily run option) Helper for pump minimal daily running time
+          description: Input helper that overrides the "Pump minimal daily running time" slider above. Use input_number helper with min 0, max 24, step 1, unit Hours.
+          default:
+          selector:
+            entity:
+              domain: input_number
+    heater_configuration:
+      name: Heater configuration options
+      icon: mdi:heat-wave
+      input:
+        alternative_current_pool_temperature_sensor:
+          name: (Optional) Alternate Pool Temperature Sensor
+          description: Alternate to internal "current_temperature" sensor of the Pool Heater
+          default:
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+        pool_target_temp:
+          name: Target Temperature
+          description: The target temperature of the pool.
+          default: 28
+          selector:
+            number:
+              min: 10
+              max: 40
+              unit_of_measurement: °C
+              mode: slider
+              step: 0.1
+        pool_target_temp_helper:
+          name: (Optional daily run option) Helper for Target Temperature
+          description: Input helper that overrides the "Target Temperature" slider above. Use input_number helper with min 10, max 40, step 0.1, unit °C.
+          default:
+          selector:
+            entity:
+              domain: input_number
+        pool_target_temp_from_heater:
+          name: (Optional) Use Pool Heater target temperature
+          description: Use the configured Pool Heater target temperature setting as target temperature. This overrides both the "Target Temperature" slider and helper above.
+          default: false
+          selector:
+            boolean:
+        pool_target_temp_deviation:
+          name: Target Temperature deviation
+          description: Deviation of target temperature. Useful when using an inverter that heats beyond the target temperature. Be aware! Do not set this to high, because this can cause that the pump and heater never stops running.
+          default: 0
+          selector:
+            number:
+              min: -5
+              max: 5
+              unit_of_measurement: °C
+              mode: slider
+              step: 0.1
+        max_pool_target_temp_deviation:
+          name: Delta Temp from Target
+          description: The difference between the current temperature and target temperature before triggering this schedule
+          default: 3
+          selector:
+            number:
+              min: 0
+              max: 30
+              unit_of_measurement: °C
+              mode: slider
+              step: 0.1
+        time_between_pump_start_heat_start:
+          name: Time between switch on pump and switch on heater
+          description: The amount of time between starting the pump and start the heater.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              unit_of_measurement: Seconds
+              mode: slider
+              step: 1
+        time_between_heat_stop_pump_stop:
+          name: Time between switch off heater and switch off pump
+          description: The amount of time between stopping the heater and pump.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              unit_of_measurement: Seconds
+              mode: slider
+              step: 1
+    salt_water_system_configuration:
+      name: Salt water system configuration options
+      icon: mdi:water-check
+      input:
+        time_between_pump_start_and_salt_water_system_start:
+          name: Time between switch on pump and switch on salter water system
+          description: The amount of time between starting the pump and the salt water system.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              unit_of_measurement: Minutes
+              mode: slider
+              step: 1
+        time_between_salt_water_system_stop_pump_stop:
+          name: Time between switch off pump after switch off salt water system
+          description: The amount of time between stopping the salt water system and stopping the pump.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              unit_of_measurement: Minutes
+              mode: slider
+              step: 1
+        salt_water_system_daily_run:
+          name: Enable salt water system daily run.
+          description: Make sure that the salt water system runs at least a desired amount of hours regardless if the heater should run or not. Configure the pump settings below. A "Salt Water System History statistics sensor" is mandatory for this.
+          default: false
+          selector:
+            boolean:
+        min_salt_water_system_running_hours:
+          name: (Daily run option) Salt Water System minimal daily running time
+          description: Salt water system minimal running time in hours.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 24
+              unit_of_measurement: Hours
+              mode: slider
+              step: 1
+        min_salt_water_system_running_hours_helper:
+          name: (Optional daily run option) Helper for salt water system minimal daily running time
+          description: Input helper that overrides the "Salt Water System minimal daily running time" slider above. Use input_number helper with min 0, max 24, step 1, unit Hours.
+          default:
+          selector:
+            entity:
+              domain: input_number
+        salt_water_system_history_stats:
+          name: (Daily run option) Salt Water System History statistics sensor
+          description: Entity that records the running hours for the salt water system to make sure that the salt water system runs the desired amount of hours each day. This assures  that the salt water system will run until the minimum daily run time time is reached.
+          default:
+          selector:
+            entity:
+              device_class: duration
+              domain: sensor
+        mandatory_salt_water_system_start_time:
+          name: (Daily run option) Salt Water System run hours check time.
+          description: Time to check if the salt water system has reached the desired run hours. When this is not reached, the salt water system will always start. This is only executed when "Salter Water System History statistics sensor". Note that this setting overrides if the pump daily run time is configured.
+          default: "16:00:00"
+          selector:
+            time:
+    blocking_entities_configuration:
+      name: Blocking Entities configuration
+      description: 'The blocking entities configuration section contains the configuration options for blocking entities.'
+      icon: mdi:cancel
+      input:
+        turn_on_blocking_entities:
+          name: (Optional) Turn-on blocking entity/entities
+          description: Boolean entities blocking both the pump and heater to turn on. E.g. In case when you have a ground swimming pool that is stored for the winter.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - binary_sensor
+                - input_boolean
+        enable_heater_blocking_entities:
+          name: (Optional) Heater blocking entity/entities
+          description: Boolean entities blocking the heater to turn on. This will only allow the pump to run, but turns powers off the heater. E.g. When the weather is bad and the pool still needs its filter maintenance. This does not affect the salt water system.
+          default:
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - binary_sensor
+                - input_boolean
+        enable_salt_water_system_blocking_entities:
+          name: (Optional) Salt water system blocking entity/entities
+          description: Boolean entities blocking the salt water system to turn on. This will only allow the pump to run, but powers off the salt water system. This does not affect the heater.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - binary_sensor
+                - input_boolean
+        turn_off_blocking_entities:
+          name: (Optional) Turn-off blocking entity
+          description: Boolean entities blocking the pump, heater and salt water system to turn off. E.g. When you want to control the pump, heater and salt water system manually without interference by this automation.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              domain:
+                - binary_sensor
+                - input_boolean
+    logging_configuration:
+      name: Logging configuration
+      description: 'The logging configuration section contains the configuration options for logging.'
+      icon: mdi:file-document
+      collapsed: true
+      input:
+        enable_logging:
+          name: (Optional) Enable Logging
+          description: When enabled status messages are written in the Home Assistant system log.
+          default: false
+          selector:
+            boolean:
+        log_level:
+          name: (Optional) Log Level
+          description: 'When "Enable Logging" is On: Info = Only basis log messages, Debug = Includes entity and decisions values involved in this automation'
+          default: Info
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - Info
+                - Debug
+      #source_url: https://community.home-assistant.io/t/pool-pump-scheduler/331369
+variables:
+
+  #Input variables
+  var_pool_pump_entity: !input 'pool_pump'
+  var_pool_heater_entity: !input 'pool_heater'
+  var_salt_water_system_entity: !input 'salt_water_system'
+  var_pool_target_temp_slider: !input 'pool_target_temp'
+  var_pool_target_temp_helper: !input 'pool_target_temp_helper'
+  var_pool_target_temp_from_heater: !input 'pool_target_temp_from_heater'
+
+  var_time_trigger_enabled: !input 'time_trigger_enabled'
+  var_time_trigger_interval: !input 'time_trigger_interval'
+  var_trigger_entity: !input 'trigger_entity'
+
+  var_pool_target_temp_deviation: !input 'pool_target_temp_deviation'
+  var_max_pool_target_temp_deviation: !input 'max_pool_target_temp_deviation'
+
+  var_alternative_current_pool_temperature_sensor: !input 'alternative_current_pool_temperature_sensor'
+
+  var_mandatory_pump_start_time: !input 'mandatory_pump_start_time'
+  var_mandatory_salt_water_system_start_time: !input 'mandatory_salt_water_system_start_time'
+
+  var_pump_switch_history_stats_entity: !input 'pump_switch_history_stats'
+  var_salt_water_system_history_stats_entity: !input 'salt_water_system_history_stats'
+  var_pump_daily_run: !input 'pump_daily_run'
+  var_salt_water_system_daily_run: !input 'salt_water_system_daily_run'
+  var_min_pump_running_hours_slider: !input 'min_pump_running_hours'
+  var_min_pump_running_hours_helper: !input 'min_pump_running_hours_helper'
+  var_min_salt_water_system_running_hours_slider: !input 'min_salt_water_system_running_hours'
+  var_min_salt_water_system_running_hours_helper: !input 'min_salt_water_system_running_hours_helper'
+
+  var_time_between_pump_start_heat_start: !input 'time_between_pump_start_heat_start'
+  var_time_between_heat_stop_pump_stop: !input 'time_between_heat_stop_pump_stop'
+
+  var_time_between_pump_start_and_salt_water_system_start: !input 'time_between_pump_start_and_salt_water_system_start'
+  var_time_between_salt_water_system_stop_pump_stop: !input 'time_between_salt_water_system_stop_pump_stop'
+
+  var_turn_on_blocking_entities: !input 'turn_on_blocking_entities'
+  var_turn_off_blocking_entities: !input 'turn_off_blocking_entities'
+  var_enable_heater_blocking_entities: !input 'enable_heater_blocking_entities'
+  var_enable_salt_water_system_blocking_entities: !input 'enable_salt_water_system_blocking_entities'
+
+  #Determine existence of entities
+  var_heater_entity_configured: '
+      {%- if var_pool_heater_entity is string and var_pool_heater_entity != none and var_pool_heater_entity | length > 0 -%}
+        {{ true }}
+      {%- else -%}
+        {{ false }}
+      {%- endif -%}'
+
+  var_heater_state_on: '
+    {%- if var_heater_entity_configured -%}
+      {% set input_entity = var_pool_heater_entity %}
+      {% set mode = states(input_entity) %}
+
+      {% if mode in ["heat", "heat_cool", "cool", "auto" ] %}
+        {{true | bool}}
+      {% else %}
+        {{false | bool}}
+      {% endif %}
+    {% else %}
+      {{false | bool}}
+    {% endif %}'
+
+  var_salt_water_system_entity_configured: '
+      {%- if var_salt_water_system_entity is string and var_salt_water_system_entity != none and var_salt_water_system_entity | length > 0 -%}
+        {{ true }}
+      {%- else -%}
+        {{ false }}
+      {%- endif -%}'
+
+  var_salt_water_system_state_on: '
+    {%- if var_salt_water_system_entity_configured -%}
+      {% set input_entity = var_salt_water_system_entity %}
+      {% set mode = states(input_entity) %}
+
+      {% if mode in ["on" ] %}
+        {{true | bool}}
+      {% else %}
+        {{false | bool}}
+      {% endif %}
+    {% else %}
+      {{false | bool}}
+    {% endif %}'
+
+  var_pump_entity_configured: '
+      {%- if var_pool_pump_entity is string and var_pool_pump_entity != none and var_pool_pump_entity | length > 0 -%}
+        {{ true }}
+      {%- else -%}
+        {{ false }}
+      {%- endif -%}'
+
+  var_pump_state_on: '
+    {%- if var_pump_entity_configured -%}
+      {% set input_entity = var_pool_pump_entity %}
+      {% set mode = states(input_entity) %}
+
+      {% if mode in ["on" ] %}
+        {{true | bool}}
+      {% else %}
+        {{false | bool}}
+      {% endif %}
+    {% else %}
+      {{false | bool}}
+    {% endif %}'
+
+  #Store last change for reporting
+  var_pump_entity_last_changed: '
+      {% set input_entity = var_pool_pump_entity | string %}
+      {% set entity_last_changed = states[input_entity].last_changed | default(None) %}
+      {{ entity_last_changed }}'
+  var_heater_entity_last_changed: '
+      {% set input_entity = var_pool_heater_entity | string %}
+      {% set entity_last_changed = states[input_entity].last_changed | default(None) %}
+      {{ entity_last_changed }}'
+  var_salt_water_system_entity_last_changed: '
+      {% set input_entity = var_salt_water_system_entity | string %}
+      {% set entity_last_changed = states[input_entity].last_changed | default(None) %}
+      {{ entity_last_changed }}'
+
+  #Determine temperature sources
+  var_pool_target_temp: '
+    {%- if (var_pool_target_temp_from_heater == true) and (var_pool_heater_entity is string and var_pool_heater_entity | length > 0) and (state_attr(var_pool_heater_entity,"temperature") | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ state_attr(var_pool_heater_entity,"temperature") | float(0) }}
+    {%- elif (var_pool_target_temp_helper | length > 0) -%}
+      {{ states(var_pool_target_temp_helper) | float(0) }}
+    {%- else -%}
+      {{ var_pool_target_temp_slider | float(0) }}
+    {%- endif -%}'
+
+  var_pool_heater_temp_setting: '
+    {%- if (var_pool_heater_entity is string and var_pool_heater_entity | length > 0) and (state_attr(var_pool_heater_entity,"temperature") | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ state_attr(var_pool_heater_entity,"temperature") | float(0) }}
+      {%- else -%}
+      {{ -1 | float(0) }}
+    {%- endif -%}'
+
+  var_pool_target_temp_source: '
+    {%- if (var_pool_target_temp_from_heater == true) and (var_pool_heater_entity is string and var_pool_heater_entity | length > 0) -%}
+      {%- if (state_attr(var_pool_heater_entity,"temperature") | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+        "Pool Heater"
+      {%- else -%}
+        "Configured pool heater not available!"
+      {%- endif -%}
+    {%- elif (var_pool_target_temp_helper is string and var_pool_target_temp_helper | length > 0) and (states(var_pool_target_temp_helper) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      "Target Temperature Helper"
+    {%- else -%}
+      "Target Temperature slider"
+    {%- endif -%}'
+
+   # 1 = Slider
+   # 2 = Helper
+   # 3 = Pool Heater
+   # 4 = Pool Heater Not Available
+
+  var_pool_target_temp_source_status: '
+    {%- if (var_pool_target_temp_from_heater == true) and (var_pool_heater_entity is string and var_pool_heater_entity | length > 0) -%}
+      {%- if (state_attr(var_pool_heater_entity,"temperature") | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+        {{ 3 | int }}
+      {%- else -%}
+        {{ 4| int}}
+      {%- endif -%}
+    {%- elif (var_pool_target_temp_helper is string and var_pool_target_temp_helper | length > 0) and (states(var_pool_target_temp_helper) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ 2| int}}
+    {%- else -%}
+      {{ 1 | int }}
+    {%- endif -%}'
+
+  # Determine pump minimal running hours (helper overrides slider)
+  var_min_pump_running_hours_helper_configured: '
+    {%- if (var_min_pump_running_hours_helper is string and var_min_pump_running_hours_helper | length > 0) -%}
+      {{ true }}
+    {%- else -%}
+      {{ false }}
+    {%- endif -%}'
+
+  var_min_pump_running_hours: '
+    {%- if var_min_pump_running_hours_helper_configured == true and (states(var_min_pump_running_hours_helper) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ states(var_min_pump_running_hours_helper) | float(0) }}
+    {%- else -%}
+      {{ var_min_pump_running_hours_slider | float(0) }}
+    {%- endif -%}'
+
+  # Determine salt water system minimal running hours (helper overrides slider)
+  var_min_salt_water_system_running_hours_helper_configured: '
+    {%- if (var_min_salt_water_system_running_hours_helper is string and var_min_salt_water_system_running_hours_helper | length > 0) -%}
+      {{ true }}
+    {%- else -%}
+      {{ false }}
+    {%- endif -%}'
+
+  var_min_salt_water_system_running_hours: '
+    {%- if var_min_salt_water_system_running_hours_helper_configured == true and (states(var_min_salt_water_system_running_hours_helper) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ states(var_min_salt_water_system_running_hours_helper) | float(0) }}
+    {%- else -%}
+      {{ var_min_salt_water_system_running_hours_slider | float(0) }}
+    {%- endif -%}'
+
+  # Calculate the pump hours running today
+  var_pump_run_time: '
+    {%- if var_pump_switch_history_stats_entity is string and var_pump_switch_history_stats_entity | length > 0 -%}
+      {{ states(var_pump_switch_history_stats_entity) | float(0) }}
+    {%- else -%}
+      {{ 0 | float(0) }}
+    {%- endif -%}'
+
+  var_salt_water_system_run_time: '
+    {%- if var_salt_water_system_history_stats_entity is string and var_salt_water_system_history_stats_entity | length > 0 -%}
+      {{ states(var_salt_water_system_history_stats_entity) | float(0) }}
+    {%- else -%}
+      {{ 0 | float(0) }}
+    {%- endif -%}'
+
+  #Calculate the current pool temperature based on the current pool temperature and deviation value
+  var_pool_temperature_sensor_value: '
+    {%- if var_alternative_current_pool_temperature_sensor is string and var_alternative_current_pool_temperature_sensor | length > 0 and (states(var_alternative_current_pool_temperature_sensor) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ (states(var_alternative_current_pool_temperature_sensor) | float(0)) + (var_pool_target_temp_deviation | float(0)) }}
+    {%- elif var_heater_entity_configured == true and (state_attr(var_pool_heater_entity, "current_temperature") | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ (state_attr(var_pool_heater_entity, "current_temperature") | float(0)) + (var_pool_target_temp_deviation | float(0)) }}
+    {%- else -%}
+      {{ 0 | float(0) }}
+    {%- endif -%}'
+
+  # Show current pool temperature, just for logging purposes.
+  var_pool_temperature_sensor_value_unchanged: '
+    {%- if var_alternative_current_pool_temperature_sensor is string and var_alternative_current_pool_temperature_sensor | length > 0 and (states(var_alternative_current_pool_temperature_sensor) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ states(var_alternative_current_pool_temperature_sensor) }}
+    {%- elif var_heater_entity_configured == true -%}
+      {{ state_attr(var_pool_heater_entity, "current_temperature") }}
+    {%- else -%}
+      unknown
+    {%- endif -%}'
+
+  # True when a valid temperature reading is available from either the alternative sensor or the heater.
+  var_pool_temperature_available: '
+    {%- if var_alternative_current_pool_temperature_sensor is string and var_alternative_current_pool_temperature_sensor | length > 0 and (states(var_alternative_current_pool_temperature_sensor) | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ true }}
+    {%- elif var_heater_entity_configured == true and (state_attr(var_pool_heater_entity, "current_temperature") | string) not in ["unavailable","unknown","none","Unavailable","Unknown","None"] -%}
+      {{ true }}
+    {%- else -%}
+      {{ false }}
+    {%- endif -%}'
+
+  # Pump, heater and salt water system can be turned on except when one of the turn off blocking entities is "on"
+  #Debug line: {%- set var_turn_on_blocking_entities =  ['input_boolean.holiday_mode', 'input_boolean.pergola_switch_winter_mode', 'binary_sensor.zwembadpomp_blocking_period'] -%}
+  var_allow_turn_on: '
+    {%- set ns = namespace(result = true) -%}
+    {%- for entity_id in var_turn_on_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set ns.result = false -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ ns.result }}'
+
+  var_allow_turn_on_blocked_blocked_by: '
+    {%- set string = "" -%}
+    {%- for entity_id in var_turn_on_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set string = string + entity_id + ", " -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ string | trim | regex_replace(", $", "") }}'
+
+  # Pump, heater and salt water system can be turned off except when one of the turn off blocking entities is "on"
+  var_turn_off_allowed: '
+    {%- set ns = namespace(result = true) -%}
+    {%- for entity_id in var_turn_off_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set ns.result = false -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ ns.result }}'
+
+  var_turn_off_not_allowed_by: '
+    {%- set string = "" -%}
+    {%- for entity_id in var_turn_off_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set string = string + entity_id + ", " -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ string | trim | regex_replace(", $", "") }}'
+
+  # Heater can be turned on except when one of the blocking entities is "on"
+  var_allow_turn_heater_on: '
+    {%- set ns = namespace(result = true) -%}
+    {%- for entity_id in var_enable_heater_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set ns.result = false -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ ns.result }}'
+
+  var_allow_turn_heater_on_blocked_by: '
+    {%- set entity_string = "" -%}
+    {%- for entity_id in var_enable_heater_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set entity_string = entity_string + entity_id + ", " -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ entity_string | trim | regex_replace(", $", "") }}'
+
+  # Salt water system can be turned on except when one of the blocking entities is "on"
+  var_allow_turn_salt_water_system_on: '
+    {%- set ns = namespace(result = true) -%}
+    {%- for entity_id in var_enable_salt_water_system_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set ns.result = false -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ ns.result }}'
+
+  var_allow_turn_salt_water_system_on_blocked_by: '
+    {%- set string = "" -%}
+    {%- for entity_id in var_enable_salt_water_system_blocking_entities or [] -%}
+        {%- if entity_id | length > 0 and (states[entity_id] == "on" or states[entity_id].state == "on") -%}
+          {%- set string = string + entity_id + ", " -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ string | trim | regex_replace(", $", "") }}'
+
+  # Return true when current pool temp is lower than target minus the configured deviation
+  var_temperature_drop_exceeded: '{{ var_pool_temperature_available == true and (var_pool_temperature_sensor_value | float(0)) < (var_pool_target_temp | float(0) - (var_max_pool_target_temp_deviation | float(0))) }}'
+  # Return true when current pool temp equals or is higher than the configured target temperature
+  var_temperature_target_reached: '{{ var_pool_temperature_available == true and (var_pool_temperature_sensor_value | float(0)) >= (var_pool_target_temp | float(0)) }}'
+
+  # Return true when current pool temp is lower than the configured temperature deviation
+  var_pump_run_hours_not_reached: '{{ var_pump_switch_history_stats_entity is string and var_pump_switch_history_stats_entity | length > 0 and now() > today_at(var_mandatory_pump_start_time) and ( states(var_pump_switch_history_stats_entity) | float(0) < var_min_pump_running_hours | float(0)) }}'
+  # Return true when the pump has reached the minimum amount of daily running hours
+  var_pump_run_hours_reached: '{{ var_pump_switch_history_stats_entity is string and (states(var_pump_switch_history_stats_entity)|float(0)) >= (var_min_pump_running_hours | float(0)) }}'
+
+  # Return true when the salt water system has reached the minimum amount of daily running hours
+  var_salt_water_system_run_hours_not_reached: '{{ var_salt_water_system_history_stats_entity is string and var_salt_water_system_history_stats_entity | length > 0 and now() > today_at(var_mandatory_salt_water_system_start_time) and ( states(var_salt_water_system_history_stats_entity) | float(0) < var_min_salt_water_system_running_hours | float(0)) }}'
+  var_salt_water_system_run_hours_reached: '{{ var_salt_water_system_history_stats_entity is string and (states(var_salt_water_system_history_stats_entity)|float(0)) >= (var_min_salt_water_system_running_hours | float(0)) }}'
+  # Return true when salt water system currently has not reached the minimum amount of daily running hours
+
+  var_time_between_pump_and_salt_water_system_on_reached: '
+    {% if var_pool_pump_entity is string and var_pool_pump_entity | length > 0 %}
+      {% set input_entity = var_pool_pump_entity | string %}
+      {% set delay_minutes = var_time_between_pump_start_and_salt_water_system_start | float(0) %}
+      {% set delay_seconds = delay_minutes * 60 %}
+      {% set entity_last_changed = states[input_entity].last_changed | default(None) %}
+
+      {{ input_entity and entity_last_changed and (as_timestamp(utcnow()) - as_timestamp(entity_last_changed) > delay_seconds) and states(input_entity) == "on" }}
+    {% else %}
+      {{ true }}
+    {% endif -%}'
+
+  var_time_between_pump_and_salt_water_system_off_reached: '
+    {%- if var_salt_water_system_entity is string and var_salt_water_system_entity |  length > 0 -%}
+      {% set input_entity = var_salt_water_system_entity | string %}
+      {% set delay_minutes = var_time_between_salt_water_system_stop_pump_stop | float(0) %}
+      {% set delay_seconds = delay_minutes * 60 %}
+      {% set entity_last_changed = states[input_entity].last_changed | default(None) %}
+
+      {{ input_entity and entity_last_changed and (as_timestamp(utcnow()) - as_timestamp(entity_last_changed) > delay_seconds) and states(input_entity) != "on" }}
+    {%- else -%}
+      {{ true }}
+    {%- endif -%}'
+
+  ##########
+  ### ON ###
+  ##########
+
+  #Determine if the heater can be turned on based on the above evaluations. Defaults to false!
+  var_set_heater_on: '
+    {%- set ns = namespace(result = false) -%}
+
+    {%- if (var_heater_entity_configured == true and var_allow_turn_on == true and var_allow_turn_heater_on == true) -%}
+      {%- if var_temperature_drop_exceeded -%}
+        {%- set ns.result = true -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ ns.result }}'
+
+  #Determine if the salt water system can be turned on based on the above evaluations. Defaults to false!
+  var_set_salt_water_system_on: '
+    {%- set ns = namespace(result = false) -%}
+
+    {%- if (var_salt_water_system_entity_configured == true and var_allow_turn_on == true and var_allow_turn_salt_water_system_on == true) -%}
+
+      {%- if var_salt_water_system_daily_run and var_salt_water_system_run_hours_not_reached and var_time_between_pump_and_salt_water_system_on_reached -%}
+        {%- set ns.result = true -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ ns.result }}'
+
+  #Determine if the pump can be turned on based on the above evaluations. Defaults to false!
+  var_set_pump_on: '
+    {%- set ns = namespace(result = false) -%}
+
+      {%- if(var_allow_turn_on == true) -%}
+
+        {%- if var_pump_daily_run and var_pump_run_hours_not_reached -%}
+          {%- set ns.result = true -%}
+        {%- endif -%}
+
+        {%- if var_set_heater_on == true -%}
+          {%- set ns.result = true -%}
+        {%- endif -%}
+
+        {%- if var_salt_water_system_daily_run and var_salt_water_system_run_hours_not_reached -%}
+          {%- set ns.result = true -%}
+        {%- endif -%}
+      {%- endif -%}
+    {{ ns.result }}'
+
+  ###########
+  ### OFF ###
+  ###########
+
+  #Determine if the heater can be turned off. True when: entity configured, turn-off not blocked, and heater is not needed.
+  var_set_heater_off: '
+    {%- if var_heater_entity_configured == true and var_turn_off_allowed == true and var_set_heater_on != true -%}
+      {{ true }}
+    {%- else -%}
+      {{ false }}
+    {%- endif -%}'
+
+  #Determine if the salt water system can be turned off. True when: entity configured, turn-off not blocked, and SWS is not needed.
+  var_set_salt_water_system_off: '
+    {%- if var_salt_water_system_entity_configured == true and var_turn_off_allowed == true and var_set_salt_water_system_on != true -%}
+      {{ true }}
+    {%- else -%}
+      {{ false }}
+    {%- endif -%}'
+
+  #Determine if the pump can be turned off. True when: entity configured, turn-off not blocked, pump not needed, and SWS shutdown delay has elapsed.
+  var_set_pump_off: '
+    {%- if var_pump_entity_configured == true and var_turn_off_allowed == true and var_set_pump_on != true and var_time_between_pump_and_salt_water_system_off_reached == true -%}
+      {{ true }}
+    {%- else -%}
+      {{ false }}
+    {%- endif -%}'
+
+  var_enable_logging: !input enable_logging
+  var_log_level: !input log_level
+  var_log_level_debug: '
+    {%- set ns = namespace(result = false) -%}
+      {%- if var_log_level == "Debug" -%}
+        {%- set ns.result = true -%}
+      {%- endif -%}
+    {{ ns.result }}'
+
+  # Short alias used in every logger: field to avoid repeating the full name.
+  var_log_name: 'pool_pump_heat_salt_water_system_controller'
+
+  # Concise Info-level summary rendered once per cycle.
+  # Shows current device states, what was decided this cycle, and the reason why.
+  var_info_message: '
+    {%- set pump_state  = "ON"  if var_pump_state_on  else "off" -%}
+    {%- set heater_state = states(var_pool_heater_entity) if var_heater_entity_configured else "n/a" -%}
+    {%- set sws_state   = "ON"  if var_salt_water_system_state_on else "off" -%}
+    {%- set state_part  = "Pump:" ~ pump_state ~ " Heater:" ~ heater_state ~ " SWS:" ~ sws_state -%}
+
+    {%- set actions = namespace(parts=[]) -%}
+    {%- if var_set_pump_on    and not var_pump_state_on    -%}{%- set actions.parts = actions.parts + ["start pump"]    -%}{%- endif -%}
+    {%- if var_set_heater_on  and not var_heater_state_on  -%}{%- set actions.parts = actions.parts + ["start heater"]  -%}{%- endif -%}
+    {%- if var_set_salt_water_system_on and not var_salt_water_system_state_on -%}{%- set actions.parts = actions.parts + ["start SWS"] -%}{%- endif -%}
+    {%- if var_set_heater_off  and var_heater_state_on     -%}{%- set actions.parts = actions.parts + ["stop heater"]   -%}{%- endif -%}
+    {%- if var_set_salt_water_system_off and var_salt_water_system_state_on -%}{%- set actions.parts = actions.parts + ["stop SWS"]  -%}{%- endif -%}
+    {%- if var_set_pump_off   and var_pump_state_on        -%}{%- set actions.parts = actions.parts + ["stop pump"]     -%}{%- endif -%}
+    {%- set decision_part = actions.parts | join(" + ") if actions.parts | length > 0 else "no action" -%}
+
+    {%- if var_allow_turn_on != true -%}
+      {%- set decision_part = "blocked" -%}
+      {%- set reason_part = "turn-on blocked by " ~ var_allow_turn_on_blocked_blocked_by -%}
+    {%- elif var_temperature_drop_exceeded -%}
+      {%- set reason_part = "temp " ~ var_pool_temperature_sensor_value_unchanged ~ "°C < threshold " ~ ((var_pool_target_temp | float(0)) - (var_max_pool_target_temp_deviation | float(0))) ~ "°C (target " ~ var_pool_target_temp ~ "°C − " ~ var_max_pool_target_temp_deviation ~ "°C)" -%}
+    {%- elif var_temperature_target_reached -%}
+      {%- set reason_part = "temp " ~ var_pool_temperature_sensor_value_unchanged ~ "°C ≥ target " ~ var_pool_target_temp ~ "°C" -%}
+    {%- elif var_pump_run_hours_not_reached -%}
+      {%- set reason_part = "pump runtime " ~ var_pump_run_time ~ "h < minimum " ~ var_min_pump_running_hours ~ "h" -%}
+    {%- elif var_salt_water_system_run_hours_not_reached -%}
+      {%- set reason_part = "SWS runtime " ~ var_salt_water_system_run_time ~ "h < minimum " ~ var_min_salt_water_system_running_hours ~ "h" -%}
+    {%- elif var_pool_temperature_available != true and var_heater_entity_configured -%}
+      {%- set reason_part = "temperature sensor unavailable" -%}
+    {%- else -%}
+      {%- set reason_part = "temp " ~ var_pool_temperature_sensor_value_unchanged ~ "°C, target " ~ var_pool_target_temp ~ "°C" -%}
+    {%- endif -%}
+    Pool Controller — {{ state_part }} | {{ decision_part }} | {{ reason_part }}'
+
+  var_debug_message: '
+    {%- if var_log_level_debug -%}
+        {{- "\n" -}}
+        {{- "\n" -}}
+        Pool pump, Heater and Salt Water System (SWS) controller blueprint automation debug information: {{- "\n" -}}
+        Current UTC time: {{utcnow()}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Recorded variables: {{- "\n" -}}
+        Entity: Pump Entity (var_pool_pump_entity) = {{var_pool_pump_entity}}, (last changed (UTC) (var_pump_entity_last_changed): {{var_pump_entity_last_changed}}), {{- "\n" -}}
+        Entity: Heater Entity (var_pool_heater_entity) = {{var_pool_heater_entity}}, (last changed (UTC) (var_heater_entity_last_changed): {{var_heater_entity_last_changed}}), {{- "\n" -}}
+        Entity: SWS Entity (var_salt_water_system_entity) = {{var_salt_water_system_entity}}, last changed (UTC) (var_salt_water_system_entity_last_changed): {{var_salt_water_system_entity_last_changed}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Entity: Pump Entity Configured (var_pump_entity_configured) = {{var_pump_entity_configured}}, {{- "\n" -}}
+        Entity: Pump Entity State On (var_pump_state_on) = {{var_pump_state_on}}, {{- "\n" -}}
+        Entity: Pump Entity Helper (var_min_pump_running_hours_helper_configured) = {{var_min_pump_running_hours_helper_configured}}, {{- "\n" -}}
+        Entity: Pump Entity Min Running Hours Slider (var_min_pump_running_hours_slider) = {{var_min_pump_running_hours_slider}}, {{- "\n" -}}
+        Entity: Heater Entity Configured (var_heater_entity_configured) = {{var_heater_entity_configured}}, {{- "\n" -}}
+        Entity: Heater Entity State On (var_heater_state_on) = {{var_heater_state_on}}, {{- "\n" -}}
+        Entity: Heater current Temperature slider value (var_pool_target_temp_slider) = {{var_pool_target_temp_slider}}, {{- "\n" -}}
+        Entity: SWS Entity Configured (var_salt_water_system_entity_configured) = {{var_salt_water_system_entity_configured}}, {{- "\n" -}}
+        Entity: SWS Entity State On (var_salt_water_system_state_on) = {{var_salt_water_system_state_on}}, {{- "\n" -}}
+        Entity: SWS Helper Configured (var_min_salt_water_system_running_hours_helper_configured) = {{var_min_salt_water_system_running_hours_helper_configured}}, {{- "\n" -}}
+        Entity: SWS Helper Min Running Hours Slider (var_min_salt_water_system_running_hours_slider) = {{var_min_salt_water_system_running_hours_slider}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Blueprint Trigger: Time trigger enabled (var_time_trigger_enabled) = {{var_time_trigger_enabled}}, {{- "\n" -}}
+        Blueprint Trigger: Time trigger interval (var_time_trigger_interval) = {{var_time_trigger_interval}}, {{- "\n" -}}
+        Blueprint Trigger: Button trigger entity (var_trigger_entity) = {{var_trigger_entity}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Temperature: Target Temperature (var_pool_target_temp) = {{var_pool_target_temp}}, {{- "\n" -}}
+        Temperature: Current Heater Temperature Setting (var_pool_heater_temp_setting) = {{var_pool_heater_temp_setting}}, {{- "\n" -}}
+        Temperature: Target temperature source (var_pool_target_temp_source) = {{var_pool_target_temp_source}}, {{- "\n" -}}
+        Temperature: Target temp source status (var_pool_target_temp_source_status) = {{var_pool_target_temp_source_status}}, {{- "\n" -}}
+        Temperature: Target Temperature Helper (var_pool_target_temp_helper) = {{var_pool_target_temp_helper}}, {{- "\n" -}}
+        Temperature: Pool Temperature Difference Trigger Value (var_max_pool_target_temp_deviation) = {{var_max_pool_target_temp_deviation}}, {{- "\n" -}}
+        Temperature: Use heater temperature setting as target temperature (var_pool_target_temp_from_heater) = {{var_pool_target_temp_from_heater}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Temperature: Drop over limit (var_temperature_drop_exceeded) = {{var_temperature_drop_exceeded}}, {{- "\n" -}}
+        Temperature: Rise on/over target (var_temperature_target_reached) = {{var_temperature_target_reached}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Heater: Alternate Temperature Sensor (var_alternative_current_pool_temperature_sensor) = {{var_alternative_current_pool_temperature_sensor}}, {{- "\n" -}}
+        Heater: Temperature Available (var_pool_temperature_available) = {{var_pool_temperature_available}}, {{- "\n" -}}
+        Heater: Temperature Value (var_pool_temperature_sensor_value_unchanged) = {{var_pool_temperature_sensor_value_unchanged}}, {{- "\n" -}}
+        Heater: Target Temperature Deviation Value (var_pool_target_temp_deviation) = {{var_pool_target_temp_deviation}}, {{- "\n" -}}
+        Heater: Temperature Calculation Value (var_pool_temperature_sensor_value) = {{var_pool_temperature_sensor_value}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Maintenance: Daily Pool Pump Run (var_pump_daily_run) = {{var_pump_daily_run}}, {{- "\n" -}}
+        Maintenance: Pump Minimal Daily Run Hours (var_min_pump_running_hours) = {{var_min_pump_running_hours}}, {{- "\n" -}}
+        Maintenance: Pump Minimal Daily Run Hours Helper (var_min_pump_running_hours_helper) = {{var_min_pump_running_hours_helper}}, {{- "\n" -}}
+        Maintenance: Pump History Statistics Entity (var_pump_switch_history_stats_entity) = {{var_pump_switch_history_stats_entity}}, {{- "\n" -}}
+        Maintenance: Pump run time today (var_pump_run_time) = {{var_pump_run_time}}, {{- "\n" -}}
+        Maintenance: Daily SWS Run (var_salt_water_system_daily_run) = {{var_salt_water_system_daily_run}}, {{- "\n" -}}
+        Maintenance: SWS Minimal Daily Run Hours (var_min_salt_water_system_running_hours) = {{var_min_salt_water_system_running_hours}}, {{- "\n" -}}
+        Maintenance: SWS Minimal Daily Run Hours Helper (var_min_salt_water_system_running_hours_helper) = {{var_min_salt_water_system_running_hours_helper}}, {{- "\n" -}}
+        Maintenance: SWS History Statistics Entity (var_salt_water_system_history_stats_entity) = {{var_salt_water_system_history_stats_entity}}, {{- "\n" -}}
+        Maintenance: SWS run time today (var_salt_water_system_run_time) = {{var_salt_water_system_run_time}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Blocking Entities: Turn on blocking entities (var_turn_on_blocking_entities) = {{var_turn_on_blocking_entities}}, {{- "\n" -}}
+        Blocking Entities: Turn off blocking entities (var_turn_off_blocking_entities) = {{var_turn_off_blocking_entities}}, {{- "\n" -}}
+        Blocking Entities: Heater On blocking entities (var_enable_heater_blocking_entities) = {{var_enable_heater_blocking_entities}}, {{- "\n" -}}
+        Blocking Entities: SWS On blocking entities (var_enable_salt_water_system_blocking_entities) = {{var_enable_salt_water_system_blocking_entities}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Threshold: Pump running hours below threshold (var_pump_run_hours_not_reached) = {{var_pump_run_hours_not_reached}}, {{- "\n" -}}
+        Threshold: Pump running hours over threshold (var_pump_run_hours_reached) = {{var_pump_run_hours_reached}}, {{- "\n" -}}
+        Threshold: SWS running hours below threshold (var_salt_water_system_run_hours_not_reached) = {{var_salt_water_system_run_hours_not_reached}}, {{- "\n" -}}
+        Threshold: SWS running hours over threshold (var_salt_water_system_run_hours_reached) = {{var_salt_water_system_run_hours_reached}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Delayed action: Pump start and heater start delay (var_time_between_pump_start_heat_start) = {{var_time_between_pump_start_heat_start}} seconds, {{- "\n" -}}
+        Delayed action: Heater stop and pump stop delay (var_time_between_heat_stop_pump_stop) = {{var_time_between_heat_stop_pump_stop}} seconds, {{- "\n" -}}
+        Delayed action: SWS start and pump start delay (var_time_between_pump_start_and_salt_water_system_start) = {{var_time_between_pump_start_and_salt_water_system_start}} minutes, {{- "\n" -}}
+        Delayed action: SWS start and pump start reached (var_time_between_pump_and_salt_water_system_on_reached) = {{var_time_between_pump_and_salt_water_system_on_reached}}, {{- "\n" -}}
+        Delayed action: SWS stop and pump stop delay (var_time_between_salt_water_system_stop_pump_stop) = {{var_time_between_salt_water_system_stop_pump_stop}} minutes, {{- "\n" -}}
+        Delayed action: SWS stop and pump stop reached (var_time_between_pump_and_salt_water_system_off_reached) = {{var_time_between_pump_and_salt_water_system_off_reached}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Condition: Turn on pump, heater and SWS allowed based on blocking entities (var_allow_turn_on) = {{var_allow_turn_on}} {%- if var_allow_turn_on != true -%} , Blocked by: {{var_allow_turn_on_blocked_blocked_by}} {%- endif -%} {{- "\n" -}}
+        Condition: Turn off pump, heater and SWS allowed unless blocked by blocking entities (var_turn_off_allowed) = {{var_turn_off_allowed}}{%- if var_turn_off_allowed != true -%} , Blocked by: {{var_turn_off_not_allowed_by}} {%- endif -%} {{- "\n" -}}
+        Condition: Turn on heater allowed based on blocking entities (var_allow_turn_heater_on): {{var_allow_turn_heater_on}}{%- if var_allow_turn_heater_on != true -%} , Blocked by: {{var_allow_turn_heater_on_blocked_by}} {%- endif -%} {{- "\n" -}}
+        Condition: Turn on SWS allowed based on blocking entities (var_allow_turn_salt_water_system_on): {{var_allow_turn_salt_water_system_on}}{%- if var_allow_turn_salt_water_system_on != true -%} , Blocked by: {{var_allow_turn_salt_water_system_on_blocked_by}} {%- endif -%} {{- "\n" -}}
+        {{- "\n" -}}
+        Action: Set heater on (based on previous evaluations) (var_set_heater_on) = {{var_set_heater_on}}, {{- "\n" -}}
+        Action: Set SWS on (based on previous evaluations) (var_set_salt_water_system_on) = {{var_set_salt_water_system_on}}, {{- "\n" -}}
+        Action: Set pump on (based on previous evaluations) (var_set_pump_on) = {{var_set_pump_on}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Action: Set heater off (based on previous evaluations) (var_set_heater_off) = {{var_set_heater_off}}, {{- "\n" -}}
+        Action: Set SWS off (based on previous evaluations) (var_set_salt_water_system_off) = {{var_set_salt_water_system_off}}, {{- "\n" -}}
+        Action: Set pump off (based on previous evaluations) (var_set_pump_off) = {{var_set_pump_off}}, {{- "\n" -}}
+        {{- "\n" -}}
+        Triggered by: {{trigger}}
+    {%- else -%}
+        {{- "" -}}
+    {%- endif -%}'
+
+trigger:
+- platform: time_pattern
+  minutes: /1
+  id: time_pattern
+- platform: state
+  id: trigger_entity
+  entity_id: !input 'trigger_entity'
+condition:
+  - condition: or
+    conditions:
+      # Time-pattern path: only fires when time trigger is enabled and the interval matches
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: 'time_pattern'
+          - condition: template
+            value_template: '{{ var_time_trigger_enabled == true }}'
+          - condition: template
+            value_template: '
+              {%- set total_seconds = now().hour * 3600 + now().minute * 60 + now().second -%}
+              {%- set interval_seconds = [var_time_trigger_interval | float(1) * 60 | int, 60] | max -%}
+              {{ total_seconds % interval_seconds == 0 }}'
+      # Entity trigger path: fires when a trigger entity changes to a non-off state
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: 'trigger_entity'
+          - condition: template
+            value_template: '{{ trigger.to_state.state != "off" }}'
+action:
+- if:
+    - condition: template
+      value_template: '{{ var_enable_logging }}'
+  then:
+    - action: system_log.write
+      data:
+        level: info
+        logger: '{{ var_log_name }}'
+        message: '{{ var_info_message }}'
+- if:
+  - condition: template
+    value_template: '{{ var_allow_turn_on }}'
+  then:
+    - if:
+        - condition: template
+          value_template: '{{ var_set_pump_on }}'
+      then:
+        - action: switch.turn_on
+          target:
+            entity_id: !input 'pool_pump'
+        - if:
+            - condition: template
+              value_template: '{{ var_enable_logging and var_pump_state_on == false }}'
+          then:
+            - action: system_log.write
+              data:
+                level: info
+                logger: '{{ var_log_name }}'
+                message: 'Sequence: Set Pool Pump On'
+        - if:
+            - condition: template
+              value_template: '{{ var_set_salt_water_system_on }}'
+            - condition: template
+              value_template: '{{ var_salt_water_system_state_on == false }}'
+          then:
+            - action: switch.turn_on
+              target:
+                entity_id: !input 'salt_water_system'
+            - if:
+                - condition: template
+                  value_template: '{{ var_enable_logging }}'
+              then:
+                - action: system_log.write
+                  data:
+                    level: info
+                    logger: '{{ var_log_name }}'
+                    message: 'Sequence: Set Pool Salt Water System On'
+        - if:
+            - condition: template
+              value_template: '{{ var_set_heater_on }}'
+            - condition: template
+              value_template: '{{ var_heater_state_on == false }}'
+          then:
+            - delay:
+                seconds: '{{ var_time_between_pump_start_heat_start }}'
+            - action: climate.turn_on
+              target:
+                entity_id: !input 'pool_heater'
+            - if:
+                - condition: template
+                  value_template: '{{ var_enable_logging }}'
+              then:
+                - action: system_log.write
+                  data:
+                    level: info
+                    logger: '{{ var_log_name }}'
+                    message: 'Sequence: Set Pool Heater On'
+        - if:
+            - condition: template
+              # Sync temperature when heater is on or was just turned on this cycle.
+              # Using "or var_set_heater_on" avoids the one-cycle lag that occurs when
+              # var_heater_state_on is still false from the pre-action state snapshot.
+              # Only sync when using the slider/helper source to avoid overwriting the
+              # heater's own temperature setting when pool_target_temp_from_heater is true.
+              value_template: '{{ (var_heater_state_on or var_set_heater_on) and var_pool_target_temp_source_status <= (2 | int) and var_pool_target_temp != var_pool_heater_temp_setting }}'
+          then:
+            - if:
+                - condition: template
+                  value_template: '{{ var_enable_logging }}'
+              then:
+                - action: system_log.write
+                  data:
+                    level: info
+                    logger: '{{ var_log_name }}'
+                    message: 'Sequence: Set Pool Heater Target Temperature'
+            - action: climate.set_temperature
+              target:
+                entity_id: !input 'pool_heater'
+              data:
+                hvac_mode: heat
+                temperature: '{{ var_pool_target_temp }}'
+- if:
+    - condition: template
+      value_template: '{{ var_set_salt_water_system_off }}'
+    - condition: template
+      value_template: '{{ var_salt_water_system_state_on }}'
+  then:
+    - action: switch.turn_off
+      target:
+        entity_id: !input 'salt_water_system'
+    - if:
+        - condition: template
+          value_template: '{{ var_enable_logging }}'
+      then:
+        - action: system_log.write
+          data:
+            level: info
+            logger: '{{ var_log_name }}'
+            message: 'Sequence: Salt Water System Stop'
+- if:
+    - condition: template
+      value_template: '{{ var_set_heater_off }}'
+    - condition: template
+      value_template: '{{ var_heater_state_on }}'
+  then:
+    - action: climate.turn_off
+      target:
+        entity_id: !input 'pool_heater'
+    - if:
+        - condition: template
+          value_template: '{{ var_enable_logging }}'
+      then:
+        - action: system_log.write
+          data:
+            level: info
+            logger: '{{ var_log_name }}'
+            message: 'Sequence: Heater Stop'
+    - delay:
+        seconds: '{{ var_time_between_heat_stop_pump_stop }}'
+    - if:
+        - condition: template
+          value_template: '{{ var_set_pump_off }}'
+        - condition: state
+          entity_id: !input 'pool_pump'
+          state: 'on'
+      then:
+        - action: switch.turn_off
+          target:
+            entity_id: !input 'pool_pump'
+        - if:
+            - condition: template
+              value_template: '{{ var_enable_logging }}'
+          then:
+            - action: system_log.write
+              data:
+                level: info
+                logger: '{{ var_log_name }}'
+                message: 'Sequence: Stop Pump via Heater'
+  else:
+    - if:
+        - condition: template
+          value_template: '{{ var_set_pump_off }}'
+      then:
+        - action: switch.turn_off
+          target:
+            entity_id: !input 'pool_pump'
+        - if:
+            - condition: template
+              value_template: '{{ var_enable_logging }}'
+          then:
+            - action: system_log.write
+              data:
+                level: info
+                logger: '{{ var_log_name }}'
+                message: 'Sequence: Stop Pump'
+- if:
+    - condition: template
+      value_template: '{{ var_log_level_debug }}'
+  then:
+    - action: system_log.write
+      data:
+        level: debug
+        logger: '{{ var_log_name }}'
+        message: '{{ var_debug_message }}'
+mode: single

@@ -1,0 +1,246 @@
+blueprint:
+  name: Scheduled vacuum notification - 3 cleaning choices
+  description: >
+    Sends an actionable Home Assistant Companion App notification on selected
+    days. Select full-home cleaning or either of two configurable groups of
+    mapped Home Assistant areas.
+
+    Requires a vacuum integration supporting vacuum.clean_area, with vacuum
+    segments mapped to Home Assistant areas.
+
+    Action IDs and notification tag must be unique for every instance of this
+    blueprint.
+  domain: automation
+
+  input:
+    schedule_time:
+      name: Notification time
+      description: Time at which the cleaning proposal is sent.
+      default: "09:00:00"
+      selector:
+        time:
+
+    weekdays:
+      name: Days to send the proposal
+      default:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+      selector:
+        select:
+          multiple: true
+          mode: list
+          options:
+            - label: Monday
+              value: mon
+            - label: Tuesday
+              value: tue
+            - label: Wednesday
+              value: wed
+            - label: Thursday
+              value: thu
+            - label: Friday
+              value: fri
+            - label: Saturday
+              value: sat
+            - label: Sunday
+              value: sun
+
+    notify_service:
+      name: Companion App notification service
+      description: >
+        Enter the notification service for the destination device, for example:
+        notify.mobile_app_xiaomi_15_ultra
+
+        This must be a Home Assistant Companion App notification service because
+        the blueprint uses actionable notification buttons.
+      default: notify.notify
+      selector:
+        text:
+
+    vacuum:
+      name: Vacuum cleaner
+      selector:
+        entity:
+          filter:
+            - domain: vacuum
+
+    notification_title:
+      name: Notification title
+      default: Vacuum cleaning
+      selector:
+        text:
+
+    notification_message:
+      name: Notification message
+      default: Start the vacuum?
+      selector:
+        text:
+
+    notification_tag:
+      name: Notification tag
+      description: >
+        Unique tag for this blueprint instance. It is used to dismiss the
+        notification after a choice is made.
+      default: vacuum_cleaning_proposal
+      selector:
+        text:
+
+    full_clean_label:
+      name: Full-clean button label
+      default: Full home
+      selector:
+        text:
+
+    group_1_label:
+      name: First area-group button label
+      default: Bedrooms
+      selector:
+        text:
+
+    group_1_areas:
+      name: First area group
+      description: >
+        Select one or more Home Assistant areas for the first partial-clean
+        choice.
+      default: []
+      selector:
+        area:
+          multiple: true
+
+    group_2_label:
+      name: Second area-group button label
+      default: Living areas
+      selector:
+        text:
+
+    group_2_areas:
+      name: Second area group
+      description: >
+        Select one or more Home Assistant areas for the second partial-clean
+        choice.
+      default: []
+      selector:
+        area:
+          multiple: true
+
+    action_full:
+      name: Full-clean action ID
+      description: Must be unique across all actionable-notification automations.
+      default: VACUUM_FULL
+      selector:
+        text:
+
+    action_group_1:
+      name: First area-group action ID
+      description: Must be unique across all actionable-notification automations.
+      default: VACUUM_GROUP_1
+      selector:
+        text:
+
+    action_group_2:
+      name: Second area-group action ID
+      description: Must be unique across all actionable-notification automations.
+      default: VACUUM_GROUP_2
+      selector:
+        text:
+
+trigger:
+  - platform: time
+    at: !input schedule_time
+    id: notify
+
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: !input action_full
+    id: full
+
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: !input action_group_1
+    id: group_1
+
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: !input action_group_2
+    id: group_2
+
+action:
+  - choose:
+      - alias: Send cleaning proposal
+        conditions:
+          - condition: trigger
+            id: notify
+          - condition: time
+            weekday: !input weekdays
+        sequence:
+          - service: !input notify_service
+            data:
+              title: !input notification_title
+              message: !input notification_message
+              data:
+                tag: !input notification_tag
+                notification_icon: mdi:robot-vacuum
+                actions:
+                  - action: !input action_full
+                    title: !input full_clean_label
+                  - action: !input action_group_1
+                    title: !input group_1_label
+                  - action: !input action_group_2
+                    title: !input group_2_label
+
+      - alias: Start full-home cleaning
+        conditions:
+          - condition: trigger
+            id: full
+        sequence:
+          - service: vacuum.start
+            target:
+              entity_id: !input vacuum
+
+          - service: !input notify_service
+            data:
+              message: clear_notification
+              data:
+                tag: !input notification_tag
+
+      - alias: Clean first area group
+        conditions:
+          - condition: trigger
+            id: group_1
+        sequence:
+          - service: vacuum.clean_area
+            target:
+              entity_id: !input vacuum
+            data:
+              cleaning_area_id: !input group_1_areas
+
+          - service: !input notify_service
+            data:
+              message: clear_notification
+              data:
+                tag: !input notification_tag
+
+      - alias: Clean second area group
+        conditions:
+          - condition: trigger
+            id: group_2
+        sequence:
+          - service: vacuum.clean_area
+            target:
+              entity_id: !input vacuum
+            data:
+              cleaning_area_id: !input group_2_areas
+
+          - service: !input notify_service
+            data:
+              message: clear_notification
+              data:
+                tag: !input notification_tag
+
+mode: single

@@ -1,0 +1,130 @@
+blueprint:
+  name: "Octopus Energy: Auto-enrol in Octoplus Saving Sessions"
+  description: >-
+    Automatically joins any available **Octoplus Saving Session** events the
+    moment they are announced, and sends push notifications to your mobile
+    device when a session is detected and when enrolment is confirmed.
+
+
+    **How it works**
+
+    Triggers on three signals: a new saving session event being announced, a
+    periodic entity update (every ~15 minutes, used for retries), and Home
+    Assistant startup. If there are unjoined sessions in `available_events`,
+    it enrolls in all of them.
+
+    Only standard saving sessions (where `octopoints_per_kwh > 0`) are joined.
+    Free electricity sessions (`octopoints_per_kwh = 0`) appear in the same
+    entity but require no enrolment and are automatically skipped.
+
+    Each join is attempted independently — if one fails (e.g. Octopus
+    announces a session before its join window opens), the others still
+    proceed and the automation retries silently every ~15 minutes.
+
+    A "Detected" notification is sent only on a new announcement or HA startup.
+    A "Joined" notification is sent only once the join is confirmed (the OE
+    integration force-refreshes within ~60 s of a successful join). If the
+    join window is not yet open, a one-time "Pending" notification is sent
+    and retries continue silently until enrolment is confirmed.
+
+
+    **Requirements**
+
+    - [Octopus Energy integration](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy)
+    by BottlecapDave, installed and configured
+
+    - Home Assistant [Mobile App](https://companion.home-assistant.io/)
+    integration for push notifications
+
+    - An active Octoplus membership
+  source_url: https://community.home-assistant.io/t/octopus-energy-auto-enrol-in-octoplus-saving-sessions/1018037
+  domain: automation
+  input:
+    saving_session_events_entity:
+      name: Saving Session Events Entity
+      description: >-
+        The Octoplus saving session events entity for your account.
+        In Settings → Devices & Services → Octopus Energy it is named
+        **"Octoplus (A-XXXXXXXX) Octoplus Saving Session Events"**.
+      selector:
+        entity:
+          domain: event
+    notify_target:
+      name: Notification Target
+      description: >-
+        The notification service name to send push alerts to. For a mobile
+        device this is typically `notify.mobile_app_<device_name>`. Find yours
+        under Developer Tools → Actions → search "notify".
+      default: notify.mobile_app_my_phone
+      selector:
+        text:
+
+variables:
+  saving_session_events_entity: !input saving_session_events_entity
+  notify_target: !input notify_target
+
+triggers:
+  - trigger: event
+    event_type: octopus_energy_new_octoplus_saving_session
+    id: new_session
+  - trigger: state
+    entity_id: !input saving_session_events_entity
+    id: entity_update
+  - trigger: homeassistant
+    event: start
+    id: startup
+
+conditions:
+  - condition: template
+    value_template: >-
+      {{ state_attr(saving_session_events_entity, 'available_events')
+         | rejectattr('octopoints_per_kwh', 'equalto', 0) | list | count > 0 }}
+
+actions:
+  - variables:
+      joinable_events: >-
+        {{ state_attr(saving_session_events_entity, 'available_events')
+           | rejectattr('octopoints_per_kwh', 'equalto', 0) | list }}
+      session_count: "{{ joinable_events | count | int }}"
+      is_announcement: "{{ trigger.id in ['new_session', 'startup'] }}"
+  - if:
+      - condition: template
+        value_template: "{{ is_announcement }}"
+    then:
+      - action: "{{ notify_target }}"
+        data:
+          title: "Octoplus: Saving Session Detected"
+          message: >-
+            {% if session_count == 1 %}New saving session on
+            {{ joinable_events[0].start | as_timestamp | timestamp_custom('%a %-d %b, %-I:%M %p', True) }}
+            ({{ joinable_events[0].octopoints_per_kwh }} pts/kWh) — enrolling now.{% else %}
+            {{ session_count }} new saving sessions detected — enrolling now.{% endif %}
+  - repeat:
+      count: "{{ session_count }}"
+      sequence:
+        - action: octopus_energy.join_octoplus_saving_session_event
+          continue_on_error: true
+          target:
+            entity_id: "{{ saving_session_events_entity }}"
+          data:
+            event_code: "{{ joinable_events[repeat.index - 1]['code'] }}"
+  - wait_template: >-
+      {{ (state_attr(saving_session_events_entity, 'available_events') or [])
+         | rejectattr('octopoints_per_kwh', 'equalto', 0)
+         | selectattr('code', 'in', joinable_events | map(attribute='code') | list)
+         | list | count == 0 }}
+    timeout:
+      minutes: 20
+    continue_on_timeout: true
+  - if:
+      - condition: template
+        value_template: "{{ not wait.completed and is_announcement }}"
+    then:
+      - action: "{{ notify_target }}"
+        data:
+          title: "Octoplus: Enrolment Pending"
+          message: >-
+            Octopus join window not yet open — enrolment will be retried
+            automatically every ~15 minutes until confirmed.
+
+mode: single

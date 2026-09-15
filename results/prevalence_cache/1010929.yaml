@@ -1,0 +1,378 @@
+blueprint:
+  name: Waste Collection Reminder
+  description: |
+    Flexible blueprint for the HACS integration "Waste Collection Schedule".
+
+    ## How "due tomorrow" is detected
+
+    For each selected waste sensor, the blueprint checks (in order):
+
+    1. **Numeric Days To preset**: `state == "1"`. The cleanest match if you've configured your sensors with that preset.
+    2. **Default preset (date in state)**: Tomorrow's date appears as a substring of the state. Supports `DD.MM.YYYY` (e.g. `on Wed, 20.05.2026`) and `YYYY-MM-DD` (e.g. `on 2026-05-20`).
+
+    Either match counts as "due tomorrow". The waste type name is always taken from `friendly_name`, with automatic cleanup of the `Waste Collection Schedule ` prefix and trailing parenthesized text like `(2-wöchentlich)`.
+
+    ## ⚠️ Tip: Rename sensors for cleanest output
+
+    The blueprint strips common cruft automatically, but for full control over how waste types appear in your notifications, rename each sensor in HA:
+
+    Settings → Devices & Services → Waste Collection Schedule → click the sensor → ⚙️ Settings → Name
+
+    Example: `Waste Collection Schedule Bioabfall(2-wöchentlich)` → `Bioabfall`.
+
+    ## Notification services
+
+    Enter notify service names (one per line) like:
+
+    ```
+    notify.mobile_app_user1_iphone
+    notify.mobile_app_user2_pixel
+    ```
+
+    Find your exact service names under **Developer Tools → Actions** by typing `notify.` in the dropdown. Use the `notify.mobile_app_*` services, NOT the bare notify entities — only the legacy services accept the `data.actions` payload needed for actionable notifications.
+
+    UI-helper notification groups (which exist only as entities, not services) don't work either. If you want a group, define it via YAML.
+
+    If the field is left empty, no notification is sent but the additional reminder actions still run.
+
+    ## Available Template Variables
+
+    | Variable | Description |
+    |---|---|
+    | `waste_list` | Python list of matching waste types |
+    | `waste_text` | Comma separated list |
+    | `waste_sentence` | "X will be collected tomorrow." (English) |
+    | `waste_sentence_de` | "Morgen wird X abgeholt." (Deutsch) |
+    | `waste_sentence2` | "The X has not been taken out yet." (English) |
+    | `waste_sentence2_de` | "Der X ist noch nicht rausgestellt." (Deutsch) |
+    | `waste_count` | Number of matching waste types |
+    | `tomorrow_iso` | Tomorrow's date YYYY-MM-DD (debugging) |
+    | `tomorrow_de` | Tomorrow's date DD.MM.YYYY (debugging) |
+    | `trigger` | Home Assistant trigger object |
+
+  domain: automation
+
+  input:
+    main_section:
+      name: Main Configuration
+      icon: mdi:trash-can
+      input:
+        waste_calendar:
+          name: Waste Collection Calendar
+          description: >
+            The calendar entity created by the
+            Waste Collection Schedule integration.
+          selector:
+            entity:
+              filter:
+                - integration: waste_collection_schedule
+                  domain: calendar
+
+        waste_sensors:
+          name: Waste Sensors
+          description: >
+            Waste sensors from the Waste Collection
+            Schedule integration. Both default and
+            "Numeric Days To" presets are supported.
+
+            Sensors are considered "due tomorrow" if:
+            - state equals `"1"` (Numeric Days To), OR
+            - tomorrow's date appears in the state
+              string (default preset)
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - integration: waste_collection_schedule
+                  domain: sensor
+
+        offset_before:
+          name: Trigger Offset
+          description: >
+            Time BEFORE the calendar event when the
+            reminder should fire.
+
+            Examples:
+            - `-07:00:00` → 17:00 previous day
+            - `-15:00:00` → 09:00 previous day
+            - `-01:00:00` → 23:00 previous day
+          default: "-07:00:00"
+          selector:
+            text:
+
+    extra_section:
+      name: Additional Triggers & Conditions
+      icon: mdi:tune
+      collapsed: true
+      input:
+        extra_triggers:
+          name: Additional Triggers
+          description: >
+            Optional extra triggers like:
+            - Time triggers
+            - Zone enter
+            - Person arrives home
+          default: []
+          selector:
+            trigger:
+
+        extra_conditions:
+          name: Additional Conditions
+          description: >
+            Additional conditions for reminder execution.
+
+            These are NOT applied to confirmation actions.
+          default: []
+          selector:
+            condition:
+
+    notification_section:
+      name: Default Notification
+      icon: mdi:bell-ring
+      input:
+        notify_services:
+          name: Notify Services
+          description: >
+            Legacy notify service names, one per line.
+
+            Examples:
+              notify.mobile_app_user_iphone
+              notify.mobile_app_user2_pixel
+
+            Find names under Developer Tools → Actions.
+            Must be legacy `notify.mobile_app_*`
+            services (not notify entities), otherwise
+            the action button won't appear.
+
+            Optional: leave empty to skip sending the
+            notification.
+          default: ""
+          selector:
+            text:
+              multiline: true
+
+        notification_message:
+          name: Notification Message
+          description: >
+            Supports templates.
+
+            Available variables: `waste_sentence`,
+            `waste_sentence_de`, `waste_sentence2`,
+            `waste_sentence2_de`, `waste_list`,
+            `waste_text`, `waste_count`.
+          default: "{{ waste_sentence }}"
+          selector:
+            text:
+              multiline: true
+
+        confirmation_button_title:
+          name: Confirmation Button Title
+          description: >
+            Label of the action button shown on the
+            notification. Tapping this button triggers
+            the confirmation workflow.
+          default: "Yes, trash can is outside!"
+          selector:
+            text:
+
+        reminder_actions:
+          name: Additional Reminder Actions
+          description: >
+            Additional actions executed AFTER the
+            default notification.
+
+            Examples:
+            - TTS announcements
+            - Flash lights
+            - Telegram messages
+            - Dashboard updates
+          default: []
+          selector:
+            action:
+
+    confirmation_section:
+      name: Confirmation Workflow
+      icon: mdi:check-circle
+      collapsed: true
+      input:
+        confirmation_actions:
+          name: Actions After Confirmation
+          description: >
+            Executed when the notification action
+            button is pressed. The notification is
+            automatically cleared on all targets
+            before these actions run.
+          default: []
+          selector:
+            action:
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  waste_sensors_var: !input waste_sensors
+
+  notify_services_input: !input notify_services
+
+  notify_services_list: >-
+    {{ notify_services_input.split('\n')
+       | map('trim')
+       | reject('eq', '')
+       | list }}
+
+  confirmation_button_title_var: !input confirmation_button_title
+
+  tomorrow_iso: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%d') }}"
+
+  tomorrow_de: "{{ (now() + timedelta(days=1)).strftime('%d.%m.%Y') }}"
+
+  waste_list: >-
+    {% set t_iso = (now() + timedelta(days=1)).strftime('%Y-%m-%d') %}
+    {% set t_de = (now() + timedelta(days=1)).strftime('%d.%m.%Y') %}
+    {% set ns = namespace(items=[]) %}
+    {% for s in waste_sensors_var %}
+      {% set state_str = states(s) %}
+      {% set is_due = (state_str == '1')
+                   or (t_iso in state_str)
+                   or (t_de in state_str) %}
+      {% if is_due %}
+        {% set raw = state_attr(s, 'friendly_name') or s %}
+        {% set name = raw
+             | regex_replace('^Waste Collection Schedule\\s+', '')
+             | regex_replace('\\s*\\([^)]*\\)\\s*$', '')
+             | trim %}
+        {% set ns.items = ns.items + [name] %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.items }}
+
+  waste_count: "{{ waste_list | length }}"
+
+  waste_text: "{{ waste_list | join(', ') }}"
+
+  waste_sentence: >-
+    {% set l = waste_list %}
+    {% set n = l | length %}
+
+    {% if n == 0 %}
+      No waste collection is due tomorrow.
+    {% elif n == 1 %}
+      {{ l[0] }} will be collected tomorrow.
+    {% else %}
+      {{ l[:-1] | join(', ') }} and {{ l[-1] }}
+      will be collected tomorrow.
+    {% endif %}
+
+  waste_sentence_de: >-
+    {% set l = waste_list %}
+    {% set n = l | length %}
+
+    {% if n == 0 %}
+      Morgen findet keine Müllabfuhr statt.
+    {% elif n == 1 %}
+      Morgen wird {{ l[0] }} abgeholt.
+    {% else %}
+      Morgen werden {{ l[:-1] | join(', ') }}
+      und {{ l[-1] }} abgeholt.
+    {% endif %}
+
+  waste_sentence2: >-
+    {% set l = waste_list %}
+    {% set n = l | length %}
+
+    {% if n == 0 %}
+      Nothing needs to be taken out.
+    {% elif n == 1 %}
+      The {{ l[0] }} has not been taken out yet.
+    {% else %}
+      {{ l[:-1] | join(', ') }} and {{ l[-1] }}
+      have not been taken out yet.
+    {% endif %}
+
+  waste_sentence2_de: >-
+    {% set l = waste_list %}
+    {% set n = l | length %}
+
+    {% if n == 0 %}
+      Es muss nichts rausgestellt werden.
+    {% elif n == 1 %}
+      Der {{ l[0] }} ist noch nicht rausgestellt.
+    {% else %}
+      {{ l[:-1] | join(', ') }} und {{ l[-1] }}
+      sind noch nicht rausgestellt.
+    {% endif %}
+
+triggers:
+  - trigger: calendar
+    entity_id: !input waste_calendar
+    event: start
+    offset: !input offset_before
+    id: reminder_calendar
+
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: YES_TRASHCAN_IS_OUTSIDE
+    id: confirmation
+
+  - triggers: !input extra_triggers
+
+conditions: []
+
+actions:
+  - choose:
+      - alias: Confirmation received
+        conditions:
+          - condition: trigger
+            id: confirmation
+
+        sequence:
+          - alias: Clear notification on all targets
+            repeat:
+              for_each: "{{ notify_services_list }}"
+
+              sequence:
+                - alias: Clear notification
+                  action: "{{ repeat.item }}"
+
+                  data:
+                    message: clear_notification
+
+                    data:
+                      tag: trashcan_done
+
+          - alias: Execute user confirmation actions
+            sequence: !input confirmation_actions
+
+    default:
+      - alias: Skip if no waste is due
+        if:
+          - condition: template
+            value_template: "{{ waste_count | int == 0 }}"
+        then:
+          - stop: "No waste collection due — nothing to notify."
+
+      - alias: Check additional conditions
+        if:
+          - condition: and
+            conditions: !input extra_conditions
+
+        then:
+          - repeat:
+              for_each: "{{ notify_services_list }}"
+
+              sequence:
+                - alias: Send reminder notification
+                  action: "{{ repeat.item }}"
+
+                  data:
+                    message: !input notification_message
+
+                    data:
+                      actions:
+                        - action: YES_TRASHCAN_IS_OUTSIDE
+                          title: "{{ confirmation_button_title_var }}"
+                      tag: trashcan_done
+
+          - alias: Execute additional reminder actions
+            sequence: !input reminder_actions

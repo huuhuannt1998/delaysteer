@@ -1,0 +1,55 @@
+blueprint:
+  name: "Tablet Control (On/Off on Motion)"
+  description: "Turns the tablet screen on when motion is detected and turns it off after a customizable delay when no motion is detected."
+  domain: automation
+  input:
+    motion_entity:
+      name: Motion Sensor
+      description: The sensor that detects motion (e.g., binary_sensor.motion).
+      selector:
+        entity:
+          domain: binary_sensor
+    tablet_screen:
+      name: Tablet Screen Switch
+      description: The switch that controls the screen (e.g., switch.tablet_screen).
+      selector:
+        entity:
+          domain: switch
+    off_delay:
+      name: Screen Off Delay (Seconds)
+      description: Time in seconds after which the display is turned off when no more motion is detected.
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 300
+          unit_of_measurement: seconds
+          mode: slider
+
+mode: restart
+
+trigger:
+  - trigger: state
+    entity_id: !input motion_entity
+    to: "on"  
+
+actions:
+  # 1. Turn on the screen
+  - action: switch.turn_on
+    target:
+      entity_id: !input tablet_screen
+
+  # 2. Wait until the motion sensor clears 
+  - wait_for_trigger:
+      - trigger: state
+        entity_id: !input motion_entity
+        to: "off" 
+
+  # 3. Wait for the user-defined delay
+  - delay: !input off_delay
+
+  # 4. Turn off the screen
+  - action: switch.turn_off
+    target:
+      entity_id: !input tablet_screen
+

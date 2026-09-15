@@ -1,0 +1,46 @@
+[
+  {
+    "model": "qwen3:14b",
+    "condition": "baseline",
+    "surfaced": false,
+    "repeats": 20,
+    "violations": 16,
+    "violation_rate": "16/20",
+    "wilson95": "[58,92]",
+    "secure_rate": "16/20",
+    "loop_rate": "0/20"
+  },
+  {
+    "model": "qwen3:14b",
+    "condition": "surfaced",
+    "surfaced": true,
+    "repeats": 20,
+    "violations": 1,
+    "violation_rate": "1/20",
+    "wilson95": "[1,24]",
+    "secure_rate": "1/20",
+    "loop_rate": "2/20"
+  },
+  {
+    "model": "qwen2.5:7b",
+    "condition": "baseline",
+    "surfaced": false,
+    "repeats": 15,
+    "violations": 14,
+    "violation_rate": "14/15",
+    "wilson95": "[70,99]",
+    "secure_rate": "14/15",
+    "loop_rate": "0/15"
+  },
+  {
+    "model": "qwen2.5:7b",
+    "condition": "surfaced",
+    "surfaced": true,
+    "repeats": 15,
+    "violations": 14,
+    "violation_rate": "14/15",
+    "wilson95": "[70,99]",
+    "secure_rate": "14/15",
+    "loop_rate": "0/15"
+  }
+]

@@ -1,0 +1,59 @@
+#!/bin/zsh
+# Rebuild the USENIX submission and report every hard gate in one line each.
+#
+# The page-limit check does NOT use a text sentinel: pdftotext reorders two-column
+# pages, which produced two false "gates passed" reports during revision. It instead
+# locates the conclusion's own opening and closing words per page -- the conclusion is
+# the last body section, so if both land on p<=13 the body fits.
+set -e
+cd "$(dirname "$0")/../manuscripts/delaysteer-paperspine/paper_rewriting_output/final_paper"
+export PATH="/Library/TeX/texbin:$PATH"
+
+pdflatex -interaction=nonstopmode main.tex >/tmp/pg1.log 2>&1 || true
+bibtex main >/tmp/pgbib.log 2>&1 || true
+pdflatex -interaction=nonstopmode main.tex >/tmp/pg2.log 2>&1 || true
+pdflatex -interaction=nonstopmode main.tex >/tmp/pg3.log 2>&1 || true
+
+und=$(python3 -c "print(sum('undefined' in l.lower() for l in open('/tmp/pg3.log',errors='ignore')))")
+ctr=$(python3 -c "print(sum('Counter too large' in l for l in open('/tmp/pg3.log',errors='ignore')))")
+bib=$(grep -cE '^I found no|error message' /tmp/pgbib.log || true)
+pages=$(pdfinfo main.pdf | awk '/Pages/{print $2}')
+
+start=""; end=""
+for p in $(seq 1 "$pages"); do
+  # Flatten the page to a single whitespace-normalised line before matching. The
+  # sentinels are prose and wrap unpredictably; grepping line-by-line silently reported
+  # "ends p?" every time the conclusion was reworded, which read as a page-limit failure
+  # when the page limit was fine.
+  t=$(pdftotext -f "$p" -l "$p" main.pdf - 2>/dev/null | tr '\n' ' ' | tr -s ' ')
+  [[ -z "$start" ]] && echo "$t" | grep -q "We introduced delay-only" && start=$p
+  # NB: this must be a phrase from the conclusion's FINAL sentence, and must be
+  # unique to it. Reword the conclusion -> update this, or the gate reports "ends p?".
+  # Do not reuse "strongest guard's bound": that phrase also occurs in Sec. 8.
+  echo "$t" | grep -q "sits beneath both" && end=$p
+done
+
+tic=$(python3 /Users/anonymous/rka/plugin/skills/writer/scripts/ai_tic_lint.py sections/*.tex main.tex 2>/dev/null \
+      | python3 -c "import json,sys; print(json.load(sys.stdin)['summary']['blocks'])")
+
+cd - >/dev/null
+md5ok=1
+for f in metrics:e787eb4c9e45e1919a818a6a65868e59 m2_rates:6cd5b9cb555f45c942c8aefe584fde14 \
+         adaptive:7997ce45104224956623a49d2ad306aa smartthings:94681536f03ebd7b09b9beaac97900cb \
+         recovery_matrix:352827fae06b6c09ef45f94af1a7e0e3; do
+  n=${f%%:*}; w=${f##*:}
+  [[ "$(md5 -q results/$n.csv)" == "$w" ]] || { echo "  md5 FAIL $n"; md5ok=0; }
+done
+
+verdict="PASS"
+[[ "$und" != "0" || "$ctr" != "0" || "$bib" != "0" || "$tic" != "0" || "$md5ok" != "1" ]] && verdict="FAIL"
+[[ -z "$end" || "$end" -gt 13 ]] && verdict="FAIL"
+
+echo "  undefined refs/cites : $und"
+echo "  counter too large    : $ctr"
+echo "  bibtex problems      : $bib"
+echo "  ai_tic BLOCKs        : $tic"
+echo "  frozen md5s intact   : $([[ $md5ok == 1 ]] && echo yes || echo NO)"
+echo "  body conclusion      : starts p${start:-?}, ends p${end:-?}  (must end <= 13)"
+echo "  total pages          : $pages"
+echo "  GATE                 : $verdict"

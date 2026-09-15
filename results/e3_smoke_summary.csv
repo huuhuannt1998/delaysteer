@@ -1,0 +1,3 @@
+condition,guard_mode,n,benign_completion,completion_wilson95,invariant_violation,violation_wilson95,runs_with_block,escalated,completed_after_block,mean_wall_s,p95_wall_s,mean_added_latency_s,p95_added_latency_s,mean_recovery_time_s,mean_blocks,mean_thrash,mean_steps
+normal,fail_closed,1,0/1,"[0,79]",0/1,"[0,79]",1/1,0/1,0/1,210.712,210.712,0.0,0.0,,1.0,2.0,8.0
+normal,user_escalation,1,1/1,"[21,100]",0/1,"[0,79]",0/1,1/1,0/1,208.826,208.826,0.0,0.0,,0.0,1.0,7.0

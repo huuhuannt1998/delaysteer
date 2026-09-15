@@ -1,0 +1,90 @@
+{
+  "tier": "tier0_synthetic",
+  "planner": "deterministic_reference",
+  "position_ablation": {
+    "A_M": {
+      "schedules": 93,
+      "successes": 19,
+      "I_k": 1,
+      "min_k_flows": 2,
+      "truncated": false
+    },
+    "A_T": {
+      "schedules": 63,
+      "successes": 13,
+      "I_k": 1,
+      "min_k_flows": 2,
+      "truncated": false
+    }
+  },
+  "observability_curve": [
+    {
+      "level": "O_0",
+      "reachable": true,
+      "n_successes": 19,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "n_schedules": 93
+    },
+    {
+      "level": "O_1",
+      "reachable": true,
+      "n_successes": 19,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "n_schedules": 93
+    },
+    {
+      "level": "O_2",
+      "reachable": true,
+      "n_successes": 19,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "n_schedules": 93
+    },
+    {
+      "level": "O_3",
+      "reachable": true,
+      "n_successes": 19,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "n_schedules": 93
+    },
+    {
+      "level": "O_4",
+      "reachable": true,
+      "n_successes": 19,
+      "min_k_flows": 2,
+      "min_total_hold": 8820.0,
+      "n_schedules": 93
+    }
+  ],
+  "min_sufficient_observability": "O_0",
+  "observability_monotone": true,
+  "observability_curve_is_degenerate": true,
+  "observability_caveat": "Flat by construction: Algorithm 2 enumerates precommitted schedules, which are O_0 adversaries by definition, so all levels explore the same space. Establishes that a BLIND adversary suffices; does NOT establish that higher observability buys nothing. Preplanned-vs-reactive remains open.",
+  "gain_matched_total": {
+    "gain": true,
+    "composed_total_hold": 8820.0,
+    "composed_k_flows": 2,
+    "single_flow_schedules_at_or_above_that_budget": 11,
+    "of_which_reached_target": 0
+  },
+  "gain_matched_delta_max": {
+    "gain": true,
+    "composed_delta_max_s": 3333.33,
+    "single_flow_peers": 11,
+    "of_which_reached_target": 0
+  },
+  "selectivity": {
+    "degenerate": true,
+    "reason": "Scenario 4 exposes one reachable target, so the matrix has a single populated row; collateral=0 means 'no second target existed', not 'the adversary never mis-hits'. Needs a scenario with >=2 independently reachable targets.",
+    "hit_rate_among_2flow_schedules": 0.463
+  },
+  "steering_horizon": {
+    "horizon_s": 1200.0,
+    "n_releases": 2,
+    "earliest": 0.0,
+    "span_between_releases_s": 20.0
+  }
+}

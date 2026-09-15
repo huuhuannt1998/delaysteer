@@ -1,0 +1,3245 @@
+{
+  "frame": {
+    "source": "community.home-assistant.io category 53",
+    "ordering": "category default listing order",
+    "pages": 12,
+    "fetched_utc": "2026-08-25T12:23:17Z",
+    "inclusion": "all topics in window except pinned About post",
+    "extraction": "longest YAML document containing a top-level blueprint: key"
+  },
+  "n_topics": 359,
+  "n_with_yaml": 305,
+  "topics": [
+    {
+      "id": 429770,
+      "title": "Zigbee2MQTT enOcean PTM 215Z (Friends of Hue) switch",
+      "views": 25137,
+      "likes": 62,
+      "created_at": "2022-06-10T14:18:27.844Z",
+      "posts": 135,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1021836,
+      "title": "\u26a1 Anker SOLIX 4 Pro - Local Zero Export with Eco-Mode & Hardware Protection",
+      "views": 199,
+      "likes": 2,
+      "created_at": "2026-08-19T21:18:35.696Z",
+      "posts": 7,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 965815,
+      "title": "IKEA Bilresa Dual Button Remote",
+      "views": 41795,
+      "likes": 41,
+      "created_at": "2025-12-23T18:00:38.871Z",
+      "posts": 42,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 680539,
+      "title": "Cover Control Automation (CCA) - Intelligent Automation for Blinds, Awnings & Shutters | Calendar, Sun Shading, Force Functions",
+      "views": 214595,
+      "likes": 776,
+      "created_at": "2024-01-27T20:12:46.045Z",
+      "posts": 2814,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 969171,
+      "title": "Inovelli Bulk Configuration (Zigbee2MQTT)",
+      "views": 628,
+      "likes": 12,
+      "created_at": "2026-01-01T23:51:41.005Z",
+      "posts": 7,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 838071,
+      "title": "\ud83d\udc99 Blueprints for Voice Commands (Weather, Calendar, Music Assistant)",
+      "views": 27219,
+      "likes": 72,
+      "created_at": "2025-01-29T09:43:07.457Z",
+      "posts": 130,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 828766,
+      "title": "Philips Hue Tap Dial Switch (Z2M / ZHA) Custom, Light and Media mode [RDM002]",
+      "views": 8508,
+      "likes": 19,
+      "created_at": "2025-01-14T18:51:21.036Z",
+      "posts": 77,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 985284,
+      "title": "Voice Assistant Blueprints Collection",
+      "views": 1782,
+      "likes": 11,
+      "created_at": "2026-02-10T14:58:33.417Z",
+      "posts": 21,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 966723,
+      "title": "Sonoff SNZB\u201101M Remote (ZHA) \u2014 16\u2011Action Event-Based Control",
+      "views": 6654,
+      "likes": 15,
+      "created_at": "2025-12-26T17:31:19.684Z",
+      "posts": 36,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 786301,
+      "title": "Import/Sync Calendar Events",
+      "views": 2530,
+      "likes": 2,
+      "created_at": "2024-10-24T13:23:56.546Z",
+      "posts": 5,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 681056,
+      "title": "Control LEDs and LED Effects on Inovelli Black, Red, Blue, and White Series Devices by Floor, Area, Group, Device ID, or Entity",
+      "views": 16996,
+      "likes": 63,
+      "created_at": "2024-01-28T19:42:37.065Z",
+      "posts": 260,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 481048,
+      "title": ":bulb: Sensor Light - Motion Sensor - Door Sensor - Sun Elevation - LUX Value - Scenes - Time - Light Control - Device Tracker - Night Lights",
+      "views": 633327,
+      "likes": 1682,
+      "created_at": "2022-10-28T09:28:04.563Z",
+      "posts": 4359,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 653754,
+      "title": "\ud83e\udeab Low Battery Notifications & Actions",
+      "views": 212419,
+      "likes": 501,
+      "created_at": "2023-12-11T01:49:29.804Z",
+      "posts": 694,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 527354,
+      "title": ":high_brightness: Smart Light - Entity - Sun Elevation - Ambient & Time Triggers",
+      "views": 122645,
+      "likes": 211,
+      "created_at": "2023-01-30T11:14:01.756Z",
+      "posts": 642,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 776296,
+      "title": "Generative AI camera snapshot notification",
+      "views": 28992,
+      "likes": 53,
+      "created_at": "2024-09-28T22:15:48.636Z",
+      "posts": 92,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 989184,
+      "title": "Blueprint: Awtrix 3 | Show Custom Entity",
+      "views": 1047,
+      "likes": 4,
+      "created_at": "2026-02-21T13:17:30.021Z",
+      "posts": 7,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1022126,
+      "title": "Unavailable Alarm Notification",
+      "views": 64,
+      "likes": 0,
+      "created_at": "2026-08-22T09:36:59.825Z",
+      "posts": 1,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1022073,
+      "title": "Smart knob scene button zg-101z/d",
+      "views": 70,
+      "likes": 0,
+      "created_at": "2026-08-22T01:43:32.059Z",
+      "posts": 2,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 612617,
+      "title": ":round_pushpin: State Notifications & Actions",
+      "views": 46044,
+      "likes": 78,
+      "created_at": "2023-09-10T09:33:31.056Z",
+      "posts": 258,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1019392,
+      "title": "WLED Holiday, Custom Event & Weather Preset Scheduler v5.1",
+      "views": 203,
+      "likes": 1,
+      "created_at": "2026-07-31T06:14:48.505Z",
+      "posts": 2,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 276581,
+      "title": "ZWave-JS - Homeseer HS-WD200+ Dimmer",
+      "views": 4257,
+      "likes": 8,
+      "created_at": "2021-02-04T05:40:16.795Z",
+      "posts": 14,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1022031,
+      "title": "Universal HomeSeer In-Wall Switch Control (Z-Wave JS)",
+      "views": 34,
+      "likes": 0,
+      "created_at": "2026-08-21T17:15:56.589Z",
+      "posts": 1,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 928611,
+      "title": "LIFX/Matter Switch - Button Automations",
+      "views": 948,
+      "likes": 4,
+      "created_at": "2025-09-08T11:46:50.568Z",
+      "posts": 4,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 843983,
+      "title": "Voice PE - Mute media players on 'listening'",
+      "views": 2135,
+      "likes": 18,
+      "created_at": "2025-02-08T14:15:49.341Z",
+      "posts": 23,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1021955,
+      "title": "Universal Magic Button \u2013 Helper-Free Dimmer 1.0.0-beta.5",
+      "views": 108,
+      "likes": 0,
+      "created_at": "2026-08-20T21:49:45.744Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1021947,
+      "title": "Midea C-Sense/Comfort Sense/Follow Me via HA IR",
+      "views": 52,
+      "likes": 1,
+      "created_at": "2026-08-20T21:20:26.708Z",
+      "posts": 1,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1017530,
+      "title": "\ud83d\udcf1 Appliance Live Activity countdown",
+      "views": 583,
+      "likes": 4,
+      "created_at": "2026-07-15T23:04:20.996Z",
+      "posts": 4,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 1004831,
+      "title": "\ud83d\udee0\ufe0f Automatic updates in homeassistant \ud83d\udee0\ufe0f",
+      "views": 7013,
+      "likes": 24,
+      "created_at": "2026-04-16T11:16:42.249Z",
+      "posts": 52,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 306939,
+      "title": "Automatic renewal of let's encrypt addon, and restart of nginx",
+      "views": 9352,
+      "likes": 4,
+      "created_at": "2021-05-10T21:42:44.630Z",
+      "posts": 9,
+      "yaml_source": "cache"
+    },
+    {
+      "id": 944273,
+      "title": "Solakon ONE Zero Export Control \u26a1 (Dynamic Nulleinspeisung/Zero Export with SOC Logic)",
+      "views": 4053,
+      "likes": 5,
+      "created_at": "2025-10-26T09:51:46.012Z",
+      "posts": 18,
+      "yaml_source": "github"
+    },
+    {
+      "id": 993226,
+      "title": "Third Reality Smart Button (Model: 3RSB22BZ) - Configurable Automation",
+      "views": 776,
+      "likes": 2,
+      "created_at": "2026-03-06T03:45:24.394Z",
+      "posts": 4,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 965365,
+      "title": "Ikea Bilresa scroll wheel blueprint (Matter) - The Original",
+      "views": 51561,
+      "likes": 115,
+      "created_at": "2025-12-22T13:25:33.738Z",
+      "posts": 173,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 986704,
+      "title": "ZHA - TS004F Rotary Knob with dual-mode support",
+      "views": 1596,
+      "likes": 11,
+      "created_at": "2026-02-15T13:02:06.867Z",
+      "posts": 23,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 676340,
+      "title": "UPDATED: Notify all mobile devices and HA dashboard with one script!",
+      "views": 8062,
+      "likes": 3,
+      "created_at": "2024-01-20T04:59:30.273Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1021556,
+      "title": "Unified Notifications",
+      "views": 166,
+      "likes": 0,
+      "created_at": "2026-08-17T19:55:27.818Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 650166,
+      "title": ":vibration_mode: Appliance Notifications & Actions - Washing Machine - Clothes Dryer - Dish Washer - ETC",
+      "views": 167618,
+      "likes": 477,
+      "created_at": "2023-12-04T13:06:21.232Z",
+      "posts": 1047,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 934966,
+      "title": "[Blueprint] Bambu Lab 3D Printer \u2013 Cost Notification (Telegram, Bambu HACS)",
+      "views": 2426,
+      "likes": 8,
+      "created_at": "2025-09-27T21:52:35.649Z",
+      "posts": 19,
+      "yaml_source": "github"
+    },
+    {
+      "id": 635422,
+      "title": "ZHA Sonoff SNZB-01P wireless button short_double_long press action",
+      "views": 9486,
+      "likes": 6,
+      "created_at": "2023-11-03T03:39:53.035Z",
+      "posts": 21,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1021428,
+      "title": "Water Heater / EV Charger / Mower Charging -- Nord Pool Price-Based Blueprints",
+      "views": 99,
+      "likes": 0,
+      "created_at": "2026-08-16T18:55:02.020Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 292610,
+      "title": "ZEN32 Scene Controller - Z-Wave JS",
+      "views": 26912,
+      "likes": 72,
+      "created_at": "2021-03-22T20:25:44.833Z",
+      "posts": 140,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1021407,
+      "title": "MAX Messenger Notifications \u2014 Camera Photo / Video / Photo+Video",
+      "views": 120,
+      "likes": 0,
+      "created_at": "2026-08-16T16:16:36.455Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1017538,
+      "title": ":puzzle_piece: ESPHome Device Update",
+      "views": 991,
+      "likes": 3,
+      "created_at": "2026-07-16T01:07:35.491Z",
+      "posts": 11,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1021397,
+      "title": "Profile-based lighting",
+      "views": 108,
+      "likes": 0,
+      "created_at": "2026-08-16T14:54:28.244Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1021393,
+      "title": "Activity-based lighting + profiles",
+      "views": 100,
+      "likes": 0,
+      "created_at": "2026-08-16T14:46:55.472Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1018714,
+      "title": "[RELEASE] MQTT Connection State Monitor for Home Assistant",
+      "views": 393,
+      "likes": 1,
+      "created_at": "2026-07-25T15:27:16.667Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1021389,
+      "title": "[Velair Blueprint] Pause a zone while windows are open",
+      "views": 50,
+      "likes": 1,
+      "created_at": "2026-08-16T14:06:25.484Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1021388,
+      "title": "[Velair Blueprint] Occupancy home and away",
+      "views": 122,
+      "likes": 1,
+      "created_at": "2026-08-16T14:05:40.320Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1013987,
+      "title": "Aqara FP300 Blueprint (light+temp control)",
+      "views": 710,
+      "likes": 6,
+      "created_at": "2026-06-15T09:46:26.315Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 500577,
+      "title": "Sonoff NSPanel Blueprint - Configure your own custom NSPanel easy via a Blueprint",
+      "views": 260247,
+      "likes": 624,
+      "created_at": "2022-12-09T22:35:10.590Z",
+      "posts": 1294,
+      "yaml_source": "github"
+    },
+    {
+      "id": 300080,
+      "title": "ZHA Sonoff Button (press, double press, hold actions)",
+      "views": 28139,
+      "likes": 39,
+      "created_at": "2021-04-16T13:00:06.038Z",
+      "posts": 48,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1005033,
+      "title": "NSPanel Easy - Blueprint-configured NSPanel customization",
+      "views": 1992,
+      "likes": 17,
+      "created_at": "2026-04-17T06:55:40.364Z",
+      "posts": 8,
+      "yaml_source": "github"
+    },
+    {
+      "id": 986783,
+      "title": "Smart Ventilation based on Absolute Humidity",
+      "views": 1176,
+      "likes": 4,
+      "created_at": "2026-02-16T13:36:25.666Z",
+      "posts": 7,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 942940,
+      "title": "Radiator Fan Controller - Control your radiator fans",
+      "views": 655,
+      "likes": 0,
+      "created_at": "2025-10-22T11:53:44.876Z",
+      "posts": 5,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1021280,
+      "title": "\ud83d\udd12 Alarmo Link - Arm and Disarm Alarmo from a Private Link - No Account, No App",
+      "views": 114,
+      "likes": 0,
+      "created_at": "2026-08-15T16:20:13.717Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1017469,
+      "title": "Detect Home Assistant's Frozen Devices and Entities - \ud83e\udd76 Entity Sentinel",
+      "views": 884,
+      "likes": 7,
+      "created_at": "2026-07-15T13:39:45.763Z",
+      "posts": 10,
+      "yaml_source": "github"
+    },
+    {
+      "id": 930806,
+      "title": "(Yet another) IKEA Styrbar (E2001/E2002) - control Multiple Light/Switch Entities (Zigbee2MQTT v2.0 Compatible)",
+      "views": 1851,
+      "likes": 10,
+      "created_at": "2025-09-15T08:00:13.707Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 734618,
+      "title": "Blueprint - Zigbee2MQTT - Tuya 3-button Scene Switch (TS0043)",
+      "views": 2346,
+      "likes": 5,
+      "created_at": "2024-05-31T06:59:38.401Z",
+      "posts": 7,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 978723,
+      "title": "\ud83c\udf2c\ufe0f IKEA ALPSTUGA E2495 Air Quality Sensor (Matter)",
+      "views": 6802,
+      "likes": 12,
+      "created_at": "2026-01-24T19:47:35.154Z",
+      "posts": 17,
+      "yaml_source": "github"
+    },
+    {
+      "id": 953189,
+      "title": "Anniversaries Notifier",
+      "views": 831,
+      "likes": 2,
+      "created_at": "2025-11-20T08:15:11.087Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1015768,
+      "title": "Battery Sentinel: Report `low` and `offline` Batteries from a Label. Watch Only What Matters, Not Another One-Trick Notifier. A Sister to Entity Sentinel",
+      "views": 484,
+      "likes": 3,
+      "created_at": "2026-07-01T19:15:20.921Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1010017,
+      "title": "Advanced Ring Keypad V2 Blueprint for Home Assistant (Alarmo)",
+      "views": 1077,
+      "likes": 8,
+      "created_at": "2026-05-11T03:49:16.074Z",
+      "posts": 8,
+      "yaml_source": "github"
+    },
+    {
+      "id": 941400,
+      "title": "\ud83d\udcdb Shelly i4 Button Controller by LTek ... with Single Button Dim & Multi-Press Functions",
+      "views": 2215,
+      "likes": 8,
+      "created_at": "2025-10-17T21:19:58.716Z",
+      "posts": 25,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 590081,
+      "title": "IKEA Remotes - Control anything",
+      "views": 102039,
+      "likes": 76,
+      "created_at": "2023-07-09T18:06:16.800Z",
+      "posts": 170,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1021110,
+      "title": "PV Surplus Heat Pump Controller",
+      "views": 123,
+      "likes": 0,
+      "created_at": "2026-08-14T08:44:40.711Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 989469,
+      "title": "Leak Detection & Notifier \u2013 Advanced (Custom Messages, Auto-Clear, Repeating Alarm, Script)",
+      "views": 2057,
+      "likes": 7,
+      "created_at": "2026-02-22T10:13:03.973Z",
+      "posts": 14,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1012173,
+      "title": "\u2600\ufe0f Sun-Aware Shutter Control - Automatically close shutters based on sun position",
+      "views": 1746,
+      "likes": 3,
+      "created_at": "2026-05-30T07:42:57.902Z",
+      "posts": 8,
+      "yaml_source": "github"
+    },
+    {
+      "id": 983749,
+      "title": "IKEA BILRESA scroll wheel (Matter) - Yet another blueprint",
+      "views": 21382,
+      "likes": 26,
+      "created_at": "2026-02-06T17:19:44.947Z",
+      "posts": 26,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1019793,
+      "title": "AWTRIX NG (next generation firmware)",
+      "views": 1410,
+      "likes": 9,
+      "created_at": "2026-08-03T19:11:18.495Z",
+      "posts": 26,
+      "yaml_source": "github"
+    },
+    {
+      "id": 469873,
+      "title": "\ud83d\udd25 Advanced Heating Control",
+      "views": 394178,
+      "likes": 1159,
+      "created_at": "2022-10-05T09:07:08.703Z",
+      "posts": 3451,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1020248,
+      "title": "ZHA - Tuya ZG-101Z/D Smart Knob Automation Blueprint (fork)",
+      "views": 120,
+      "likes": 0,
+      "created_at": "2026-08-07T05:09:25.008Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 591182,
+      "title": "IKEA Remotes - Control Light",
+      "views": 43180,
+      "likes": 48,
+      "created_at": "2023-07-12T21:52:54.952Z",
+      "posts": 67,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1020847,
+      "title": "Adaptive Cover Controller \u2013 Intelligent Sun Protection for Curtains, Blinds & Shutters",
+      "views": 267,
+      "likes": 2,
+      "created_at": "2026-08-12T07:10:13.204Z",
+      "posts": 5,
+      "yaml_source": "github"
+    },
+    {
+      "id": 945368,
+      "title": ":camera: Immich memories blueprint",
+      "views": 1130,
+      "likes": 0,
+      "created_at": "2025-10-29T08:28:58.551Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1020823,
+      "title": "Automatic switch restart",
+      "views": 140,
+      "likes": 0,
+      "created_at": "2026-08-11T21:35:01.637Z",
+      "posts": 1,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 783849,
+      "title": "Daily Automatic Light Color Adjustment",
+      "views": 1633,
+      "likes": 1,
+      "created_at": "2024-10-18T07:47:32.843Z",
+      "posts": 2,
+      "yaml_source": "github"
+    },
+    {
+      "id": 921658,
+      "title": "\ud83c\udf2c\ufe0f Smart Climate Management \ud83c\udf2c\ufe0f",
+      "views": 4379,
+      "likes": 6,
+      "created_at": "2025-08-17T22:42:29.244Z",
+      "posts": 7,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 899334,
+      "title": "VPD and Temperature-Based Controller for Home Assistant",
+      "views": 1354,
+      "likes": 1,
+      "created_at": "2025-06-08T09:14:45.360Z",
+      "posts": 4,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 962344,
+      "title": "IKEA BILRESA Matter Button \ud83d\udc48 [Blueprint] for Ikea *Matter over Thread* Button (Actions, Scripts, and Entities)!",
+      "views": 34678,
+      "likes": 34,
+      "created_at": "2025-12-13T21:32:11.450Z",
+      "posts": 45,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 509992,
+      "title": ":shower: Bathroom Humidity Exhaust Fan",
+      "views": 188414,
+      "likes": 388,
+      "created_at": "2022-12-30T05:39:06.280Z",
+      "posts": 856,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 992123,
+      "title": "\ud83d\udcf9 Magic Snapshot / Video sequence ===> Telegram",
+      "views": 469,
+      "likes": 2,
+      "created_at": "2026-03-02T15:41:07.707Z",
+      "posts": 4,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1020578,
+      "title": "\u0130kea Bilresa Dual Button Smart Fan & Oscillation Control (Tested with Xiaomi Fan 2 Lite)",
+      "views": 79,
+      "likes": 0,
+      "created_at": "2026-08-09T20:54:52.409Z",
+      "posts": 1,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1020575,
+      "title": "Open Cover on Door Open \u2013 balcony door raises the shutter, with optional position restore",
+      "views": 82,
+      "likes": 0,
+      "created_at": "2026-08-09T20:31:08.247Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1020570,
+      "title": "Sync Two Covers \u2013 keep two roller shutters perfectly in sync (bidirectional, loop-safe)",
+      "views": 63,
+      "likes": 0,
+      "created_at": "2026-08-09T20:27:45.284Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1020525,
+      "title": "Vent-Axia extractor boost on/off when risk of mould",
+      "views": 58,
+      "likes": 0,
+      "created_at": "2026-08-09T15:17:42.392Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 992532,
+      "title": "[V2] Automatically unlock your door when getting in bluetooth range",
+      "views": 1348,
+      "likes": 3,
+      "created_at": "2026-03-03T19:28:33.962Z",
+      "posts": 10,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 768065,
+      "title": "IKEA SOMRIG Shortcut Button (E2213) for Matter",
+      "views": 2815,
+      "likes": 4,
+      "created_at": "2024-09-06T19:45:56.213Z",
+      "posts": 11,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 384482,
+      "title": "ZHA - IKEA four button remote (Styrbar) for lights (E2001, E2002)",
+      "views": 89722,
+      "likes": 54,
+      "created_at": "2022-01-25T22:01:26.913Z",
+      "posts": 107,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1020378,
+      "title": "AWTRIX NG Sensor Display \u2013 colour thresholds, progress bar, scrolling text & weather overlay [DE]",
+      "views": 202,
+      "likes": 0,
+      "created_at": "2026-08-08T06:43:31.131Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 413705,
+      "title": "Philips HUE Smart Button - 5 press actions + hold-to-dim",
+      "views": 46068,
+      "likes": 45,
+      "created_at": "2022-04-20T18:00:24.132Z",
+      "posts": 314,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1020247,
+      "title": "Light Group Cycler Blueprint",
+      "views": 87,
+      "likes": 1,
+      "created_at": "2026-08-07T05:02:13.393Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 971222,
+      "title": "ZHA - Tuya ZG-101Z/D Smart Knob Automation Blueprint",
+      "views": 1680,
+      "likes": 1,
+      "created_at": "2026-01-06T15:34:40.539Z",
+      "posts": 4,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1020215,
+      "title": "To-do List Sync \u2014 one-way items, two-way completion",
+      "views": 148,
+      "likes": 0,
+      "created_at": "2026-08-06T21:12:55.464Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1014021,
+      "title": "Update notifications for Home Assistant",
+      "views": 2616,
+      "likes": 18,
+      "created_at": "2026-06-15T15:34:56.612Z",
+      "posts": 32,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 910833,
+      "title": "Smart Pool Pump Controller",
+      "views": 1097,
+      "likes": 2,
+      "created_at": "2025-07-14T16:27:44.286Z",
+      "posts": 4,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 978974,
+      "title": "[Z2M] IKEA BILRESA (E2489) - Full Custom Actions (Single, Double, Long Press)",
+      "views": 5524,
+      "likes": 5,
+      "created_at": "2026-01-25T10:46:24.774Z",
+      "posts": 10,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 727643,
+      "title": "\u26c8\ufe0f AWTRIX 3 - Deutscher Wetterdienst (DWD) Weather Warnings",
+      "views": 3222,
+      "likes": 3,
+      "created_at": "2024-05-09T21:42:39.204Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1020113,
+      "title": "\u26c8\ufe0f AWTRIX NG - Weather Warnings Deutscher Wetterdienst (DWD)",
+      "views": 163,
+      "likes": 0,
+      "created_at": "2026-08-06T09:20:35.334Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1018686,
+      "title": "\u2728 Smooth Hold-to-Dim / Brighten\u2728",
+      "views": 499,
+      "likes": 0,
+      "created_at": "2026-07-25T11:44:43.264Z",
+      "posts": 5,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 652571,
+      "title": "\ud83d\udcf2 Contact Sensor (Door or Window) Left Open Notification",
+      "views": 55643,
+      "likes": 95,
+      "created_at": "2023-12-08T18:27:06.108Z",
+      "posts": 173,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 726235,
+      "title": "AWTRIX 3 - Blueprint for creating simple apps for dummies",
+      "views": 51361,
+      "likes": 143,
+      "created_at": "2024-05-06T16:54:18.113Z",
+      "posts": 287,
+      "yaml_source": "github"
+    },
+    {
+      "id": 409161,
+      "title": "Update notifications (Core, OS, Addons, HACS, etc)",
+      "views": 64120,
+      "likes": 114,
+      "created_at": "2022-04-07T01:49:47.110Z",
+      "posts": 154,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1005218,
+      "title": "\ud83c\udf9b\ufe0f IKEA Styrbar Multi-Device Controller - Support for E2001, E2002 & E2313",
+      "views": 900,
+      "likes": 0,
+      "created_at": "2026-04-17T21:11:40.488Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 841036,
+      "title": "Z2M - Aqara Rotary Knob H1 \u2013 Adjustable Brightness & Color Temperature (Z2M)",
+      "views": 2725,
+      "likes": 4,
+      "created_at": "2025-02-03T19:52:22.210Z",
+      "posts": 28,
+      "yaml_source": "github"
+    },
+    {
+      "id": 512399,
+      "title": "ZHA - MOES ZigBee Wireless Scene Switch | 3 button remote (TS0043) powered by Tuya",
+      "views": 6439,
+      "likes": 10,
+      "created_at": "2023-01-03T20:41:43.046Z",
+      "posts": 10,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 871550,
+      "title": ":airplane: Holiday & Away Lighting",
+      "views": 25219,
+      "likes": 63,
+      "created_at": "2025-03-31T10:05:37.103Z",
+      "posts": 75,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 925904,
+      "title": "Goodwe export limiter together with HomeWizard P1",
+      "views": 911,
+      "likes": 2,
+      "created_at": "2025-08-31T08:18:02.248Z",
+      "posts": 7,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 742479,
+      "title": "Pool Pump and Heat Controller",
+      "views": 3210,
+      "likes": 2,
+      "created_at": "2024-06-23T13:37:40.322Z",
+      "posts": 15,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 774469,
+      "title": "Moes 4-Button Scene Controller - Zigbee2MQTT (Model: TS0044)",
+      "views": 9633,
+      "likes": 9,
+      "created_at": "2024-09-25T06:52:30.125Z",
+      "posts": 17,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1019579,
+      "title": "ZHA zigbee Smart Scene Button Wheel RSH-SC20 aka TuyaTS004F light control",
+      "views": 99,
+      "likes": 0,
+      "created_at": "2026-08-01T22:21:45.444Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 996732,
+      "title": "Smart Energy Arbitrage System (Octopus Energy + Enphase + Solcast)",
+      "views": 701,
+      "likes": 1,
+      "created_at": "2026-03-17T20:38:36.873Z",
+      "posts": 4,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 960479,
+      "title": "Ikea Bilresa Scrollwheel",
+      "views": 12393,
+      "likes": 7,
+      "created_at": "2025-12-08T22:38:09.918Z",
+      "posts": 11,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1019355,
+      "title": "A blueprint to adjust lights throughout the day based on a time range",
+      "views": 197,
+      "likes": 1,
+      "created_at": "2026-07-30T22:11:28.295Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1019230,
+      "title": "Label-based Zone & List Notifications",
+      "views": 186,
+      "likes": 11,
+      "created_at": "2026-07-29T19:57:48.125Z",
+      "posts": 12,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1018387,
+      "title": "Fully automatic zone-based list notifications for users",
+      "views": 541,
+      "likes": 4,
+      "created_at": "2026-07-22T18:41:59.770Z",
+      "posts": 14,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 948502,
+      "title": "Aqara W100 Blueprint for Thermostat mode",
+      "views": 4371,
+      "likes": 7,
+      "created_at": "2025-11-07T12:19:42.052Z",
+      "posts": 24,
+      "yaml_source": "github"
+    },
+    {
+      "id": 968751,
+      "title": "\u2728 Smart Light Timer - easily create multiple profiles in a single automation",
+      "views": 1397,
+      "likes": 0,
+      "created_at": "2025-12-31T18:26:39.875Z",
+      "posts": 7,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 673507,
+      "title": "\ud83c\udf89 Party Lights - Randomly loop through color and brightness values",
+      "views": 34015,
+      "likes": 77,
+      "created_at": "2024-01-15T10:56:37.651Z",
+      "posts": 178,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 349461,
+      "title": "Synchronize Ring Alarm Keypad v2 with Alarmo",
+      "views": 47658,
+      "likes": 118,
+      "created_at": "2021-10-23T12:00:40.629Z",
+      "posts": 263,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 878257,
+      "title": "PV Optimization for GoodWe Solar Systems",
+      "views": 6645,
+      "likes": 12,
+      "created_at": "2025-04-15T19:38:33.700Z",
+      "posts": 17,
+      "yaml_source": "github"
+    },
+    {
+      "id": 256656,
+      "title": "Mi Magic Cube - Deconz (45+ actions!)",
+      "views": 30769,
+      "likes": 51,
+      "created_at": "2020-12-17T14:57:36.839Z",
+      "posts": 56,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1018983,
+      "title": "Scheduled vacuum daily notification",
+      "views": 163,
+      "likes": 0,
+      "created_at": "2026-07-27T20:03:11.571Z",
+      "posts": 1,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1018979,
+      "title": "Play daily podcast from RSS feed \u2013 Mediaplayer or Sonos, Manual Bypass and Daily Limit",
+      "views": 111,
+      "likes": 0,
+      "created_at": "2026-07-27T19:57:41.946Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1015002,
+      "title": "\ud83e\ude9f Heatwave Windows / Fen\u00eatres Canicule \u2014 Open or close windows based on multi-sensor temperature comparison",
+      "views": 812,
+      "likes": 3,
+      "created_at": "2026-06-24T18:48:04.236Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 729907,
+      "title": "Vallhorn tailored blueprint - test drive",
+      "views": 3134,
+      "likes": 1,
+      "created_at": "2024-05-16T18:03:54.240Z",
+      "posts": 10,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 463052,
+      "title": "Another Blueprint for Lutron 5 button Pico with press and hold for dimming function",
+      "views": 10545,
+      "likes": 9,
+      "created_at": "2022-09-20T00:24:00.142Z",
+      "posts": 32,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1018758,
+      "title": "ZV9001K12-DIM-Z5 (Sunricher 5-channel Z-Wave remote) Blueprint",
+      "views": 38,
+      "likes": 0,
+      "created_at": "2026-07-26T09:53:22.433Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1018027,
+      "title": "Octopus energy - Spin the wheel - automatically!",
+      "views": 550,
+      "likes": 3,
+      "created_at": "2026-07-19T20:57:44.260Z",
+      "posts": 8,
+      "yaml_source": "github"
+    },
+    {
+      "id": 277704,
+      "title": "ZWave-JS Inovelli LZW36 Fan Switch/Dimmer",
+      "views": 4534,
+      "likes": 12,
+      "created_at": "2021-02-06T19:27:09.428Z",
+      "posts": 33,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1018059,
+      "title": "Home Energy Autopilot \u2014 charge the battery when power is cheap, run the house off it when it's expensive",
+      "views": 347,
+      "likes": 0,
+      "created_at": "2026-07-20T04:49:53.153Z",
+      "posts": 2,
+      "yaml_source": "github"
+    },
+    {
+      "id": 962231,
+      "title": "Telegram Bot To\u2011Do List",
+      "views": 1376,
+      "likes": 2,
+      "created_at": "2025-12-13T14:29:18.919Z",
+      "posts": 6,
+      "yaml_source": "github"
+    },
+    {
+      "id": 898289,
+      "title": "Jellyfin Webhook v2",
+      "views": 5501,
+      "likes": 11,
+      "created_at": "2025-06-04T23:26:02.198Z",
+      "posts": 30,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1018541,
+      "title": "IKEA STYRBAR E2313 | Two Light Controller with Colour Matching",
+      "views": 148,
+      "likes": 0,
+      "created_at": "2026-07-23T22:35:18.627Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1018532,
+      "title": "IKEA Bilresa with Scrollwheel",
+      "views": 307,
+      "likes": 1,
+      "created_at": "2026-07-23T21:06:32.602Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 688273,
+      "title": ":magic_wand: Manual Light Control With Auto OFF",
+      "views": 35519,
+      "likes": 77,
+      "created_at": "2024-02-11T11:30:43.696Z",
+      "posts": 119,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 732517,
+      "title": "[Script] Cycle fan speed",
+      "views": 1683,
+      "likes": 2,
+      "created_at": "2024-05-24T19:23:42.033Z",
+      "posts": 5,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 559732,
+      "title": "Frigate Mobile App Notifications 2.0",
+      "views": 279964,
+      "likes": 606,
+      "created_at": "2022-11-03T06:56:46.475Z",
+      "posts": 2982,
+      "yaml_source": "github"
+    },
+    {
+      "id": 255239,
+      "title": "Simple Mobile Notification when device becomes unavailable",
+      "views": 8781,
+      "likes": 9,
+      "created_at": "2020-12-14T13:47:57.409Z",
+      "posts": 10,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 966025,
+      "title": "Anniversaries template sensor blueprint (to replace Anniversaries integration)",
+      "views": 1698,
+      "likes": 5,
+      "created_at": "2025-12-24T11:33:19.505Z",
+      "posts": 15,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1018037,
+      "title": "Octopus Energy: Auto-enrol in Octoplus Saving Sessions",
+      "views": 199,
+      "likes": 0,
+      "created_at": "2026-07-19T21:48:04.703Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 950033,
+      "title": "Yet another Philips \"Hue Tap dial switch\" Blueprint (z2m)",
+      "views": 1971,
+      "likes": 2,
+      "created_at": "2025-11-11T12:48:46.848Z",
+      "posts": 20,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1017886,
+      "title": "Sunny Boy Smart Energy: Battery control",
+      "views": 165,
+      "likes": 2,
+      "created_at": "2026-07-18T16:48:55.050Z",
+      "posts": 3,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 975664,
+      "title": "Shelly Detached Input Blueprint \u2013 Switch & Button Mode with Fallback Script (v1.3)",
+      "views": 1513,
+      "likes": 3,
+      "created_at": "2026-01-16T20:30:33.882Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 937467,
+      "title": "Frigate AI Notification - Multi-Camera, Include/Exclude Zones, LLMVision, Low Noise",
+      "views": 5545,
+      "likes": 9,
+      "created_at": "2025-10-05T19:42:03.183Z",
+      "posts": 17,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1014995,
+      "title": "Adaptive Fan Speed Control",
+      "views": 650,
+      "likes": 0,
+      "created_at": "2026-06-24T18:11:50.324Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 928462,
+      "title": "Controlling Shelly Cloud Devices in Home Assistant",
+      "views": 3254,
+      "likes": 10,
+      "created_at": "2025-09-07T22:09:16.285Z",
+      "posts": 11,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1010174,
+      "title": "Gardena 6-Way Mechanical Irrigation Controller",
+      "views": 1534,
+      "likes": 10,
+      "created_at": "2026-05-12T13:52:29.807Z",
+      "posts": 15,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 982305,
+      "title": "IKEA Bilresa Scrollwheel (Matter) \u2013 Ultimate Light Controller (Atomic Edition)",
+      "views": 12628,
+      "likes": 35,
+      "created_at": "2026-02-02T21:58:12.847Z",
+      "posts": 46,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1017326,
+      "title": "\ud83e\uddb7 ADHD-Friendly Toothbrushing Notification System (Morning & Evening)",
+      "views": 486,
+      "likes": 1,
+      "created_at": "2026-07-14T12:45:08.254Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 512487,
+      "title": "Notify Mobile Companion App Devices",
+      "views": 31727,
+      "likes": 53,
+      "created_at": "2023-01-03T23:30:35.828Z",
+      "posts": 128,
+      "yaml_source": "github"
+    },
+    {
+      "id": 902962,
+      "title": "Advanced Ventilation/AC Management Blueprint",
+      "views": 5922,
+      "likes": 8,
+      "created_at": "2025-06-19T04:41:27.718Z",
+      "posts": 24,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1017244,
+      "title": "A blueprint to play chimes or make announcements on Sonos",
+      "views": 306,
+      "likes": 1,
+      "created_at": "2026-07-13T16:41:00.187Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 978334,
+      "title": "\ud83d\udeaa IKEA MYGGBETT E2492 Door/Window Sensor (Matter)",
+      "views": 3584,
+      "likes": 5,
+      "created_at": "2026-01-23T17:29:54.930Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 976397,
+      "title": "IKEA MYGGSPRAY E2494 Motion Sensor (Matter) - Flexible Action Script",
+      "views": 7074,
+      "likes": 8,
+      "created_at": "2026-01-18T18:37:25.036Z",
+      "posts": 21,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 888294,
+      "title": "\u26a0\ufe0f Repeating Alert Notifications w/ Actionable Buttons and other features",
+      "views": 3142,
+      "likes": 15,
+      "created_at": "2025-05-11T19:36:38.132Z",
+      "posts": 36,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1016912,
+      "title": "TRV Anti-Seize Maintenance (Multi-Zone, Dynamic Limits & Boiler Shutoff)",
+      "views": 76,
+      "likes": 0,
+      "created_at": "2026-07-10T22:08:19.108Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 846232,
+      "title": "\ud83d\ude97 Tesla Dynamic Charging (Ford, Mercedes\u2026 any EV) Automation",
+      "views": 14333,
+      "likes": 13,
+      "created_at": "2025-02-12T13:08:38.221Z",
+      "posts": 53,
+      "yaml_source": "github"
+    },
+    {
+      "id": 552677,
+      "title": "PV / Solar Excess Optimizer: Auto-control appliances (wallbox, dish washer, heatpump, ...) based on excess solar power",
+      "views": 110533,
+      "likes": 155,
+      "created_at": "2023-03-26T21:12:14.474Z",
+      "posts": 595,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1016827,
+      "title": "Home Energy Autopilot \u2014 charge your battery when power is cheap, discharge when it's expensive (any dynamic tariff, any battery)",
+      "views": 219,
+      "likes": 0,
+      "created_at": "2026-07-10T05:56:00.498Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1016823,
+      "title": "Bosch Indego Weather based Schedule Blueprint",
+      "views": 89,
+      "likes": 0,
+      "created_at": "2026-07-10T04:35:50.991Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 273473,
+      "title": "KNX - relative dimming for lights",
+      "views": 19721,
+      "likes": 17,
+      "created_at": "2021-01-27T08:40:15.266Z",
+      "posts": 93,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 887614,
+      "title": "Camera Notification V0.8 with Actionable Buttons Android IOS - Frigate LLM Vision AI",
+      "views": 23918,
+      "likes": 21,
+      "created_at": "2025-05-09T22:09:24.186Z",
+      "posts": 178,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1016447,
+      "title": "[Blueprint] Intelligent Wall Tablet Screen Control (On/Off on Motion)",
+      "views": 322,
+      "likes": 0,
+      "created_at": "2026-07-07T09:19:57.157Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 395248,
+      "title": "ZHA - IKEA four button remote (Styrbar) for lights and switches",
+      "views": 12101,
+      "likes": 0,
+      "created_at": "2022-02-21T15:32:57.668Z",
+      "posts": 7,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 976506,
+      "title": "IKEA E2490 BILRESA Scroll Wheel",
+      "views": 14914,
+      "likes": 14,
+      "created_at": "2026-01-18T23:39:03.902Z",
+      "posts": 26,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1016373,
+      "title": "[Blueprint] Reolink Presence - Presence-Controlled Doorbell Tablet Automation with Intercom Support",
+      "views": 467,
+      "likes": 1,
+      "created_at": "2026-07-06T16:36:39.710Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 779965,
+      "title": "A blueprint for the IKEA SYMFONISK Sound remote, gen 2 (E2123) - with volume hold",
+      "views": 6726,
+      "likes": 2,
+      "created_at": "2024-10-07T20:58:21.281Z",
+      "posts": 13,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 388850,
+      "title": "Aqara Cube ZHA - Simplified face-based device control",
+      "views": 35270,
+      "likes": 53,
+      "created_at": "2022-02-05T10:59:33.175Z",
+      "posts": 119,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 604156,
+      "title": "Camera - Send & Save snapshot to mobile device when motion is detected with Conditions. Now with Custom Triggers!",
+      "views": 76592,
+      "likes": 101,
+      "created_at": "2023-08-18T02:19:05.935Z",
+      "posts": 310,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 923409,
+      "title": ":star2: Motion-Controlled Lighting 4.8 \u2013 The Next-Level Light Maestro",
+      "views": 4462,
+      "likes": 10,
+      "created_at": "2025-08-23T10:49:27.849Z",
+      "posts": 6,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1016025,
+      "title": "Wyze - Google fallback system",
+      "views": 168,
+      "likes": 1,
+      "created_at": "2026-07-03T15:31:58.412Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 945813,
+      "title": "Home Assistant - Reload Integrations Automatically",
+      "views": 3533,
+      "likes": 13,
+      "created_at": "2025-11-02T21:01:11.751Z",
+      "posts": 10,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1013322,
+      "title": "\ud83d\udcf5 Child WiFi Blocker - Block your child's WiFi at bedtime via UniFi",
+      "views": 461,
+      "likes": 0,
+      "created_at": "2026-06-09T03:21:50.617Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 980063,
+      "title": "SONOFF Orb 4-in-1 (SZNB-01M) Zigbee2MQTT",
+      "views": 2815,
+      "likes": 7,
+      "created_at": "2026-01-27T23:46:06.925Z",
+      "posts": 5,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1014897,
+      "title": "The SMART Doorbell - Complete doorbell automation",
+      "views": 1764,
+      "likes": 2,
+      "created_at": "2026-06-23T17:43:51.394Z",
+      "posts": 6,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 785335,
+      "title": "Camera, Frigate: Intelligent AI-powered notifications",
+      "views": 49727,
+      "likes": 65,
+      "created_at": "2024-10-22T08:00:08.839Z",
+      "posts": 208,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1015834,
+      "title": "ZHA-Tradfri-ON/OFF- for lights and switches",
+      "views": 205,
+      "likes": 1,
+      "created_at": "2026-07-02T08:38:16.951Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1015784,
+      "title": "Anker Solarbank 3 \u2013 Smart Multi-Strategy EMS (Tibber 15-Min Synced)",
+      "views": 152,
+      "likes": 0,
+      "created_at": "2026-07-01T23:50:29.431Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1015640,
+      "title": "ESPHome Play RTTTL Script Blueprint",
+      "views": 158,
+      "likes": 0,
+      "created_at": "2026-06-30T16:36:44.360Z",
+      "posts": 2,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 981560,
+      "title": "ZHA - AwoX / Eglo Connect.Z Remote (ERCU_3groups_Zm) - Complete Action-Based Blueprint",
+      "views": 533,
+      "likes": 0,
+      "created_at": "2026-01-31T22:35:31.550Z",
+      "posts": 8,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1015056,
+      "title": "Climate ventilation advisory with optional notifications and TTS",
+      "views": 430,
+      "likes": 2,
+      "created_at": "2026-06-25T09:56:30.378Z",
+      "posts": 6,
+      "yaml_source": "github"
+    },
+    {
+      "id": 799478,
+      "title": "\ud83d\udcfb User specific NFC Tag Action/Event",
+      "views": 1885,
+      "likes": 7,
+      "created_at": "2024-11-24T23:31:32.898Z",
+      "posts": 6,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1013338,
+      "title": "Seasonal Climate Controller",
+      "views": 872,
+      "likes": 2,
+      "created_at": "2026-06-09T07:05:20.591Z",
+      "posts": 4,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1015081,
+      "title": "Third Reality Smart Button Model 3RSB01085Z Configurable Automation",
+      "views": 213,
+      "likes": 4,
+      "created_at": "2026-06-25T14:35:45.739Z",
+      "posts": 6,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1010779,
+      "title": "Aqara H2 EU switch blueprint",
+      "views": 624,
+      "likes": 7,
+      "created_at": "2026-05-18T10:45:40.701Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 481543,
+      "title": ":eight_spoked_asterisk: Toggle Switch - Turn ON & OFF Entities",
+      "views": 14777,
+      "likes": 5,
+      "created_at": "2022-10-29T17:24:34.282Z",
+      "posts": 10,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 911310,
+      "title": "\ud83c\udf21\ufe0f HVAC Health Monitor Blueprint - Detect System Performance Issues",
+      "views": 2118,
+      "likes": 8,
+      "created_at": "2025-07-15T21:29:45.090Z",
+      "posts": 10,
+      "yaml_source": "github"
+    },
+    {
+      "id": 887859,
+      "title": "\u26d4 Offline Devices Report : Easy Customize Includes & Excludes, Notifications + More",
+      "views": 7226,
+      "likes": 20,
+      "created_at": "2025-05-10T15:28:48.038Z",
+      "posts": 90,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1014746,
+      "title": "Linked Entities Pro: Keep entities synced. No loops. No drift. No recursion-guard blind spots",
+      "views": 261,
+      "likes": 3,
+      "created_at": "2026-06-22T12:22:50.602Z",
+      "posts": 5,
+      "yaml_source": "github"
+    },
+    {
+      "id": 696229,
+      "title": "Zigbee2MQTT - Philips Hue Tap Dial Switch by SmartHomeGeeks.io",
+      "views": 11042,
+      "likes": 19,
+      "created_at": "2024-02-27T09:06:10.372Z",
+      "posts": 38,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 994758,
+      "title": "\ud83e\udee7 LaundryMinder - Washer & Dryer Cycle Notifications, Handoff Reminders, 3 Detection Methods",
+      "views": 2884,
+      "likes": 2,
+      "created_at": "2026-03-11T03:09:17.295Z",
+      "posts": 9,
+      "yaml_source": "github"
+    },
+    {
+      "id": 997537,
+      "title": "ESPHome Device Auto Bulk Update",
+      "views": 1535,
+      "likes": 2,
+      "created_at": "2026-03-20T17:21:38.703Z",
+      "posts": 9,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 943919,
+      "title": "Filter positive or negative value changes in a sensor entity",
+      "views": 1631,
+      "likes": 1,
+      "created_at": "2025-10-25T08:07:28.119Z",
+      "posts": 18,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 382180,
+      "title": "Moes Smart Knob Lights Control",
+      "views": 37355,
+      "likes": 50,
+      "created_at": "2022-01-20T11:37:01.431Z",
+      "posts": 108,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 976364,
+      "title": "IKEA Bilresa E2489 2-button remote (Z2M)",
+      "views": 3546,
+      "likes": 2,
+      "created_at": "2026-01-18T16:50:42.838Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 820470,
+      "title": "Reminders - Create and List Tasks with Conversational Commands",
+      "views": 6604,
+      "likes": 12,
+      "created_at": "2025-01-02T12:44:22.318Z",
+      "posts": 26,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 783988,
+      "title": "ZHA - iCasa Black Remote (ICZB-RM11S)",
+      "views": 819,
+      "likes": 3,
+      "created_at": "2024-10-18T14:28:24.559Z",
+      "posts": 6,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 967985,
+      "title": "\ud83d\udd25 Smart Smoke System \u2013 The Ultimate Fire Alarm Linker",
+      "views": 3901,
+      "likes": 8,
+      "created_at": "2025-12-29T21:38:36.722Z",
+      "posts": 18,
+      "yaml_source": "github"
+    },
+    {
+      "id": 977875,
+      "title": "Z2M - Philips Hue Dimmer Switch - Ultimate Controller (Device Triggers + Double Clicks",
+      "views": 3052,
+      "likes": 5,
+      "created_at": "2026-01-22T12:59:10.616Z",
+      "posts": 15,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 945798,
+      "title": "KNX - Weather Report \ud83c\udf26\ufe0f",
+      "views": 1159,
+      "likes": 5,
+      "created_at": "2025-11-02T17:56:48.955Z",
+      "posts": 5,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 777660,
+      "title": "KNX - Media Player Control \ud83c\udfb6",
+      "views": 7254,
+      "likes": 11,
+      "created_at": "2024-10-02T07:03:16.493Z",
+      "posts": 44,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1014532,
+      "title": "Automatically-resetting tasks: To-Do List Chore Scheduler",
+      "views": 184,
+      "likes": 0,
+      "created_at": "2026-06-20T13:02:56.176Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1014504,
+      "title": "Motion Light Blueprint - Weather, Sunset, Time, and Seasonal Logic",
+      "views": 442,
+      "likes": 0,
+      "created_at": "2026-06-20T06:57:28.993Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 942918,
+      "title": "Correct Envoy lifetime production energy",
+      "views": 2361,
+      "likes": 7,
+      "created_at": "2025-10-22T10:23:09.935Z",
+      "posts": 66,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 760429,
+      "title": "Telegram Bot: Conversation with Assist (and others like OpenAI)",
+      "views": 8771,
+      "likes": 13,
+      "created_at": "2024-08-16T07:06:55.064Z",
+      "posts": 38,
+      "yaml_source": "github"
+    },
+    {
+      "id": 583610,
+      "title": "PVPC Optimizer (only for Spain): Turn on devices based on the PVPC electricity tariff",
+      "views": 4409,
+      "likes": 13,
+      "created_at": "2023-06-19T15:16:27.979Z",
+      "posts": 34,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1007417,
+      "title": "Robot Mower Scheduler",
+      "views": 1769,
+      "likes": 3,
+      "created_at": "2026-04-27T03:23:07.701Z",
+      "posts": 6,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1005228,
+      "title": "Bambu Lab 3D Printer Progress Update Notifications, Status & Energy Tracker (Duration. Costs, Camera & Snooze)",
+      "views": 1213,
+      "likes": 3,
+      "created_at": "2026-04-17T22:32:23.679Z",
+      "posts": 6,
+      "yaml_source": "github"
+    },
+    {
+      "id": 732070,
+      "title": "Amber Electric - Best Price Block",
+      "views": 2425,
+      "likes": 4,
+      "created_at": "2024-05-23T11:53:13.359Z",
+      "posts": 13,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1014263,
+      "title": "Sensor Watchdog: Catch Silent Freezes and Auto-Recover Offline Devices (Routers, Switchs, Hubs, Bridges, Cameras, Devices, or Sensors)",
+      "views": 483,
+      "likes": 1,
+      "created_at": "2026-06-17T21:35:35.994Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 930003,
+      "title": "Pool Pump, Heat and Salt Water System Controller",
+      "views": 831,
+      "likes": 0,
+      "created_at": "2025-09-12T19:30:26.292Z",
+      "posts": 5,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 791388,
+      "title": "deCONZ - Philips Hue Dimmer Switch (model v2 / RWL022)",
+      "views": 4127,
+      "likes": 1,
+      "created_at": "2024-11-06T20:10:52.397Z",
+      "posts": 4,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1014116,
+      "title": "Dual Presence Sensors Light Control (Avoid Pet False Positives) with Illuminance",
+      "views": 224,
+      "likes": 0,
+      "created_at": "2026-06-16T13:11:50.757Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 599838,
+      "title": "Adjustable Wake-up to Android alarm",
+      "views": 24619,
+      "likes": 29,
+      "created_at": "2023-08-06T11:52:43.973Z",
+      "posts": 50,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 310138,
+      "title": "Offline detection for Z2M devices with last_seen",
+      "views": 52865,
+      "likes": 71,
+      "created_at": "2021-05-22T10:31:07.870Z",
+      "posts": 94,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1013472,
+      "title": "Matter - IKEA Bilresa Scrollwheel Media Control",
+      "views": 1361,
+      "likes": 1,
+      "created_at": "2026-06-10T11:12:39.956Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 728100,
+      "title": "\ud83d\udce2 Notifications & Announcements",
+      "views": 52006,
+      "likes": 114,
+      "created_at": "2024-05-11T06:47:36.420Z",
+      "posts": 155,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 787423,
+      "title": "ZBMINIR2 detach relay mode",
+      "views": 9183,
+      "likes": 15,
+      "created_at": "2024-10-27T17:27:04.798Z",
+      "posts": 26,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 636946,
+      "title": "Actionable Task Reminder - A Powerful Task Reminder Automation",
+      "views": 17447,
+      "likes": 12,
+      "created_at": "2023-11-06T01:54:15.252Z",
+      "posts": 16,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1013927,
+      "title": "Illuminance sensor (ambient sensor) int(0) instead of int",
+      "views": 130,
+      "likes": 0,
+      "created_at": "2026-06-14T21:15:20.263Z",
+      "posts": 3,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1013061,
+      "title": "Full control dimmer for RGB+CCT lights using Z2M Smart Knob",
+      "views": 375,
+      "likes": 1,
+      "created_at": "2026-06-07T01:06:22.633Z",
+      "posts": 2,
+      "yaml_source": "github"
+    },
+    {
+      "id": 899287,
+      "title": ":battery: Battery Charger Notifications & Actions",
+      "views": 5931,
+      "likes": 3,
+      "created_at": "2025-06-08T06:12:11.144Z",
+      "posts": 21,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 993493,
+      "title": "Philips Hue Tap Dial - Media Controls (Native Hue Hub)",
+      "views": 923,
+      "likes": 2,
+      "created_at": "2026-03-06T21:15:15.601Z",
+      "posts": 10,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 991955,
+      "title": "Aqara Cube zigbee2mqtt (35 actions)",
+      "views": 550,
+      "likes": 1,
+      "created_at": "2026-03-01T22:36:18.827Z",
+      "posts": 3,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 956624,
+      "title": "\ud83c\udf21\ufe0f EN 16798-1 Smart Setpoint Blueprint",
+      "views": 1336,
+      "likes": 5,
+      "created_at": "2025-11-29T11:41:24.108Z",
+      "posts": 15,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 783075,
+      "title": "\ud83d\udce2 [Alarm] Keypad Frient (KEPZB-110) for Alarmo or Other Systems with ZHA",
+      "views": 7681,
+      "likes": 5,
+      "created_at": "2024-10-16T11:02:07.365Z",
+      "posts": 25,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1013477,
+      "title": "Recently Active: A Template Blueprint With an On/Off State Plus an Off Delay All-In-One",
+      "views": 254,
+      "likes": 1,
+      "created_at": "2026-06-10T12:25:46.479Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1013598,
+      "title": "Stop Freezing in the Dark: Build Unbreakable Sensors with the Failover Blueprint",
+      "views": 800,
+      "likes": 3,
+      "created_at": "2026-06-11T15:50:44.090Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 995338,
+      "title": "\ud83c\udf2c\ufe0fGSW: Smart Ventilation Suite (Absolute Humidity & Dew Point logic)",
+      "views": 568,
+      "likes": 0,
+      "created_at": "2026-03-13T07:14:39.986Z",
+      "posts": 4,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 900865,
+      "title": "[Blueprint] Azan Notifications \u2013 Islamic Prayer Time Notifications",
+      "views": 432,
+      "likes": 0,
+      "created_at": "2025-06-12T15:47:17.382Z",
+      "posts": 3,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 255540,
+      "title": "ZHA - Aqara Wireless Mini Switch",
+      "views": 69380,
+      "likes": 54,
+      "created_at": "2020-12-15T01:05:36.035Z",
+      "posts": 72,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 607107,
+      "title": "Tesla controlled charge rate based on power sensor",
+      "views": 14612,
+      "likes": 17,
+      "created_at": "2023-08-26T04:12:54.971Z",
+      "posts": 60,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1013224,
+      "title": "\ud83d\udd0c Smart Climate Switch with Occupancy Control",
+      "views": 225,
+      "likes": 0,
+      "created_at": "2026-06-08T09:49:42.429Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 785944,
+      "title": "Aqara/Xiaomi Wireless mini switch WXKG11LM",
+      "views": 3133,
+      "likes": 1,
+      "created_at": "2024-10-23T12:01:57.979Z",
+      "posts": 7,
+      "yaml_source": "github"
+    },
+    {
+      "id": 887934,
+      "title": "Linked Lights - Keep Lights in Sync",
+      "views": 2349,
+      "likes": 3,
+      "created_at": "2025-05-10T19:45:29.522Z",
+      "posts": 8,
+      "yaml_source": "github"
+    },
+    {
+      "id": 330332,
+      "title": "\ud83c\udf24 WUnderground data uploader",
+      "views": 16064,
+      "likes": 32,
+      "created_at": "2021-08-16T05:14:35.502Z",
+      "posts": 111,
+      "yaml_source": "github"
+    },
+    {
+      "id": 300533,
+      "title": "Blueprint for automatic renewal of a Let's Encrypt certificate",
+      "views": 11486,
+      "likes": 10,
+      "created_at": "2021-04-17T22:07:13.314Z",
+      "posts": 10,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 935363,
+      "title": "Scheduler Blueprint",
+      "views": 1116,
+      "likes": 0,
+      "created_at": "2025-09-29T08:00:13.975Z",
+      "posts": 3,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 959816,
+      "title": "[Blueprint] MiBoxer FUT089Z \u2013 Full Zone Control (Lights / Switches / Scenes)",
+      "views": 1145,
+      "likes": 5,
+      "created_at": "2025-12-07T12:17:49.661Z",
+      "posts": 23,
+      "yaml_source": "github"
+    },
+    {
+      "id": 305237,
+      "title": "ZwaveJS - Heatit Z-Push button 8 Scene Controller",
+      "views": 4203,
+      "likes": 3,
+      "created_at": "2021-05-04T19:59:52.054Z",
+      "posts": 24,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 967636,
+      "title": "\ud83d\ude97 Smart Garage - Control Doors, Lighting, and Alerts",
+      "views": 4038,
+      "likes": 7,
+      "created_at": "2025-12-28T23:58:01.982Z",
+      "posts": 36,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1012833,
+      "title": "[Automation] Meross Alarm Hub Loop (MSH400 / MSH450) - 100% Local Trigger\u2060",
+      "views": 157,
+      "likes": 1,
+      "created_at": "2026-06-04T21:15:15.531Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 565392,
+      "title": "Advanced control of any light entity from KNX (state, brightness, dim, temperature, color + states feedback)",
+      "views": 16329,
+      "likes": 32,
+      "created_at": "2023-04-28T10:42:20.795Z",
+      "posts": 114,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1010010,
+      "title": "Touch panel for home assistant (OXRS)",
+      "views": 714,
+      "likes": 0,
+      "created_at": "2026-05-10T23:57:40.726Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1012675,
+      "title": "Dynamic light gradient controller - automatically generates light gradients between multiple bulbs",
+      "views": 264,
+      "likes": 0,
+      "created_at": "2026-06-03T16:04:51.611Z",
+      "posts": 5,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1012490,
+      "title": "Outdoor Lights \u2014 Sunset Fade-in / Overnight Fade-out (color, brightness, durations + summer-skip gate)",
+      "views": 361,
+      "likes": 0,
+      "created_at": "2026-06-02T02:01:13.386Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 965834,
+      "title": "\ud83c\udf05 Adaptive Lighting Scheduler",
+      "views": 2930,
+      "likes": 6,
+      "created_at": "2025-12-23T18:54:07.394Z",
+      "posts": 9,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1012370,
+      "title": "Better Label Selector",
+      "views": 189,
+      "likes": 0,
+      "created_at": "2026-06-01T00:24:44.797Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1012181,
+      "title": "ESPHome Smart Sprinkler Controller with Multi-Zone Hardware Queuing & Weather-Aware Automation",
+      "views": 385,
+      "likes": 1,
+      "created_at": "2026-05-30T09:46:33.884Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 866649,
+      "title": "\ud83c\udfae ZHA, deCONZ, Zigbee2MQTT - IKEA E2201 RODRET Dimmer Universal blueprint - all actions + double click events - control lights, media players and more with Hooks",
+      "views": 12633,
+      "likes": 8,
+      "created_at": "2025-03-20T11:34:15.070Z",
+      "posts": 19,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1012124,
+      "title": "[Blueprint] Samotech Pull Cord Bathroom Auto-Off: timed turn-off for UK Zone 2 bathrooms (ZHA + Z2M)",
+      "views": 53,
+      "likes": 0,
+      "created_at": "2026-05-29T16:47:45.366Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1012122,
+      "title": "[Blueprint] Samotech SM323 v2 Direct Mirror Pair - ~200ms two-device dimmer companion (ZHA + Z2M)",
+      "views": 77,
+      "likes": 0,
+      "created_at": "2026-05-29T16:39:10.526Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1012121,
+      "title": "[Blueprint] Samotech devices Linked Sync Group - mirror 2-5 dimmers/switches on the same circuit (ZHA + Z2M)",
+      "views": 61,
+      "likes": 0,
+      "created_at": "2026-05-29T16:34:31.239Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 489620,
+      "title": "[Z2M] Inovelli Blue Series Switch LED Notification Script (VZM31-SN, VZM35-SN)",
+      "views": 12639,
+      "likes": 54,
+      "created_at": "2022-11-16T05:27:03.160Z",
+      "posts": 114,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1012039,
+      "title": "[Blueprint] Smart ERV / HRV Controller with IAQ Sensors, Manual Timers, and Efficiency Guardrails",
+      "views": 245,
+      "likes": 1,
+      "created_at": "2026-05-28T22:45:02.814Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1012003,
+      "title": "Automation Failure Notification",
+      "views": 292,
+      "likes": 0,
+      "created_at": "2026-05-28T15:50:32.727Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1011714,
+      "title": "License Plate Recognition using Gemini 3.5 Flash API (Gate Opener & Notifications)",
+      "views": 558,
+      "likes": 2,
+      "created_at": "2026-05-25T23:56:06.464Z",
+      "posts": 7,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1011891,
+      "title": "Solar Surplus Heater Control \u2014 maximise self-consumption with priority chaining",
+      "views": 335,
+      "likes": 1,
+      "created_at": "2026-05-27T19:29:03.795Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1011839,
+      "title": "Bidirectional light sync",
+      "views": 308,
+      "likes": 0,
+      "created_at": "2026-05-27T09:18:15.578Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 584240,
+      "title": "Close/open curtain (cover, blinds) based on sun and weather",
+      "views": 22387,
+      "likes": 21,
+      "created_at": "2023-06-21T11:56:20.674Z",
+      "posts": 59,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 966744,
+      "title": "\ud83d\udca1 Clean & Simple Universal Occupancy Lighting for PIR & Radar Sensors (examples: Aqara FP300, Eve Motion)",
+      "views": 3725,
+      "likes": 6,
+      "created_at": "2025-12-26T18:58:41.819Z",
+      "posts": 20,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1011751,
+      "title": "License Plate Recognition using Gemini 3.5 Flash API (Gate Opener & Notifications) with lights",
+      "views": 305,
+      "likes": 0,
+      "created_at": "2026-05-26T12:35:37.541Z",
+      "posts": 3,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1011789,
+      "title": "AWTRIX - Claude Usage Display",
+      "views": 203,
+      "likes": 1,
+      "created_at": "2026-05-26T18:31:03.259Z",
+      "posts": 2,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1011784,
+      "title": "Everything-Remote-Blueprint",
+      "views": 192,
+      "likes": 0,
+      "created_at": "2026-05-26T17:30:23.174Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 276859,
+      "title": "ZHA - IKEA TRADFRI - 2 Button Remote - OnOff and Brightness",
+      "views": 7809,
+      "likes": 12,
+      "created_at": "2021-02-04T20:12:55.552Z",
+      "posts": 13,
+      "yaml_source": "github"
+    },
+    {
+      "id": 798883,
+      "title": "INNR zigbee remote RC210 blueprint, to use with ZHA",
+      "views": 1105,
+      "likes": 1,
+      "created_at": "2024-11-23T20:10:27.621Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 945486,
+      "title": "SmartThings Washer Dryer Cycle Time Remaining - Template sensor that calculates the remaining time for your Samsung SmartThings washer or dryer cycle",
+      "views": 942,
+      "likes": 2,
+      "created_at": "2025-10-30T03:16:13.674Z",
+      "posts": 2,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 979403,
+      "title": "ZHA - IKEA Styrbar (N2) - Light, Dimming & Color Temp (No Helpers needed!)",
+      "views": 2065,
+      "likes": 6,
+      "created_at": "2026-01-26T11:25:45.525Z",
+      "posts": 5,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 964276,
+      "title": "Grocy Meal Plan to Calendar Sync (with Duplicate Check)",
+      "views": 405,
+      "likes": 1,
+      "created_at": "2025-12-19T12:56:44.198Z",
+      "posts": 5,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1007514,
+      "title": "Zigbee2MQTT - IKEA Symfonisk Gen2 [E2123] Media Control",
+      "views": 687,
+      "likes": 8,
+      "created_at": "2026-04-27T12:54:26.023Z",
+      "posts": 14,
+      "yaml_source": "github"
+    },
+    {
+      "id": 579538,
+      "title": "Lutron Cas\u00e9ta Pico 4/5 Button Remote Advanced Actions (Core Integration)",
+      "views": 8865,
+      "likes": 10,
+      "created_at": "2023-06-08T06:03:55.228Z",
+      "posts": 36,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 466383,
+      "title": "Blueprint for monitoring plants",
+      "views": 4339,
+      "likes": 5,
+      "created_at": "2022-09-28T13:11:52.293Z",
+      "posts": 4,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 989940,
+      "title": "\ud83d\udcf8 Smart Camera Notifications",
+      "views": 1852,
+      "likes": 2,
+      "created_at": "2026-02-23T16:02:17.239Z",
+      "posts": 6,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1011309,
+      "title": "\ud83e\udeb4 Hydroponic Tower Watering Blueprint (Day/Night + Weather-Adaptive Intervals)",
+      "views": 258,
+      "likes": 0,
+      "created_at": "2026-05-22T13:40:46.975Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 551552,
+      "title": "\ud83d\udd14 Notifications - Actionable Mobile Notifications Script, with optional Timeout Feature and Camera Snapshots [works with iOS/Android]",
+      "views": 51607,
+      "likes": 115,
+      "created_at": "2023-03-24T03:37:22.467Z",
+      "posts": 234,
+      "yaml_source": "github"
+    },
+    {
+      "id": 601531,
+      "title": "ZHA - Inovelli Blue Series Animated Notifications to single or multiple switches simultaneously!",
+      "views": 2195,
+      "likes": 3,
+      "created_at": "2023-08-10T16:27:38.810Z",
+      "posts": 12,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 746683,
+      "title": "PV \u00dcberschussladen/ load excess Alfen Eve Wallbox",
+      "views": 4556,
+      "likes": 0,
+      "created_at": "2024-07-06T08:56:39.402Z",
+      "posts": 3,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 954667,
+      "title": "SONOFF ORB 4in1 Easy Setup",
+      "views": 4434,
+      "likes": 2,
+      "created_at": "2025-11-24T10:49:39.441Z",
+      "posts": 22,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1010929,
+      "title": "Waste Collection Reminder",
+      "views": 785,
+      "likes": 0,
+      "created_at": "2026-05-19T12:06:55.814Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1006378,
+      "title": "Multi Zone Irrigation - Multi-valve, sensor driven",
+      "views": 1305,
+      "likes": 1,
+      "created_at": "2026-04-22T15:47:04.678Z",
+      "posts": 3,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1010863,
+      "title": "Battery Notes",
+      "views": 261,
+      "likes": 0,
+      "created_at": "2026-05-18T23:07:19.555Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 612326,
+      "title": ":calendar: Calendar Notifications & Actions",
+      "views": 112387,
+      "likes": 213,
+      "created_at": "2023-09-09T12:09:04.253Z",
+      "posts": 433,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 274735,
+      "title": "Zigbee2MQTT - Tuya 4-button Scene Switch (TS0044)",
+      "views": 84976,
+      "likes": 91,
+      "created_at": "2021-01-30T16:39:39.691Z",
+      "posts": 166,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1007648,
+      "title": "Water Leak Alert - Multi-Sensor, Mobile Push, TTS with Presence Check",
+      "views": 940,
+      "likes": 0,
+      "created_at": "2026-04-28T02:56:22.290Z",
+      "posts": 3,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1010666,
+      "title": "[Blueprint] AWTRIX/SVITRIX PV Display \u2013 Solar Power, Battery & Grid (3 Blueprints)",
+      "views": 302,
+      "likes": 0,
+      "created_at": "2026-05-17T10:14:25.753Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 329686,
+      "title": "Z2M - Philips Hue Tap Switch",
+      "views": 10555,
+      "likes": 10,
+      "created_at": "2021-08-13T14:16:04.616Z",
+      "posts": 15,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 369425,
+      "title": "Plant moisture notification",
+      "views": 9387,
+      "likes": 16,
+      "created_at": "2021-12-21T01:27:06.623Z",
+      "posts": 17,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 843686,
+      "title": ":honeybee: Bee In The Hive Sensor",
+      "views": 13187,
+      "likes": 20,
+      "created_at": "2025-02-08T01:34:08.618Z",
+      "posts": 35,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 478954,
+      "title": ":toilet: Toilet Exhaust Fan - Time Delay - Trigger Wait Time - Time",
+      "views": 31134,
+      "likes": 58,
+      "created_at": "2022-10-23T08:06:15.915Z",
+      "posts": 110,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 940901,
+      "title": ":globe_with_meridians: Zone Presence of People & Devices",
+      "views": 10397,
+      "likes": 23,
+      "created_at": "2025-10-16T08:37:58.268Z",
+      "posts": 25,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 722652,
+      "title": "ZHA - Fan speed display on Inovelli Blue Series 2-1 Switch",
+      "views": 1116,
+      "likes": 2,
+      "created_at": "2024-04-28T03:34:57.092Z",
+      "posts": 10,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1010503,
+      "title": "Smart travel blueprint",
+      "views": 263,
+      "likes": 0,
+      "created_at": "2026-05-15T13:25:19.629Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1010399,
+      "title": "Z2M - Aqara Wireless mini switch with any click option",
+      "views": 190,
+      "likes": 0,
+      "created_at": "2026-05-14T15:33:18.950Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 662836,
+      "title": "Linked Entities - keep mutlple entities state in sync (lights, switches, etc.)",
+      "views": 16578,
+      "likes": 28,
+      "created_at": "2023-12-29T08:14:41.014Z",
+      "posts": 63,
+      "yaml_source": "github"
+    },
+    {
+      "id": 602716,
+      "title": "Notify Alexa devices using Alexa Media Player",
+      "views": 31771,
+      "likes": 15,
+      "created_at": "2023-08-14T03:00:21.213Z",
+      "posts": 22,
+      "yaml_source": "github"
+    },
+    {
+      "id": 579927,
+      "title": "ZHA - Inovelli Blue Series 2-1 Switch LED Notification Script",
+      "views": 5080,
+      "likes": 8,
+      "created_at": "2023-06-08T22:46:04.549Z",
+      "posts": 26,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1009996,
+      "title": "[EN] DIY ESP32 IR Receiver using recycled Dymond RGB hardware from action with esphome yaml",
+      "views": 274,
+      "likes": 1,
+      "created_at": "2026-05-10T19:48:48.886Z",
+      "posts": 6,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1009949,
+      "title": "SCBRC Simple roller control with dual button device (Open/Close/stop + 50% with double click)",
+      "views": 76,
+      "likes": 0,
+      "created_at": "2026-05-10T12:43:04.037Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 254841,
+      "title": "Notify or do something when an appliance like a dishwasher or washing machine finishes",
+      "views": 228937,
+      "likes": 159,
+      "created_at": "2020-12-13T14:03:32.035Z",
+      "posts": 185,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 622406,
+      "title": "Created a blueprint for linking On/Off/Brightness for smart switch and shelly dimmers",
+      "views": 3827,
+      "likes": 3,
+      "created_at": "2023-10-05T05:22:21.614Z",
+      "posts": 6,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 674206,
+      "title": "Easy configuration for an Onvis HS2 Smart Button (5-Button)",
+      "views": 5732,
+      "likes": 5,
+      "created_at": "2024-01-16T13:45:32.445Z",
+      "posts": 28,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 644842,
+      "title": "Advanced Bathroom Fan Timer",
+      "views": 2970,
+      "likes": 1,
+      "created_at": "2023-11-23T05:39:19.235Z",
+      "posts": 3,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 981024,
+      "title": "IKEA Bilresa Scroll Wheel Remote controller - Lights, Brightness, Hue, Temperature, Climate use Z2M Zigbee2MQTT",
+      "views": 5153,
+      "likes": 3,
+      "created_at": "2026-01-30T16:18:12.964Z",
+      "posts": 18,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 779544,
+      "title": "Simple Blueprint : Zigbee2MQTT Frient Keypad for Alarm control panel (ex: Alarmo)",
+      "views": 10821,
+      "likes": 17,
+      "created_at": "2024-10-06T21:44:12.699Z",
+      "posts": 41,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1009593,
+      "title": "Blueprint for Graber 12 Channel Premium Remote",
+      "views": 89,
+      "likes": 0,
+      "created_at": "2026-05-07T12:30:36.266Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 730391,
+      "title": "\u26e9\ufe0f Automatic Gate : don't ever use your remote again",
+      "views": 24957,
+      "likes": 40,
+      "created_at": "2024-05-18T13:14:55.685Z",
+      "posts": 146,
+      "yaml_source": "github"
+    },
+    {
+      "id": 413228,
+      "title": "Automatic Room Occupancy - Room-based occupancy based on activity",
+      "views": 18460,
+      "likes": 13,
+      "created_at": "2022-04-19T12:54:40.792Z",
+      "posts": 45,
+      "yaml_source": "github"
+    },
+    {
+      "id": 957196,
+      "title": "IKEA Tradfri Bulb Reset / Pairing Mode Sequence",
+      "views": 1438,
+      "likes": 3,
+      "created_at": "2025-11-30T21:01:48.411Z",
+      "posts": 4,
+      "yaml_source": "github"
+    },
+    {
+      "id": 529472,
+      "title": "Zigbee2MQTT STYRBAR",
+      "views": 3197,
+      "likes": 4,
+      "created_at": "2023-02-03T09:03:56.951Z",
+      "posts": 3,
+      "yaml_source": "github"
+    },
+    {
+      "id": 963357,
+      "title": "\ud83c\udf19 Smart Night Light by LTek",
+      "views": 902,
+      "likes": 2,
+      "created_at": "2025-12-16T18:16:23.865Z",
+      "posts": 2,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 954122,
+      "title": ":broom: Smart Vacuum & Light Sync",
+      "views": 1796,
+      "likes": 5,
+      "created_at": "2025-11-22T20:24:18.999Z",
+      "posts": 9,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 378710,
+      "title": "Playing Alexa Echo Announcments, TTS Messages, or Sounds only in rooms that are occupied. BLUEPRINT",
+      "views": 4460,
+      "likes": 2,
+      "created_at": "2022-01-11T23:20:37.388Z",
+      "posts": 7,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 619672,
+      "title": "Energy Disaggregation or Non-Intrusive Load Monitoring (NILM) blueprint",
+      "views": 9482,
+      "likes": 13,
+      "created_at": "2023-09-28T10:18:17.072Z",
+      "posts": 32,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 986147,
+      "title": "Configure Aqara smart controllers in an automation",
+      "views": 592,
+      "likes": 0,
+      "created_at": "2026-02-12T21:33:52.735Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1008454,
+      "title": "Low Battery Warning",
+      "views": 603,
+      "likes": 0,
+      "created_at": "2026-05-01T11:30:23.588Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 960128,
+      "title": "\ud83c\udf26 Weather Condition Alert Message (rain/snow/etc within a time window)",
+      "views": 4666,
+      "likes": 2,
+      "created_at": "2025-12-08T05:49:01.851Z",
+      "posts": 15,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1007840,
+      "title": "Lutron Pico Blueprint",
+      "views": 179,
+      "likes": 2,
+      "created_at": "2026-04-28T23:45:16.293Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1007746,
+      "title": "Control home assistant using Meshtastic",
+      "views": 421,
+      "likes": 1,
+      "created_at": "2026-04-28T14:56:45.873Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 958295,
+      "title": "\ud83d\udea8 Alarm System with Keypad support (Z2M / ZHA / Dashboard) [KEPZB-110]",
+      "views": 4730,
+      "likes": 7,
+      "created_at": "2025-12-03T21:07:07.029Z",
+      "posts": 67,
+      "yaml_source": "github"
+    },
+    {
+      "id": 930764,
+      "title": "Music Assistant DJ Announcer Blueprint for Home Assistant \u2013 Automated DJ-Style Music Playback",
+      "views": 3231,
+      "likes": 3,
+      "created_at": "2025-09-15T02:59:04.696Z",
+      "posts": 13,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 559523,
+      "title": "Zigbee2MQTT - IKEA Symfonisk Gen2 [E2123] Media Control v1.55a",
+      "views": 33815,
+      "likes": 64,
+      "created_at": "2023-04-12T20:55:41.729Z",
+      "posts": 267,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 856444,
+      "title": "Sonoff TRVZB External Temperature Sensor Calibration",
+      "views": 25976,
+      "likes": 61,
+      "created_at": "2025-02-28T22:58:09.613Z",
+      "posts": 170,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 916571,
+      "title": "Vibration Sensor Filter Blueprint for Appliances (e.g. washing machines/dryers/dishwashers)",
+      "views": 3844,
+      "likes": 12,
+      "created_at": "2025-08-01T18:30:00.990Z",
+      "posts": 13,
+      "yaml_source": "github"
+    },
+    {
+      "id": 678152,
+      "title": "\ud83d\udca8 Adaptive fan speed control based on temperature and speed range",
+      "views": 18822,
+      "likes": 33,
+      "created_at": "2024-01-23T06:35:27.903Z",
+      "posts": 81,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 870864,
+      "title": "Frigate Telegram notifications, perfected - but with quite some work on your side",
+      "views": 6396,
+      "likes": 11,
+      "created_at": "2025-03-29T17:38:58.374Z",
+      "posts": 23,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 987984,
+      "title": "Simple Presence Simulation",
+      "views": 1072,
+      "likes": 2,
+      "created_at": "2026-02-17T21:50:12.471Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 972431,
+      "title": "\u23f2\ufe0f Z2M Knob \u2014 Gesture Action Controller (Moes ZG-101ZD & similar AliExpress-sold knobs) with filter of false events",
+      "views": 2120,
+      "likes": 6,
+      "created_at": "2026-01-09T03:39:10.111Z",
+      "posts": 20,
+      "yaml_source": "github"
+    },
+    {
+      "id": 678736,
+      "title": "Track repetitive tasks with NFC tags",
+      "views": 12827,
+      "likes": 27,
+      "created_at": "2024-01-24T08:59:34.133Z",
+      "posts": 37,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 388153,
+      "title": "LG webOS Smart TV - Enable Turn On Action for HA 2022.2+",
+      "views": 136459,
+      "likes": 104,
+      "created_at": "2022-02-03T19:29:48.391Z",
+      "posts": 144,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1006212,
+      "title": "Shelly BLU RC Button 4 US ZB Z2M",
+      "views": 314,
+      "likes": 1,
+      "created_at": "2026-04-21T20:27:41.041Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1006050,
+      "title": "cctvQL \u2014 Motion Alert with Natural Language Camera Summary",
+      "views": 195,
+      "likes": 0,
+      "created_at": "2026-04-21T07:46:54.874Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1006054,
+      "title": "cctvQL \u2014 Scheduled Camera Report (Daily / Nightly Digest)",
+      "views": 116,
+      "likes": 0,
+      "created_at": "2026-04-21T07:52:05.519Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1006055,
+      "title": "cctvQL \u2014 PTZ to Preset on Motion (with Auto-Return Home)",
+      "views": 132,
+      "likes": 0,
+      "created_at": "2026-04-21T07:57:11.349Z",
+      "posts": 2,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 796078,
+      "title": "\ud83d\udcec Smart mailbox",
+      "views": 6867,
+      "likes": 14,
+      "created_at": "2024-11-17T15:01:52.519Z",
+      "posts": 12,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1006038,
+      "title": "Apollo Air-1 LED Color based on combined Air Quality",
+      "views": 91,
+      "likes": 0,
+      "created_at": "2026-04-21T07:02:34.549Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1005830,
+      "title": "Range Actions: Run action when value enters a specific range(s)",
+      "views": 102,
+      "likes": 0,
+      "created_at": "2026-04-20T11:54:24.722Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 514527,
+      "title": "Shelly i4 4 Buttons actions",
+      "views": 17419,
+      "likes": 13,
+      "created_at": "2023-01-07T07:06:46.931Z",
+      "posts": 27,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 796494,
+      "title": "\ud83d\udea8 Custom Blinking Lights Blueprint",
+      "views": 14290,
+      "likes": 30,
+      "created_at": "2024-11-18T14:30:02.888Z",
+      "posts": 60,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 899043,
+      "title": "Zero Feed-in Control for PV Systems \u2013 Blueprint for Hoymiles + OpenDTU",
+      "views": 1946,
+      "likes": 3,
+      "created_at": "2025-06-07T10:20:47.633Z",
+      "posts": 7,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 943155,
+      "title": "Sunrise Light Simulator",
+      "views": 5261,
+      "likes": 12,
+      "created_at": "2025-10-23T02:38:40.525Z",
+      "posts": 24,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1005144,
+      "title": "\ud83c\udf9b\ufe0f ZHA - Tuya Smart Scene Button (Knob) for Media Players & Music Assistant",
+      "views": 212,
+      "likes": 0,
+      "created_at": "2026-04-17T16:03:37.337Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1005084,
+      "title": "Reliable motion trigger",
+      "views": 360,
+      "likes": 0,
+      "created_at": "2026-04-17T11:33:05.123Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 1004910,
+      "title": "Bathroom Automation System (mmWave Required)",
+      "views": 551,
+      "likes": 0,
+      "created_at": "2026-04-16T15:47:15.383Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 989969,
+      "title": "[Blueprint] \ud83e\ude9f Ventilation Recommendation v0.4.3 \u2013 Smart ventilation alerts via Push, Alexa & HA UI (Beta)",
+      "views": 741,
+      "likes": 2,
+      "created_at": "2026-02-23T17:35:37.787Z",
+      "posts": 5,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 581146,
+      "title": ":sun_with_face: Automatic blinds / sunscreen control based on sun platform",
+      "views": 7909,
+      "likes": 12,
+      "created_at": "2023-06-12T14:01:55.409Z",
+      "posts": 16,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 492872,
+      "title": "Enbrighten Z-Wave Light Switch Mutli Clicks",
+      "views": 2169,
+      "likes": 2,
+      "created_at": "2022-11-23T05:06:53.656Z",
+      "posts": 6,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1004142,
+      "title": "\ud83d\udcf2 Shelly Elevate Device Buttons (Shelly WallDisplayXL)",
+      "views": 505,
+      "likes": 0,
+      "created_at": "2026-04-14T11:56:13.955Z",
+      "posts": 1,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 663302,
+      "title": "Zigbee2MQTT - Tuya 4-button Scene Switch (TS0044) - rdeangel",
+      "views": 16621,
+      "likes": 25,
+      "created_at": "2023-12-30T00:37:43.398Z",
+      "posts": 35,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 944318,
+      "title": "Modern Sunrise Wake-Up Blueprint (Kelvin/RGB): Start/End Sliders, Quiet Hours, Workday \u2014 Evolution of Sbyx",
+      "views": 4184,
+      "likes": 5,
+      "created_at": "2025-10-26T11:50:27.972Z",
+      "posts": 13,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1003088,
+      "title": "Universal timer with a set reset time or reset at 00:01 (daily reset)",
+      "views": 281,
+      "likes": 1,
+      "created_at": "2026-04-10T11:49:35.779Z",
+      "posts": 5,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1003523,
+      "title": "Ikea bilresa two button zha",
+      "views": 611,
+      "likes": 0,
+      "created_at": "2026-04-12T07:16:45.594Z",
+      "posts": 1,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 1003465,
+      "title": "Airzone Climate Manager - Intelligent HVAC Control Blueprint (5 Zones, Multi-Slot, Solar Boost, EV Aware)",
+      "views": 317,
+      "likes": 0,
+      "created_at": "2026-04-11T22:36:20.465Z",
+      "posts": 1,
+      "yaml_source": "github"
+    },
+    {
+      "id": 255193,
+      "title": "Wake-up light alarm with sunrise effect",
+      "views": 336745,
+      "likes": 279,
+      "created_at": "2020-12-14T12:17:55.047Z",
+      "posts": 462,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 744631,
+      "title": "Automated Plant Watering v1",
+      "views": 7826,
+      "likes": 3,
+      "created_at": "2024-06-30T02:16:31.796Z",
+      "posts": 5,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 937052,
+      "title": "Dreame - Use Alexa to clean specific Room and Advanced Automation for vacuum",
+      "views": 2703,
+      "likes": 5,
+      "created_at": "2025-10-04T15:03:19.785Z",
+      "posts": 11,
+      "yaml_source": "no_yaml_found"
+    },
+    {
+      "id": 383543,
+      "title": "Advanced Circadian Lighting",
+      "views": 24128,
+      "likes": 26,
+      "created_at": "2022-01-23T16:24:48.352Z",
+      "posts": 28,
+      "yaml_source": "inline"
+    },
+    {
+      "id": 1003289,
+      "title": "Advanced Circadian Lighting v2.0",
+      "views": 810,
+      "likes": 1,
+      "created_at": "2026-04-11T07:12:32.170Z",
+      "posts": 1,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 636995,
+      "title": "Ikea Rodret dimmer with triple click",
+      "views": 9270,
+      "likes": 12,
+      "created_at": "2023-11-06T08:22:20.894Z",
+      "posts": 21,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 1003146,
+      "title": "Zigbee2MQTT - 4-Button Switch (Conditions, Debounce & Collapsible UI)",
+      "views": 461,
+      "likes": 0,
+      "created_at": "2026-04-10T15:47:51.899Z",
+      "posts": 1,
+      "yaml_source": "gist"
+    },
+    {
+      "id": 867586,
+      "title": "ZHA - 1-Button (TS004F)",
+      "views": 2191,
+      "likes": 3,
+      "created_at": "2025-03-22T09:46:29.195Z",
+      "posts": 5,
+      "yaml_source": "inline"
+    }
+  ]
+}

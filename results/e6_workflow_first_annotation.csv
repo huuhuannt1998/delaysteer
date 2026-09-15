@@ -1,0 +1,41 @@
+topic_id,critical_fact_domains,n_critical_fact_domains,reads_sensor_state,age_bounded,timeout_present,timeout_triggers_recovery,fallback_latitude,policy_edit_permitted,high_impact_action,n_yaml_bytes,parse_error,title
+1014995,sensor,1,1,0,1,1,1,1,0,26779,,Adaptive Fan Speed Control
+330332,sensor,1,1,0,0,0,0,0,0,11089,,🌤 WUnderground data uploader
+1012122,,0,0,0,0,0,0,0,0,3724,,[Blueprint] Samotech SM323 v2 Direct Mirror Pair - ~200ms two-device dimmer companion (ZHA + Z2M)
+1018979,binary_sensor|sensor,2,1,0,1,1,1,1,0,10559,,"Play daily podcast from RSS feed – Mediaplayer or Sonos, Manual Bypass and Daily Limit"
+678152,sensor,1,1,0,0,0,0,1,0,6603,,💨 Adaptive fan speed control based on temperature and speed range
+636946,,0,0,1,0,0,0,0,0,20536,,Actionable Task Reminder - A Powerful Task Reminder Automation
+982305,sensor,1,1,0,0,0,0,0,0,9901,,IKEA Bilresa Scrollwheel (Matter) – Ultimate Light Controller (Atomic Edition)
+349461,alarm_control_panel,1,1,0,1,1,1,0,0,5951,,Synchronize Ring Alarm Keypad v2 with Alarmo
+1005084,binary_sensor|sensor,2,1,0,0,0,0,1,0,9952,,Reliable motion trigger
+1012833,,0,0,0,0,0,0,0,0,1397,,[Automation] Meross Alarm Hub Loop (MSH400 / MSH450) - 100% Local Trigger⁠
+1019793,,0,0,0,0,0,0,0,0,2944,,AWTRIX NG (next generation firmware)
+1020525,sensor,1,1,0,0,0,0,0,1,6058,,Vent-Axia extractor boost on/off when risk of mould
+1015834,,0,0,0,0,0,0,1,0,2514,,ZHA-Tradfri-ON/OFF- for lights and switches
+760429,person,1,1,0,0,0,0,0,0,4974,,Telegram Bot: Conversation with Assist (and others like OpenAI)
+967636,binary_sensor|cover|lock|sensor,4,1,0,1,1,1,1,1,174621,,"🚗 Smart Garage - Control Doors, Lighting, and Alerts"
+676340,,0,0,0,1,1,1,0,0,5462,,UPDATED: Notify all mobile devices and HA dashboard with one script!
+960128,,0,0,0,0,0,0,1,0,17572,,🌦 Weather Condition Alert Message (rain/snow/etc within a time window)
+1013061,sensor,1,1,0,0,0,0,0,0,17411,,Full control dimmer for RGB+CCT lights using Z2M Smart Knob
+942940,binary_sensor|sensor,2,1,0,0,0,0,1,0,6486,,Radiator Fan Controller - Control your radiator fans
+329686,sensor,1,1,0,0,0,0,0,0,1194,,Z2M - Philips Hue Tap Switch
+991955,,0,0,0,0,0,0,0,0,524,,Aqara Cube zigbee2mqtt (35 actions)
+1017469,binary_sensor|cover|device_tracker|lock|sensor,5,1,1,0,0,0,0,0,33724,,Detect Home Assistant's Frozen Devices and Entities - 🥶 Entity Sentinel
+413705,sensor,1,1,1,0,0,0,0,0,26796,,Philips HUE Smart Button - 5 press actions + hold-to-dim
+1014532,,0,0,1,0,0,0,0,0,6507,,Automatically-resetting tasks: To-Do List Chore Scheduler
+255193,device_tracker|person|sensor,3,1,1,1,1,0,0,0,5552,,Wake-up light alarm with sunrise effect
+652571,binary_sensor|sensor,2,1,1,0,0,0,0,0,8893,,📲 Contact Sensor (Door or Window) Left Open Notification
+843686,binary_sensor|cover|sensor,3,1,0,0,0,0,1,0,5329,,:honeybee: Bee In The Hive Sensor
+1021836,,0,0,0,0,0,0,0,0,377,,⚡ Anker SOLIX 4 Pro - Local Zero Export with Eco-Mode & Hardware Protection
+944273,lock|sensor,2,1,0,1,1,1,1,0,76025,,Solakon ONE Zero Export Control ⚡ (Dynamic Nulleinspeisung/Zero Export with SOC Logic)
+976364,,0,0,0,0,0,0,0,0,2408,,IKEA Bilresa E2489 2-button remote (Z2M)
+935363,,0,0,1,0,0,0,0,1,4717,,Scheduler Blueprint
+953189,sensor,1,1,0,0,0,0,0,0,2827,,Anniversaries Notifier
+1019355,,0,0,1,0,0,0,0,0,4182,,A blueprint to adjust lights throughout the day based on a time range
+867586,,0,0,0,0,0,0,0,0,1127,,ZHA - 1-Button (TS004F)
+997537,,0,0,0,1,1,1,0,0,5318,,ESPHome Device Auto Bulk Update
+469873,binary_sensor|device_tracker|person|sensor,4,1,1,1,1,0,0,1,124530,,🔥 Advanced Heating Control
+591182,,0,0,0,0,0,0,0,0,4713,,IKEA Remotes - Control Light
+1004142,,0,0,0,0,0,0,0,0,2526,,📲 Shelly Elevate Device Buttons (Shelly WallDisplayXL)
+1011309,,0,0,1,0,0,0,0,0,5469,,🪴 Hydroponic Tower Watering Blueprint (Day/Night + Weather-Adaptive Intervals)
+722652,,0,0,0,0,0,0,0,0,2182,,ZHA - Fan speed display on Inovelli Blue Series 2-1 Switch

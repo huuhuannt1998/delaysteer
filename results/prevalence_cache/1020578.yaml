@@ -1,0 +1,104 @@
+blueprint:
+  name: Dual Button Smart Fan & Oscillation Control
+  description: >
+    Control fan power (Single Press), cycle 3 speed levels (Double Press: 33%, 66%, 100%), 
+    and jump to max speed (Long Press) with Button 1. Toggle horizontal swing with Button 2.
+  domain: automation
+  input:
+    button_1_entity:
+      name: Button 1 (Fan & Speed Control)
+      description: Select the event entity for fan power and speed adjustment.
+      selector:
+        entity:
+          domain: event
+    button_2_entity:
+      name: Button 2 (Oscillation Control)
+      description: Select the event entity for oscillation toggle.
+      selector:
+        entity:
+          domain: event
+    fan_entity:
+      name: Smart Fan
+      description: Select the target fan entity.
+      selector:
+        entity:
+          domain: fan
+    swing_switch_entity:
+      name: Oscillation Switch
+      description: Select the switch entity for horizontal swing control.
+      selector:
+        entity:
+          domain: switch
+
+mode: queued
+
+trigger:
+  - platform: state
+    entity_id: !input button_1_entity
+    id: dugme_1
+  - platform: state
+    entity_id: !input button_2_entity
+    id: dugme_2
+
+action:
+  - choose:
+      # BUTTON 1 ACTIONS (Power & Speed)
+      - conditions:
+          - condition: trigger
+            id: dugme_1
+        sequence:
+          - choose:
+              # Single Press -> Toggle Power
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ state_attr(trigger.entity_id, 'event_type') == 'multi_press_1' }}
+                sequence:
+                  - action: fan.toggle
+                    target:
+                      entity_id: !input fan_entity
+
+              # Double Press -> Cycle Speeds (33% -> 66% -> 100%)
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ state_attr(trigger.entity_id, 'event_type') == 'multi_press_2' }}
+                sequence:
+                  - action: fan.turn_on
+                    target:
+                      entity_id: !input fan_entity
+                    data:
+                      percentage: >-
+                        {% set current = state_attr(target_fan, 'percentage') | default(0, true) | int %}
+                        {% if is_state(target_fan, 'off') or current >= 100 %}
+                          33
+                        {% elif current < 33 %}
+                          33
+                        {% elif current < 66 %}
+                          66
+                        {% else %}
+                          100
+                        {% endif %}
+                variables:
+                  target_fan: !input fan_entity
+
+              # Long Press -> Jump to Max Speed (100%)
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ state_attr(trigger.entity_id, 'event_type') == 'long_press' }}
+                sequence:
+                  - action: fan.turn_on
+                    target:
+                      entity_id: !input fan_entity
+                    data:
+                      percentage: 100
+
+      # BUTTON 2 ACTIONS (Oscillation / Swing Toggle)
+      - conditions:
+          - condition: trigger
+            id: dugme_2
+        sequence:
+          - action: switch.toggle
+            target:
+              entity_id: !input swing_switch_entity

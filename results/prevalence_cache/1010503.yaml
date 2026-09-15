@@ -1,0 +1,664 @@
+blueprint:
+  name: Smart EV Travel Planning & Charging
+  description: >
+    VERSION: v2.6.2<br>
+
+    ───────────────<br>
+    REQUIRED<br>
+    ───────────────<br>
+    • Calendar entity with location-based events<br>
+    • Person entity (home location)<br>
+    • Google Travel Time integration (via input_text)<br>
+
+    ───────────────<br>
+    OPTIONAL MODULES<br>
+    ───────────────<br>
+
+    Travel Assistant:<br>
+    • input_boolean.not_returning_home → Skip return trip calculation<br>
+
+    Preconditioning:<br>
+    • input_datetime.ev_preheat_time → Stores calculated preheat start time<br>
+
+    EV & Charging:<br>
+    • Battery SOC sensor (percentage)<br>
+    • Range sensor (in km or miles)<br>
+    • Miles option will be built in later version<br>
+    • Target SOC number helper (used by EV Smart Charge)<br>
+
+    ───────────────<br>
+    HOW IT WORKS<br>
+    ───────────────<br>
+
+    1. Reads all calendar events with a location for the next day<br>
+    2. Calculates driving time + distance using Google Travel Time<br>
+    3. Automatically creates "Travel" events in your calendar (before each appointment)<br>
+    4. Plans total distance including optional return trip home<br>
+    5. Calculates smart target SOC with configurable safety buffer<br>
+    6. Sets target SOC for your EV Smart Charge integration<br>
+    7. Calculates preconditioning start time (first travel block start – buffer)<br>
+    8. Sends notification with summary & charging recommendations<br>
+
+    ───────────────<br>
+    EXAMPLE WORKFLOW<br>
+    ───────────────<br>
+
+    Meeting at 09:00 (location: Work)<br>
+    → Calculates 30min travel time<br>
+    → Creates Travel event: 08:00–09:00<br>
+    → Preconditioning (20min buffer): starts at 07:40<br>
+    → Google uses 60min earlier departure for traffic accuracy (first trip only)<br>
+
+    ───────────────<br>
+    KEY FEATURES<br>
+    ───────────────<br>
+
+    • Smart Zone Matching: "home"/"thuis" → zone.home | "werk"/"office"/"kantoor" → zone.werk<br>
+    • Traffic-Aware Timing: First trip uses 60 minutes earlier departure for Google API (subsequent trips use previous event end time)<br>
+    • Preconditioning Alignment: Preheat starts at (first travel block start – buffer) so your car is ready exactly when needed<br>
+    • Configurable Execution Time: Set daily run time (default 14:30 for next-day planning)<br>
+    • Supports km only<br>
+    • All modules outside Core Settings are fully optional<br>
+
+    ───────────────<br>
+    TIPS & BEST PRACTICES<br>
+    ───────────────<br>
+
+    • Works best with Google Calendar + Google Travel Time integration<br>
+    • waze will be tested in the future (because it does not worjk in my HA) 
+    • Pair with EV Smart Charge blueprint for automatic charging optimization<br>
+    • Use input_boolean.not_returning_home to skip return trip on specific days<br>
+    • Adjust safety buffer % based on your charging preferences (default 15%)<br>
+    • Monitor preconditioning times via your preheat input_datetime entity<br>
+
+  domain: automation
+
+  input:
+    core_settings:
+      name: Core Settings
+      input:
+        run_time:
+          name: Run time
+          description: Time when this automation should run daily
+          default: "19:30:00"
+          selector:
+            time:
+            
+        calendar:
+          name: Calendar
+          selector:
+            entity:
+              domain: calendar
+        person:
+          name: Person entity
+          selector:
+            entity:
+              domain: person
+
+        google_api:
+          name: Google Travel Time Input Text (only needed for Google)
+          default: ""
+          selector:
+            entity:
+              domain: input_text
+        
+        total_distance_helper:
+          name: Total Distance Helper
+          description: For informational purposes on your dashboard
+          selector:
+            entity:
+              domain: input_number
+
+        total_duration_helper:
+          name: Total Duration Helper 
+          description: For informational purposes on your dashboard
+          selector:
+            entity:
+              domain: input_number
+
+        notify_service:
+          name: Notification service
+          default: "notify.mobile_app_your_phone"
+          selector:
+            text:
+
+    travel_settings:
+      name: Travel Assistant
+      input:
+        travel_provider:
+          name: Travel Time Provider
+          description: Google or Waze
+          default: "google"
+          selector:
+            select:
+              options:
+                - label: "Google Maps"
+                  value: "google"
+                - label: "Waze"
+                  value: "waze"
+
+        enable_travel_planning:
+          name: Enable Travel Planning
+          default: true
+          selector:
+            boolean:
+
+        not_returning_home_entity:
+          name: Not returning home helper
+          default: ""
+          selector:
+            entity:
+              domain: input_boolean
+
+        travel_event_name:
+          name: Outbound travel event name
+          default: "Travel"
+          selector:
+            text:
+
+        return_event_name:
+          name: Return travel event name
+          default: "Travel (Home)"
+          selector:
+            text:
+
+        safety_buffer_percent:
+          name: Safety / Spits Buffer
+          default: 15
+          selector:
+            number:
+              min: 0
+              max: 40
+              step: 1
+              unit_of_measurement: "%"
+              mode: slider
+
+        distance_unit:
+          name: Distance Unit
+          default: "km"
+          selector:
+            select:
+              options:
+                - "km"
+
+    ev_settings:
+      name: EV & Charging
+      input:
+        enable_ev:
+          name: Enable EV Features
+          default: false
+          selector:
+            boolean:
+
+        battery_soc:
+          name: Battery SOC Sensor
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+      
+        charge_completion_entity:
+          name: Charge completion selector
+          default: ""
+          selector:
+            entity:
+              domain: select
+
+        range_sensor:
+          name: Vehicle Range Sensor
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+
+        target_soc_entity:
+          name: Target SOC Entity
+          default: ""
+          selector:
+            entity:
+              domain: number
+
+    preconditioning_settings:
+      name: Preconditioning
+      input:
+        enable_preconditioning:
+          name: Enable Preconditioning
+          default: false
+          selector:
+            boolean:
+
+        preheat_buffer_minutes:
+          name: Preconditioning Buffer (minutes)
+          default: 20
+          selector:
+            number:
+              min: 5
+              max: 60
+
+        preheat_datetime:
+          name: Preheat Start Time (input_datetime)
+          default: ""
+          selector:
+            entity:
+              domain: input_datetime
+
+    notification_settings:
+      name: Notifications
+      description: >
+        You can customize the notification message with the following variables:<br>
+        • {{ distance }} → total distance<br>
+        • {{ unit }} → km or mi<br>
+        • {{ duration }} → total minutes<br>
+        • {{ soc }} → current battery percentage<br>
+        • {{ target_soc }} → calculated target SOC<br>
+        • {{ needed_range }} → trip distance with safety buffer<br>
+        • {{ current_range }} → current vehicle range<br>
+        • {{ charging_needed_before_trip }} → flag if charging needed before trip<br>
+        • {{ charging_needed_underway }} → flag if charging needed during trip<br>
+
+      input:
+        notify_title:
+          name: Notification Title
+          default: "🚗 Smart Travel"
+          selector:
+            text:
+
+        notify_message:
+          name: Notification Message (template)
+          default: >
+            {{ distance }} {{ unit }} | {{ duration }} min {% if soc != 'n/a' %} | SOC: {{ soc }}% {% endif %}
+
+            {% if charging_needed_before_trip %}
+              {% if target_soc is defined %}
+              Target SOC: {{ target_soc }}%
+              {% endif %}
+              ⚠️ **Charging required!** Trip distance ({{ needed_range }} {{ unit }}) exceeds current range ({{ current_range }} {{ unit }}).
+            {% else %}
+              ✅ Trip fits in current range. No charging needed before departure.
+            {% endif %}
+            
+            {% if charging_needed_underway %}
+            ⏱️ **Note:** Even at 100% SOC, charging stops are needed during the trip.
+            {% endif %}
+          selector:
+            text:
+              multiline: true
+
+mode: single
+
+trigger:
+  - platform: time
+    at: !input run_time
+
+action:
+  - variables:
+      calendar: !input calendar
+      person: !input person
+      google_api: !input google_api
+      notify_service: !input notify_service
+      notify_title: !input notify_title
+      total_distance_helper: !input total_distance_helper
+      total_duration_helper: !input total_duration_helper 
+
+      travel_provider: !input travel_provider
+      enable_travel: !input enable_travel_planning
+      not_home_entity: !input not_returning_home_entity
+      travel_name: !input travel_event_name
+      return_name: !input return_event_name
+      safety_buffer: !input safety_buffer_percent
+      unit: !input distance_unit
+
+      enable_ev: !input enable_ev
+      soc_entity: !input battery_soc
+      range_entity: !input range_sensor
+      target_soc_entity: !input target_soc_entity
+      charge_completion_entity: !input charge_completion_entity
+
+      enable_precond: !input enable_preconditioning
+      preheat_buffer: !input preheat_buffer_minutes
+      preheat_entity: !input preheat_datetime
+
+      return_block: "{{ not_home_entity != '' and is_state(not_home_entity, 'on') }}"
+
+  # Agenda
+  - variables:
+      tomorrow_start: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%dT00:00:00') }}"
+      tomorrow_end: "{{ (now() + timedelta(days=2)).strftime('%Y-%m-%dT00:00:00') }}"
+
+  - action: input_number.set_value
+    target:
+      entity_id: "{{ total_distance_helper }}"
+    data:
+      value: 0 
+
+  - action: input_number.set_value
+    target:
+      entity_id: "{{ total_duration_helper }}"
+    data:
+      value: 0
+
+  - action: calendar.get_events
+    target:
+      entity_id: "{{ calendar }}"
+    data:
+      start_date_time: "{{ tomorrow_start }}"
+      end_date_time: "{{ tomorrow_end }}"
+    response_variable: agenda
+
+  - action: calendar.get_events
+    target:
+      entity_id: "{{ calendar }}"
+    data:
+      start_date_time: "{{ now().strftime('%Y-%m-%dT00:00:00') }}"
+      end_date_time: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%dT00:00:00') }}"
+    response_variable: agenda_today
+
+  - variables:
+      raw_events: "{{ (agenda.values() | list | first).events | default([]) }}"
+      events: >
+        {{ raw_events 
+           | selectattr('location', 'defined')
+           | rejectattr('location', 'equalto', '')
+           | sort(attribute='start')
+           | list }}
+      events_today: >
+        {{ (agenda_today.values() | list | first | default({'events': []})).events
+           | selectattr('location','defined')
+           | rejectattr('location','equalto','')
+           | list }}
+
+      last_location_today: >
+        {{ events_today[-1].location if events_today | count > 0 else none }}
+
+  - condition: template 
+    value_template: "{{ events | count > 0 }}"
+
+  ##################################################
+  # ORIGIN (Smarter Zone Matching)
+  ##################################################
+
+  - variables:
+      origin: >
+        {% set raw = (last_location_today if return_block and last_location_today not in ['none','',None] else 'zone.home') | lower | trim %}
+        {% set zone_match = states.zone | selectattr('attributes.friendly_name', 'search', raw) | list %}
+        {% if zone_match | count > 0 %}
+          {{ zone_match[0].entity_id }}
+        {% elif raw in ['thuis','home'] %}
+          zone.home
+        {% elif raw in ['werk','kantoor','office'] %}
+          zone.werk
+        {% else %}
+          {{ raw if raw.startswith('zone.') else (last_location_today if return_block and last_location_today not in ['none','',None] else 'zone.home') }}
+        {% endif %}
+
+  # ====================== TRAVEL CALCULATION ======================
+  - variables:
+      total_distance_m: 0
+      total_duration: 0
+      last_end_time: ""
+      first_travel_start: 0
+
+  - repeat:
+      count: "{{ events | count }}"
+      sequence:
+        - variables:
+            e: "{{ events[repeat.index - 1] }}"
+            event_location: >
+              {% set raw = e.location | lower | trim %}
+              {% set zone_match = states.zone | selectattr('attributes.friendly_name', 'search', raw) | list %}
+              {% if zone_match | count > 0 %}
+                {{ zone_match[0].entity_id }}
+              {% elif raw in ['thuis','home'] %}
+                zone.home
+              {% elif raw in ['werk','kantoor','office'] %}
+                zone.werk
+              {% else %}
+                {{ e.location }}
+              {% endif %}
+
+            # API Timing: because google travel does not support arrival time. 
+            travel_departure_time: >
+              {% if repeat.index == 1 %}
+                {% set departure_ts = as_timestamp(e.start) - 9000 %}
+                {{ departure_ts | timestamp_custom('%H:%M:%S', true) }}
+              {% else %}
+                {% if last_end_time not in [none, '', 'none'] %}
+                  {{ as_timestamp(last_end_time) | timestamp_custom('%H:%M:%S', true) }}
+                {% else %}
+                  {{ (as_timestamp(e.start) - 3600) | timestamp_custom('%H:%M:%S', true) }}
+                {% endif %}
+              {% endif %}
+
+        # === Google or Waze call ===
+        - choose:
+            - conditions: "{{ travel_provider == 'google' }}"
+              sequence:
+                - action: google_travel_time.get_travel_times
+                  continue_on_error: true
+                  response_variable: t
+                  data:
+                    config_entry_id: "{{ states(google_api) if google_api != '' else none }}"
+                    origin: "{{ origin }}"
+                    destination: "{{ event_location }}"
+                    departure_time: "{{ travel_departure_time }}"
+                    mode: driving
+
+            - conditions: "{{ travel_provider == 'waze' }}"
+              sequence:
+                - action: waze_travel_time.get_travel_times
+                  continue_on_error: true
+                  response_variable: t
+                  data:
+                    origin: "{{ origin }}"
+                    destination: "{{ event_location }}"
+                    mode: driving
+
+        - variables:
+            #dist: "{{ t.routes[0].distance_meters | default(0) | int if t.routes is defined else 0 }}"
+            dist: "{{ (t.routes[0].distance_meters if t.routes is defined and t.routes | count > 0 else 0) | int }}"
+            dur: "{{ (t.routes[0].duration if t.routes is defined and t.routes | count > 0 else 0) | int }}"
+            first_travel_start: >
+              {% if repeat.index == 1 %}
+                {% if dur | int > 0 %}
+                  {{ as_timestamp(e.start) - dur }}
+                {% else %}
+                  {{ as_timestamp(e.start) }}
+                {% endif %}
+              {% else %}
+                {{ first_travel_start | default(0) }}
+              {% endif %}
+
+        - choose:
+            - conditions: "{{ enable_travel and dur > 0 }}"
+              sequence:
+                - action: calendar.create_event
+                  target: { entity_id: "{{ calendar }}" }
+                  data:
+                    summary: "{{ travel_name }}"
+                    start_date_time: "{{ (as_timestamp(e.start) - dur)|timestamp_local }}"
+                    end_date_time: "{{ e.start }}"
+
+        - variables:
+            total_distance_m: "{{ total_distance_m + dist }}"
+            total_duration: "{{ total_duration + dur }}"
+            origin: "{{ event_location }}"
+            last_end_time: "{{ e.end }}"
+
+  # Return trip
+  - choose:
+      - conditions: "{{ enable_travel and not return_block and events|count > 0 }}"
+        sequence:
+          - variables:
+              last_event: "{{ events[-1] }}"
+              last_location: >
+                {% set raw = last_event.location | lower | trim %}
+                {% set zone_match = states.zone | selectattr('attributes.friendly_name', 'search', raw) | list %}
+                {% if zone_match | count > 0 %}
+                  {{ zone_match[0].entity_id }}
+                {% else %}
+                  {{ last_event.location }}
+                {% endif %}
+
+          - choose:
+              - conditions: "{{ travel_provider == 'google' }}"
+                sequence:
+                  - action: google_travel_time.get_travel_times
+                    continue_on_error: true
+                    response_variable: r
+                    data:
+                      config_entry_id: "{{ states(google_api) }}"
+                      origin: "{{ last_location }}"
+                      destination: "zone.home"
+                      mode: driving
+
+              - conditions: "{{ travel_provider == 'waze' }}"
+                sequence:
+                  - action: waze_travel_time.get_travel_times
+                    continue_on_error: true
+                    response_variable: r
+                    data:
+                      origin: "{{ last_location }}"
+                      destination: "zone.home"
+                      mode: driving
+
+          - variables:
+              #d2: "{{ r.routes[0].distance_meters | default(0) | int if r.routes is defined else 0 }}"
+              d2: "{{ (r.routes[0].distance_meters if r.routes is defined and r.routes | count > 0 else 0) | int }}"
+              #t2: "{{ r.routes[0].duration | default(0) | int if r.routes is defined else 0 }}"
+              t2: "{{ (r.routes[0].duration if r.routes is defined and r.routes | count > 0 else 0) | int }}"
+
+          - choose:
+              - conditions: "{{ t2 > 0 }}"
+                sequence:
+                  - action: calendar.create_event
+                    target: { entity_id: "{{ calendar }}" }
+                    data:
+                      summary: "{{ return_name }}"
+                      start_date_time: "{{ last_event.end }}"
+                      end_date_time: "{{ (as_timestamp(last_event.end) + t2)|timestamp_local }}"
+
+          - variables:
+              total_distance_m: "{{ total_distance_m + d2 }}"
+              total_duration: "{{ total_duration + t2 }}"
+
+  # Final calculations + SOC + Preconditioning + Notification
+  - variables:
+      distance: >
+        {% if unit == 'mi' %}
+          {{ (total_distance_m / 1609.34) | round(1) }}
+        {% else %}
+          {{ (total_distance_m / 1000) | round(1) }}
+        {% endif %}
+      duration: "{{ (total_duration / 60) | round(0) }}"
+      soc: "{{ states(soc_entity) if soc_entity != '' else 'n/a' }}"
+
+      buffer_factor: "{{ 1 + (safety_buffer / 100) }}"
+      needed_range: "{{ (distance * buffer_factor) | round(0) }}"
+      current_soc: "{{ states(soc_entity) | float(0) }}"
+      current_range: "{{ states(range_entity) | float(0) }}"
+
+      # Safety Check: Vermijd delen door nul
+      range_at_80: "{{ ((current_range / (current_soc | float(1))) * 80) | round(0) if current_soc > 5 else (current_range * 1.5 if current_soc > 0 else 0) }}"
+      range_at_90: "{{ ((current_range / (current_soc | float(1))) * 90) | round(0) if current_soc > 5 else (current_range * 1.8 if current_soc > 0 else 0) }}"
+      range_at_100: "{{ ((current_range / (current_soc | float(1))) * 100) | round(0) if current_soc > 5 else (current_range * 2.0 if current_soc > 0 else 0) }}"
+
+      # Determine target SOC based on needed range
+      target_soc: >
+        {% if events | count == 0 %}
+          80
+        {% elif current_soc > 0 %}
+          {% if needed_range <= range_at_80 %} 
+            80
+          {% elif needed_range <= range_at_90 %} 
+            90
+          {% else %} 100
+          {% endif %}
+        {% else %}
+          80
+        {% endif %}
+
+      # Flag if charging needed underway
+      charging_needed_underway: "{{ current_soc > 0 and needed_range > range_at_100 }}"
+
+      # Flag if charging needed before trip (fits in current range or not)
+      charging_needed_before_trip: "{{ needed_range > current_range }}"
+  
+  - choose:
+      - conditions:
+          - "{{ charging_needed_before_trip and return_block }}"
+        sequence:
+          - condition: template
+            value_template: "{{ charge_completion_entity != '' }}"
+          - action: select.select_option
+            target:
+              entity_id: "{{ charge_completion_entity }}"
+            data:
+              option: None
+
+      - conditions:
+          - "{{ charging_needed_before_trip and events | count > 0 }}"
+        sequence:
+          - variables:
+              vertrek_ts: "{{ as_timestamp(events[0].start) - 1800 }}"
+              kwartier: >
+                {% set h = vertrek_ts | timestamp_custom('%H', true) | int %}
+                {% set m = vertrek_ts | timestamp_custom('%M', true) | int %}
+                {% set q = (m // 15) * 15 %}
+                {{ '%02d:%02d' | format(h, q) }}
+
+          - condition: template
+            value_template: "{{ charge_completion_entity != '' }}"
+
+          - action: select.select_option
+            target:
+              entity_id: "{{ charge_completion_entity }}"
+            data:
+              option: "{{ kwartier }}"
+
+  - choose:
+      - conditions: "{{ enable_ev and target_soc_entity != '' }}"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: "{{ target_soc_entity }}"
+            data:
+              value: "{{ target_soc }}"
+
+  - choose:
+      - conditions: "{{ enable_precond and preheat_entity != '' and events|count > 0 }}"
+        sequence:
+          - variables:
+              # Preconditioning start before the first travel block
+              preheat_start: >
+                {% if first_travel_start | int > 0 %}
+                  {{ (first_travel_start - (preheat_buffer * 60)) | timestamp_local }}
+                {% else %}
+                  {{ ((as_timestamp(events[0].start) - (preheat_buffer * 60))) | timestamp_local }}
+                {% endif %}
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: "{{ preheat_entity }}"
+            data:
+              datetime: "{{ preheat_start }}"
+  
+  - action: input_number.set_value
+    target:
+      entity_id: "{{ total_distance_helper }}"
+    data:
+      value: "{{ distance }}"
+
+  - action: input_number.set_value
+    target:
+      entity_id: "{{ total_duration_helper }}"
+    data:
+      value: "{{ duration }}"
+
+  - action: "{{ notify_service }}"
+    data:
+      title: "{{ notify_title }}"
+      message: !input notify_message
+      
+  - action: system_log.write
+    data:
+      message: "Smart EV Travel ({{ travel_provider }}) → {{ events|count }} events | {{ distance }} {{ unit }}"
+      level: info

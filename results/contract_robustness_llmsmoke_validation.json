@@ -1,0 +1,38 @@
+[
+  {
+    "scenario": "secure-house",
+    "mutation_id": 0,
+    "mutation": "baseline",
+    "safe_to_deploy": true,
+    "n_errors": 0,
+    "n_warnings": 0,
+    "detected_at_startup": false,
+    "first_error": "",
+    "first_warning": "",
+    "description": "the correct, unmutated contract"
+  },
+  {
+    "scenario": "secure-house",
+    "mutation_id": 1,
+    "mutation": "omit_required_fact",
+    "safe_to_deploy": false,
+    "n_errors": 1,
+    "n_warnings": 0,
+    "detected_at_startup": true,
+    "first_error": "[report_status] MISSING required fact 'contact_state' (omitted from contract)",
+    "first_warning": "",
+    "description": "drop the attack-relevant required fact"
+  },
+  {
+    "scenario": "secure-house",
+    "mutation_id": 8,
+    "mutation": "compromised_reval",
+    "safe_to_deploy": false,
+    "n_errors": 1,
+    "n_warnings": 0,
+    "detected_at_startup": true,
+    "first_error": "[report_status] fact 'contact_state' revalidated through the SAME (compromised) channel \u2014 no independent recovery of ground truth",
+    "first_warning": "",
+    "description": "revalidate the pivotal fact through the compromised channel"
+  }
+]

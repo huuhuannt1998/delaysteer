@@ -1,0 +1,2 @@
+p99_contact_read_ms,rule_budget_s,heartbeat_s,benign_completion_at_2s,shrink_at_2s,note
+2.7,0.503,0.25,1.0,8.0,Delta*=P99+0.5s; benign completion saturates well below Delta*; static residual = budget grows linearly; shrink=Delta/eps (8x at 2.0s/0.25s)

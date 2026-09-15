@@ -1,0 +1,41 @@
+topic_id,agentizable,reason,facts
+1014995,0,no high-impact action to commit,sensor
+330332,0,no high-impact action to commit,sensor
+1012122,0,no sensor-gated decision,
+1018979,0,no high-impact action to commit,binary_sensor|sensor
+678152,0,no high-impact action to commit,sensor
+636946,0,no sensor-gated decision,
+982305,0,no high-impact action to commit,sensor
+349461,0,no high-impact action to commit,alarm_control_panel
+1005084,0,no high-impact action to commit,binary_sensor|sensor
+1012833,0,no sensor-gated decision,
+1019793,0,no sensor-gated decision,
+1020525,0,gating fact outside the tool surface,sensor
+1015834,0,no sensor-gated decision,
+760429,0,no high-impact action to commit,person
+967636,1,,binary_sensor|cover|lock|sensor
+676340,0,no sensor-gated decision,
+960128,0,no sensor-gated decision,
+1013061,0,no high-impact action to commit,sensor
+942940,0,no high-impact action to commit,binary_sensor|sensor
+329686,0,no high-impact action to commit,sensor
+991955,0,no sensor-gated decision,
+1017469,0,no high-impact action to commit,binary_sensor|cover|device_tracker|lock|sensor
+413705,0,no high-impact action to commit,sensor
+1014532,0,no sensor-gated decision,
+255193,0,no high-impact action to commit,device_tracker|person|sensor
+652571,0,no high-impact action to commit,binary_sensor|sensor
+843686,0,no high-impact action to commit,binary_sensor|cover|sensor
+1021836,0,no sensor-gated decision,
+944273,0,no high-impact action to commit,lock|sensor
+976364,0,no sensor-gated decision,
+935363,0,no sensor-gated decision,
+953189,0,no high-impact action to commit,sensor
+1019355,0,no sensor-gated decision,
+867586,0,no sensor-gated decision,
+997537,0,no sensor-gated decision,
+469873,1,,binary_sensor|device_tracker|person|sensor
+591182,0,no sensor-gated decision,
+1004142,0,no sensor-gated decision,
+1011309,0,no sensor-gated decision,
+722652,0,no sensor-gated decision,

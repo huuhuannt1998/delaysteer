@@ -1,0 +1,8 @@
+probe,entity_class,entity_id,device_id,t_cause,t_generated,t_received,ha_clock_offset_s,gap_generated_to_received_s,hold_s,value,payload_sha256,verdict,notes
+baseline_skew,integration_backed,binary_sensor.st_contact,c6a2f562-4461-4fbd-867a-48ca0a3bd516,,1786565696.192,1786566137.714,-0.068,441.522,,st=on;ha=on,54b6da797ab099ea,receipt_stamped,no causation; standing deployment
+baseline_skew,integration_backed,binary_sensor.st_leak,87030d7f-925f-4dbc-99d9-ff75b24d10f3,,1782415054.908,1786566167.919,-0.068,4151113.011,,st=off;ha=off,0ed27f8c0d6fc932,receipt_stamped,no causation; standing deployment
+baseline_skew,integration_backed,binary_sensor.st_motion,cb7f405c-65e8-43be-bf1c-7add2f7fb3e3,,1782415181.14,1786566167.944,-0.068,4150986.804,,st=off;ha=off,8eb0d8261c45b66b,receipt_stamped,no causation; standing deployment
+baseline_skew,integration_backed,binary_sensor.st_arrival,61af57d1-5f5b-41c1-94d2-d818131557e1,,1782415556.133,1786566167.927,-0.068,4150611.794,,st=off;ha=off,b527299c7481d9dd,receipt_stamped,no causation; standing deployment
+baseline_skew,template_virtual,binary_sensor.front_door_contact,input_boolean.front_door_open,,,1786566138.536,-0.068,,,on,,receipt_stamped_by_construction,hub-resident fact: no device measurement timestamp exists to propagate
+baseline_skew,template_virtual,binary_sensor.back_door_contact,input_boolean.back_door_open,,,1786566138.536,-0.068,,,off,,receipt_stamped_by_construction,hub-resident fact: no device measurement timestamp exists to propagate
+causal_flip,integration_backed,binary_sensor.st_contact,c6a2f562-4461-4fbd-867a-48ca0a3bd516,1786566263.963,1786566264.213,1786566287.922,-0.068,23.709,23.709,off,7d41a705cf930efc,receipt_stamped,true_age_at_read=23.73s observable_age_at_read=0.02s

@@ -1,0 +1,461 @@
+blueprint:
+  name: ADHD-Friendly Brushing System (Morning & Evening)
+  description: >
+    An unpredictable, ADHD-friendly toothbrushing tracker and reminder system. 
+    Delays notifications by a random window to defeat notification blindness and 
+    includes actionable snooze/complete options. Supports offline queuing rules.
+    
+    **Compatibility Note:** This blueprint requires toothbrushes that report their live active state to Home Assistant (Oral-B, Oral-B Live, Philips Sonicare, Laifen). Due to how Oclean toothbrushes communicate with Home Assistant (batch-syncing historical data via polling rather than live broadcasting), they are not compatible with this real-time tracker.
+    
+    **Prerequisite:** Create a 'Toggle' helper (Settings > Devices & Services > Helpers) named something obvious like "Toothbrush Tracker". This acts as the brain to remember if you have successfully brushed today.
+  domain: automation
+  source_url: https://github.com/CoatsyJnr/home-assistant-blueprints/blob/main/adhd_toothbrush_system.yaml
+  author: CoatsyJnr
+  homeassistant:
+    min_version: 2024.8.0
+
+  input:
+    # --- PRIMARY SETUP ---
+    toothbrush_entity:
+      name: Which toothbrush are we tracking?
+      description: >
+        Select the sensor that tracks what your brush is doing right now. 
+        For Home Assistant's built-in Oral-B integration, select the sensor explicitly named "State". For Oral-B Live, install and configure the integration, disable the built-in Oral-B config entry for the same brush, and select the main toothbrush sensor whose value changes between "idle" and "running"; it may be displayed under the brush's name rather than as "State". Do not select its Time, Last session, or charger sensors. For Philips Sonicare, choose "Handle State", "Activity", "Brushing State", or the "Brushing" binary sensor. For Laifen, choose "Status"; its Timer is numeric and its binary sensors do not represent brushing activity.
+      selector:
+        entity:
+          multiple: false
+          filter:
+            - integration: oralb
+              domain: sensor
+            - integration: oralb_live
+              domain: sensor
+            - integration: philips_sonicare_ble
+              domain: sensor
+            - integration: philips_sonicare_ble
+              domain: binary_sensor
+            - integration: laifen_ble
+              domain: sensor
+
+    brushed_helper:
+      name: Brushing Tracker Helper
+      description: Choose the Toggle helper you created (e.g., "Toothbrush Tracker").
+      selector:
+        entity:
+          domain: input_boolean
+          multiple: false
+
+    notification_device:
+      name: Notification Device
+      description: The mobile device running the Home Assistant app to receive reminders.
+      selector:
+        device:
+          integration: mobile_app
+          multiple: false
+
+    enable_morning:
+      name: Enable Morning Reminders
+      description: Check this box to track your morning routine.
+      default: false
+      selector:
+        boolean: {}
+
+    morning_reminder_time:
+      name: Morning Reminder Time
+      description: The baseline time for the morning alarm. (Only applies if 'Enable Morning Reminders' is checked above).
+      default: '09:00:00'
+      selector:
+        time: {}
+
+    enable_evening:
+      name: Enable Evening Reminders
+      description: Check this box to track your evening routine.
+      default: true
+      selector:
+        boolean: {}
+
+    evening_reminder_time:
+      name: Evening Reminder Time
+      description: The baseline time for the evening alarm. (Only applies if 'Enable Evening Reminders' is checked above).
+      default: '21:00:00'
+      selector:
+        time: {}
+
+    # --- RANDOMIZER SECTION (VISIBLE) ---
+    randomizer_settings:
+      name: 🎲 ADHD Randomizer Delay
+      description: >
+        Adding unpredictability to alerts helps break notification blindness. The reminder will fire randomly between 0 minutes and your chosen maximum delay. (A 15-minute window is recommended to remain unpredictable without losing the context of the task).
+      icon: mdi:dice-multiple
+      collapsed: false
+      input:
+        enable_randomizer:
+          name: Enable Randomizer Delay
+          description: If turned off, notifications will fire precisely at the reminder times set above (0 minute delay).
+          default: true
+          selector:
+            boolean: {}
+        random_delay_window:
+          name: Randomizer Window (minutes)
+          description: The maximum number of minutes the notification can be randomly delayed.
+          default: 15
+          selector:
+            number:
+              min: 0.0
+              max: 60.0
+              step: 1.0
+              mode: slider
+
+    # --- ADVANCED CONFIGURATION (COLLAPSED) ---
+    advanced_settings:
+      name: ⚙️ Advanced Settings
+      description: Optional customizations. Proceed with caution when altering check times.
+      icon: mdi:cogs
+      collapsed: true
+      input:
+        notification_title:
+          name: Notification Title
+          default: Routine Check-In 🪥
+          selector:
+            text: {}
+        morning_message:
+          name: Morning Message
+          default: Fresh breath baseline! Let's get those teeth brushed before the day gets away from you.
+          selector:
+            text: {}
+        evening_message:
+          name: Evening Message
+          default: Future you will thank you. Let's knock out toothbrushing now so you can properly unwind.
+          selector:
+            text: {}
+        notification_channel:
+          name: Android Notification Channel
+          description: The user-friendly name that will appear in Android's notification settings (Apps > Home Assistant > Notification Channels), allowing custom sounds and vibration rules.
+          default: "Toothbrush Routine"
+          selector:
+            text: {}
+        notification_tag:
+          name: Notification Tag Identifier
+          description: The unique tracking key used to clear or overwrite active alerts instantly when you brush your teeth.
+          default: toothbrush_reminder
+          selector:
+            text: {}
+        notification_group:
+          name: Notification Group / Thread ID
+          description: The invisible system key that groups these reminders together in your mobile notification center to prevent clutter. Works on both iOS and Android.
+          default: toothbrush_routine
+          selector:
+            text: {}
+        enable_random_snooze:
+          name: Enable Randomized Snooze
+          description: If enabled, snoozing will wait a random window between 4.5 and 5.5 minutes to prevent predictable pacing.
+          default: true
+          selector:
+            boolean: {}
+        fixed_snooze_duration:
+          name: Fixed Snooze Duration (minutes)
+          description: If randomized snooze is turned off, this sets the explicit snooze duration.
+          default: 5
+          selector:
+            number:
+              min: 1.0
+              max: 30.0
+              step: 1.0
+              mode: box
+        brushing_duration:
+          name: Minimum Brushing Duration (minutes)
+          description: How long the toothbrush must run to count as a valid session.
+          default: 2
+          selector:
+            number:
+              min: 1.0
+              max: 5.0
+              step: 1.0
+              mode: box
+        use_custom_morning_start:
+          name: Override Morning Check Time
+          description: "⚠️ ADVANCED: The system naturally starts tracking morning brushing at 4:00 AM. Only check this box if you have a highly unusual schedule (e.g., shift work) and need to alter the core logic."
+          default: false
+          selector:
+            boolean: {}
+        custom_morning_start_time:
+          name: Custom Morning Check Start Time
+          description: Takes effect only if the override box above is checked.
+          default: '04:00:00'
+          selector:
+            time: {}
+        use_custom_evening_start:
+          name: Override Evening Check Time
+          description: "⚠️ ADVANCED: The system naturally starts tracking evening brushing at 4:00 PM (16:00). Only check this box to alter the core logic."
+          default: false
+          selector:
+            boolean: {}
+        custom_evening_start_time:
+          name: Custom Evening Check Start Time
+          description: Takes effect only if the override box above is checked.
+          default: '16:00:00'
+          selector:
+            time: {}
+
+variables:
+  morning_enabled: !input enable_morning
+  evening_enabled: !input enable_evening
+  randomizer_enabled: !input enable_randomizer
+  max_delay: !input random_delay_window
+  use_custom_am_start: !input use_custom_morning_start
+  custom_am_start: !input custom_morning_start_time
+  use_custom_pm_start: !input use_custom_evening_start
+  custom_pm_start: !input custom_evening_start_time
+
+mode: parallel
+max: 10
+
+trigger:
+  - platform: state
+    entity_id: !input toothbrush_entity
+    to:
+      - 'running'   # Home Assistant Oral-B and Oral-B Live
+      - 'run'       # Sonicare Handle State
+      - 'brushing'  # Sonicare Activity
+      - 'on'        # Sonicare Brushing State or Brushing binary sensor
+      - 'Running'   # Laifen Status
+      - 'Brushing'  # Legacy/display-value compatibility
+      - 'On'        # Legacy/display-value compatibility
+    for:
+      minutes: !input brushing_duration
+    id: 'toothbrush_used'
+  - platform: time
+    at: !input morning_reminder_time
+    id: 'morning_alarm'
+  - platform: time
+    at: !input evening_reminder_time
+    id: 'evening_alarm'
+  - platform: time
+    at: '00:00:00'
+    id: 'reset_morning'
+  - platform: time
+    at: '12:00:00'
+    id: 'reset_evening'
+
+action:
+  - choose:
+      # 1. Toothbrush Tracking Instance
+      - conditions:
+          - condition: trigger
+            id: 'toothbrush_used'
+        sequence:
+          - choose:
+              # Morning Match
+              - conditions:
+                  - condition: template
+                    value_template: "{{ morning_enabled }}"
+                  - condition: template
+                    value_template: >
+                      {% set current_time = now().strftime('%H:%M:%S') %}
+                      {% set start_time = custom_am_start if use_custom_am_start else '04:00:00' %}
+                      {{ current_time >= start_time and current_time < '12:00:00' }}
+                sequence:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: !input brushed_helper
+              # Evening Match
+              - conditions:
+                  - condition: template
+                    value_template: "{{ evening_enabled }}"
+                  - condition: template
+                    value_template: >
+                      {% set current_time = now().strftime('%H:%M:%S') %}
+                      {% set start_time = custom_pm_start if use_custom_pm_start else '16:00:00' %}
+                      {{ current_time >= start_time and current_time <= '23:59:59' }}
+                sequence:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: !input brushed_helper
+
+          # Force an immediate remote clear command to purge any offline queued notifications
+          - domain: mobile_app
+            type: notify
+            device_id: !input notification_device
+            message: "clear_notification"
+            data:
+              tag: !input notification_tag
+
+      # 2. Morning Notification Engine Instance
+      - conditions:
+          - condition: trigger
+            id: 'morning_alarm'
+          - condition: template
+            value_template: "{{ morning_enabled }}"
+          - condition: state
+            entity_id: !input brushed_helper
+            state: 'off'
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ randomizer_enabled }}"
+            then:
+              - delay:
+                  minutes: "{{ range(0, max_delay | int + 1) | random }}"
+          - condition: state
+            entity_id: !input brushed_helper
+            state: 'off'
+          - repeat:
+              while:
+                - condition: state
+                  entity_id: !input brushed_helper
+                  state: 'off'
+              sequence:
+                - variables:
+                    random_snooze: !input enable_random_snooze
+                    fixed_snooze: !input fixed_snooze_duration
+                    snooze_seconds: >
+                      {% if random_snooze %}
+                        {{ range(270, 331) | random }}
+                      {% else %}
+                        {{ fixed_snooze | int * 60 }}
+                      {% endif %}
+                - domain: mobile_app
+                  type: notify
+                  device_id: !input notification_device
+                  title: !input notification_title
+                  message: !input morning_message
+                  data:
+                    channel: !input notification_channel
+                    importance: high
+                    group: !input notification_group
+                    tag: !input notification_tag
+                    ttl: 7200
+                    priority: high
+                    push:
+                      thread-id: !input notification_group
+                    actions:
+                      - action: "toothbrush_snooze"
+                        title: "Snooze ⏳"
+                      - action: "toothbrush_marked"
+                        title: "Already Brushed ✅"
+                - wait_for_trigger:
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: "toothbrush_snooze"
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: "toothbrush_marked"
+                    - platform: state
+                      entity_id: !input brushed_helper
+                      to: 'on'
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ wait.trigger is defined and wait.trigger != none and wait.trigger.platform == 'event' and wait.trigger.event.data.action == 'toothbrush_marked' }}"
+                      sequence:
+                        - action: input_boolean.turn_on
+                          target:
+                            entity_id: !input brushed_helper
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ wait.trigger is defined and wait.trigger != none and wait.trigger.platform == 'event' and wait.trigger.event.data.action == 'toothbrush_snooze' }}"
+                      sequence:
+                        - delay:
+                            seconds: "{{ snooze_seconds }}"
+
+      # 3. Evening Notification Engine Instance
+      - conditions:
+          - condition: trigger
+            id: 'evening_alarm'
+          - condition: template
+            value_template: "{{ evening_enabled }}"
+          - condition: state
+            entity_id: !input brushed_helper
+            state: 'off'
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ randomizer_enabled }}"
+            then:
+              - delay:
+                  minutes: "{{ range(0, max_delay | int + 1) | random }}"
+          - condition: state
+            entity_id: !input brushed_helper
+            state: 'off'
+          - repeat:
+              while:
+                - condition: state
+                  entity_id: !input brushed_helper
+                  state: 'off'
+              sequence:
+                - variables:
+                    random_snooze: !input enable_random_snooze
+                    fixed_snooze: !input fixed_snooze_duration
+                    snooze_seconds: >
+                      {% if random_snooze %}
+                        {{ range(270, 331) | random }}
+                      {% else %}
+                        {{ fixed_snooze | int * 60 }}
+                      {% endif %}
+                - domain: mobile_app
+                  type: notify
+                  device_id: !input notification_device
+                  title: !input notification_title
+                  message: !input evening_message
+                  data:
+                    channel: !input notification_channel
+                    importance: high
+                    group: !input notification_group
+                    tag: !input notification_tag
+                    ttl: 7200
+                    priority: high
+                    push:
+                      thread-id: !input notification_group
+                    actions:
+                      - action: "toothbrush_snooze"
+                        title: "Snooze ⏳"
+                      - action: "toothbrush_marked"
+                        title: "Already Brushed ✅"
+                - wait_for_trigger:
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: "toothbrush_snooze"
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: "toothbrush_marked"
+                    - platform: state
+                      entity_id: !input brushed_helper
+                      to: 'on'
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ wait.trigger is defined and wait.trigger != none and wait.trigger.platform == 'event' and wait.trigger.event.data.action == 'toothbrush_marked' }}"
+                      sequence:
+                        - action: input_boolean.turn_on
+                          target:
+                            entity_id: !input brushed_helper
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ wait.trigger is defined and wait.trigger != none and wait.trigger.platform == 'event' and wait.trigger.event.data.action == 'toothbrush_snooze' }}"
+                      sequence:
+                        - delay:
+                            seconds: "{{ snooze_seconds }}"
+
+      # 4. Resets
+      - conditions:
+          - condition: trigger
+            id: 'reset_morning'
+          - condition: template
+            value_template: "{{ morning_enabled }}"
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: !input brushed_helper
+
+      - conditions:
+          - condition: trigger
+            id: 'reset_evening'
+          - condition: template
+            value_template: "{{ evening_enabled }}"
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: !input brushed_helper

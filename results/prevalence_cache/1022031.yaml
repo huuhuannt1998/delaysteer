@@ -1,0 +1,549 @@
+---
+# BLP-homeseer-inwall-control.yaml
+# Blueprint name in the HA UI: "Universal HomeSeer In-Wall Switch Control"
+# v0.4  2026-08-21 
+#
+# TWO TRIGGER PATHS, ONE AUTOMATION:
+#   scene         zwave_js_value_notification -> run the tap actions
+#   apply_config  automation_reloaded or HA start -> push config parameters
+#
+# CONFIG IS WRITTEN ON EVERY AUTOMATION RELOAD, NOT JUST THIS ONE.
+# "automation_reloaded" is a global event. Any automation reload re-pushes
+# these parameters to every device selected here. Consequences:
+#   - This blueprint becomes the authority. A value you change on the device's
+#     Configure page is silently reverted at the next reload.
+#   - Traffic is (settings you changed) x (devices selected) Z-Wave writes per
+#     reload. Settings left at their no-op default write nothing, so an
+#     instance that configures nothing costs nothing.
+#   - Turn it off entirely with "Apply configuration on reload" in Advanced.
+#
+# WHY VALUES ARE WORDS, NOT NUMBERS.
+# zwave_js.set_config_parameter accepts the state LABEL in place of the integer
+# and resolves it against that device's own config file. Parameter 3 is
+# INVERTED between models:
+#   HS-WD200+ / HS-WS200+ / HS-FC200+ : 0 = On when load is off,  1 = Off when load is off
+#   HS-WX300  / WS300                 : 0 = Off when load is off, 1 = On when load is off
+# Writing integer 1 to a mixed set gives the opposite result on half of them.
+# Writing "Off when load is off" is correct on all of them. Labels are CASE
+# SENSITIVE. Parameters are targeted by NUMBER because their names differ per
+# model (14 is "Load Status LED Color" on the WD200+, "LED Normal Color" on the
+# WS300).
+#
+# WHICH CONFIG SETTINGS APPLY TO WHICH MODEL (blueprints cannot hide inputs
+# per device, so this table is the substitute):
+#
+#   Setting                param  WD100+ WS100+ WD200+ WS200+ WX300 WS300 FC200+
+#   LED indicator            3      -      *      y      y      y     y     y
+#   Load LED colour         14      -      -      y      y      y   y(+4)   y
+#   LED brightness          34      -      -      -      -    y(fw)   y     -
+#   Dimming threshold        5      -      -    y(fw)    -      y     -     -
+#   Ramp rate (Z-Wave)      11      -      -      y      -      y     -     -
+#   Ramp rate (manual)      12      -      -      y      -      y     -     -
+#   Default brightness      36      -      -      -      -    y(fw)   -     -
+#   Wire mode               32      -      -      -      -      y     -     -
+#
+#   *  WS100+ offers "On when load is off", "On when load is on", "Always off".
+#      Only the first overlaps with the other models.
+#   fw WD200+ dimming threshold needs firmware 5.14+. WX300 brightness and
+#      default brightness need firmware 1.13+.
+#   +4 WS300 adds Orange, Teal, Pink and Custom to the colour list.
+#
+# A parameter the model does not have is skipped by continue_on_error rather
+# than aborting the run, so failures are SILENT. 
+#
+# DIMMER VERSUS SWITCH MODE IS NOT A PARAMETER. On the WX300 it is the small
+# button on the metal yoke, or tap-tap-tap-press-and-hold on the top paddle,
+# and it must be done BEFORE Z-Wave inclusion. Parameter 37 ("Control Load with
+# Paddle") is a different thing: it disables the relay so the paddle only sends
+# scenes. Not exposed here.
+#
+# 4x and 5x taps exist only on the 200 and 300 series. On HS-WD100+ / HS-WS100+
+# those inputs are simply never triggered; leaving them empty is harmless.
+#
+# Config-on-reload pattern taken from:
+#   https://github.com/rwalker777/Zen32-HA-Blueprint/blob/26ad09e0b45a8ebb1901a697bfd9d6f21244b2e2/ZEN32-control-track.yaml
+
+blueprint:
+  name: Universal HomeSeer In-Wall Switch Control
+  description: >-
+    One universal blueprint for every scene-capable HomeSeer in-wall Z-Wave
+    device: HS-WD100+, HS-WS100+, HS-WD200+, HS-WS200+, HS-WX300, WS300 and
+    HS-FC200+. Handles top and bottom paddle taps 1x through 5x, plus hold and
+    release, and pushes device configuration parameters when the automation is
+    saved.
+
+
+    Tap counts by generation: 100 series reports 1x, 2x, 3x, hold and release.
+    200 and 300 series add 4x and 5x. A WX300 reports the same scene events
+    whether it was configured as a dimmer or as an on/off switch before
+    inclusion, so no separate handling is needed for switch mode.
+
+
+    Configuration settings default to no-op, so only what you change is
+    written. Not every setting exists on every model; see the table in the file
+    header. Settings the device does not have are skipped silently.
+
+
+    If no tap ever fires, check Z-Wave parameter 6 (Central Scene Commands) on
+    the device. Value 0 enables scene reporting with a short load delay; value 1
+    disables it. Parameter 6 requires firmware 5.12 or later on the HS-WD200+
+    and HS-WS200+, and does not exist on the 100 series.
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+
+    device_section:
+      name: Devices
+      icon: mdi:light-switch
+      description: >-
+        Pick one or more HomeSeer switches. Every selected device runs the same
+        actions and receives the same configuration. Use separate automations
+        when devices need different actions, or when they are different models
+        with different configuration needs.
+      input:
+        homeseer_devices:
+          name: HomeSeer device(s)
+          selector:
+            device:
+              multiple: true
+              filter:
+                - manufacturer: HomeSeer Technologies
+                  model: HS-WD100+
+                - manufacturer: HomeSeer Technologies
+                  model: HS-WS100+
+                - manufacturer: HomeSeer Technologies
+                  model: HS-WD200+
+                - manufacturer: HomeSeer Technologies
+                  model: HS-WS200+
+                - manufacturer: HomeSeer Technologies
+                  model: HS-WX300
+                - manufacturer: HomeSeer Technologies
+                  model: WS300
+                - manufacturer: HomeSeer Technologies
+                  model: HS-FC200+
+
+    config_section:
+      name: Device configuration
+      icon: mdi:cog
+      collapsed: true
+      description: >-
+        Written to the switch when this automation is saved or reloaded, and at
+        Home Assistant start. Leave a setting at its default and it is never
+        written.
+      input:
+        led_indicator:
+          name: LED indicator operation (parameter 3)
+          description: >-
+            Whether the paddle LED lights when the load is off or when it is on.
+            "On when load is on" and "Always off" exist only on the HS-WS100+.
+          default: Leave unchanged
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - Leave unchanged
+                - Off when load is off
+                - On when load is off
+                - On when load is on
+                - Always off
+
+        load_led_color:
+          name: Load LED colour (parameter 14)
+          description: >-
+            The base colour the LED shows while indicating load state. Pink,
+            Orange, Teal and Custom exist only on the WS300.
+          default: Leave unchanged
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - Leave unchanged
+                - White
+                - Red
+                - Green
+                - Blue
+                - Magenta
+                - Yellow
+                - Cyan
+                - Pink
+                - Orange
+                - Teal
+                - Custom
+
+        led_brightness:
+          name: LED brightness (parameter 34)
+          description: >-
+            0 to 6. HS-WX300 (firmware 1.13+) and WS300 only. -1 leaves it alone.
+          default: -1
+          selector:
+            number:
+              min: -1
+              max: 6
+              step: 1
+              mode: box
+
+        dimming_threshold:
+          name: Dimming threshold (parameter 5)
+          description: >-
+            Minimum dim level, 1 to 14. Dimmers only. HS-WD200+ needs firmware
+            5.14 or later. -1 leaves it alone.
+          default: -1
+          selector:
+            number:
+              min: -1
+              max: 14
+              step: 1
+              mode: box
+
+        ramp_rate_zwave:
+          name: Ramp rate, Z-Wave commands (parameter 11)
+          description: >-
+            Seconds to reach target level when commanded over Z-Wave, 0 to 90.
+            Dimmers only. Factory default is 3. -1 leaves it alone.
+          default: -1
+          selector:
+            number:
+              min: -1
+              max: 90
+              step: 1
+              unit_of_measurement: s
+              mode: box
+
+        ramp_rate_manual:
+          name: Ramp rate, local paddle (parameter 12)
+          description: >-
+            Seconds to reach target level when operated at the switch, 0 to 90.
+            Dimmers only. Factory default is 3. -1 leaves it alone.
+          default: -1
+          selector:
+            number:
+              min: -1
+              max: 90
+              step: 1
+              unit_of_measurement: s
+              mode: box
+
+        default_brightness:
+          name: Default brightness on manual turn-on (parameter 36)
+          description: >-
+            0 to 99. 0 means resume the last non-zero brightness. HS-WX300
+            (firmware 1.13+) only. -1 leaves it alone.
+          default: -1
+          selector:
+            number:
+              min: -1
+              max: 99
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+
+        wire_mode:
+          name: Wire mode (parameter 32)
+          description: >-
+            HS-WX300 only. Match this to how the switch is actually wired.
+            Setting it wrong on a dimmer causes flicker or refusal to dim.
+          default: Leave unchanged
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - Leave unchanged
+                - 3 wire mode (Neutral, line & load)
+                - 2 wire mode (Line & load)
+
+    single_tap_section:
+      name: Single tap
+      icon: mdi:gesture-tap
+      collapsed: true
+      description: >-
+        Fires on every normal paddle press, alongside the switch controlling its
+        own load. Usually left empty unless the load relay is disabled
+        (parameter 37 on WX300 and WS300).
+      input:
+        up_1x:
+          name: Top paddle, 1 tap
+          default: []
+          selector:
+            action:
+        dn_1x:
+          name: Bottom paddle, 1 tap
+          default: []
+          selector:
+            action:
+
+    double_tap_section:
+      name: Double tap
+      icon: mdi:gesture-double-tap
+      collapsed: true
+      input:
+        up_2x:
+          name: Top paddle, 2 taps
+          default: []
+          selector:
+            action:
+        dn_2x:
+          name: Bottom paddle, 2 taps
+          default: []
+          selector:
+            action:
+
+    triple_tap_section:
+      name: Triple tap
+      icon: mdi:gesture-tap-button
+      collapsed: true
+      input:
+        up_3x:
+          name: Top paddle, 3 taps
+          default: []
+          selector:
+            action:
+        dn_3x:
+          name: Bottom paddle, 3 taps
+          default: []
+          selector:
+            action:
+
+    quad_tap_section:
+      name: Quadruple tap (200 and 300 series only)
+      icon: mdi:gesture-tap-button
+      collapsed: true
+      description: >-
+        Not reported by HS-WD100+ or HS-WS100+. Leave empty for those.
+      input:
+        up_4x:
+          name: Top paddle, 4 taps
+          default: []
+          selector:
+            action:
+        dn_4x:
+          name: Bottom paddle, 4 taps
+          default: []
+          selector:
+            action:
+
+    quint_tap_section:
+      name: Quintuple tap (200 and 300 series only)
+      icon: mdi:gesture-tap-button
+      collapsed: true
+      description: >-
+        Not reported by HS-WD100+ or HS-WS100+. Leave empty for those.
+      input:
+        up_5x:
+          name: Top paddle, 5 taps
+          default: []
+          selector:
+            action:
+        dn_5x:
+          name: Bottom paddle, 5 taps
+          default: []
+          selector:
+            action:
+
+    hold_section:
+      name: Hold and release
+      icon: mdi:gesture-tap-hold
+      collapsed: true
+      description: >-
+        On a dimmer, holding also ramps the local load. Release fires when the
+        paddle is let go.
+      input:
+        up_hold:
+          name: Top paddle held
+          default: []
+          selector:
+            action:
+        dn_hold:
+          name: Bottom paddle held
+          default: []
+          selector:
+            action:
+        up_release:
+          name: Top paddle released
+          default: []
+          selector:
+            action:
+        dn_release:
+          name: Bottom paddle released
+          default: []
+          selector:
+            action:
+
+    advanced_section:
+      name: Advanced
+      icon: mdi:tune
+      collapsed: true
+      input:
+        any_event:
+          name: Any scene event
+          description: >-
+            Runs on every Central Scene event from the selected devices, before
+            the specific tap actions. The variables paddle and press are in
+            scope.
+          default: []
+          selector:
+            action:
+        apply_config_on_reload:
+          name: Apply configuration on reload
+          description: >-
+            Push the Device configuration settings whenever any automation is
+            reloaded and at Home Assistant start. Turn off to make this a
+            scene-only automation and manage parameters on the device page.
+          default: true
+          selector:
+            boolean:
+        debug_logbook:
+          name: Diagnostics
+          description: >-
+            Writes each paddle event to the logbook, and posts a notification
+            after a configuration push listing what was attempted. Leave off in
+            normal use.
+          default: false
+          selector:
+            boolean:
+
+mode: queued
+max: 25
+max_exceeded: silent
+
+variables:
+  device_ids: !input homeseer_devices
+  debug: !input debug_logbook
+  apply_config: !input apply_config_on_reload
+  v_led_indicator: !input led_indicator
+  v_load_led_color: !input load_led_color
+  v_led_brightness: !input led_brightness
+  v_dimming_threshold: !input dimming_threshold
+  v_ramp_rate_zwave: !input ramp_rate_zwave
+  v_ramp_rate_manual: !input ramp_rate_manual
+  v_default_brightness: !input default_brightness
+  v_wire_mode: !input wire_mode
+
+triggers:
+  - trigger: event
+    event_type: zwave_js_value_notification
+    id: scene
+  - trigger: event
+    event_type: automation_reloaded
+    id: apply_config
+  - trigger: homeassistant
+    event: start
+    id: apply_config
+
+conditions: []
+
+actions:
+  - choose:
+
+      - alias: Push device configuration parameters
+        conditions:
+          - condition: trigger
+            id: apply_config
+          - condition: template
+            value_template: "{{ apply_config }}"
+        sequence:
+          - variables:
+              pending: >-
+                {{ [
+                     {'p': 3,  'v': v_led_indicator},
+                     {'p': 14, 'v': v_load_led_color},
+                     {'p': 32, 'v': v_wire_mode},
+                     {'p': 34, 'v': v_led_brightness},
+                     {'p': 5,  'v': v_dimming_threshold},
+                     {'p': 11, 'v': v_ramp_rate_zwave},
+                     {'p': 12, 'v': v_ramp_rate_manual},
+                     {'p': 36, 'v': v_default_brightness}
+                   ] | rejectattr('v', 'in', ['Leave unchanged', -1]) | list }}
+          - variables:
+              writes: >-
+                {%- set ns = namespace(out=[]) -%}
+                {%- for d in device_ids -%}
+                  {%- for w in pending -%}
+                    {%- set ns.out = ns.out + [{'d': d, 'p': w.p, 'v': w.v}] -%}
+                  {%- endfor -%}
+                {%- endfor -%}
+                {{ ns.out }}
+          - repeat:
+              for_each: "{{ writes }}"
+              sequence:
+                - action: zwave_js.set_config_parameter
+                  continue_on_error: true
+                  target:
+                    device_id: "{{ repeat.item.d }}"
+                  data:
+                    parameter: "{{ repeat.item.p }}"
+                    value: "{{ repeat.item.v }}"
+          - if:
+              - condition: template
+                value_template: "{{ debug and pending | count > 0 }}"
+            then:
+              - action: persistent_notification.create
+                data:
+                  title: HomeSeer configuration pushed
+                  message: >-
+                    {{ writes | count }} write(s) attempted across
+                    {{ device_ids | count }} device(s). Parameters the model does
+                    not have were skipped silently. Verify at Settings > Devices
+                    & services > the device > Configure.
+
+
+                    {% for w in pending %}Parameter {{ w.p }} = {{ w.v }}
+                    {% endfor %}
+
+      - alias: Handle a paddle scene event
+        conditions:
+          - condition: trigger
+            id: scene
+          - condition: template
+            value_template: >-
+              {{ trigger.event.data.device_id in device_ids
+                 and trigger.event.data.command_class_name == 'Central Scene'
+                 and trigger.event.data.property_key_name in ['001', '002'] }}
+        sequence:
+          - variables:
+              paddle: "{{ trigger.event.data.property_key_name }}"
+              press: "{{ trigger.event.data.value }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ debug }}"
+            then:
+              - action: logbook.log
+                data:
+                  name: HomeSeer scene
+                  message: >-
+                    {{ device_attr(trigger.event.data.device_id, 'name') }}
+                    paddle {{ '001 (top)' if paddle == '001' else '002 (bottom)' }}
+                    event {{ press }}
+
+          - sequence: !input any_event
+
+          - choose:
+              - conditions: "{{ paddle == '001' and press == 'KeyPressed' }}"
+                sequence: !input up_1x
+              - conditions: "{{ paddle == '002' and press == 'KeyPressed' }}"
+                sequence: !input dn_1x
+              - conditions: "{{ paddle == '001' and press == 'KeyPressed2x' }}"
+                sequence: !input up_2x
+              - conditions: "{{ paddle == '002' and press == 'KeyPressed2x' }}"
+                sequence: !input dn_2x
+              - conditions: "{{ paddle == '001' and press == 'KeyPressed3x' }}"
+                sequence: !input up_3x
+              - conditions: "{{ paddle == '002' and press == 'KeyPressed3x' }}"
+                sequence: !input dn_3x
+              - conditions: "{{ paddle == '001' and press == 'KeyPressed4x' }}"
+                sequence: !input up_4x
+              - conditions: "{{ paddle == '002' and press == 'KeyPressed4x' }}"
+                sequence: !input dn_4x
+              - conditions: "{{ paddle == '001' and press == 'KeyPressed5x' }}"
+                sequence: !input up_5x
+              - conditions: "{{ paddle == '002' and press == 'KeyPressed5x' }}"
+                sequence: !input dn_5x
+              - conditions: "{{ paddle == '001' and press == 'KeyHeldDown' }}"
+                sequence: !input up_hold
+              - conditions: "{{ paddle == '002' and press == 'KeyHeldDown' }}"
+                sequence: !input dn_hold
+              - conditions: "{{ paddle == '001' and press == 'KeyReleased' }}"
+                sequence: !input up_release
+              - conditions: "{{ paddle == '002' and press == 'KeyReleased' }}"
+                sequence: !input dn_release

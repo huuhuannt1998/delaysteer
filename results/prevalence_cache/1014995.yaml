@@ -1,0 +1,732 @@
+# Adaptive Fan Speed Control
+# Version: 1.2.1
+# https://github.com/bferd/homeassistant-blueprints/tree/main/adaptive_fan_speed_control
+blueprint:
+  name: Adaptive Fan Speed Control
+  description: "Adaptive fan speed control based on one or more sensors —
+    temperature, humidity, air quality — and/or a thermostat.\n\n Each
+    configured entity is evaluated independently, mapping its value (or, for
+    a thermostat, deviation from setpoint) onto a configurable speed range
+    using whichever threshold sliders match its device class. Whichever
+    entity currently computes the highest fan speed wins — the fan always
+    serves the most urgent condition, never an average of all of them, so a
+    sensor that's satisfied can never suppress or dilute a different
+    sensor's more urgent demand. The fan only turns off once every
+    configured entity agrees it's satisfied.\n\n Which threshold sliders
+    apply per entity is auto-detected from its device class (Temperature
+    Mode is the fallback if it doesn't match humidity or air quality, so a
+    plain sensor needs no extra configuration); Humidity Mode additionally
+    lets you choose whether more fan speed should respond to rising or
+    falling humidity. For thermostats, the response direction automatically
+    flips by HVAC mode (responds to too-hot in Cool mode, too-cold in Heat
+    mode). Air quality sensors always bypass the cooldown delay below,
+    responding on every check rather than waiting one out, since an
+    air-quality event is more time-sensitive than a comfort-oriented one.
+    \n\n A cooldown delay and a minimum percentage change threshold prevent
+    frequent, jittery speed adjustments on non-air-quality sensors — both
+    can be disabled via the Enable Change Frequency Delay toggle, useful
+    while testing.\n\n Update Check Frequency controls how often sensors are
+    re-evaluated (5–60 seconds), independent of how often they themselves
+    report updates. A Custom Trigger Override input is available to
+    supplement this with your own trigger(s), such as reacting on every
+    native sensor update instead of polling.\n\n If a sensor becomes
+    unavailable, unknown, or unreadable, it's excluded from the calculation
+    rather than treated as zero — the fan keeps responding to whichever
+    configured sensors are still healthy, and only freezes at its current
+    speed if every configured sensor is down simultaneously. An optional
+    companion app notification can be sent whenever at least one sensor is
+    down (listing which); with an optional Notify State Helper (an
+    input_boolean you create), that notification is throttled to once per
+    outage, plus a one-time 'recovered' notification once every sensor is
+    reporting again.\n\n Requires a relatively recent Home Assistant Core
+    release for the select/device/entity selector filter syntax used below
+    (anything from the last couple of years should be fine; if the
+    device/select inputs fail to render, update Home Assistant Core)."
+  domain: automation
+  input:
+    sensor_entities:
+      name: 🌡 Sensors or Thermostat(s)
+      description: Enter one or more temperature, humidity, or air quality
+        sensors, and/or single-setpoint thermostats. Each one is evaluated
+        independently using whichever threshold sliders match its device
+        class (see below) and whichever computes the highest fan speed wins
+        — so the fan always serves the most urgent condition, never an
+        average of all of them. The fan only turns off once every configured
+        entity agrees it's satisfied. If a sensor of the same type (e.g. two
+        humidity sensors) is added more than once, they share the same
+        threshold sliders rather than getting independent ones each.
+        Dual-setpoint thermostats (separate heat/cool targets) aren't
+        supported — use a single-setpoint thermostat or a plain sensor
+        instead.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+            - domain: climate
+          multiple: true
+    fan_switch:
+      name: 💨 Fan
+      description: The fan you wish to speed control.
+      selector:
+        entity:
+          domain:
+          - fan
+          multiple: false
+    min_fan_speed:
+      name: 💨 Minimum Fan Speed
+      description: Set the minimum percentage speed when your fan is still on.
+      default: 16
+      selector:
+        number:
+          min: 1.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    max_fan_speed:
+      name: 💨 Maximum Fan Speed
+      description: Set the maximum percentage speed for your fan.
+      default: 100
+      selector:
+        number:
+          min: 1.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    max_temp:
+      name: 📈 Maximum Temperature (Temperature Mode)
+      description: What temperature would you like the fan to run at max fan speed
+        (see Deviation Amount for thermostats, Maximum Humidity/Air Quality for
+        those sensor types). Make sure the sensor is in the units (°C or °F)
+        you want to use here — if it's in °C but you want °F, create a
+        template sensor to convert it first. Ignored unless the sensor is a
+        plain sensor without a humidity/air-quality device class.
+      default: 40
+      selector:
+        number:
+          min: 10.0
+          max: 120.0
+          step: 1.0
+          mode: slider
+    min_temp:
+      name: 📉 Minimum Temperature (Temperature Mode)
+      description: What temperature would you like the fan to run at minimum speed
+        (see Deviation Off for thermostats, Minimum Humidity/Air Quality for
+        those sensor types). Ignored unless the sensor is a plain sensor
+        without a humidity/air-quality device class.
+      default: 23
+      selector:
+        number:
+          min: 10.0
+          max: 120.0
+          step: 1.0
+          mode: slider
+    off_temp:
+      name: 🛑 Off Temperature (Temperature Mode)
+      description: What temperature would you like the fan to turn off? Below this,
+        the fan turns off; above it, the fan turns back on automatically (unless
+        disabled via "Enable auto fan on"). See Deviation Off for thermostats,
+        Off Humidity/Air Quality for those sensor types. Ignored unless the
+        sensor is a plain sensor without a humidity/air-quality device class.
+      default: 22
+      selector:
+        number:
+          min: 10.0
+          max: 120.0
+          step: 1.0
+          mode: slider
+    humidity_direction:
+      name: 🔁 Humidity Direction (Humidity Mode)
+      description: High Mode ramps fan speed up as humidity rises (e.g. a
+        bathroom exhaust fan responding to a shower) and turns off below
+        Off Humidity. Low Mode ramps fan speed up as humidity falls instead,
+        and turns off above Off Humidity. Only applies if the sensor's
+        device class is "humidity" — ignored otherwise.
+      default: high
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - value: high
+              label: High Mode (more fan as humidity rises)
+            - value: low
+              label: Low Mode (more fan as humidity falls)
+    max_humidity:
+      name: 📈 Maximum Humidity (Humidity Mode)
+      description: The humidity % at which the fan reaches max speed in High
+        Mode, or min speed in Low Mode. Must be greater than Minimum Humidity.
+        Ignored unless the sensor's device class is "humidity".
+      default: 65
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          step: 1.0
+          mode: slider
+          unit_of_measurement: '%'
+    min_humidity:
+      name: 📉 Minimum Humidity (Humidity Mode)
+      description: The humidity % at which the fan reaches min speed in High
+        Mode, or max speed in Low Mode. Must be smaller than Maximum Humidity.
+        Ignored unless the sensor's device class is "humidity".
+      default: 50
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          step: 1.0
+          mode: slider
+          unit_of_measurement: '%'
+    off_humidity:
+      name: 🛑 Off Humidity (Humidity Mode)
+      description: In High Mode, the fan turns off below this humidity (and
+        back on above it automatically, unless disabled via "Enable auto fan
+        on") — should be smaller than Minimum Humidity. In Low Mode it's the
+        reverse — the fan turns off above this humidity instead — should be
+        larger than Maximum Humidity. Ignored unless the sensor's device
+        class is "humidity".
+      default: 45
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          step: 1.0
+          mode: slider
+          unit_of_measurement: '%'
+    max_air_quality:
+      name: 📈 Maximum Air Quality (Air Quality Mode)
+      description: The reading at which the fan reaches max speed. Enter this
+        in whatever unit your sensor reports (ppm for CO2, µg/m³ for PM2.5,
+        index value for VOC/AQI, etc.) — the slider range is generous to
+        accommodate most of these, let me know if yours needs a wider range.
+        Must be greater than Minimum Air Quality. The default range here is
+        intentionally narrower than Temperature/Humidity's, so air quality
+        ramps to full speed over a smaller span of readings — air quality
+        sensors also always bypass the Change frequency delay cooldown (see
+        below), so they can respond on every check rather than waiting one
+        out. Air Quality Mode only ramps in one direction (more pollutant =
+        more fan); ignored unless the sensor's device class is one of the
+        recognized air quality classes (aqi, carbon_dioxide,
+        carbon_monoxide, nitrogen_dioxide, nitrogen_monoxide, nitrous_oxide,
+        ozone, pm1, pm25, pm4, pm10, sulphur_dioxide,
+        volatile_organic_compounds, volatile_organic_compounds_parts).
+      default: 800
+      selector:
+        number:
+          min: 0.0
+          max: 2000.0
+          step: 1.0
+          mode: slider
+    min_air_quality:
+      name: 📉 Minimum Air Quality (Air Quality Mode)
+      description: The reading at which the fan reaches min speed. Must be
+        smaller than Maximum Air Quality. Ignored unless the sensor's device
+        class is a recognized air quality class — see Maximum Air Quality for
+        the full list.
+      default: 500
+      selector:
+        number:
+          min: 0.0
+          max: 2000.0
+          step: 1.0
+          mode: slider
+    off_air_quality:
+      name: 🛑 Off Air Quality (Air Quality Mode)
+      description: Below this reading, the fan turns off; above it, the fan
+        turns back on automatically (unless disabled via "Enable auto fan
+        on"). Should be smaller than Minimum Air Quality. Ignored unless the
+        sensor's device class is a recognized air quality class — see
+        Maximum Air Quality for the full list.
+      default: 400
+      selector:
+        number:
+          min: 0.0
+          max: 2000.0
+          step: 1.0
+          mode: slider
+    deviation_amount:
+      name: 🌡️ Deviation Amount (Thermostat Mode)
+      description: Degrees of deviation from the thermostat's setpoint that maps
+        to maximum fan speed — applies in either HVAC direction (too hot in
+        Cool mode, too cold in Heat mode). See Maximum Temperature for plain
+        sensors.
+      default: 5
+      selector:
+        number:
+          min: 0.0
+          max: 30.0
+          step: 0.5
+          mode: slider
+    deviation_off:
+      name: 🛑 Deviation Off (Thermostat Mode)
+      description: Degrees of deviation from setpoint below which the fan turns
+        off (and the floor of the ramp range — there's no separate minimum
+        deviation input, so this also marks where minimum fan speed begins).
+        Must be smaller than Deviation Amount. See Off Temperature for plain
+        sensors.
+      default: 1
+      selector:
+        number:
+          min: 0.0
+          max: 30.0
+          step: 0.5
+          mode: slider
+
+    auto_turn_on_enabled:
+      name: ✅ Enable auto fan on 
+      description: Let the fan automatically turn back on if the temperature returns to a value above the temperature that the fan switches off
+      default: true
+      selector:
+        boolean: {}
+    update_frequency:
+      name: 🔁 Update Check Frequency / Cooldown
+      description: How often to re-check sensors and consider a fan speed
+        adjustment — this also serves as the cooldown between adjustments,
+        so the two are always in sync and the automation never queues more
+        triggers than it can handle. Lower values react faster; higher values
+        reduce log noise and automation load. For reacting on every native
+        sensor update instead of polling, use the Custom Trigger Override
+        input below.
+      default: "0"
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - value: "/5"
+              label: Every 5 seconds
+            - value: "/10"
+              label: Every 10 seconds
+            - value: "/15"
+              label: Every 15 seconds
+            - value: "/30"
+              label: Every 30 seconds
+            - value: "0"
+              label: Every 60 seconds (1 minute)
+    custom_trigger_override:
+      name: 🎛️ (OPTIONAL) Custom Trigger Override
+      description: Add your own trigger(s) here to supplement the Update Check 
+        Frequency above — for example, a "state" trigger on your temperature 
+        sensor to react on every native sensor update (the original behaviour), 
+        instead of polling at all. Leave blank to just use the preset 
+        dropdown above. Any trigger added here runs through the same logic as 
+        the periodic check, so it doesn't replace the dropdown — it adds to it.
+      default: []
+      selector:
+        trigger: {}
+    change_time_enabled:
+      name: ⏱️ Enable Cooldown
+      description: Toggle the cooldown on or off. The cooldown matches the
+        Update Check Frequency above — so if you're polling every 30 seconds,
+        adjustments are also throttled to at most once every 30 seconds. Turn
+        this off temporarily while testing (e.g. manually nudging a thermostat
+        setpoint to watch the fan step through the ramp on every check). Note
+        this only affects non-air-quality sensors — any active air quality
+        sensor always bypasses the cooldown regardless of this toggle.
+      default: true
+      selector:
+        boolean: {}
+    change_threshold:
+      name: Minimum percentage change
+      description: The minimum percentage change (between current fan speed and set
+        fan speed)
+      default: 1
+      selector:
+        number:
+          min: 1.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    max_change:
+      name: Maximum percentage change
+      description: The maximum percentage change (between current fan speed and set
+        fan speed)
+      default: 50
+      selector:
+        number:
+          min: 1.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    blocker_entity:
+      name: 🚫 (OPTIONAL) Blocking entity
+      description: If this entity's state is on, the automation will either
+        pause or shut off the fan depending on the Blocking Entity Action
+        setting below. E.g. a sleep mode, away mode, or quiet time helper.
+      default:
+      selector:
+        entity:
+          multiple: false
+    blocker_action:
+      name: 🚫 Blocking Entity Action
+      description: What to do when the blocking entity is on. Pause leaves
+        the fan at its current speed and stops the automation from making
+        any adjustments until the blocker turns off again. Shut off turns
+        the fan off immediately and keeps it off until the blocker turns off.
+        Ignored if no blocking entity is configured. Note — in Shut off mode
+        the fan turns off on the next periodic check (up to 60 seconds
+        depending on Update Check Frequency) rather than the instant the
+        blocker turns on, since the blocker entity itself isn't a trigger by
+        default. For immediate shutoff, add a state trigger on your blocker
+        entity to the Custom Trigger Override input below using the trigger
+        editor — set platform to "state", entity_id to your blocker entity,
+        and "to" to "on". That fires the automation the moment the blocker
+        turns on, which then immediately runs the shutoff logic rather than
+        waiting for the next poll.
+      default: pause
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - value: pause
+              label: Pause (fan stays at current speed, no adjustments)
+            - value: shutoff
+              label: Shut off (fan turns off immediately)
+    notify_device:
+      name: 📱 (OPTIONAL) Notify Device
+      description: Companion app device to notify if the sensor/thermostat
+        becomes unavailable or unknown. The fan is left at whatever speed
+        it's currently at — no automatic adjustment is made while the sensor
+        is down. Leave blank to skip notifications. By default this notifies
+        on every check while the sensor stays unavailable (frequency
+        controlled by Update Check Frequency above) — set a Notify State
+        Helper below to throttle this to once per outage instead.
+      default:
+      selector:
+        device:
+          filter:
+            integration: mobile_app
+          multiple: false
+    notify_state_helper:
+      name: 🔁 (OPTIONAL) Notify State Helper
+      description: An input_boolean helper that tracks whether the unavailable
+        notification has already been sent for the current outage. With this
+        set, the unavailable notification fires once when the sensor first
+        goes down (instead of on every check) and a separate "recovered"
+        notification fires once when it comes back. Create a new Toggle
+        helper (Settings → Devices & Services → Helpers → Create Helper →
+        Toggle) and select it here. Leave blank to keep the old behavior —
+        notifies every check while unavailable, no recovery notification.
+      default:
+      selector:
+        entity:
+          filter:
+            - domain: input_boolean
+          multiple: false
+    ambient_sensor:
+      name: 🌍 (OPTIONAL) Ambient Reference Sensor
+      description: A temperature or humidity sensor representing the ambient
+        conditions that physically limit what the fan can achieve — typically
+        the average temperature or humidity of the home. When set, the
+        effective off threshold for matching sensor types is adjusted so the
+        fan stops trying once it reaches ambient rather than continuing to
+        run toward an unachievable setpoint. For example, if the home average
+        is 26°C and the thermostat targets 22°C, the fan turns off when the
+        room reaches 26°C instead of thrashing trying to push past ambient.
+        The sensor's device_class determines which mode(s) it corrects —
+        temperature corrects Temperature and Thermostat sensors; humidity
+        corrects both Humidity High and Humidity Low sensors. Air quality
+        sensors are not affected. Leave blank to use the configured off
+        thresholds as-is.
+      default:
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+            - domain: sensor
+              device_class: humidity
+          multiple: false
+
+  source_url: https://community.home-assistant.io/t/adaptive-fan-speed-control-based-on-temperature-and-speed-range/678152
+variables:
+  fan_switch: !input fan_switch
+  auto_turn_on_enabled: !input 'auto_turn_on_enabled'
+
+  min_fan_speed: !input min_fan_speed
+  max_fan_speed: !input max_fan_speed
+
+  max_temp: !input max_temp 
+  min_temp: !input min_temp
+  off_temp: !input off_temp
+  humidity_direction: !input humidity_direction
+  max_humidity: !input max_humidity
+  min_humidity: !input min_humidity
+  off_humidity: !input off_humidity
+  max_air_quality: !input max_air_quality
+  min_air_quality: !input min_air_quality
+  off_air_quality: !input off_air_quality
+  deviation_amount: !input deviation_amount
+  deviation_off: !input deviation_off
+
+  change_time_enabled: !input change_time_enabled
+  update_frequency: !input update_frequency
+  check_interval_seconds: "{{ update_frequency.lstrip('/') | int if update_frequency != '0' else 60 }}"
+  max_change: !input max_change
+  change_threshold: !input change_threshold
+  blocker_entity: !input blocker_entity
+  blocker_action: !input blocker_action
+  notify_device: !input notify_device
+  notify_state_helper: !input notify_state_helper
+  already_notified: "{{ notify_state_helper not in [none, ''] and is_state(notify_state_helper, 'on') }}"
+  ambient_sensor: !input ambient_sensor
+  sensor_entities: !input sensor_entities
+  fan_speed: '{{ state_attr(fan_switch,''percentage'') | float(0)}}'
+  sensor_eval: >-
+    {% set ns = namespace(contributions=[], unavailable=[], aq_active=false) %}
+    {% set aq_classes = ['aqi', 'carbon_dioxide', 'carbon_monoxide',
+      'nitrogen_dioxide', 'nitrogen_monoxide', 'nitrous_oxide', 'ozone',
+      'pm1', 'pm25', 'pm4', 'pm10', 'sulphur_dioxide',
+      'volatile_organic_compounds', 'volatile_organic_compounds_parts'] %}
+    {% set use_ambient = ambient_sensor not in [none, ''] and states(ambient_sensor) not in ['unavailable', 'unknown', 'none'] %}
+    {% set ambient_dc = state_attr(ambient_sensor, 'device_class') if use_ambient else '' %}
+    {% set ambient_t = states(ambient_sensor) | float(0) if (use_ambient and ambient_dc == 'temperature') else none %}
+    {% set ambient_h = states(ambient_sensor) | float(0) if (use_ambient and ambient_dc == 'humidity') else none %}
+    {% for entity in sensor_entities %}
+      {% set is_climate = entity.split('.')[0] == 'climate' %}
+      {% set dc = state_attr(entity, 'device_class') %}
+      {% set is_hum = dc == 'humidity' %}
+      {% set is_aq = dc in aq_classes %}
+      {% if is_climate %}
+        {% set unavail = states(entity) in ['unavailable', 'unknown', 'none', 'off'] or state_attr(entity, 'current_temperature') is none or state_attr(entity, 'temperature') is none %}
+      {% else %}
+        {% set unavail = states(entity) in ['unavailable', 'unknown', 'none'] %}
+      {% endif %}
+      {% if unavail %}
+        {% set ns.unavailable = ns.unavailable + [entity] %}
+      {% else %}
+        {% if is_climate %}
+          {% set setpoint = state_attr(entity, 'temperature') | float(0) %}
+          {% set actual = state_attr(entity, 'current_temperature') | float(0) %}
+          {% set is_heat = states(entity) == 'heat' %}
+          {% set cur = (setpoint - actual) if is_heat else (actual - setpoint) %}
+          {% set emin = deviation_off | float(0) %}
+          {% set emax = deviation_amount | float(0) %}
+          {% set eoff = deviation_off | float(0) %}
+          {% if ambient_t is not none %}
+            {% if is_heat %}
+              {% set eoff = [eoff, setpoint - ambient_t] | max %}
+            {% else %}
+              {% set eoff = [eoff, ambient_t - setpoint] | max %}
+            {% endif %}
+          {% endif %}
+        {% elif is_hum %}
+          {% if humidity_direction == 'low' %}
+            {% set cur = -1 * (states(entity) | float(0)) %}
+            {% set emin = -1 * (max_humidity | float(0)) %}
+            {% set emax = -1 * (min_humidity | float(0)) %}
+            {% set eoff = -1 * (off_humidity | float(0)) %}
+            {% if ambient_h is not none %}
+              {% set eoff = [eoff, -ambient_h] | max %}
+            {% endif %}
+          {% else %}
+            {% set cur = states(entity) | float(0) %}
+            {% set emin = min_humidity | float(0) %}
+            {% set emax = max_humidity | float(0) %}
+            {% set eoff = off_humidity | float(0) %}
+            {% if ambient_h is not none %}
+              {% set eoff = [eoff, ambient_h] | max %}
+            {% endif %}
+          {% endif %}
+        {% elif is_aq %}
+          {% set cur = states(entity) | float(0) %}
+          {% set emin = min_air_quality | float(0) %}
+          {% set emax = max_air_quality | float(0) %}
+          {% set eoff = off_air_quality | float(0) %}
+        {% else %}
+          {% set cur = states(entity) | float(0) %}
+          {% set emin = min_temp | float(0) %}
+          {% set emax = max_temp | float(0) %}
+          {% set eoff = off_temp | float(0) %}
+          {% if ambient_t is not none %}
+            {% set eoff = [eoff, ambient_t] | max %}
+          {% endif %}
+        {% endif %}
+        {% set vrange = emax - emin %}
+        {% set eslope = ((max_fan_speed | float(0) - min_fan_speed | float(0)) / vrange) if vrange != 0 else 0 %}
+        {% set active = cur > eoff %}
+        {% set contrib = ([[eslope * (cur - emin) + min_fan_speed | float(0), min_fan_speed | float(0)] | max, max_fan_speed | float(0)] | min) if active else 0 %}
+        {% set ns.contributions = ns.contributions + [contrib] %}
+        {% if is_aq and active %}
+          {% set ns.aq_active = true %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ {'contributions': ns.contributions, 'unavailable': ns.unavailable, 'aq_active': ns.aq_active} }}
+  unavailable_entities: "{{ sensor_eval.unavailable }}"
+  any_unavailable: "{{ unavailable_entities | length > 0 }}"
+  all_unavailable: "{{ sensor_entities | length > 0 and unavailable_entities | length == sensor_entities | length }}"
+  aq_active: "{{ sensor_eval.aq_active }}"
+  initial_set_fan_speed: "{{ sensor_eval.contributions | max if sensor_eval.contributions | length > 0 else 0 }}"
+  any_active: "{{ initial_set_fan_speed | float(0) > 0 }}"
+  adjusted_set_fan_speed: >
+    {% set diff = initial_set_fan_speed - fan_speed %}
+    {% if diff > max_change|float(0) %}
+      {{ fan_speed + max_change|float(0) }}
+    {% elif diff < -max_change|float(0) %}
+      {{ fan_speed - max_change|float(0) }}
+    {% else %}
+      {{ initial_set_fan_speed }}
+    {% endif %}
+  set_fan_speed: '{{ adjusted_set_fan_speed | round(0) | int }}'
+  speed_diff: '{{(fan_speed - set_fan_speed)|abs}}'
+trigger:
+- triggers: !input custom_trigger_override
+- platform: state
+  entity_id:
+  - !input fan_switch
+  id: fanon
+  from: 'off'
+  to: 'on'
+- platform: time_pattern
+  id: temp_state_change
+  seconds: !input update_frequency
+condition: []
+action:
+- if:
+  - condition: template
+    alias: Blocker entity is active
+    value_template: "{{ blocker_entity not in [none, ''] and is_state(blocker_entity, 'on') }}"
+  then:
+  - if:
+    - condition: template
+      value_template: "{{ blocker_action == 'shutoff' }}"
+    then:
+    - service: homeassistant.turn_off
+      target:
+        entity_id: "{{ fan_switch }}"
+- condition: template
+  alias: Stop here if blocker entity is active — prevents all further logic regardless of mode
+  value_template: "{{ blocker_entity in [none, ''] or is_state(blocker_entity, 'off') }}"
+- if:
+  - condition: template
+    alias: All previously-down sensors have recovered
+    value_template: "{{ (not any_unavailable) and already_notified }}"
+  then:
+  - service: input_boolean.turn_off
+    target:
+      entity_id: "{{ notify_state_helper }}"
+  - condition: template
+    alias: Only continue if a notify device was configured
+    value_template: "{{ notify_device not in [none, ''] }}"
+  - service: "notify.mobile_app_{{ device_attr(notify_device, 'name') | slugify }}"
+    data:
+      title: "✅ {{ state_attr(fan_switch, 'friendly_name') or fan_switch }} fan control"
+      message: >-
+        All previously unavailable sensors are reporting again.
+- if:
+  - condition: template
+    alias: At least one configured sensor is currently unavailable or unknown
+    value_template: "{{ any_unavailable }}"
+  then:
+  - if:
+    - condition: template
+      value_template: "{{ notify_state_helper not in [none, ''] }}"
+    then:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: "{{ notify_state_helper }}"
+  - condition: template
+    alias: Only notify if a device is configured and we haven't already notified for this outage
+    value_template: "{{ notify_device not in [none, ''] and not already_notified }}"
+  - service: "notify.mobile_app_{{ device_attr(notify_device, 'name') | slugify }}"
+    data:
+      title: "🌡️ {{ state_attr(fan_switch, 'friendly_name') or fan_switch }} fan control"
+      message: >-
+        {{ unavailable_entities | join(', ') }} {{ 'is' if unavailable_entities | length == 1 else 'are' }}
+        unavailable or unknown. Still operating off whichever configured
+        sensors are working — fully stopped only if all of them go down.
+- choose:
+  - conditions:
+    - condition: template
+      alias: Every configured sensor is unavailable or unknown — nothing to act on
+      value_template: "{{ all_unavailable }}"
+    sequence: []
+  - conditions:
+    - condition: trigger
+      alias: Only run if fan was switched on 
+      id: fanon
+    - condition: template
+      alias: Is the percentage change great enough? 
+      value_template: '{{ speed_diff | float(0) > change_threshold | float(0) }}'
+    sequence:
+    - service: homeassistant.turn_on
+      data:
+        percentage: '{{set_fan_speed}}'
+      target:
+        entity_id: '{{fan_switch}}'
+    - if:
+      - condition: template
+        value_template: "{{ change_time_enabled and not aq_active }}"
+      then:
+      - wait_template: >-
+          {{ blocker_entity not in [none, ''] and is_state(blocker_entity, 'on') }}
+        timeout:
+          seconds: "{{ check_interval_seconds }}"
+        continue_on_timeout: true
+  - conditions:
+    - condition: template
+      value_template: '{{states(fan_switch) == ''on''}}'
+      alias: Make sure the fan is already on (ignore if it's been switched off)
+    - condition: template
+      alias: Is the percentage change great enough? 
+      value_template: '{{ speed_diff | float(0) > change_threshold | float(0) }}'
+    - condition: template
+      alias: Does at least one sensor still want the fan on?
+      value_template: '{{ any_active }}'
+    sequence:
+    - service: homeassistant.turn_on
+      target:
+        entity_id: '{{fan_switch}}'
+      data:
+        percentage: '{{set_fan_speed}}'
+    - if:
+      - condition: template
+        value_template: "{{ change_time_enabled and not aq_active }}"
+      then:
+      - wait_template: >-
+          {{ blocker_entity not in [none, ''] and is_state(blocker_entity, 'on') }}
+        timeout:
+          seconds: "{{ check_interval_seconds }}"
+        continue_on_timeout: true
+  - conditions:
+    - condition: not
+      alias: Make sure the fan hasn't just been turned on 
+      conditions:
+      - condition: trigger
+        id: fanon
+    - condition: template
+      alias: Does every sensor agree it's satisfied?
+      value_template: '{{ not any_active }}'
+    sequence:
+    - service: homeassistant.turn_off
+      target:
+        entity_id: '{{fan_switch}}'
+  - conditions:
+    - '{{ auto_turn_on_enabled }}'
+    - condition: template
+      value_template: '{{states(fan_switch) == ''off''}}'
+      alias: Is the fan currently off?  
+    - condition: template
+      alias: Does at least one sensor want the fan on?
+      value_template: '{{ any_active }}'
+    sequence:
+    - service: homeassistant.turn_on
+      data:
+        percentage: '{{set_fan_speed}}'
+      target:
+        entity_id: '{{fan_switch}}'
+    - if:
+      - condition: template
+        value_template: "{{ change_time_enabled and not aq_active }}"
+      then:
+      - wait_template: >-
+          {{ blocker_entity not in [none, ''] and is_state(blocker_entity, 'on') }}
+        timeout:
+          seconds: "{{ check_interval_seconds }}"
+        continue_on_timeout: true
+mode: queued
+max: 2

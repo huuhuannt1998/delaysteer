@@ -1,0 +1,55 @@
+guard,deliberation_s,pollable,ablation,benign_false_block_rate,attack_violation_rate,task_completion_rate,observe_to_commit_age_s,commit_reval_latency_s,user_escalation_rate,additional_reads,basis
+static,0.0,1,full,0.0,1.0,1.0,0.05,0.0135,0.0,5,measured
+static,0.1,1,full,0.0,1.0,1.0,0.15,0.0135,0.0,5,measured
+static,0.5,1,full,0.0,1.0,1.0,0.55,0.0135,0.0,5,measured
+static,1.0,1,full,0.0,1.0,1.0,1.05,0.0135,0.0,5,measured
+static,2.0,1,full,1.0,0.0,0.0,2.05,0.0054,0.0,2,measured
+static,5.0,1,full,1.0,0.0,0.0,5.05,0.0054,0.0,2,measured
+static,10.0,1,full,1.0,0.0,0.0,10.05,0.0054,0.0,2,measured
+static,20.0,1,full,1.0,0.0,0.0,20.05,0.0054,0.0,2,measured
+static,40.0,1,full,1.0,0.0,0.0,40.05,0.0054,0.0,2,measured
+heartbeat,0.0,1,challenge,0.0,1.0,1.0,0.05,0.0135,0.0,5,measured
+heartbeat,0.1,1,challenge,0.0,1.0,1.0,0.15,0.0135,0.0,5,measured
+heartbeat,0.5,1,challenge,1.0,0.0,0.0,0.55,0.0054,0.0,2,measured
+heartbeat,1.0,1,challenge,1.0,0.0,0.0,1.05,0.0054,0.0,2,measured
+heartbeat,2.0,1,challenge,1.0,0.0,0.0,2.05,0.0054,0.0,2,measured
+heartbeat,5.0,1,challenge,1.0,0.0,0.0,5.05,0.0054,0.0,2,measured
+heartbeat,10.0,1,challenge,1.0,0.0,0.0,10.05,0.0054,0.0,2,measured
+heartbeat,20.0,1,challenge,1.0,0.0,0.0,20.05,0.0054,0.0,2,measured
+heartbeat,40.0,1,challenge,1.0,0.0,0.0,40.05,0.0054,0.0,2,measured
+active-poll,0.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,0.1,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,0.5,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,1.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,2.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,5.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,10.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,20.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+active-poll,40.0,1,activepoll,0.0,0.0,1.0,0.05,0.022,0.0,5,measured
+fused,0.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,0.1,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,0.5,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,1.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,2.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,5.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,10.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,20.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+fused,40.0,1,activepoll,0.0,0.0,1.0,0.05,0.0,0.0,0,derived
+non-pollable fail-closed,0.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,0.1,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,0.5,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,1.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,2.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,5.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,10.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,20.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable fail-closed,40.0,0,activepoll,1.0,0.0,0.0,30.0,0.0088,0.0,2,measured+modeled
+non-pollable escalation,0.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,0.1,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,0.5,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,1.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,2.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,5.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,10.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,20.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled
+non-pollable escalation,40.0,0,activepoll,0.0,0.0,1.0,30.0,0.022,1.0,5,measured+modeled

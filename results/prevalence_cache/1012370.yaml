@@ -1,0 +1,164 @@
+blueprint:
+  author: Hardy Jones
+
+  description: |
+    A better label selector than the default.
+
+    The issue with the default selector is that it finds all areas/devices/entites that have *any* of the labels.
+    This behavior works fine if all the labels carry the same semantic meaning,
+    but falls on its face if you want to select labels with *different* semantic meaning.
+    This script selects areas/devices/entities,
+    and lets *you* decide how to combine the semantics.
+
+    Returns a dict with the type:
+    ```Python
+    import typing
+
+    class Result(typing.TypedDict):
+      area_id: List[str],
+      device_id: List[str],
+      entity_id: List[str],
+    ```
+
+    So, it can be used directly where a target selector is available.
+    E.g. in an automation:
+    ```YAML
+    actions:
+      - action: script.better_label_selector
+        data:
+          how_to_combine_the_labels: Has all labels
+          labels_to_include:
+            - blinds
+          labels_to_exclude:
+            - south_facing
+        response_variable: selected_blinds
+      - action: cover.set_cover_tilt_position
+        data:
+          tilt_position: 50
+        target: "{{ selected_blinds }}"
+    ```
+
+  domain: script
+
+  name: Better Label Selector
+
+  source_url: https://codeberg.org/joneshf/home-assistant-stuff/raw/branch/main/blueprints/script/joneshf/better-label-selector.yaml
+
+fields:
+  labels_to_include:
+    description: Find areas/devices/entites with the selected labels.
+    name: Labels to include
+    required: true
+    selector:
+      label:
+        multiple: true
+
+  how_to_combine_the_labels:
+    default: Has any label
+    description: |
+      - "Has all labels" only finds areas/devices/entities that have all of the labels.
+
+          <details>
+          <summary>Set theory explanation</summary>
+
+          If you're familiar with [set theory](https://en.wikipedia.org/wiki/Set_theory),
+          this is equivalent to the finding areas/devices/entities with the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) of all of the labels.
+
+          </details>
+
+      - "Has any label" finds areas/devices/entites with _any_ of the labels.
+          This option is the default Home Assistant behavior when selecting labels.
+
+          <details>
+          <summary>Set theory explanation</summary>
+
+          If you're familiar with [set theory](https://en.wikipedia.org/wiki/Set_theory),
+          this is equivalent to the finding areas/devices/entities with the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of all of the labels.
+
+          </details>
+    name: How to combine the labels
+    required: true
+    selector:
+      select:
+        options:
+          - Has all labels
+          - Has any label
+        multiple: false
+
+  labels_to_exclude:
+    description: |
+      Remove all areas/devices/entites with the selected labels.
+
+      <details>
+      <summary>Set theory explanation</summary>
+
+      If you're familiar with [set theory](https://en.wikipedia.org/wiki/Set_theory),
+      this is equivalent to the finding areas/devices/entities with the [relative compliment](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) of the excluded labels in the included labels (`labels_to_exclude \ labels_to_include`).
+
+      <details>
+    name: Labels to exclude
+    selector:
+      label:
+        multiple: true
+
+icon: mdi:form-dropdown
+
+mode: parallel
+
+sequence:
+  - variables:
+      result: |
+        {% macro make_dict_macro(d, returns) %}
+          {% do returns(dict(**d)) %}
+        {% endmacro %}
+
+        {% set make_dict = make_dict_macro | as_function %}
+
+        {% 
+          set result = namespace(
+            areas=set([]),
+            devices=set([]),
+            entities=set([])
+          )
+        %}
+
+        {% for label_to_include in labels_to_include %}
+          {%- set areas = set(label_areas(label_to_include)) %}
+          {%- set devices = set(label_devices(label_to_include)) %}
+          {%- set entites = set(label_entities(label_to_include)) %}
+
+          {%- if loop.first %}
+            {%- set result.areas = areas %}
+            {%- set result.devices = devices %}
+            {%- set result.entites = entites %}
+          {%- elif how_to_combine_the_labels == "Has all labels" %}
+            {%- set result.areas = intersect(result.areas, areas) %}
+            {%- set result.devices = intersect(result.devices, devices) %}
+            {%- set result.entites = intersect(result.entites, entites) %}
+          {%- elif how_to_combine_the_labels == "Has any label" %}
+            {%- set result.areas = union(result.areas, areas) %}
+            {%- set result.devices = union(result.devices, devices) %}
+            {%- set result.entities = union(result.entities, entities) %}
+          {%- endif %}
+        {% endfor %}
+
+        {% for label_to_exclude in labels_to_exclude %}
+          {%- set areas = set(label_areas(label_to_exclude)) %}
+          {%- set devices = set(label_devices(label_to_exclude)) %}
+          {%- set entites = set(label_entities(label_to_exclude)) %}
+
+          {%- set result.areas = difference(result.areas, areas) %}
+          {%- set result.devices = difference(result.devices, devices) %}
+          {%- set result.entites = difference(result.entites, entites) %}
+        {% endfor %}
+
+        {{
+          make_dict({
+            "area_id": result.areas | sort | list,
+            "device_id": result.devices | sort | list,
+            "entity_id": result.entites | sort | list,
+          })
+        }}
+
+  - stop: Returning result
+    response_variable: result

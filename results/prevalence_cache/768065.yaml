@@ -1,0 +1,194 @@
+blueprint:
+  name: Matter - IKEA SOMRIG Shortcut Button (Model E2213) V1.0
+  description: >
+    Trigger actions from the "dot" buttons on an IKEA SOMRIG
+    shortcut button. Tap, double-tap, long press and long release are all
+    supported.  Requires an IKEA DIRIGERA hub connected to Home Assistant
+    via the [Matter integration](https://www.home-assistant.io/integrations/matter).
+
+
+    Tested with:
+
+    * Home Assistant 2024.10.4
+    
+    * DIRIGERA firmware 2.660.5
+    
+    * SOMRIG (E2213) firmware 1.0.21
+
+
+    Based on [Lorenzo Cecchelli](https://community.home-assistant.io/u/cecche/summary)'s
+    [ZHA blueprint](https://community.home-assistant.io/t/ikea-somrig-remote-e2213-zha/668671).
+
+    Adapted for the Matter integration by [Edward Wright](https://community.home-assistant.io/u/fasteddy516/summary).
+  author: Edward Wright
+  domain: automation
+  input:
+    single_dot_button:
+      name: '"Single Dot" Button Event'
+      description: The entity corresponding to the single dot button event.
+      selector:
+        entity:
+          multiple: false
+          filter:
+            - integration: matter
+              domain: event
+              device_class: button
+    double_dot_button:
+      name: '"Double Dot" Button Event'
+      description: The entity corresponding to the double dot button event.
+      selector:
+        entity:
+          multiple: false
+          filter:
+            - integration: matter
+              domain: event
+              device_class: button
+    lockout_time:
+      name: Lockout Time
+      description: The time to wait before accepting another button press after a
+        button press has been detected. Use this to prevent multiple actions from
+        being triggered by a single button press.
+      default: 250
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: milliseconds
+          mode: slider
+    single_dot_single_press:
+      name: "Action: Single Dot > Tap"
+      default: []
+      selector:
+        action: {}
+    single_dot_double_press:
+      name: "Action: Single Dot > Double Tap"
+      default: []
+      selector:
+        action: {}
+    single_dot_long_press:
+      name: "Action: Single Dot > Long Press"
+      default: []
+      selector:
+        action: {}
+    single_dot_long_release:
+      name: "Action: Single Dot > Release after Long Press"
+      default: []
+      selector:
+        action: {}
+    double_dot_single_press:
+      name: "Action: Double Dot > Tap"
+      default: []
+      selector:
+        action: {}
+    double_dot_double_press:
+      name: "Action: Double Dot > Double Tap"
+      default: []
+      selector:
+        action: {}
+    double_dot_long_press:
+      name: "Action: Double Dot > Long Press"
+      default: []
+      selector:
+        action: {}
+    double_dot_long_release:
+      name: "Action: Double Dot > Release after Long Press"
+      default: []
+      selector:
+        action: {}
+mode: single
+max_exceeded: silent
+triggers:
+- trigger: state
+  entity_id:
+    - !input single_dot_button
+    - !input double_dot_button
+actions:
+  - variables:
+      single_dot: !input single_dot_button
+      double_dot: !input double_dot_button
+  - choose:
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == single_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'multi_press_1'
+            }}
+      sequence: !input single_dot_single_press
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == single_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'multi_press_2'
+            }}
+      sequence: !input single_dot_double_press
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == single_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'long_press'
+            }}
+      sequence: !input single_dot_long_press
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == single_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'long_release'
+            }}
+      sequence: !input single_dot_long_release
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == double_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'multi_press_1'
+            }}
+      sequence: !input double_dot_single_press
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == double_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'multi_press_2'
+            }}
+      sequence: !input double_dot_double_press
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == double_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'long_press'
+            }}
+      sequence: !input double_dot_long_press
+    - conditions:
+        - condition: template
+          value_template: >-
+            {{ trigger.entity_id == double_dot
+            }}
+        - condition: template
+          value_template: >-
+            {{ trigger.to_state['attributes']['event_type'] == 'long_release'
+            }}
+      sequence: !input double_dot_long_release
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: !input lockout_time

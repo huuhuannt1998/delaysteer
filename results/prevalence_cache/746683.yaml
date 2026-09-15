@@ -1,0 +1,10 @@
+blueprint:
+  name: Überschussladen für Elektroauto
+  description: Überschussladung basierend auf PV-Leistung, Hausverbrauch und Batteriespeicher
+  domain: automation
+  input:
+    switch:
+      name: Automatisierungsschalter
+      selector:
+        entity:
+          domain: input_boolean

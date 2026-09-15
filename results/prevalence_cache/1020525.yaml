@@ -1,0 +1,212 @@
+blueprint:
+  name: Pax extractor boost when dew-point ventilation warranted
+  description: >
+    Turn a Vent-Axia Pax (Svara/Calima, or compatible) extractor **boost mode** switch
+    **on** or **off** when dew-point ventilation is warranted, with a stability delay
+    so boost does not flap.
+
+
+    **Vent warranted** when both are true:
+
+    1. Room dew point is at or above the mould floor (default 16 °C) - winter heat-loss
+       guard so you do not extract expensive heated air unless humidity is mould-relevant.
+
+    2. Room dew point is more than *outdoor dew point + delta* (default 1.0 °C) - outdoor
+       air is materially drier, so extraction removes humidity instead of adding it.
+
+
+    **Dew point source**
+
+    - *Calculate* (default): Magnus formula from room and outdoor temperature + humidity.
+
+    - *Sensors*: use existing room and outdoor dew point `sensor.*` entities.
+
+
+    **Behaviour**
+
+    - Warranted **on** for *N* minutes → `switch.turn_on` (only if boost is off).
+
+    - Warranted **off** for *N* minutes → `switch.turn_off` (only if boost is on).
+
+
+    **Caveat:** may turn off boost you enabled manually in the Pax app when warranted
+    stays off for the full delay.
+  author: Tom
+  domain: automation
+  homeassistant:
+    min_version: 2023.4.0
+  input:
+    dew_point_source:
+      name: Dew point source
+      description: Calculate from temperature and humidity, or use existing dew point sensors.
+      default: calculate
+      selector:
+        select:
+          options:
+            - label: Calculate from temperature and humidity
+              value: calculate
+            - label: Use dew point sensors
+              value: sensors
+    room_temperature:
+      name: Room temperature
+      description: Pax fan or room temperature sensor (calculate mode only).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    room_humidity:
+      name: Room humidity
+      description: Pax fan or room humidity sensor (calculate mode only).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: humidity
+    outdoor_temperature:
+      name: Outdoor temperature
+      description: Weather integration outdoor temperature (calculate mode only).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    outdoor_humidity:
+      name: Outdoor humidity
+      description: Weather integration outdoor humidity (calculate mode only).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: humidity
+    room_dew_point:
+      name: Room dew point
+      description: Room dew point sensor (sensors mode only).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    outdoor_dew_point:
+      name: Outdoor dew point
+      description: Outdoor dew point sensor (sensors mode only).
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    mould_floor_c:
+      name: Mould floor (°C dew point)
+      description: Minimum room dew point before boost is considered (UK mould band ~16–18 °C).
+      default: 16
+      selector:
+        number:
+          min: 10
+          max: 25
+          step: 0.5
+          unit_of_measurement: "°C"
+          mode: box
+    outdoor_delta_c:
+      name: Outdoor delta (°C)
+      description: Room dew point must exceed outdoor dew point by at least this much.
+      default: 1.0
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.1
+          unit_of_measurement: "°C"
+          mode: box
+    boost_switch:
+      name: Extractor boost switch
+      description: Switch entity for Pax **boost mode** (not the fan power relay).
+      selector:
+        entity:
+          filter:
+            - domain: switch
+    stable_minutes:
+      name: Stability delay
+      description: >
+        Minutes vent-warranted must stay **on** or **off** before boost changes.
+        Filters brief spikes (default 30).
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: min
+          mode: box
+
+mode: single
+
+triggers:
+  - trigger: template
+    id: warranted_on
+    value_template: >
+      {% if '!input dew_point_source' == 'sensors' %}
+      {% set room_dp = states('!input room_dew_point') | float(none) %}
+      {% set outdoor_dp = states('!input outdoor_dew_point') | float(none) %}
+      {% else %}
+      {% set rh_r = states('!input room_humidity') | float(none) %}
+      {% set t_r = states('!input room_temperature') | float(none) %}
+      {% set room_dp = none if rh_r is none or t_r is none or rh_r <= 0
+         else (243.5 * (((rh_r / 100) | log) + (17.67 * t_r) / (243.5 + t_r))
+         / (17.67 - ((rh_r / 100) | log) - (17.67 * t_r) / (243.5 + t_r))) | round(1) %}
+      {% set rh_o = states('!input outdoor_humidity') | float(none) %}
+      {% set t_o = states('!input outdoor_temperature') | float(none) %}
+      {% set outdoor_dp = none if rh_o is none or t_o is none or rh_o <= 0
+         else (243.5 * (((rh_o / 100) | log) + (17.67 * t_o) / (243.5 + t_o))
+         / (17.67 - ((rh_o / 100) | log) - (17.67 * t_o) / (243.5 + t_o))) | round(1) %}
+      {% endif %}
+      {{ room_dp is not none and outdoor_dp is not none
+         and room_dp >= !input mould_floor_c
+         and room_dp > outdoor_dp + !input outdoor_delta_c }}
+    for:
+      minutes: !input stable_minutes
+  - trigger: template
+    id: warranted_off
+    value_template: >
+      {% if '!input dew_point_source' == 'sensors' %}
+      {% set room_dp = states('!input room_dew_point') | float(none) %}
+      {% set outdoor_dp = states('!input outdoor_dew_point') | float(none) %}
+      {% else %}
+      {% set rh_r = states('!input room_humidity') | float(none) %}
+      {% set t_r = states('!input room_temperature') | float(none) %}
+      {% set room_dp = none if rh_r is none or t_r is none or rh_r <= 0
+         else (243.5 * (((rh_r / 100) | log) + (17.67 * t_r) / (243.5 + t_r))
+         / (17.67 - ((rh_r / 100) | log) - (17.67 * t_r) / (243.5 + t_r))) | round(1) %}
+      {% set rh_o = states('!input outdoor_humidity') | float(none) %}
+      {% set t_o = states('!input outdoor_temperature') | float(none) %}
+      {% set outdoor_dp = none if rh_o is none or t_o is none or rh_o <= 0
+         else (243.5 * (((rh_o / 100) | log) + (17.67 * t_o) / (243.5 + t_o))
+         / (17.67 - ((rh_o / 100) | log) - (17.67 * t_o) / (243.5 + t_o))) | round(1) %}
+      {% endif %}
+      {% set warranted = room_dp is not none and outdoor_dp is not none
+         and room_dp >= !input mould_floor_c
+         and room_dp > outdoor_dp + !input outdoor_delta_c %}
+      {{ room_dp is not none and outdoor_dp is not none and not warranted }}
+    for:
+      minutes: !input stable_minutes
+
+actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: warranted_on
+      - condition: state
+        entity_id: !input boost_switch
+        state: "off"
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: !input boost_switch
+    - conditions:
+      - condition: trigger
+        id: warranted_off
+      - condition: state
+        entity_id: !input boost_switch
+        state: "on"
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id: !input boost_switch

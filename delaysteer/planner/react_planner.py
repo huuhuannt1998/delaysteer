@@ -28,6 +28,8 @@ SEMANTIC_TO_BELIEF: dict[str, str] = {
     "occupancy": "motion",
     "leak_state": "leak",
     "arrival": "arrival",
+    "window_state": "window",            # E7
+    "alarm_ready_state": "alarm_ready",  # E7
 }
 
 

@@ -1,0 +1,500 @@
+blueprint:
+  name: ERV Controller
+  description: |
+    # ERV Controller
+
+    A Home Assistant blueprint for controlling an Energy Recovery Ventilator (ERV) or similar ventilation device. Designed for single or dual-speed setups (regular and boost), with multiple layers of control that work together automatically.
+
+    ## How It Works
+
+    The automation runs continuously in the background, evaluating conditions in priority order: blockers and manual off first, then manual button presses, then sensor-driven responses, then scheduled and hourly minimum ventilation. The ERV is always in exactly the right state based on whatever is most relevant at the time.
+
+    ## Features
+
+    **Dual-Speed Support**
+    Separate relays for regular and boost speed. Boost relay is optional — works fine as a single-speed setup.
+
+    **Air Quality Sensors**
+    Monitors up to four sensor types — CO2, VOC, PM2.5, and NOx. Each has independent regular and boost thresholds. If an outdoor sensor is provided, the ERV will only respond when indoor levels exceed outdoor levels (no point ventilating if outside air is worse). Trigger and post-run delays prevent short cycling from momentary spikes.
+
+    **Physical Buttons**
+    Optional regular, boost, and off buttons via Event entities. Each press adds time to a timer helper. Supports click-type filtering (e.g. single vs double press) for buttons that emit multiple event types.
+
+    **Schedule**
+    Optional Schedule helper keeps the ERV running at regular speed during configured time windows.
+
+    **Minimum Hourly Ventilation**
+    Runs the ERV for a set number of minutes at the top of every hour, regardless of sensor readings — useful for maintaining baseline fresh air exchange. Respects blocking entities like everything else.
+
+    **Blocking Entities**
+    Any switch, binary sensor, or other entity in the 'on' state can block all ERV operation — useful for outdoor air quality alerts, open window detection, or any other condition where ventilation should be suppressed.
+
+    **Manual Off Cooldown**
+    Pressing the off button suppresses automatic control for a configurable period, so sensors or schedules don't immediately undo a manual off.
+  domain: automation
+
+  input:
+    section_relays:
+      name: "Relays"
+      icon: mdi:power-plug
+      collapsed: true
+      input:
+        regular_relay:
+          name: Regular Speed Relay
+          selector: { entity: { domain: switch } }
+        boost_relay:
+          name: Boost Speed Relay (Optional)
+          default: ""
+          selector: { entity: { domain: switch } }
+
+    section_helpers:
+      name: "Helpers"
+      icon: mdi:creation
+      collapsed: true
+      input:
+        manual_timer:
+          name: Timer Helper (Optional)
+          description: >
+            A Timer helper used to track manual button presses. When a Regular or Boost
+            button is pressed, this timer runs for the configured increment. The ERV stays
+            on until the timer finishes.
+          default: ""
+          selector: { entity: { domain: timer } }
+        custom_schedule:
+          name: Schedule Helper (Optional)
+          description: >
+            A Schedule helper that keeps the ERV running at regular speed whenever
+            the schedule is active. Create a Schedule helper in Settings → Helpers.
+          default: ""
+          selector: { entity: { domain: schedule } }
+
+    section_overrides:
+      name: "Controls & Safety"
+      icon: mdi:shield-alert-outline
+      collapsed: true
+      input:
+        blocking_entities:
+          name: Blocking Entities (Optional)
+          description: >
+            When any of these entities are 'on', the ERV will be forced off and will not
+            run for any reason — including the hourly minimum, sensors, or schedule.
+            Useful for outdoor air quality alerts, window/door sensors, or manual overrides.
+          default: []
+          selector: { entity: { multiple: true } }
+        btn_regular:
+          name: Regular Speed Button (Optional)
+          description: >
+            An Event entity tied to a physical button. Each press adds time to the timer
+            at Regular speed.
+          default: ""
+          selector: { entity: { domain: event } }
+        btn_regular_type:
+          name: Regular Button — Click Type
+          description: >
+            Filter to a specific click type (e.g. single_press, double_press). Leave blank
+            to trigger on any event from that button. To find the event type, go to
+            Developer Tools → States, find your button entity, and look at the
+            'event_type' attribute after pressing the button.
+          default: ""
+        btn_boost:
+          name: Boost Speed Button (Optional)
+          description: >
+            An Event entity tied to a physical button. Each press adds time to the timer
+            at Boost speed.
+          default: ""
+          selector: { entity: { domain: event } }
+        btn_boost_type:
+          name: Boost Button — Click Type
+          description: >
+            Filter to a specific click type (e.g. single_press, double_press). Leave blank
+            to trigger on any event from that button. To find the event type, go to
+            Developer Tools → States, find your button entity, and look at the
+            'event_type' attribute after pressing the button.
+          default: ""
+        btn_off:
+          name: Off Button (Optional)
+          description: >
+            An Event entity tied to a physical button. Pressing this cancels the timer
+            and turns the ERV off for the configured cooldown period.
+          default: ""
+          selector: { entity: { domain: event } }
+        btn_off_type:
+          name: Off Button — Click Type
+          description: >
+            Filter to a specific click type (e.g. single_press, double_press). Leave blank
+            to trigger on any event from that button. To find the event type, go to
+            Developer Tools → States, find your button entity, and look at the
+            'event_type' attribute after pressing the button.
+          default: ""
+
+    section_timing:
+      name: "Timing"
+      icon: mdi:timer-cog-outline
+      collapsed: true
+      input:
+        trigger_dur:
+          name: Trigger Delay
+          description: >
+            How long a sensor must remain above its threshold before the ERV turns on.
+            Helps avoid short spurts from momentary sensor spikes.
+          default: 2
+          selector: { number: { min: 0, max: 30, unit_of_measurement: min } }
+        post_run_dur:
+          name: Post-Run Delay
+          description: >
+            How long sensors must remain below their thresholds before the ERV turns off.
+            Keeps the ERV running a little longer after air quality recovers.
+          default: 3
+          selector: { number: { min: 0, max: 30, unit_of_measurement: min } }
+        min_run_time:
+          name: Minimum Hourly Ventilation
+          description: >
+            The ERV will run for at least this many minutes at the start of every hour
+            (e.g. 20 = runs from :00 to :20 each hour). Set to 0 to disable.
+            Blocking entities will prevent this from running, just like any other mode.
+          default: 0
+          selector: { number: { min: 0, max: 60, unit_of_measurement: min } }
+        manual_inc:
+          name: Button Time Increment
+          description: >
+            Each button press adds this many minutes to the timer. If the ERV is already
+            running in the same mode, presses are cumulative.
+          default: 10
+          selector: { number: { min: 1, max: 60, unit_of_measurement: min } }
+        off_cooldown:
+          name: Manual Off Cooldown
+          description: >
+            After pressing the Off button, the ERV will stay off for this many minutes
+            before normal automatic control (sensors, schedule, hourly minimum) can turn
+            it back on. Does not block emergency overrides or blocker entities.
+          default: 30
+          selector: { number: { min: 0, max: 180, unit_of_measurement: min } }
+
+    section_co2:
+      name: "CO2 Sensors"
+      icon: mdi:molecule-co2
+      collapsed: true
+      input:
+        co2_in:
+          name: Indoor CO2
+          default: ""
+          selector: { entity: { domain: sensor, device_class: carbon_dioxide } }
+        co2_out:
+          name: Outdoor CO2
+          default: ""
+          selector: { entity: { domain: sensor, device_class: carbon_dioxide } }
+        co2_reg:
+          name: Regular Threshold
+          default: 1000
+          selector: { number: { min: 400, max: 5000, mode: box } }
+        co2_bst:
+          name: Boost Threshold
+          default: 2000
+          selector: { number: { min: 400, max: 5000, mode: box } }
+
+    section_voc:
+      name: "VOC Sensors"
+      icon: mdi:scent
+      collapsed: true
+      input:
+        voc_in:
+          name: Indoor VOC
+          default: ""
+          selector: { entity: { domain: sensor } }
+        voc_out:
+          name: Outdoor VOC
+          default: ""
+          selector: { entity: { domain: sensor } }
+        voc_reg:
+          name: Regular Threshold
+          default: 300
+          selector: { number: { min: 0, max: 2000, mode: box } }
+        voc_bst:
+          name: Boost Threshold
+          default: 1000
+          selector: { number: { min: 0, max: 2000, mode: box } }
+
+    section_pm:
+      name: "PM2.5 Sensors"
+      icon: mdi:blur
+      collapsed: true
+      input:
+        pm_in:
+          name: Indoor PM2.5
+          default: ""
+          selector: { entity: { domain: sensor, device_class: pm25 } }
+        pm_out:
+          name: Outdoor PM2.5
+          default: ""
+          selector: { entity: { domain: sensor, device_class: pm25 } }
+        pm_reg:
+          name: Regular Threshold
+          default: 15
+          selector: { number: { min: 0, max: 500, mode: box } }
+        pm_bst:
+          name: Boost Threshold
+          default: 55
+          selector: { number: { min: 0, max: 500, mode: box } }
+
+    section_nox:
+      name: "NOx Sensors"
+      icon: mdi:smog
+      collapsed: true
+      input:
+        nox_in:
+          name: Indoor NOx
+          default: ""
+          selector: { entity: { domain: sensor } }
+        nox_out:
+          name: Outdoor NOx
+          default: ""
+          selector: { entity: { domain: sensor } }
+        nox_reg:
+          name: Regular Threshold
+          default: 30
+          selector: { number: { min: 0, max: 500, mode: box } }
+        nox_bst:
+          name: Boost Threshold
+          default: 100
+          selector: { number: { min: 0, max: 500, mode: box } }
+
+mode: restart
+
+variables:
+  reg_relay: !input regular_relay
+  bst_relay: !input boost_relay
+  manual_timer: !input manual_timer
+  manual_inc: !input manual_inc
+  min_run_time: !input min_run_time
+  off_cooldown: !input off_cooldown
+  blocking_entities: !input blocking_entities
+  custom_schedule: !input custom_schedule
+  btn_reg_type: !input btn_regular_type
+  btn_bst_type: !input btn_boost_type
+  btn_off_type: !input btn_off_type
+  btn_regular: !input btn_regular
+  btn_boost: !input btn_boost
+  btn_off: !input btn_off
+  ev_type: "{{ trigger.to_state.attributes.event_type | default('') if trigger.platform == 'state' and trigger.to_state is not none else '' }}"
+  match_off: "{{ trigger.id == 'trig_btn_off' and (btn_off_type == '' or ev_type == btn_off_type) }}"
+  match_bst: "{{ trigger.id == 'trig_btn_bst' and (btn_bst_type == '' or ev_type == btn_bst_type) }}"
+  match_reg: "{{ trigger.id == 'trig_btn_reg' and (btn_reg_type == '' or ev_type == btn_reg_type) }}"
+
+  # Sensor Eval Logic
+  co2_in: !input co2_in
+  co2_out: !input co2_out
+  co2_reg: !input co2_reg
+  co2_bst: !input co2_bst
+  voc_in: !input voc_in
+  voc_out: !input voc_out
+  voc_reg: !input voc_reg
+  voc_bst: !input voc_bst
+  pm_in: !input pm_in
+  pm_out: !input pm_out
+  pm_reg: !input pm_reg
+  pm_bst: !input pm_bst
+  nox_in: !input nox_in
+  nox_out: !input nox_out
+  nox_reg: !input nox_reg
+  nox_bst: !input nox_bst
+
+# === "Do No Harm" Safe Outdoor Check ===
+  # Only allow automatic ventilation if outdoor air is NOT worse for ANY pollutant,
+  # UNLESS that outdoor pollutant is still below its regular safety threshold.
+  safe_to_ventilate: >
+    {% set ns = namespace(safe=true) %}
+    {% set sensors = [
+      (co2_in, co2_out, co2_reg), 
+      (voc_in, voc_out, voc_reg),
+      (pm_in, pm_out, pm_reg), 
+      (nox_in, nox_out, nox_reg)
+    ] %}
+    {% for s_in, s_out, thresh in sensors %}
+      {% if s_in != '' and s_out != '' and states(s_in)|is_number and states(s_out)|is_number %}
+        {% set in_val = states(s_in)|float %}
+        {% set out_val = states(s_out)|float %}
+        {% if out_val > in_val and out_val >= thresh|float %}
+          {% set ns.safe = false %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.safe }}
+
+  eval_boost_needed: >
+    {% set ns = namespace(needs_boost=false) %}
+    {% if safe_to_ventilate | trim | bool(false) %}
+      {% set sensors = [(co2_in, co2_out, co2_bst), (voc_in, voc_out, voc_bst), (pm_in, pm_out, pm_bst), (nox_in, nox_out, nox_bst)] %}
+      {% for s_in, s_out, thresh in sensors %}
+        {% if s_in != '' and states(s_in)|is_number %}
+          {% set in_val = states(s_in)|float %}
+          {% if in_val >= thresh|float %}
+            {% if s_out == '' or not states(s_out)|is_number or in_val > states(s_out)|float %}
+              {% set ns.needs_boost = true %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {{ ns.needs_boost }}
+
+  eval_regular_needed: >
+    {% set ns = namespace(needs_regular=false) %}
+    {% if safe_to_ventilate | trim | bool(false) %}
+      {% set sensors = [(co2_in, co2_out, co2_reg), (voc_in, voc_out, voc_reg), (pm_in, pm_out, pm_reg), (nox_in, nox_out, nox_reg)] %}
+      {% for s_in, s_out, thresh in sensors %}
+        {% if s_in != '' and states(s_in)|is_number %}
+          {% set in_val = states(s_in)|float %}
+          {% if in_val >= thresh|float %}
+            {% if s_out == '' or not states(s_out)|is_number or in_val > states(s_out)|float %}
+              {% set ns.needs_regular = true %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {{ ns.needs_regular }}
+
+trigger:
+  # Physical button event triggers
+  - platform: state
+    id: 'trig_btn_reg'
+    entity_id: !input btn_regular
+    not_to: [ "unknown", "unavailable" ]
+  - platform: state
+    id: 'trig_btn_bst'
+    entity_id: !input btn_boost
+    not_to: [ "unknown", "unavailable" ]
+  - platform: state
+    id: 'trig_btn_off'
+    entity_id: !input btn_off
+    not_to: [ "unknown", "unavailable" ]
+  
+  # Heartbeat Trigger: Evaluates the entire automation every 60 seconds
+  # Fixes the bug where transitioning past the hourly runtime limit failed to trigger a shutoff
+  - platform: time_pattern
+    id: 'minute_heartbeat'
+    minutes: "/1"
+  
+  # Sensor Active Trigger: Fires when IAQ thresholds are exceeded continuously for 'trigger_dur' minutes
+  - platform: template
+    id: 'sensor_trigger'
+    value_template: "{{ eval_boost_needed | trim | bool(false) or eval_regular_needed | trim | bool(false) }}"
+    for:
+      minutes: !input trigger_dur
+  
+  # All Clear Trigger: Fires when air quality drops below thresholds for 'post_run_dur' minutes
+  - platform: template
+    id: 'all_clear'
+    value_template: "{{ not (eval_boost_needed | trim | bool(false)) and not (eval_regular_needed | trim | bool(false)) }}"
+    for:
+      minutes: !input post_run_dur
+  
+  # Housekeeping Triggers: Re-evaluates on timer expiration, blocker changes, or system restarts
+  - platform: state
+    id: 'timer_done'
+    entity_id: !input manual_timer
+    to: 'idle'
+  - platform: state
+    id: 'blocker_change'
+    entity_id: !input blocking_entities
+  - platform: homeassistant
+    event: start
+  - platform: event
+    event_type: automation_reloaded
+
+action:
+  - choose:
+      # --- OFF / BLOCKERS ---
+      - conditions: >
+          {% set blocker_active = expand(blocking_entities) | selectattr('state', 'eq', 'on') | list | length > 0 %}
+          {{ match_off or blocker_active }}
+        sequence:
+          - if: "{{ manual_timer != '' }}"
+            then:
+              - service: timer.cancel
+                target: { entity_id: "{{ manual_timer }}" }
+          - service: switch.turn_off
+            target: { entity_id: ["{{ reg_relay }}", "{{ bst_relay }}"] }
+          - if: "{{ match_off and off_cooldown > 0 }}"
+            then:
+              - delay:
+                  minutes: "{{ off_cooldown }}"
+
+      # --- BOOST BUTTON ---
+      - conditions: "{{ match_bst }}"
+        sequence:
+          - if: "{{ manual_timer != '' }}"
+            then:
+              - service: timer.start
+                target: { entity_id: "{{ manual_timer }}" }
+                data:
+                  duration: >
+                    {% set is_already_bst = is_state(bst_relay, 'on') if bst_relay != '' else false %}
+                    {% set rem = state_attr(manual_timer, 'remaining') %}
+                    {% set current_sec = (rem.split(':')[0]|int * 3600 + rem.split(':')[1]|int * 60 + rem.split(':')[2]|int) if is_state(manual_timer, 'active') and rem else 0 %}
+                    {{ (manual_inc * 60) + (current_sec if is_already_bst else 0) }}
+          - if: "{{ bst_relay != '' }}"
+            then:
+              - service: switch.turn_on
+                target: { entity_id: ["{{ reg_relay }}", "{{ bst_relay }}"] }
+
+      # --- REGULAR BUTTON ---
+      - conditions: "{{ match_reg }}"
+        sequence:
+          - if: "{{ manual_timer != '' }}"
+            then:
+              - service: timer.start
+                target: { entity_id: "{{ manual_timer }}" }
+                data:
+                  duration: >
+                    {% set is_already_reg = is_state(reg_relay, 'on') and (is_state(bst_relay, 'off') if bst_relay != '' else true) %}
+                    {% set rem = state_attr(manual_timer, 'remaining') %}
+                    {% set current_sec = (rem.split(':')[0]|int * 3600 + rem.split(':')[1]|int * 60 + rem.split(':')[2]|int) if is_state(manual_timer, 'active') and rem else 0 %}
+                    {{ (manual_inc * 60) + (current_sec if is_already_reg else 0) }}
+          - service: switch.turn_on
+            target: { entity_id: "{{ reg_relay }}" }
+          - if: "{{ bst_relay != '' }}"
+            then:
+              - service: switch.turn_off
+                target: { entity_id: "{{ bst_relay }}" }
+
+    # --- SYSTEM EVALUATION ---
+    # Automatically triggers when a specific physical button interaction hasn't intercepted the flow
+    default:
+      - choose:
+          # PRIORITY 1: MANUAL TIMER LOCK
+          # If the remote's timer is running, STOP evaluating and leave the relays exactly as the remote set them!
+          - conditions: "{{ manual_timer != '' and is_state(manual_timer, 'active') }}"
+            sequence:
+              - stop: "Manual remote timer is active. Yielding control."
+
+          # PRIORITY 2: BOOST SPEED SENSORS
+          # If high-severity IAQ sensor thresholds are crossed, run boost speed and regular speed
+          # DO NO HARM: Yields to bad outdoor air.
+          - conditions: "{{ eval_boost_needed | trim | bool(false) and safe_to_ventilate | trim | bool(false) and bst_relay != '' }}"
+            sequence:
+              - service: switch.turn_on
+                target: { entity_id: ["{{ reg_relay }}", "{{ bst_relay }}"] }
+
+          # PRIORITY 3: REGULAR SPEED CONDITIONS
+          # Turns on regular speed if standard sensor thresholds are breached, a custom schedule is on, 
+          # OR the current clock minute is below the target hourly runtime.
+          # DO NO HARM: Yields to bad outdoor air.
+          - conditions: >
+              {% set sched_active = custom_schedule != '' and is_state(custom_schedule, 'on') %}
+              {% set hourly_active = min_run_time > 0 and now().minute < min_run_time %}
+              {% set auto_ventilation = eval_regular_needed | trim | bool(false) or sched_active or hourly_active %}
+              {{ auto_ventilation and safe_to_ventilate | trim | bool(false) }}
+            sequence:
+              - service: switch.turn_on
+                target: { entity_id: "{{ reg_relay }}" }
+              - if: "{{ bst_relay != '' }}"
+                then:
+                  - service: switch.turn_off
+                    target: { entity_id: "{{ bst_relay }}" }
+
+        # DEFAULT FALLBACK: TURN EVERYTHING OFF
+        # Runs when all other criteria above fail (e.g., the exact minute the hourly runtime window closes)
+        default:
+          - service: switch.turn_off
+            target: { entity_id: ["{{ reg_relay }}", "{{ bst_relay }}"] }

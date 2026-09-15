@@ -1,0 +1,362 @@
+blueprint:
+  name: ZV9001K12-DIM-Z5 Remote
+  description: "Use the ZV9001K12-DIM-Z5 to trigger actions and events. \n"
+  domain: automation
+  source_url: https://community.home-assistant.io/t/zv9001k12-dim-z5-sunricher-5-channel-z-wave-remote-blueprint/1018758
+  input:
+    remote_entity:
+      name: Remote Entity
+      description: The ZV9001K12-DIM-Z5 to listen for events on.
+      selector:
+        device:
+          integration: zwave_js
+          manufacturer: Sunricher
+          model: ZV9001K12-DIM-Z5
+    G1_Press_on:
+      name: Group 1 (All) press on
+      selector:
+        action: {}
+      default: []
+    G1_Press_off:
+      name: Group 1 (All) press off
+      selector:
+        action: {}
+      default: []
+    G2_Press_on:
+      name: Group 2 press on
+      selector:
+        action: {}
+      default: []
+    G2_Press_off:
+      name: Group 2 press off
+      selector:
+        action: {}
+      default: []
+    G3_Press_on:
+      name: Group 3 press on
+      selector:
+        action: {}
+      default: []
+    G3_Press_off:
+      name: Group 3 press off
+      selector:
+        action: {}
+      default: []
+    G4_Press_on:
+      name: Group 4 press on
+      selector:
+        action: {}
+      default: []
+    G4_Press_off:
+      name: Group 4 press off
+      selector:
+        action: {}
+      default: []
+    G5_Press_on:
+      name: Group 5 press on
+      selector:
+        action: {}
+      default: []
+    G5_Press_off:
+      name: Group 5 press off
+      selector:
+        action: {}
+      default: []
+    G6_Press_on:
+      name: Group 6 press on
+      selector:
+        action: {}
+      default: []
+    G6_Press_off:
+      name: Group 6 press off
+      selector:
+        action: {}
+      default: []
+    G1_Hold_on:
+      name: Group 1 (All) hold on
+      selector:
+        action: {}
+      default: []
+    G1_Release_on:
+      name: Group 1 (All) release on
+      selector:
+        action: {}
+      default: []
+    G1_Hold_off:
+      name: Group 1 (All) hold off
+      selector:
+        action: {}
+      default: []
+    G1_Release_off:
+      name: Group 1 (All) release off
+      selector:
+        action: {}
+      default: []
+    G2_Hold_on:
+      name: Group 2 hold on
+      selector:
+        action: {}
+      default: []
+    G2_Release_on:
+      name: Group 2 release on
+      selector:
+        action: {}
+      default: []
+    G2_Hold_off:
+      name: Group 2 hold off
+      selector:
+        action: {}
+      default: []
+    G2_Release_off:
+      name: Group 2 release off
+      selector:
+        action: {}
+      default: []
+    G3_Hold_on:
+      name: Group 3 hold on
+      selector:
+        action: {}
+      default: []
+    G3_Release_on:
+      name: Group 3 release on
+      selector:
+        action: {}
+      default: []
+    G3_Hold_off:
+      name: Group 3 hold off
+      selector:
+        action: {}
+      default: []
+    G3_Release_off:
+      name: Group 3 release off
+      selector:
+        action: {}
+      default: []
+    G4_Hold_on:
+      name: Group 4 hold on
+      selector:
+        action: {}
+      default: []
+    G4_Release_on:
+      name: Group 4 release on
+      selector:
+        action: {}
+      default: []
+    G4_Hold_off:
+      name: Group 4 hold off
+      selector:
+        action: {}
+      default: []
+    G4_Release_off:
+      name: Group 4 release off
+      selector:
+        action: {}
+      default: []
+    G5_Hold_on:
+      name: Group 5 hold on
+      selector:
+        action: {}
+      default: []
+    G5_Release_on:
+      name: Group 5 release on
+      selector:
+        action: {}
+      default: []
+    G5_Hold_off:
+      name: Group 5 hold off
+      selector:
+        action: {}
+      default: []
+    G5_Release_off:
+      name: Group 5 release off
+      selector:
+        action: {}
+      default: []
+    G6_Hold_on:
+      name: Group 6 hold on
+      selector:
+        action: {}
+      default: []
+    G6_Release_on:
+      name: Group 6 release on
+      selector:
+        action: {}
+      default: []
+    G6_Hold_off:
+      name: Group 6 hold off
+      selector:
+        action: {}
+      default: []
+    G6_Release_off:
+      name: Group 6 release off
+      selector:
+        action: {}
+      default: []
+mode: single
+trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+variables:
+  logger: blueprint.zwave_js_value_notification
+  device_id: !input "remote_entity"
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.device_id == device_id and trigger.event.data.command_class == 91 and (trigger.event.data.value == 'KeyPressed' or trigger.event.data.value == 'KeyHeldDown' or trigger.event.data.value == 'KeyReleased') }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '001' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G1_Press_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '002' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G1_Press_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '003' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G2_Press_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '004' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G2_Press_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '005' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G3_Press_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '006' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G3_Press_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '007' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G4_Press_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '008' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G4_Press_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '009' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G5_Press_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '010' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G5_Press_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '011' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G6_Press_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '012' and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input "G6_Press_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '001' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G1_Hold_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '001' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G1_Release_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '002' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G1_Hold_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '002' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G1_Release_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '003' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G2_Hold_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '003' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G2_Release_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '004' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G2_Hold_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '004' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G2_Release_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '005' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G3_Hold_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '005' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G3_Release_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '006' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G3_Hold_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '006' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G3_Release_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '007' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G4_Hold_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '007' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G4_Release_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '008' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G4_Hold_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '008' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G4_Release_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '009' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G5_Hold_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '009' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G5_Release_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '010' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G5_Hold_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '010' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G5_Release_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '011' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G6_Hold_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '011' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G6_Release_on"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '012' and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input "G6_Hold_off"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.property_key == '012' and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input "G6_Release_off"
+            default:
+              - service: system_log.write
+                data:
+                  level: debug
+                  logger: "{{ logger }}"
+                  message:
+                    Activated scene '{{ trigger.event.data.label }}' ({{ trigger.event.data.scene_id
+                    }}) with value '{{ trigger.event.data.label }}' ({{ trigger.event.data.property_key
+                    }}) for node '{{ remote_entity }}' ({{ trigger.event.data.node_id }})
+    default: []

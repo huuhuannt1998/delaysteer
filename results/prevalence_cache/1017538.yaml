@@ -1,0 +1,997 @@
+blueprint:
+  name: ESPHome Device Update
+  description: >
+    # 🧩 ESPHome Device Update
+
+    **Version: 1.5**
+
+
+    Fresh code, happy nodes! 🙂
+
+
+    **If you like my blueprints, and would like to show your support or just say thank you?** [Click Here](https://www.paypal.com/donate/?hosted_button_id=WAZS3QSDTPGA8) 🙂
+
+
+    <details>
+    <summary><b>The Automation Process:</b> 👈</summary>
+
+
+      - **Trigger Options:**
+        - **Auto** - Runs automatically when ESPHome devices have available firmware updates.
+        - **Button** - Runs when the selected button helper is pressed.
+        - **Time** - Runs at the configured time when ESPHome devices have available firmware updates.
+
+      - **ESP Devices:**
+        - Update only selected ESPHome devices.
+        - Or update all devices except those you exclude.
+
+      - **Mobile App Notifications:**
+        - Sends messages before and after updates to selected mobile devices and/or notification groups.
+
+      - **Notify Time Restrictions:**
+        - Restrict **Mobile App Notifications** to the specified start and end times on the selected days. Notifications that would otherwise be sent outside this time range will be skipped.
+
+      - **UI Notifications:**
+        - Displays notifications before and after updates.
+
+      - **Global Conditions:**
+        - Enter any custom conditions to further control when this automation is allowed to run.
+    </details>
+    <details>
+    <summary><b>A Balanced Approach:</b> ⚖️</summary>
+
+      For most Home Assistant users, the following approach provides a good balance between staying up to date and maintaining stability:
+
+      - **Read the ESPHome release notes** before updating.
+      - **Consider updating when** there are bug fixes, framework updates, security fixes, compatibility improvements with Home Assistant, or other improvements relevant to your devices.
+      - **If a release mainly introduces new features** that your devices do not use and they are operating reliably, there is usually no urgency to update.
+      - **If your devices perform critical tasks or are installed in hard-to-reach locations** (for example, built-in sensors, devices installed in walls or ceilings, roof spaces, or other difficult-to-access locations), consider selecting only the devices you want to update or excluding these devices in the **ESP Devices to Update** section. You can then manually update these devices through the **ESPHome Builder** when it is convenient and you have sufficient time to monitor the update and troubleshoot any unexpected issues.
+    </details>
+
+
+    Need help?
+
+      - FAQ: [Click Here](https://community.home-assistant.io/t/1017538/2)
+
+      - Community Support Including Updates: [Click Here](https://community.home-assistant.io/t/1017538/)
+
+
+    Required = *
+  domain: automation
+  input:
+    trigger_settings:
+      name: "Triggers *"
+      icon: mdi:cog-outline
+      description: >
+        You must select at least one trigger *
+      collapsed: true
+      input:
+        trigger_method:
+          name: Update Trigger Method
+          description: >
+            Choose how this automation should be triggered.
+
+
+            **Auto Trigger** - After the ESPHome Device Builder is updated, Home Assistant will detect ESPHome devices with firmware updates as they become available.
+            This may occur immediately or later if devices are offline.
+            When one or more updates are detected, this automation will automatically update those devices.
+
+
+            **Button Trigger** - Runs when the selected button helper is pressed.
+
+
+            **Time Trigger** - Runs at a set time when one or more updates are available.
+
+
+            ⚠️ **WARNING:** Updates can be risky. New ESPHome versions may include breaking changes that could render devices unusable.
+            Before updating, always review the ESPHome release notes to ensure they are compatible.
+
+
+            **If your devices perform critical tasks or are installed in hard-to-reach locations** (for example, built-in sensors, devices installed in walls or ceilings, roof spaces, or other difficult-to-access locations), consider selecting only the devices you want to update or excluding these devices in the **ESP Devices to Update** section.
+          default: []
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Use Auto Trigger
+                  value: "enable_auto_trigger"
+                - label: Use Button Trigger
+                  value: "enable_button_trigger"
+                - label: Use Time Trigger
+                  value: "enable_time_trigger"
+        update_detection_delay:
+          name: Auto Trigger - Update Detection Delay
+          description: >
+            When using Auto Trigger, this delay starts after Home Assistant detects that at least one ESPHome device has a firmware update available.
+
+
+            Additional ESPHome devices may be detected shortly afterwards, such as devices waking from deep sleep or reconnecting to Home Assistant.
+            This delay gives Home Assistant time to detect other available updates before the automation builds the final list of devices and begins updating them.
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 10
+              step: 1
+              unit_of_measurement: minutes
+        delay_between_device_updates:
+          name: Delay Between Device Updates
+          description: >
+            Adds a short pause between each device update.
+
+
+            After one device update completes, this delay waits before starting the next device update, helping reduce system load and keep updates running smoothly.
+          default: 10
+          selector:
+            number:
+              min: 10
+              max: 20
+              step: 1
+              unit_of_measurement: seconds
+        button_entity:
+          name: Button Trigger - Button Helper
+          description: >
+            If using **Button Trigger**, choose the button helper that will manually start the update process.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_button
+        time_trigger:
+          name: Time Trigger
+          description: >
+            If using **Time Trigger**, set the time to check for available ESPHome updates.
+            The update process will begin only if one or more updates are available.
+          default: "03:00:00"
+          selector:
+            time:
+    esp_devices:
+      name: "ESP Devices to Update"
+      icon: mdi:chip
+      description: >
+      collapsed: true
+      input:
+        esp_update_mode:
+          name: ESPHome Update Mode
+          description: >
+            Choose which ESPHome devices to update.
+
+
+            **Update selected devices** - Only the devices you choose will be updated.
+
+
+            **Update all except excluded devices** - Updates all available ESPHome devices except those you exclude.
+          default: update_included_esp_devices
+          selector:
+            select:
+              options:
+                - label: Update selected devices
+                  value: "update_included_esp_devices"
+                - label: Update all except excluded devices
+                  value: "excluded_esp_devices"
+        included_esp_devices:
+          name: Included ESPHome Devices
+          description: >
+            If using **Update selected devices**, choose the devices to update.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - integration: esphome
+                  domain: update
+        excluded_esp_devices:
+          name: Excluded ESPHome Devices
+          description: >
+            If using **Update all except excluded devices**, choose the devices to exclude.
+
+
+            Even when using **Update selected devices**, you may choose to add devices you would like to exclude as an extra safeguard in case the update mode changes in the future.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - integration: esphome
+                  domain: update
+    easy_notify_device:
+      name: "Easy Notify - Device"
+      icon: mdi:devices
+      collapsed: true
+      input:
+        include_easy_notify:
+          name: Use The Easy Notify - Device Notification Options (Optional)
+          description: >
+            Enable this option to send notifications to the selected mobile app devices, notification groups, or both.
+          default: disabled_easy_notify
+          selector:
+            select:
+              options:
+                - label: Enable Easy Notify
+                  value: "enable_easy_notify"
+                - label: Disable Easy Notify
+                  value: "disabled_easy_notify"
+        notify_device:
+          name: Mobile App Devices (Optional)
+          description: >
+            Select mobile devices registered via the Home Assistant mobile app.
+
+
+            You can use devices, notification groups below, or both together.
+            If both are selected, notifications will be sent to all targets.
+            If the same device is selected multiple times (via the group input), it will only receive one notification.
+          default: []
+          selector:
+            device:
+              filter:
+                integration: mobile_app
+              multiple: true
+        notify_group:
+          name: Notification Groups (Optional)
+          description: >
+            Select notification groups (e.g. notify group helpers). All members in the group will receive the notification.
+
+
+            Groups are useful for managing notifications centrally.
+            If you update your phone in Home Assistant, you only need to update the group and all automations will automatically use the new device.
+
+
+            You can use groups, individual devices above, or both together.
+            If both are selected, notifications will be sent to all targets.
+            If the same device is selected multiple times (directly or via the device input), it will only receive one notification.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - integration: group
+                  domain: notify
+        notify_title:
+          name: Notification Title
+          description: >
+            Title displayed for all notifications sent to mobile app devices and notification groups.
+          default: 🧩 ESP Device Update
+          selector:
+            text:
+        notify_pre_update_message:
+          name: Pre-Update Header
+          description: >
+            Header displayed before the ESPHome devices begin updating.
+          default: |
+            ⚠️ Do not restart Home Assistant!
+          selector:
+            text:
+        notify_devices_to_update:
+          name: Pre-Update Summary
+          description: >
+            Text displayed after the number of ESPHome devices that are about to be updated.
+          default: |
+            ESPHome devices are about to be updated.
+          selector:
+            text:
+        notify_after_update_message:
+          name: Post-Update Header
+          description: >
+            Header displayed after the ESPHome devices have finished updating.
+          default: |
+            Update complete!
+          selector:
+            text:
+        notify_successful_updates:
+          name: Successful Updates
+          description: >
+            Text displayed after the number of ESPHome devices that were updated successfully.
+          default: |
+            ESPHome Devices Successfully Updated ✅
+          selector:
+            text:
+        notify_failed_updates:
+          name: Failed Updates
+          description: >
+            Text displayed after the number of ESPHome devices that failed to update.
+          default: |
+            ESPHome Devices Failed To Update ❌
+          selector:
+            text:
+        notify_success_footer:
+          name: Success Footer
+          description: >
+            Footer displayed when all ESPHome devices were updated successfully.
+          default: |
+            All ESPHome devices were updated successfully!
+          selector:
+            text:
+        notify_failure_footer:
+          name: Failure Footer
+          description: >
+            Footer displayed when one or more ESPHome devices failed to update.
+          default: |
+            Check ESPHome Builder for details on devices that failed to update.
+          selector:
+            text:
+        notify_no_updates_message:
+          name: No Updates Available Message
+          description: >
+            Message displayed when no ESPHome devices require an update.
+          default: |
+            All ESPHome devices are up to date!
+          selector:
+            text:
+        notify_tag:
+          name: Device Notification Tag
+          description: >
+            You can use a tag to keep your notifications organized.
+            When a new notification with the same tag is sent, it replaces the old one, so you won't get cluttered with duplicates.
+
+
+            If this input is left blank, no tag will be applied and each notification will be treated as separate.
+
+
+            For best results, use short, unique tags for each automation - for example: `esp-update`, `esp-devices`, `esp-device-updates`, etc.
+          default: []
+          selector:
+            text:
+        notify_url:
+          name: Notification URL
+          description: >
+            Opens a specific page or view in Home Assistant when the notification is tapped.
+
+
+            This is useful for jumping straight to a related dashboard or view.
+            Use the path from the Home Assistant address bar to set your URL.
+
+
+            If left blank, tapping the notification opens Home Assistant to the last viewed page.
+
+
+            Examples:
+
+            `/your_url_link_to_esphome_builder`
+
+            `/config/integrations/integration/esphome`
+          default: []
+          selector:
+            text:
+        notify_interruption_level:
+          name: Interruption Level - iOS Only
+          description: >
+            On devices running iOS 15 and later, you can configure the interruption level for your notifications to ensure they are delivered according to your preferences.
+            Choose the desired interruption level from the dropdown list.
+            Critical and time-sensitive notifications must be turned ON within the Home Assistant App, and time-sensitive notifications must be allowed in your Focus settings.
+
+
+            For more information on interruption levels [Click Here](https://community.home-assistant.io/t/1017538/3)
+          default: active
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Default
+                  value: "active"
+                - label: Critical Notifications
+                  value: "critical"
+                - label: Time Sensitive Notifications
+                  value: "time-sensitive"
+                - label: Quiet Notifications Without Waking Screen
+                  value: "passive"
+        notify_sound:
+          name: Notification Sound - iOS Only
+          description: >
+            The Home Assistant app for iOS includes built-in notification sounds, and you can import sounds from your iOS device into the app.
+            Custom sounds can also be added via iTunes or from your cloud storage.
+            When entering a sound, ensure you use the full filename, including the extension.
+
+
+            For more information on using sounds in the Home Assistant app, [Click Here](https://community.home-assistant.io/t/1017538/3)
+          default: []
+          selector:
+            text:
+        notify_data:
+          name: Android Only Options (Optional)
+          description: >
+            **High Priority** notifications ensure that you receive important alerts immediately.
+            These notifications bypass normal delivery delays and are delivered instantly to your device.
+
+
+            **Sticky Notification** ensure that important alerts are not dismissed when selected. They remain on your notification screen until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
+
+
+            **Notification Channel** allow you to easily organize different notification settings,
+            including notification sounds, vibrations, and other device-specific features.
+            If you choose this option, please enter your desired channel name below.
+
+
+            **Icon** allows you to replace the default Home Assistant icon with one of your choice.
+            If selected, choose your preferred icon using the **Icon - Android Only** option below, and set the icon colour using **Icon Colour - Android Only**.
+          default: []
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: High Priority
+                  value: "high_priority"
+                - label: Sticky Notification
+                  value: "sticky"
+                - label: Notification Channel
+                  value: "channel"
+                - label: Icon
+                  value: "icon"
+        notify_channel:
+          name: Notification Channel - Android Only
+          description: >
+            If you have chosen to use a notification channel, simply enter the name of an existing channel to apply its pre-configured settings.
+            If you don't have a channel yet, you can create a new one by entering a name here.
+            When your automation sends the first notification, it will create the channel on your device.
+            After the channel is created, you can customize its notification settings to your preference directly on your device.
+
+
+            For more information on notification channels [Click Here](https://community.home-assistant.io/t/1017538/3)
+          default: []
+          selector:
+            text:
+        notify_icon:
+          name: Icon - Android Only
+          description: >
+            Select a custom icon to replace the default Home Assistant icon in the notification.
+            This setting applies only if the **Icon** option is selected in **Android Only Options** above.
+          default: "mdi:car-esp"
+          selector:
+            icon:
+        notify_icon_colour:
+          name: Icon Colour - Android Only
+          description: >
+            Choose a colour for your custom notification icon.
+            This setting applies only if the **Icon** option is selected in **Android Only Options** above.
+          default: [225, 0, 225]
+          selector:
+            color_rgb:
+    notify_time_restrictions_settings:
+      name: "Notify Time Restrictions"
+      icon: mdi:clock-outline
+      collapsed: true
+      input:
+        include_time:
+          name: Use the Notify  Time Restriction Option (Optional)
+          description: >
+            Restrict notifications to a specified time range and selected days.
+
+
+            Notifications outside this time window will be skipped.
+            This is useful for preventing alerts that could disturb you while sleeping, such as when an ESP device comes online at night.
+          default: time_disabled
+          selector:
+            select:
+              options:
+                - label: Enable notify time restrictions
+                  value: "time_enabled"
+                - label: Disable notify time restrictions
+                  value: "time_disabled"
+        after_time:
+          name: Start Time
+          description: >
+            Set the time when notifications are allowed to begin.
+          default: "08:00:00"
+          selector:
+            time:
+        before_time:
+          name: End Time
+          description: >
+            Set the time when notifications should stop being sent.
+          default: "23:00:00"
+          selector:
+            time:
+        weekday_options:
+          name: Weekdays
+          description: >
+            Select which days notifications are allowed.  
+            To activate this, you must enable the Notification Time Restriction option above.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: "mon"
+                - label: Tuesday
+                  value: "tue"
+                - label: Wednesday
+                  value: "wed"
+                - label: Thursday
+                  value: "thu"
+                - label: Friday
+                  value: "fri"
+                - label: Saturday
+                  value: "sat"
+                - label: Sunday
+                  value: "sun"
+    easy_notify_ui:
+      name: "Easy Notify - UI"
+      icon: mdi:bell-check-outline
+      collapsed: true
+      input:
+        include_persistent_notification:
+          name: Enable UI Notifications (Optional)
+          description: >
+            Display notifications directly in the Home Assistant user interface (UI).
+          default: disabled_persistent_notification
+          selector:
+            select:
+              options:
+                - label: Enable UI Notification
+                  value: "enable_persistent_notification"
+                - label: Disable UI Notification
+                  value: "disabled_persistent_notification"
+        persistent_notify_title:
+          name: Notification Title
+          description: >
+            Title displayed for all UI notifications.
+          default: 🧩 ESPHome - Device Update
+          selector:
+            text:
+        persistent_notify_pre_update_message:
+          name: Pre-Update Message
+          description: >
+            Message shown before the ESPHome devices are updated.
+          default: |
+            ⚠️ Do not restart Home Assistant! 
+            The following ESPHome devices are about to be updated:
+          selector:
+            text:
+        persistent_notify_after_update_message:
+          name: Post-Update Message Header
+          description: >
+            Message header shown after the ESPHome devices have finished updating.
+          default: |
+            Update complete!
+          selector:
+            text:
+        persistent_notify_successful_updates:
+          name: Post-Update Successful Updates
+          description: >
+            Heading displayed above successfully updated devices.
+          default: |
+            ✅ Successfully Updated:
+          selector:
+            text:
+        persistent_notify_failed_updates:
+          name: Post-Update Failed Updates
+          description: >
+            Heading displayed above devices that failed to update.
+          default: |
+            ❌ Failed To Update:
+          selector:
+            text:
+        persistent_notify_no_updates_message:
+          name: No Device-Update Message
+          description: >
+            Message displayed when no ESPHome devices require an update.
+          default: |
+            ✅ No ESPHome devices need updating at this time.
+          selector:
+            text:
+        persistent_notify_id:
+          name: Notification ID (Optional)
+          description: >
+            A notification ID allows new notifications to replace older ones with the same ID instead of creating duplicates.
+
+
+            If left blank, each notification will be shown separately.
+
+
+            **Tip:** If you use a notification ID, choose a short, unique ID per automation (for example: `esp-update`) to prevent duplicate notifications.
+          default: []
+          selector:
+            text:
+    global_conditions_settings:
+      name: "Global Conditions"
+      icon: mdi:earth
+      collapsed: true
+      input:
+        global_conditions:
+          name: Global Conditions
+          description: >
+            Enter any global conditions you would like to apply to the automation.
+          default: []
+          selector:
+            condition:
+
+mode: single
+
+variables:
+  trigger_method: !input trigger_method
+  update_detection_delay: !input update_detection_delay
+  delay_between_device_updates: !input delay_between_device_updates
+  button_entity: !input button_entity
+  time_trigger: !input time_trigger
+  esp_update_mode: !input esp_update_mode
+  included_esp_devices: !input included_esp_devices
+  excluded_esp_devices: !input excluded_esp_devices
+  include_easy_notify: !input include_easy_notify
+  notify_device: !input notify_device
+  notify_group: !input notify_group
+  notify_title: !input notify_title
+  notify_pre_update_message: !input notify_pre_update_message
+  notify_devices_to_update: !input notify_devices_to_update
+  notify_after_update_message: !input notify_after_update_message
+  notify_successful_updates: !input notify_successful_updates
+  notify_success_footer: !input notify_success_footer
+  notify_failed_updates: !input notify_failed_updates
+  notify_failure_footer: !input notify_failure_footer
+  notify_no_updates_message: !input notify_no_updates_message
+  notify_tag: !input notify_tag
+  notify_url: !input notify_url
+  notify_interruption_level: !input notify_interruption_level
+  notify_sound: !input notify_sound
+  notify_data: !input notify_data
+  notify_channel: !input notify_channel
+  notify_icon: !input notify_icon
+  notify_icon_colour: !input notify_icon_colour
+  include_time: !input include_time
+  after_time: !input after_time
+  before_time: !input before_time
+  weekday_options: !input weekday_options
+  include_persistent_notification: !input include_persistent_notification
+  persistent_notify_title: !input persistent_notify_title
+  persistent_notify_pre_update_message: !input persistent_notify_pre_update_message
+  persistent_notify_after_update_message: !input persistent_notify_after_update_message
+  persistent_notify_successful_updates: !input persistent_notify_successful_updates
+  persistent_notify_failed_updates: !input persistent_notify_failed_updates
+  persistent_notify_no_updates_message: !input persistent_notify_no_updates_message
+  persistent_notify_id: !input persistent_notify_id
+  global_conditions: !input global_conditions
+
+# Notify Devices & Groups
+
+  notify_devices_and_groups: >
+    {% if notify_device %}
+      {% set device = namespace(device=[]) %}
+      {% for dev in notify_device %}
+        {% set notify = device_entities(dev)
+          | select('match', '^notify\\.')
+          | first %}
+        {% if notify %}
+          {% set device.device = device.device + [notify] %}
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      {% set device = namespace(device=[]) %}
+    {% endif %}
+    {% if notify_group %}
+      {% set group = namespace(entities=[]) %}
+      {% for grp in notify_group %}
+        {% set group.entities = group.entities + (state_attr(grp, 'entity_id') or []) %}
+      {% endfor %}
+    {% else %}
+      {% set group = namespace(entities=[]) %}
+    {% endif %}
+    {{ (device.device + group.entities) | unique | list }}
+
+# ESP Devices to update
+
+  included_esp_devices_list: >
+    {% set list_var = included_esp_devices if included_esp_devices is defined else [] %}
+    {% if list_var is string %}
+      {% set list_var = [list_var] %}
+    {% endif %}
+    {{ list_var }}
+
+  excluded_esp_devices_list: >
+    {% set list_var = excluded_esp_devices if excluded_esp_devices is defined else [] %}
+    {% if list_var is string %}
+      {% set list_var = [list_var] %}
+    {% endif %}
+    {{ list_var }}
+
+  esp_devices_to_update: >
+    {% set all_esp = integration_entities('esphome')
+        | select('match', '^update\\.')
+        | reject('is_state_attr', 'in_progress', true)
+        | select('is_state', 'on')
+        | list %}
+    {% if esp_update_mode == 'update_included_esp_devices' %}
+      {% set devices = all_esp | select('in', included_esp_devices_list) | list %}
+    {% else %}
+      {% set devices = all_esp | reject('in', excluded_esp_devices_list) | list %}
+    {% endif %}
+    {{ devices }}
+
+# Notify Device Variables
+
+  notify_pre_update_message_data: >-
+    {% set header = notify_pre_update_message %}
+    {% set device_count = esp_devices_to_update | count %}
+    {{ header ~ '\n' ~ device_count ~ ' ' ~ notify_devices_to_update }}
+
+  device_message_data: >-
+    {% set message = namespace(data={}) %}
+    {% set push = namespace(data={}) %}
+    {% if notify_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
+      {% set push.data = dict(push.data, **{ 'interruption-level': notify_interruption_level }) %}
+    {% endif %}
+    {% if notify_sound != [] %}
+      {% set push.data = dict(push.data, **{ 'sound': notify_sound }) %}
+    {% endif %}
+    {% if push.data %}
+      {% set message.data = dict(message.data, **{ 'push': push.data }) %}
+    {% endif %}
+    {% if 'high_priority' in notify_data %}
+      {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
+    {% endif %}
+    {% if 'channel' in notify_data %}
+      {% set message.data = dict(message.data, **{ 'channel': notify_channel }) %}
+    {% endif %}
+    {% if 'sticky' in notify_data %}
+      {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
+    {% endif %}
+    {% if 'icon' in notify_data %}
+      {% set message.data = dict(message.data, **{ 'notification_icon': notify_icon }) %}
+      {% if notify_icon_colour | length == 3 %}
+        {% set icon_colour = '#%02x%02x%02x' | format(notify_icon_colour[0], notify_icon_colour[1], notify_icon_colour[2]) %}
+        {% set message.data = dict(message.data, **{ 'color': icon_colour }) %}
+      {% endif %}
+    {% endif %}
+    {% if notify_tag != [] %}
+      {% set message.data = dict(message.data, **{ 'tag': notify_tag }) %}
+    {% endif %}
+    {% if notify_url != [] %}
+      {% set message.data = dict(message.data, **{ 'url': notify_url, 'clickAction': notify_url }) %}
+    {% endif %}
+    {{ message.data }}
+
+# Persistent Notify Variables
+
+  persistent_notify_pre_update_message_data: >-
+    {% set friendly_names = esp_devices_to_update | map('state_attr', 'friendly_name') | list %}
+    {% set data = {
+      'title': persistent_notify_title,
+      'message': persistent_notify_pre_update_message ~ '\n' ~ friendly_names | join('\n')
+    } %}
+    {% if persistent_notify_id %}
+      {% set data = dict(data, notification_id=persistent_notify_id) %}
+    {% endif %}
+    {{ data }}
+
+  persistent_notify_no_updates_message_data: >-
+    {% set data = {
+      'title': persistent_notify_title,
+      'message': persistent_notify_no_updates_message
+    } %}
+    {% if persistent_notify_id %}
+      {% set data = dict(data, notification_id=persistent_notify_id) %}
+    {% endif %}
+    {{ data }}
+
+triggers:
+  - platform: template
+    value_template: >
+      {{ integration_entities('esphome') | select('match', '^update\.') | select('is_state', 'on') | list | count > 0 }}
+    for:
+      minutes: !input update_detection_delay
+    id: 't0'
+  - trigger: state
+    entity_id: !input button_entity
+    id: 't1'
+  - trigger: time
+    at: !input time_trigger
+    id: 't2'
+
+# All Conditions
+conditions:
+
+# Global Conditions
+  - condition: and
+    conditions: !input global_conditions
+
+#Trigger conditions
+  - condition: or
+    conditions:
+      - condition: and # trigger by auto trigger
+        conditions:
+          - condition: trigger
+            id: 't0'
+          -  "{{ 'enable_auto_trigger' in trigger_method }}"
+      - condition: and # trigger by button trigger
+        conditions:
+          - condition: trigger
+            id: 't1'
+          -  "{{ 'enable_button_trigger' in trigger_method }}"
+      - condition: and # trigger by time trigger
+        conditions:
+          - condition: trigger
+            id: 't2'
+          -  "{{ 'enable_time_trigger' in trigger_method }}"
+          - condition: template
+            value_template: >
+              {{ integration_entities('esphome') | select('match', '^update\.') | select('is_state', 'on') | list | count > 0 }}
+
+actions:
+  - choose:
+      - alias: "If any ESP Devices require an update"
+        conditions:
+          - condition: template
+            value_template: "{{ esp_devices_to_update | count > 0 }}"
+        sequence:
+          - choose:
+            - alias: "If Enabled - Pre Notify of Devices"
+              conditions:
+                - condition: template
+                  value_template: "{{ include_easy_notify == 'enable_easy_notify' }}"
+                - condition: template
+                  value_template: "{{ notify_devices_and_groups | length > 0 }}"
+                - alias: "Check if notify time restriction is enabled before sending the message"
+                  condition: or
+                  conditions:
+                    - condition: template
+                      value_template: "{{ include_time == 'time_disabled' }}"
+                    - condition: and
+                      conditions:
+                        - condition: time
+                          after: !input after_time
+                          before: !input before_time
+                          weekday: !input weekday_options
+                        - condition: template
+                          value_template: "{{ include_time == 'time_enabled' }}"
+              sequence:
+                - alias: "Send a notification to each device"
+                  repeat:
+                    for_each: "{{ notify_devices_and_groups }}"
+                    sequence:
+                      - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                        data:
+                          title: !input notify_title
+                          message: "{{notify_pre_update_message_data}}"
+                          data: "{{ device_message_data }}"
+                        continue_on_error: true
+          - choose:
+            - alias: "If Enabled - Pre Persistent Notification"
+              conditions:
+                - condition: template
+                  value_template: "{{ include_persistent_notification == 'enable_persistent_notification' }}"
+              sequence:
+                - action: persistent_notification.create
+                  data: "{{ persistent_notify_pre_update_message_data }}"
+          - alias: "Update Each ESP Device"
+            repeat:
+              for_each: "{{ esp_devices_to_update }}"
+              sequence:
+                - alias: "Install Update"
+                  continue_on_error: true
+                  action: update.install
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                - delay: !input delay_between_device_updates
+          - alias: "Wait For ESPHome Devices To Report Their Final State OFF To Provide Accurate Update Results"
+            wait_template: >
+              {{ expand(esp_devices_to_update) | rejectattr('state', 'eq', 'off') | list | count == 0 }}
+            timeout: "00:02:00"
+            continue_on_timeout: true
+          - alias: "Collect final ESP device results"
+            variables:
+              successful_devices: >-
+                {{ esp_devices_to_update | select('is_state', 'off') | map('state_attr', 'friendly_name') | list }}
+              failed_devices: >-
+                {{ esp_devices_to_update | reject('is_state', 'off') | map('state_attr', 'friendly_name') | list }}
+          - choose:
+            - alias: "If Enabled - Post Notify of Devices"
+              conditions:
+                - condition: template
+                  value_template: "{{ include_easy_notify == 'enable_easy_notify' }}"
+                - condition: template
+                  value_template: "{{ notify_devices_and_groups | length > 0 }}"
+                - alias: "Check if notify time restriction is enabled before sending the message"
+                  condition: or
+                  conditions:
+                    - condition: template
+                      value_template: "{{ include_time == 'time_disabled' }}"
+                    - condition: and
+                      conditions:
+                        - condition: time
+                          after: !input after_time
+                          before: !input before_time
+                          weekday: !input weekday_options
+                        - condition: template
+                          value_template: "{{ include_time == 'time_enabled' }}"
+              sequence:
+                - variables:
+                    notify_after_update_message_data: >-
+                      {% set msg = notify_after_update_message %}
+                      {% if successful_devices | length > 0 %}
+                        {% set msg = msg ~ '\n' ~ (successful_devices | length) ~ ' ' ~ notify_successful_updates %}
+                      {% endif %}
+                      {% if failed_devices | length > 0 %}
+                        {% set msg = msg ~ '\n' ~ (failed_devices | length) ~ ' ' ~ notify_failed_updates %}
+                      {% endif %}
+                      {% if failed_devices | length == 0 %}
+                        {% set msg = msg ~ '\n' ~ notify_success_footer %}
+                      {% else %}
+                        {% set msg = msg ~ '\n' ~ notify_failure_footer %}
+                      {% endif %}
+                      {{ msg }}
+                - alias: "Send a notification to each device"
+                  repeat:
+                    for_each: "{{ notify_devices_and_groups }}"
+                    sequence:
+                      - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                        data:
+                          title: !input notify_title
+                          message: "{{notify_after_update_message_data}}"
+                          data: "{{ device_message_data }}"
+                        continue_on_error: true
+          - choose:
+            - alias: "If Enabled - Post Persistent Notification"
+              conditions:
+                - condition: template
+                  value_template: "{{ include_persistent_notification == 'enable_persistent_notification' }}"
+              sequence:
+                - variables:
+                    persistent_notify_after_update_message_data: >-
+                      {% set msg = persistent_notify_after_update_message %}
+                      {% if successful_devices | length > 0 %}
+                        {% set msg = msg ~ '\n' ~ persistent_notify_successful_updates ~ '\n' ~ successful_devices | join('\n') %}
+                      {% endif %}
+                      {% if failed_devices | length > 0 %}
+                        {% set msg = msg ~ '\n\n' ~ persistent_notify_failed_updates ~ '\n' ~ failed_devices | join('\n') %}
+                      {% endif %}
+                      {% set data = dict(
+                        title=persistent_notify_title,
+                        message=msg
+                      ) %}
+                      {% if persistent_notify_id %}
+                        {% set data = dict(data, notification_id=persistent_notify_id) %}
+                      {% endif %}
+                      {{ data }}
+                - action: persistent_notification.create
+                  data: "{{ persistent_notify_after_update_message_data }}"
+  - choose:
+      - alias: "If any ESP Devices dont require an update"
+        conditions:
+          - condition: template
+            value_template: "{{ esp_devices_to_update | count == 0 }}"
+        sequence:
+          - choose:
+            - alias: "If Enabled - Send Device Notification"
+              conditions:
+                - condition: template
+                  value_template: "{{ include_easy_notify == 'enable_easy_notify' }}"
+                - condition: template
+                  value_template: "{{ notify_devices_and_groups | length > 0 }}"
+                - alias: "Check if notify time restriction is enabled before sending the message"
+                  condition: or
+                  conditions:
+                    - condition: template
+                      value_template: "{{ include_time == 'time_disabled' }}"
+                    - condition: and
+                      conditions:
+                        - condition: time
+                          after: !input after_time
+                          before: !input before_time
+                          weekday: !input weekday_options
+                        - condition: template
+                          value_template: "{{ include_time == 'time_enabled' }}"
+              sequence:
+                - alias: "Send a notification to each device"
+                  repeat:
+                    for_each: "{{ notify_devices_and_groups }}"
+                    sequence:
+                      - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                        data:
+                          title: !input notify_title
+                          message: !input notify_no_updates_message
+                          data: "{{ device_message_data }}"
+                        continue_on_error: true
+          - choose:
+            - alias: "If Enabled - Send Persistent Notification"
+              conditions:
+                - condition: template
+                  value_template: "{{ include_persistent_notification == 'enable_persistent_notification' }}"
+              sequence:
+                - action: persistent_notification.create
+                  data: "{{ persistent_notify_no_updates_message_data }}"

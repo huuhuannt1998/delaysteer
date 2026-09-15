@@ -1,0 +1,20 @@
+blueprint:
+  name: 'Inovelli Blue LED (Zigbee2MQTT)'
+  description: |
+    Set LED effects for Inovelli Blue Series Switches using Zigbee2MQTT.
+
+    ℹ️ Version: 2026.4.0
+
+    To update this blueprint, read [Re-importing a blueprint](https://www.home-assistant.io/docs/automation/using_blueprints/#re-importing-a-blueprint)
+
+    ✨ Features:
+
+    - Select one or multiple devices, entities, floors, labels, or areas with Inovelli switches
+    - Selectors for LED Number, Color, Brightness Level, Effect, and Duration
+    - LED Number, Color, Effect, and Duration can accept direct values or the “friendly name” listed in the dropdown
+    - Debug info to diagnose issues
+      - Warning: Debug mode will create a persistent message for every entity called in the script plus 1
+
+    ✅ Supported Models:
+
+    - Inovelli Blue Series On/Off Switch (VZM30-SN)

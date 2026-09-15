@@ -1,0 +1,223 @@
+blueprint:
+  name: Onvis Smartswitch HS2 - event based
+  description: Easily setup your Onvis HS2 5-Button Smartswitch
+  domain: automation
+  input:
+    onvis_smartswitch:
+      name: Onvis HS2 Switch
+      description: Select your Onvis HS2 Switch you want to configure actions for.
+      selector:
+        device:
+          filter:
+          - model: HS2
+          multiple: false
+    button1_sp:
+      name: Action SP Button 1
+      default:
+      description: Action Type for single pressing Button 1
+      selector:
+        action: {}
+    button1_dp:
+      name: Action DP Button 1
+      default:
+      description: Action Type for double pressing Button 1
+      selector:
+        action: {}
+    button1_lp:
+      name: Action LP Button 1
+      default:
+      description: Action Type for long pressing Button 1
+      selector:
+        action: {}
+    button2_sp:
+      name: Action SP Button 2
+      default:
+      description: Action Type for single pressing Button 2
+      selector:
+        action: {}
+    button2_dp:
+      name: Action DP Button 2
+      default:
+      description: Action Type for double pressing Button 2
+      selector:
+        action: {}
+    button2_lp:
+      name: Action LP Button 2
+      default:
+      description: Action Type for long pressing Button 2
+      selector:
+        action: {}
+    button3_sp:
+      name: Action SP Button 3
+      default:
+      description: Action Type for single pressing Button 3
+      selector:
+        action: {}
+    button3_dp:
+      name: Action DP Button 3
+      default:
+      description: Action Type for double pressing Button 3
+      selector:
+        action: {}
+    button3_lp:
+      name: Action LP Button 3
+      default:
+      description: Action Type for long pressing Button 3
+      selector:
+        action: {}
+    button4_sp:
+      name: Action SP Button 4
+      default:
+      description: Action Type for single pressing Button 4
+      selector:
+        action: {}
+    button4_dp:
+      name: Action DP Button 4
+      default:
+      description: Action Type for double pressing Button 4
+      selector:
+        action: {}
+    button4_lp:
+      name: Action LP Button 4
+      default:
+      description: Action Type for long pressing Button 4
+      selector:
+        action: {}
+    button5_sp:
+      name: Action SP Button 5
+      default:
+      description: Action Type for single pressing Button 5
+      selector:
+        action: {}
+    button5_dp:
+      name: Action DP Button 5
+      default:
+      description: Action Type for double pressing Button 5
+      selector:
+        action: {}
+    button5_lp:
+      name: Action LP Button 5
+      default:
+      description: Action Type for long pressing Button 5
+      selector:
+        action: {}
+        
+        
+trigger_variables:
+  var_device_id: !input onvis_smartswitch
+
+trigger:
+- platform: event
+  id: B1
+  event_type: state_changed
+  event_data:
+    entity_id:  "{{ device_entities(var_device_id)[0] }}" #device_entities(!input onvis_smartswitch)[0]
+- platform: event
+  id: B2
+  event_type: state_changed
+  event_data:
+    entity_id:  "{{ device_entities(var_device_id)[1] }}"
+- platform: event
+  id: B3
+  event_type: state_changed
+  event_data:
+    entity_id:  "{{ device_entities(var_device_id)[2] }}"
+- platform: event
+  id: B4
+  event_type: state_changed
+  event_data:
+    entity_id:  "{{ device_entities(var_device_id)[3] }}"
+- platform: event
+  id: B5
+  event_type: state_changed
+  event_data:
+    entity_id:  "{{ device_entities(var_device_id)[4] }}"
+
+    
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: B1
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''single_press'' }}'
+                sequence: !input button1_sp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''double_press'' }}'
+                sequence: !input button1_dp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''long_press'' }}'
+                sequence: !input button1_lp
+      - conditions:
+          - condition: trigger
+            id: B2
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''single_press'' }}'
+                sequence: !input button2_sp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''double_press'' }}'
+                sequence: !input button2_dp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''long_press'' }}'
+                sequence: !input button2_lp
+      - conditions:
+          - condition: trigger
+            id: B3
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''single_press'' }}'
+                sequence: !input button3_sp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''double_press'' }}'
+                sequence: !input button3_dp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''long_press'' }}'
+                sequence: !input button3_lp
+      - conditions:
+          - condition: trigger
+            id: B4
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''single_press'' }}'
+                sequence: !input button4_sp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''double_press'' }}'
+                sequence: !input button4_dp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''long_press'' }}'
+                sequence: !input button4_lp
+      - conditions:
+          - condition: trigger
+            id: B5
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''single_press'' }}'
+                sequence: !input button5_sp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''double_press'' }}'
+                sequence: !input button5_dp
+              - conditions:
+                  - condition: template
+                    value_template: '{{ trigger.event.data.new_state.attributes.event_type == ''long_press'' }}'
+                sequence: !input button5_lp

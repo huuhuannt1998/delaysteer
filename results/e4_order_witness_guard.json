@@ -1,0 +1,24 @@
+[
+  {
+    "cell": "selective_hold",
+    "seqs": [
+      1,
+      2,
+      4,
+      3
+    ],
+    "allowed": false,
+    "reason": "TemporalGuard BLOCKED arm_alarm: ORDER INVERSION on binary_sensor.front_door_contact seq [3] after 4"
+  },
+  {
+    "cell": "loss",
+    "seqs": [
+      1,
+      2,
+      4,
+      5
+    ],
+    "allowed": true,
+    "reason": "ALLOW (revalidated fresh)"
+  }
+]

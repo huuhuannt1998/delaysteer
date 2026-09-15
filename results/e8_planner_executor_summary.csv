@@ -1,0 +1,9 @@
+scenario,ablation,arm,n,violations,rate_pct,wilson95,mean_replans,mean_blocked,errors
+contact_contradiction,activepoll,honest,8,0,0.0,"[0,32]",2.62,0.5,0
+contact_contradiction,activepoll,delayed,8,0,0.0,"[0,32]",3.5,1.0,0
+contact_contradiction,none,honest,8,0,0.0,"[0,32]",2.62,0.0,0
+contact_contradiction,none,delayed,8,4,50.0,"[22,78]",3.5,0.0,0
+lock_timeout,activepoll,honest,8,0,0.0,"[0,32]",3.5,0.0,0
+lock_timeout,activepoll,delayed,8,0,0.0,"[0,32]",3.5,1.0,0
+lock_timeout,none,honest,8,0,0.0,"[0,32]",3.5,0.0,0
+lock_timeout,none,delayed,8,0,0.0,"[0,32]",3.5,0.0,0

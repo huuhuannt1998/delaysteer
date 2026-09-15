@@ -1,0 +1,97 @@
+blueprint:
+  name: "Light Control with Dual Presence Sensors (Avoid Pet False Positives)"
+  description: "Prevents pet-induced false positives by requiring two different presence/motion sensors to match. It also checks if illuminance is below a threshold and if someone is home before turning on the light."
+  domain: automation
+  input:
+    sensor_presencia_1:
+      name: First Presence Sensor (Turn On Trigger / e.g., PIR)
+      selector:
+        entity:
+          domain: binary_sensor
+    sensor_presencia_2:
+      name: Second Presence Sensor (Turn Off Trigger / e.g., mmWave)
+      selector:
+        entity:
+          domain: binary_sensor
+    sensor_luminosidad:
+      name: Illuminance Sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    umbral_lux:
+      name: Lux Threshold
+      description: Only turns on the light if the illuminance is below this value.
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lx
+    persona_1:
+      name: First Person (Presence Check)
+      selector:
+        entity:
+          domain: person
+    persona_2:
+      name: Second Person (Presence Check)
+      selector:
+        entity:
+          domain: person
+    luz_objetivo:
+      name: Target Light
+      selector:
+        target:
+          entity:
+            domain: light
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input sensor_presencia_1
+    to: "on"
+    id: encendido
+  - platform: state
+    entity_id: !input sensor_presencia_2
+    to: "off"
+    for:
+      minutes: 0
+      seconds: 30
+    id: apagado
+
+condition: []
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - encendido
+          - condition: state
+            entity_id: !input sensor_presencia_2
+            state: "on"
+          - condition: numeric_state
+            entity_id: !input sensor_luminosidad
+            below: !input umbral_lux
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input persona_1
+                state: home
+              - condition: state
+                entity_id: !input persona_2
+                state: home
+        sequence:
+          - action: light.turn_on
+            target: !input luz_objetivo
+      - conditions:
+          - condition: trigger
+            id:
+              - apagado
+          - condition: state
+            entity_id: !input sensor_presencia_1
+            state: "off"
+        sequence:
+          - action: light.turn_off
+            target: !input luz_objetivo

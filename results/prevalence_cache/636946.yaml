@@ -1,0 +1,669 @@
+blueprint:
+  name: Actionnable Task Reminder
+  description: |
+    # Send an actionable and snoozable reminder notification
+
+    Send a notification to the provided notification service to remind you a recurring task or event.
+
+    Supports full customizable notification, snooze options and recurrency control.
+    Support custom action when acknowledge the reminder.
+
+    Keep in mind that all subsequent notifications will take the place of the previous notification.
+
+    Examples:
+    <img src="https://i.imgur.com/sBQq75J.png" alt="Example Dishes" width="33%"><img src="https://i.imgur.com/eDvOAEJ.png" alt="Example Trash" width="33%"><img src="https://i.imgur.com/pumnO6V.png" alt="Example Roomba" width="33%">
+    ℹ️ Version 2022.04.10
+  domain: automation
+  input:
+    notificationTitle:
+      name: (Required) Notification title
+      description: |
+        Title for the notification.
+        You can use template to enhance the title.
+
+        <img src="https://i.imgur.com/eWnJibA.png" alt="Notification Title" width="50%">
+      default: ""
+      selector:
+        text: {}
+    notificationSubtitle:
+      name: (Optional) Notification subtitle
+      description: |
+        Subtitle for the notification.
+        You can use template to enhance the subtitle.
+
+        <img src="https://i.imgur.com/vGyY8kq.png" alt="Notification Subtitle" width="50%">
+      default: ""
+      selector:
+        text: {}
+    notificationBody:
+      name: (Required) Notification message
+      description: |
+        Message for the notification.
+        You can use template to enhance the message.
+
+        <img src="https://i.imgur.com/pTPsqcP.png" alt="Notification-Message" width="50%">
+      default: ""
+      selector:
+        text:
+          multiline: true
+    notificationService:
+      name: (Required) Mobile devices notification service
+      description: |
+        The notification service for mobile devices.
+
+        If you want use notify group, please go see the section about Task reminder notification group.
+
+        *eg. service.mobile_app_<your_device_id_here>*
+      selector:
+        text: {}
+    startDate:
+      name: (Required) Date of first reminder
+      description: |
+        The date on which the first reminder must take place if all the conditions are met.
+
+        Must be format YYYY-M-D Four-digit year, "-", one-digit or two-digit month, "-", one-digit or two-digit day. 
+
+        *eg. 2002-12-31, 2002-2-2*
+      selector:
+        text: {}
+    reminderTime:
+      name: (Required) Time of the reminder
+      description: At what time should the notification be sent if all the conditions are met.
+      selector:
+        time:
+    everyXDays:
+      name: (Required) Recurency of the reminder
+      description: The number of day(s) between each new reminder
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: day(s)
+          mode: box
+    stopDate:
+      name: (Optional) Date of last reminder
+      description: |
+        The date from which there should be no more reminders.
+
+        Must be format YYYY-M-D Four-digit year, "-", one-digit or two-digit month, "-", one-digit or two-digit day.
+        If the field is empty, it means that there is no date to stop reminding.
+
+        *eg. 2002-12-31, 2002-2-2*
+        ___
+        ## All other options are advanced options. Only edit them if you need to!
+      default: ""
+      selector:
+        text: {}
+    acknowledgeActionTitle:
+      name: (Required) Title of the acknowledge notification action
+      description: |
+        The title of the acknowledge notification action
+        You can use template to enhance the message.
+
+        *Default: "Mark as done"*
+
+        <img src="https://i.imgur.com/Fe0cbwo.png" alt="Acknowledge Notification Action" width="50%">
+      default: "Mark as done"
+      selector:
+        text: {}
+    waitTimeIfNoActionSelected:
+      name: (Required) Wait time if no action selected
+      description: |
+        How long should it be before resending a notification if the user has ignored the notification.
+
+        *Default: 15 minutes*
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: minute(s)
+          mode: box
+    snooze1Delay:
+      name: (Required) First snooze notification action wait time
+      description: |
+        The first snooze option in the actionnable notifications should wait x minutes.
+
+        *Default: 5 minutes*
+
+        <img src="https://i.imgur.com/Jt8Gcgy.png" alt="First Notification Action" width="50%">
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: minute(s)
+          mode: box
+    snooze2Delay:
+      name: (Required) Second snooze notification action wait time
+      description: |
+        The second snooze option in the actionnable notifications should wait x minutes.
+
+        *Default: 15 minutes*
+
+        <img src="https://i.imgur.com/q79joPx.png" alt="Second-Notification-Action" width="50%">
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: minute(s)
+          mode: box
+    snooze3Delay:
+      name: (Required) Third snooze notification action wait time
+      description: |
+        The third snooze option in the actionnable notifications should wait x minutes.
+
+        *Default: 30 minutes*
+
+        <img src="https://i.imgur.com/ttZghU8.png" alt="Third Notification Action" width="50%">
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: minute(s)
+          mode: box
+    snooze4Delay:
+      name: (Required) Fourth snooze notification action wait time
+      description: |
+        The fourth snooze option in the actionnable notifications should wait x minutes.
+
+        *Default: 45 minutes*
+
+        <img src="https://i.imgur.com/Smgbeua.png" alt="Fourth-Notification-Action" width="50%">
+      default: 45
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: minute(s)
+          mode: box
+    snooze5Delay:
+      name: (Required) Fifth snooze notification action wait time
+      description: |
+        The fifth snooze option in the actionnable notifications should wait x minutes.
+
+        *Default: 60 minutes*
+
+        <img src="https://i.imgur.com/lTZ5bIP.png" alt="Fifth Notification Action" width="50%">
+      default: 60
+      selector:
+        number:
+          min: 1
+          max: 100000
+          step: 1
+          unit_of_measurement: minute(s)
+          mode: box
+    snoozeText:
+      name: (Required) Notification action snooze text
+      description: |
+        The text for the snoozes notification action.
+
+        The text "${time}" will be replace by the actual value for the corresponding notification action.
+
+        *Default: "Snooze for ${time}"*
+
+        <img src="https://i.imgur.com/n4zWK9B.png" alt="Notification Snooze Text" width="50%">
+      default: Snooze for ${time}
+      selector:
+        text:
+    templateOrEveryXDays:
+      name: (Required) Day(s) recurency or trigger template
+      description: |
+        <font color="indianred"><strong>⚠️ FOR ADVANCE USER ONLY ⚠️</strong></font>
+
+        How each first notification should be triggered.
+
+        Day(s) Recurency = Will use the fields:
+          "Date of first reminder", "Date of last reminder", "Days of week to exclude", "Time of the reminder", "Recurency of the reminder"
+        to determine when the notification will occur.
+
+        Trigger template = Will use the fields:
+          "Date of first reminder", "Date of last reminder", "Days of week to exclude", "Trigger template"
+        to determine when the notification will occur.
+
+        *Default: "Day(s) recurency"*
+      default: "Day(s) recurency"
+      selector:
+        select:
+          options: ["Day(s) recurency", "Trigger template"]
+    triggerTemplate:
+      name: (Required) Trigger template
+      description: |
+        <font color="indianred"><strong>⚠️ FOR ADVANCE USER ONLY ⚠️</strong></font>
+
+        If the option "Day(s) recurency or trigger template" is equal to "Trigger template", use this template as trigger for the first notification.
+
+        Keep in mind that trigger templates are only check when an entity of the template changes state.
+
+        IMPORTANT, if "Day(s) recurency or trigger template" is equal to "Day(s) recurency", this field must be equal to "{{ false }}".
+        *Default: "{{ false }}"*
+      default: "{{ false }}"
+      selector:
+        text:
+    excludeDaysOfWeek:
+      name: (Optional) Days of week to exclude
+      description: |
+        The day(s) of the week on which not to send a notification.
+      default: ""
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: Monday
+              value: "0"
+            - label: Tuesday
+              value: "1"
+            - label: Wednesday
+              value: "2"
+            - label: Thursday
+              value: "3"
+            - label: Friday
+              value: "4"
+            - label: Saturday
+              value: "5"
+            - label: Sunday
+              value: "6"
+    notificationColor:
+      name: (Optional) (Android only) Notification color
+      description: |
+        Color for the notifications.
+        You can both type a friendly color name or an hex value.
+      default: ""
+      selector:
+        text:
+    notificationChannel:
+      name: (Optional) (Android only) Notification channel
+      description: |
+        Android notification channel.
+        Allows to group notifications to then apply custom settings for sound, vibration, etc.
+
+        Leave blank if you do not want to use this feature.
+      default: ""
+      selector:
+        text:
+    notificationChannelImportance:
+      name: (Optional) (Android only) Notification Channel importance
+      description: |
+        Android notification channel importance.
+        Allows to define different priority levels for your notifications.
+      default: ""
+      selector:
+        select:
+          options: ["", "default", "min", "low", "high", "max"]
+    acknowledgeActionUrl:
+      name: (Optional) URL of the acknowledge notification action
+      description: |
+        If provided, the acknowledge notification action will redirect the user to the proided URL.
+
+        <img src="https://i.imgur.com/Fe0cbwo.png" alt="Acknowledge Notification Action" width="50%">
+      default: ""
+      selector:
+        text:
+    acknowledgeActions:
+      name: (Optional) Actions to execute when acknowledge notification action is press
+      description: |
+        If provided, the acknowledge notification action will execute theses actions.
+
+        <img src="https://i.imgur.com/Fe0cbwo.png" alt="Acknowledge Notification Action" width="50%">
+      default: []
+      selector:
+        action: {}
+    firstReminderActions:
+      name: (Optional) Actions to execute when sending the first reminder notification
+      description: |
+        If provided, when the first reminder notification are sent, these actions will be executed.
+      default: []
+      selector:
+        action: {}
+    userConditions:
+      name: (Optional) Conditions to be met before reminding
+      description: |
+        Additional conditions to be met when the automation is triggered at the requested time.
+        Theses conditions will not be check if the notification as been snoozed.
+
+        <font color="indianred"><strong>⚠️ IMPORTANT: MUST BE ACTION TYPE "CONDITION" ⚠️</strong></font>
+
+        <img src="https://i.imgur.com/yLfmspR.png" alt="Condition" width="65%">
+      default: []
+      selector:
+        action: {}
+    notificationCount:
+      name: (Required) Number of notification reminder if no response
+      description: |
+        The number of time to send the notification if no response from the device.
+
+        *Default: 100*
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 1000
+          step: 1
+          mode: box
+    taskReminderNotificationGroupDummy:
+      name: "."
+      description: |
+        ___
+        # This next section is all about Task reminder notification group.
+
+        ## What is it ?
+        This feature allows you to link multiple automations together using this blueprint.
+
+        Small example:
+
+        You, your wife or your son must complete a task. It doesn't matter who does it. You each receive reminder notifications that you can individually snooze as usual.
+
+        When one of you acknowledges the notification, all the others will receive a final notification that the task has been completed.
+      default: ""
+      selector:
+        select:
+          options: [""]
+    taskReminderNotificationGroup:
+      name: (Optional) Task reminder notification group
+      description: |
+        The Task reminder notification group to use for this automation.
+
+        If set, all automations with the same value for this field will stop sending notifications when one of them is acknowledged.
+      default: ""
+      selector:
+        text:
+    userName:
+      name: (Optional) User Name
+      description: |
+        The name of user that is link to the Notify service.
+
+        *Default: "Someone"*
+      default: "Someone"
+      selector:
+        text: {}
+    acknowledgeNotificationTitle:
+      name: (Optional) Acknowledge Notification Title
+      description: |
+        Title for the acknowledge notification.
+
+        You can use template to enhance the title. You can use variables "User name" like this "{{ triggerEventActionArray[4] }}".
+
+        *Default: "Someone acknowledged the notification"*
+        <img src="https://i.imgur.com/OTYjBeq.png" alt="Acknowledge Notification Title" width="50%">
+      default: "Someone acknowledged the notification"
+      selector:
+        text: {}
+    acknowledgeNotificationSubtitle:
+      name: (Optional) Acknowledge notification subtitle
+      description: |
+        Subtitle for the acknowledge notification.
+
+        You can use template to enhance the subtitle. You can use variables "User name" like this "{{ triggerEventActionArray[4] }}".
+
+        <img src="https://i.imgur.com/hZbgfSI.png" alt="Acknowledge Notification Subtitle" width="50%">
+      default: ""
+      selector:
+        text: {}
+    acknowledgeNotificationBody:
+      name: (Optional) Acknowledge notification message
+      description: |
+        Message for the acknowledge notification.
+
+        You can use template to enhance the message. You can use variables "User name" like this "{{ triggerEventActionArray[4] }}".
+
+        <img src="https://i.imgur.com/savsQKV.png" alt="Acknowledge Notification Message" width="50%">
+      default: ""
+      selector:
+        text:
+          multiline: true
+    acknowledgeNotificationColor:
+      name: (Optional) (Android only) Acknowledge notification color
+      description: |
+        Color for the acknowledge notifications.
+        You can both type a friendly color name or an hex value.
+      default: ""
+      selector:
+        text: {}
+    acknowledgeNotificationChannel:
+      name: (Optional) (Android only) Acknowledge notification channel
+      description: |
+        Android acknowledge notification channel.
+        Allows to group notifications to then apply custom settings for sound, vibration, etc.
+      default: ""
+      selector:
+        text: {}
+    acknowledgeNotificationChannelImportance:
+      name: (Optional) (Android only) Acknowledge notification Channel importance
+      description: |
+        Android acknowledge notification channel importance.
+        Allows to define different priority levels for your notifications.
+      default: ""
+      selector:
+        select:
+          options: ["", "default", "min", "low", "high", "max"]
+variables:
+  acknowledgeActionTitle: !input acknowledgeActionTitle
+  startDate: !input startDate
+  reminderTime: !input reminderTime
+  stopDate: !input stopDate
+  excludeDaysOfWeek: !input excludeDaysOfWeek
+  everyXDays: !input everyXDays
+  acknowledgeActionUrl: !input acknowledgeActionUrl
+  snooze1Delay: !input snooze1Delay
+  snooze2Delay: !input snooze2Delay
+  snooze3Delay: !input snooze3Delay
+  snooze4Delay: !input snooze4Delay
+  snooze5Delay: !input snooze5Delay
+  snoozeText: !input snoozeText
+  notificationSubtitle: !input notificationSubtitle
+  notificationChannel: !input notificationChannel
+  notificationChannelImportance: !input notificationChannelImportance
+  notificationColor: !input notificationColor
+  templateOrEveryXDays: !input templateOrEveryXDays
+  taskReminderNotificationGroup: !input taskReminderNotificationGroup
+  userName: !input userName
+trigger:
+  - platform: time
+    at: !input reminderTime
+    id: "first_reminder"
+  - platform: template
+    value_template: !input triggerTemplate
+    id: "first_reminder"
+  - platform: event
+    event_type: mobile_app_notification_action
+condition:
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.platform != 'event' }}"
+      - condition: template
+        value_template: |
+          {% set triggerActionArray = trigger.event.data.action.split("╡") %}
+          {# If it's an action from the "taskReminder" blueprint #}
+          {% if triggerActionArray[0] == "taskReminder" %}
+            {# If it's an action coming from this automation #}
+            {% if triggerActionArray[1] == this.attributes.id %}
+              {{ true }}
+            {# If it's an action coming from an automation with the same "taskReminderNotificationGroup" #}
+            {% elif taskReminderNotificationGroup != "" and triggerActionArray[2] == taskReminderNotificationGroup and triggerActionArray[3] == '-1' %}
+              {{ true }}
+            {% endif %}
+          {% else %}
+            {{ false }}
+          {% endif %}
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.platform == 'template' and templateOrEveryXDays == 'Trigger template' }}"
+      - condition: template
+        value_template: "{{ trigger.platform == 'time' and templateOrEveryXDays == 'Day(s) recurency' }}"
+      - condition: not
+        conditions:
+          - condition: trigger
+            id: "first_reminder"
+  - condition: or
+    conditions:
+      # If the automation was executed by a snooze or by the completion of the task, let the automation be execute.
+      - condition: not
+        conditions:
+          - condition: trigger
+            id: "first_reminder"
+      - condition: and
+        conditions:
+          # The automation was executed by the trigger ID "first_reminder".
+          - condition: trigger
+            id: "first_reminder"
+          # The automation was executed a day of the week that has not been excluded.
+          - condition: template
+            value_template: "{{ as_timestamp(startDate) < as_timestamp(now()) and as_timestamp(stopDate if (stopDate|length != 0) else '9999-12-31') > as_timestamp(now()) }}"
+          # The automation was executed the right day according to the determined interval or "templateOrEveryXDays" equals to "Trigger template".
+          - condition: template
+            value_template: "{{ true if templateOrEveryXDays == 'Trigger template' else ((as_timestamp(now().date()) - as_timestamp(startDate)) | int /60/1440) | round(0) % everyXDays == 0 }}"
+          # The automation was executed between the date of the first reminder and last reminder.
+          - condition: template
+            value_template: "{{ not ((now().weekday() | string) in (excludeDaysOfWeek)) }}"
+          # The automation complies with the conditions entered by the user.
+          - condition: and
+            conditions: !input userConditions
+action:
+  # First reminder action
+  - if:
+      - condition: trigger
+        id: "first_reminder"
+    then: !input firstReminderActions
+  - choose:
+      # Acknowledge Action
+      - conditions:
+          - condition: not
+            conditions:
+              - condition: trigger
+                id: "first_reminder"
+          - condition: template
+            value_template: "{{ (trigger.event.data.action.split('╡')[3] | int) == -1 }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.action.split('╡')[1] == this.attributes.id }}"
+                sequence: !input acknowledgeActions
+            default:
+              - service: !input notificationService
+                data:
+                  title: !input acknowledgeNotificationTitle
+                  message: !input acknowledgeNotificationBody
+                  data:
+                    tag: "taskReminder╡{{ this.attributes.id }}"
+                    # iOS subtitle
+                    subtitle: "{{ acknowledgeNotificationSubtitle if (acknowledgeNotificationSubtitle|length != 0) else None }}"
+                    # Android subtitle
+                    subject: "{{ acknowledgeNotificationSubtitle if (acknowledgeNotificationSubtitle|length != 0) else None }}"
+                    # Android only
+                    channel: "{{ acknowledgeNotificationChannel if (acknowledgeNotificationChannel|length != 0) else None }}"
+                    importance: "{{ acknowledgeNotificationChannelImportance if (acknowledgeNotificationChannelImportance|length != 0) else None }}"
+                    color: "{{ acknowledgeNotificationColor if (acknowledgeNotificationColor|length != 0) else None }}"
+    default:
+      # Starts the timer of x minutes if the automation runs following a snooze
+      - choose:
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: trigger
+                    id: "first_reminder"
+            sequence:
+              - delay:
+                  hours: 0
+                  minutes: "{{ trigger.event.data.action.split('╡')[3] | int }}"
+                  seconds: 0
+                  milliseconds: 0
+      # Sends the same notification in a loop until the user snoozes it or designates it as completed
+      - repeat:
+          count: !input notificationCount
+          sequence:
+            # The notification
+            - service: !input notificationService
+              data:
+                title: !input notificationTitle
+                message: !input notificationBody
+                data:
+                  tag: "taskReminder╡{{ this.attributes.id }}"
+                  # iOS subtitle
+                  subtitle: "{{ notificationSubtitle if (notificationSubtitle|length != 0) else None }}"
+                  # Android subtitle
+                  subject: "{{ notificationSubtitle if (notificationSubtitle|length != 0) else None }}"
+                  # Android only
+                  channel: "{{ notificationChannel if (notificationChannel|length != 0) else None }}"
+                  importance: "{{ notificationChannelImportance if (notificationChannelImportance|length != 0) else None }}"
+                  color: "{{ notificationColor if (notificationColor|length != 0) else None }}"
+                  actions:
+                    - action: "taskReminder╡{{ this.attributes.id }}╡{{ taskReminderNotificationGroup }}╡-1╡{{ userName }}"
+                      title: !input acknowledgeActionTitle
+                      # IOS URL
+                      url: "{{ acknowledgeActionUrl if (acknowledgeActionUrl|length != 0) else None }}"
+                      # Android URL
+                      clickAction: "{{ acknowledgeActionUrl if (acknowledgeActionUrl|length != 0) else None }}"
+                    - action: "taskReminder╡{{ this.attributes.id }}╡{{ taskReminderNotificationGroup }}╡{{ snooze1Delay }}╡{{ userName }}"
+                      title: |
+                        {% set snoozeDelay = snooze1Delay %}
+                        {% set formatedTime = "" %}
+                        {% if (snoozeDelay/60)|round(0, 'floor') > 0 %}
+                          {% set formatedTime = (snoozeDelay/60)|round(0, 'floor')|string + 'h' %}
+                        {% endif %}
+                        {% if snoozeDelay % 60 != 0 %}
+                          {% set formatedTime = formatedTime ~ ((snoozeDelay%60)|string + 'm') %}
+                        {% endif %}
+                        {{ snoozeText|replace('${time}', formatedTime) }}
+                    - action: "taskReminder╡{{ this.attributes.id }}╡{{ taskReminderNotificationGroup }}╡{{ snooze2Delay }}╡{{ userName }}"
+                      title: |
+                        {% set snoozeDelay = snooze2Delay %}
+                        {% set formatedTime = "" %}
+                        {% if (snoozeDelay/60)|round(0, 'floor') > 0 %}
+                          {% set formatedTime = (snoozeDelay/60)|round(0, 'floor')|string + 'h' %}
+                        {% endif %}
+                        {% if snoozeDelay % 60 != 0 %}
+                          {% set formatedTime = formatedTime ~ ((snoozeDelay%60)|string + 'm') %}
+                        {% endif %}
+                        {{ snoozeText|replace('${time}', formatedTime) }}
+                    - action: "taskReminder╡{{ this.attributes.id }}╡{{ taskReminderNotificationGroup }}╡{{ snooze3Delay }}╡{{ userName }}"
+                      title: |
+                        {% set snoozeDelay = snooze3Delay %}
+                        {% set formatedTime = "" %}
+                        {% if (snoozeDelay/60)|round(0, 'floor') > 0 %}
+                          {% set formatedTime = (snoozeDelay/60)|round(0, 'floor')|string + 'h' %}
+                        {% endif %}
+                        {% if snoozeDelay % 60 != 0 %}
+                          {% set formatedTime = formatedTime ~ ((snoozeDelay%60)|string + 'm') %}
+                        {% endif %}
+                        {{ snoozeText|replace('${time}', formatedTime) }}
+                    - action: "taskReminder╡{{ this.attributes.id }}╡{{ taskReminderNotificationGroup }}╡{{ snooze4Delay }}╡{{ userName }}"
+                      title: |
+                        {% set snoozeDelay = snooze4Delay %}
+                        {% set formatedTime = "" %}
+                        {% if (snoozeDelay/60)|round(0, 'floor') > 0 %}
+                          {% set formatedTime = (snoozeDelay/60)|round(0, 'floor')|string + 'h' %}
+                        {% endif %}
+                        {% if snoozeDelay % 60 != 0 %}
+                          {% set formatedTime = formatedTime ~ ((snoozeDelay%60)|string + 'm') %}
+                        {% endif %}
+                        {{ snoozeText|replace('${time}', formatedTime) }}
+                    - action: "taskReminder╡{{ this.attributes.id }}╡{{ taskReminderNotificationGroup }}╡{{ snooze5Delay }}╡{{ userName }}"
+                      title: |
+                        {% set snoozeDelay = snooze5Delay %}
+                        {% set formatedTime = "" %}
+                        {% if (snoozeDelay/60)|round(0, 'floor') > 0 %}
+                          {% set formatedTime = (snoozeDelay/60)|round(0, 'floor')|string + 'h' %}
+                        {% endif %}
+                        {% if snoozeDelay % 60 != 0 %}
+                          {% set formatedTime = formatedTime ~ ((snoozeDelay%60)|string + 'm') %}
+                        {% endif %}
+                        {{ snoozeText|replace('${time}', formatedTime) }}
+            # Waits x minutes before resending a new notification.
+            - delay:
+                hours: 0
+                minutes: !input waitTimeIfNoActionSelected
+                seconds: 0
+                milliseconds: 0
+# IMPORTANT! Allows to stop the infinite loop of notifications when an action is selected by the user.
+mode: restart

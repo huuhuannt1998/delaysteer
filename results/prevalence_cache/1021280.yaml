@@ -1,0 +1,181 @@
+blueprint:
+  name: "🔒 Alarmo Link"
+  description: >-
+    Arm and disarm Alarmo from a private link - no Home Assistant account, no
+    app. For household members, cleaners or house sitters who should be able to
+    set the alarm and nothing else.
+
+
+    **This blueprint needs a companion page.** Copy `alarmo-link.html` from the
+    repository to `config/www/alarmo-link.html`. Without it the webhooks work
+    but there is nothing to tap.
+
+
+    **Setup:** open `/local/alarmo-link.html` in a browser with no `#` in the
+    address. Name the alarm if you like, generate a pair of webhook IDs, and it
+    shows the finished link. Paste the two IDs below, fill in the name and the
+    Alarmo code, save, and send the person the link.
+
+
+    **One automation per person.** Adding someone means creating another
+    automation from this blueprint. Removing someone means deleting theirs -
+    their link dies instantly and nobody else is affected. To rotate a link,
+    replace both webhook IDs.
+
+
+    **The link is the password.** Anyone holding it can arm and disarm. Share it
+    the way you would share a house key, and serve Home Assistant over HTTPS.
+
+
+    The webhooks accept POST only, on purpose: messengers and chat apps fetch
+    URLs to build link previews, so a GET webhook would trip the alarm the
+    moment you sent someone the link.
+
+
+    Version 1.4.1
+  domain: automation
+  author: HubEight
+  source_url: https://github.com/HubEight/home-assistant-blueprints/blob/main/alarmo-link/alarmo_link.yaml
+  homeassistant:
+    min_version: "2024.10.0"
+
+  input:
+    person_section:
+      name: Person
+      icon: mdi:account
+      description: Who this link is for, and who Alarmo books the action under.
+      input:
+        person:
+          name: Name (required)
+          description: >-
+            Appears in the notification, so you can tell who switched the alarm.
+          selector:
+            text:
+
+        alarmo_code:
+          name: Alarmo code (required)
+          description: >-
+            The code of the Alarmo user these actions should be booked under -
+            that user's name is what shows up in Alarmo's history. Create the
+            user first under Alarmo > Users. Give every person their own code,
+            or the history will name the wrong one.
+          selector:
+            text:
+              type: password
+
+    link_section:
+      name: Link
+      icon: mdi:link-variant
+      description: >-
+        Open /local/alarmo-link.html with no # in the address to generate a
+        pair, or paste your own random strings.
+      input:
+        arm_webhook:
+          name: Webhook ID - arm (required)
+          description: Never reuse an ID across people.
+          selector:
+            text:
+
+        disarm_webhook:
+          name: Webhook ID - disarm (required)
+          description: Must differ from the one above.
+          selector:
+            text:
+
+    alarm_section:
+      name: Alarm
+      icon: mdi:shield-home
+      input:
+        alarm_entity:
+          name: Alarm panel (required)
+          selector:
+            entity:
+              filter:
+                domain: alarm_control_panel
+
+        arm_mode:
+          name: Arm mode (optional)
+          default: away
+          selector:
+            select:
+              options:
+                - label: Away
+                  value: away
+                - label: Home
+                  value: home
+                - label: Night
+                  value: night
+
+    # Deliberately not in a section: Home Assistant renders every section as an
+    # expansion panel whose header can always be clicked shut, and this is the
+    # option most people should actually set.
+    notify_target:
+      name: Notification (optional)
+      description: >-
+        Worth setting up. Two seconds after the command, reports what the alarm
+        panel actually did - the page can only confirm that the command
+        arrived, not that the alarm changed state.
+      default: []
+      selector:
+        entity:
+          multiple: true
+          filter:
+            domain: notify
+
+mode: queued
+max: 5
+
+triggers:
+  - trigger: webhook
+    webhook_id: !input arm_webhook
+    allowed_methods:
+      - POST
+    local_only: false
+    id: arm
+  - trigger: webhook
+    webhook_id: !input disarm_webhook
+    allowed_methods:
+      - POST
+    local_only: false
+    id: disarm
+
+variables:
+  person: !input person
+  alarm_entity: !input alarm_entity
+  notify_target: !input notify_target
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: arm
+        sequence:
+          - action: alarmo.arm
+            data:
+              entity_id: !input alarm_entity
+              mode: !input arm_mode
+              code: !input alarmo_code
+    default:
+      - action: alarmo.disarm
+        data:
+          entity_id: !input alarm_entity
+          code: !input alarmo_code
+
+  - delay:
+      seconds: 2
+
+  - if:
+      - condition: template
+        value_template: "{{ notify_target | count > 0 }}"
+    then:
+      - action: notify.send_message
+        target:
+          entity_id: !input notify_target
+        data:
+          # Underscores are stripped on purpose: notify.send_message passes only
+          # message and title, so a Telegram bot left on its default Markdown
+          # parser reads the one in "armed_home" as an unclosed italic marker
+          # and rejects the whole message.
+          message: >-
+            Alarmo Link ({{ person }}):
+            {{ states(alarm_entity) | replace('_', ' ') }}

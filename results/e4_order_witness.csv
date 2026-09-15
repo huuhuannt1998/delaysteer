@@ -1,0 +1,161 @@
+case,style,rep,n_frames,inversions,gaps,admitted,observable,reason,per_msg_us,per_commit_us
+normal,periodic,0,100,0,0,1,1,source order intact,1.32,5.13
+normal,periodic,1,100,0,0,1,1,source order intact,1.23,8.17
+normal,periodic,2,100,0,0,1,1,source order intact,1.27,3.04
+normal,periodic,3,100,0,0,1,1,source order intact,1.21,3.58
+normal,periodic,4,100,0,0,1,1,source order intact,1.3,4.92
+normal,periodic,5,100,0,0,1,1,source order intact,1.37,3.88
+normal,periodic,6,100,0,0,1,1,source order intact,1.19,3.04
+normal,periodic,7,100,0,0,1,1,source order intact,1.32,3.33
+normal,periodic,8,100,0,0,1,1,source order intact,1.22,3.0
+normal,periodic,9,100,0,0,1,1,source order intact,1.26,3.29
+normal,periodic,10,100,0,0,1,1,source order intact,1.23,3.71
+normal,periodic,11,100,0,0,1,1,source order intact,1.21,3.25
+normal,periodic,12,100,0,0,1,1,source order intact,62.94,4.21
+normal,periodic,13,100,0,0,1,1,source order intact,1.31,3.75
+normal,periodic,14,100,0,0,1,1,source order intact,1.25,5.88
+normal,periodic,15,100,0,0,1,1,source order intact,2.92,5.08
+normal,periodic,16,100,0,0,1,1,source order intact,1.15,3.0
+normal,periodic,17,100,0,0,1,1,source order intact,1.26,3.33
+normal,periodic,18,100,0,0,1,1,source order intact,1.36,2.79
+normal,periodic,19,100,0,0,1,1,source order intact,1.2,3.12
+normal,on_change,0,100,0,0,1,1,source order intact,1.28,3.42
+normal,on_change,1,100,0,0,1,1,source order intact,0.72,2.13
+normal,on_change,2,100,0,0,1,1,source order intact,1.45,3.62
+normal,on_change,3,100,0,0,1,1,source order intact,1.27,3.04
+normal,on_change,4,100,0,0,1,1,source order intact,1.98,3.46
+normal,on_change,5,100,0,0,1,1,source order intact,1.42,3.62
+normal,on_change,6,100,0,0,1,1,source order intact,1.52,3.37
+normal,on_change,7,100,0,0,1,1,source order intact,1.23,2.79
+normal,on_change,8,100,0,0,1,1,source order intact,1.18,3.37
+normal,on_change,9,100,0,0,1,1,source order intact,1.24,3.37
+normal,on_change,10,100,0,0,1,1,source order intact,1.19,3.21
+normal,on_change,11,100,0,0,1,1,source order intact,1.92,2.92
+normal,on_change,12,100,0,0,1,1,source order intact,1.3,2.33
+normal,on_change,13,100,0,0,1,1,source order intact,1.19,6.29
+normal,on_change,14,100,0,0,1,1,source order intact,1.21,3.0
+normal,on_change,15,100,0,0,1,1,source order intact,1.25,3.29
+normal,on_change,16,100,0,0,1,1,source order intact,1.23,2.87
+normal,on_change,17,100,0,0,1,1,source order intact,1.35,3.17
+normal,on_change,18,100,0,0,1,1,source order intact,0.59,1.83
+normal,on_change,19,100,0,0,1,1,source order intact,0.67,4.17
+selective_hold,periodic,0,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.73,22.62
+selective_hold,periodic,1,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,1.29,19.13
+selective_hold,periodic,2,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.79,17.04
+selective_hold,periodic,3,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.59,15.71
+selective_hold,periodic,4,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.98,63.92
+selective_hold,periodic,5,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.6,13.0
+selective_hold,periodic,6,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,1.45,24.08
+selective_hold,periodic,7,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.95,10.96
+selective_hold,periodic,8,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,1.15,11.96
+selective_hold,periodic,9,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.73,11.79
+selective_hold,periodic,10,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.46,9.08
+selective_hold,periodic,11,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.66,10.46
+selective_hold,periodic,12,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.49,9.79
+selective_hold,periodic,13,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.54,9.0
+selective_hold,periodic,14,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.58,25.67
+selective_hold,periodic,15,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,1.42,24.83
+selective_hold,periodic,16,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.61,16.83
+selective_hold,periodic,17,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,1.24,16.13
+selective_hold,periodic,18,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.98,19.17
+selective_hold,periodic,19,100,1,1,0,1,ORDER INVERSION on binary_sensor.e4_periodic seq [50] after 100,0.67,18.33
+selective_hold,on_change,0,50,0,0,1,0,source order intact,0.81,2.37
+selective_hold,on_change,1,50,0,0,1,0,source order intact,0.78,1.75
+selective_hold,on_change,2,50,0,0,1,0,source order intact,0.79,2.46
+selective_hold,on_change,3,50,0,0,1,0,source order intact,0.89,2.87
+selective_hold,on_change,4,50,0,0,1,0,source order intact,0.71,1.75
+selective_hold,on_change,5,50,0,0,1,0,source order intact,1.47,2.92
+selective_hold,on_change,6,50,0,0,1,0,source order intact,0.7,2.21
+selective_hold,on_change,7,50,0,0,1,0,source order intact,1.47,3.75
+selective_hold,on_change,8,50,0,0,1,0,source order intact,1.38,3.42
+selective_hold,on_change,9,50,0,0,1,0,source order intact,1.49,2.83
+selective_hold,on_change,10,50,0,0,1,0,source order intact,1.42,2.83
+selective_hold,on_change,11,50,0,0,1,0,source order intact,1.51,4.38
+selective_hold,on_change,12,50,0,0,1,0,source order intact,1.33,2.79
+selective_hold,on_change,13,50,0,0,1,0,source order intact,0.7,2.54
+selective_hold,on_change,14,50,0,0,1,0,source order intact,1.51,3.25
+selective_hold,on_change,15,50,0,0,1,0,source order intact,1.26,2.63
+selective_hold,on_change,16,50,0,0,1,0,source order intact,2.56,4.29
+selective_hold,on_change,17,50,0,0,1,0,source order intact,1.25,2.96
+selective_hold,on_change,18,50,0,0,1,0,source order intact,1.33,3.37
+selective_hold,on_change,19,50,0,0,1,0,source order intact,1.48,2.96
+loss,periodic,0,99,0,1,1,1,source order intact,1.11,2.96
+loss,periodic,1,99,0,1,1,1,source order intact,1.15,3.17
+loss,periodic,2,99,0,1,1,1,source order intact,1.62,5.96
+loss,periodic,3,99,0,1,1,1,source order intact,1.18,2.87
+loss,periodic,4,99,0,1,1,1,source order intact,0.89,2.33
+loss,periodic,5,99,0,1,1,1,source order intact,0.56,2.29
+loss,periodic,6,99,0,1,1,1,source order intact,1.13,2.83
+loss,periodic,7,99,0,1,1,1,source order intact,0.49,1.37
+loss,periodic,8,99,0,1,1,1,source order intact,1.14,3.17
+loss,periodic,9,99,0,1,1,1,source order intact,1.14,2.63
+loss,periodic,10,99,0,1,1,1,source order intact,1.36,2.79
+loss,periodic,11,99,0,1,1,1,source order intact,1.01,2.37
+loss,periodic,12,99,0,1,1,1,source order intact,0.55,2.29
+loss,periodic,13,99,0,1,1,1,source order intact,1.61,5.25
+loss,periodic,14,99,0,1,1,1,source order intact,1.23,2.96
+loss,periodic,15,99,0,1,1,1,source order intact,1.0,2.42
+loss,periodic,16,99,0,1,1,1,source order intact,1.32,3.0
+loss,periodic,17,99,0,1,1,1,source order intact,1.43,4.67
+loss,periodic,18,99,0,1,1,1,source order intact,0.99,3.37
+loss,periodic,19,99,0,1,1,1,source order intact,6.51,3.83
+loss,on_change,0,99,0,1,1,1,source order intact,0.64,1.87
+loss,on_change,1,99,0,1,1,1,source order intact,1.21,3.54
+loss,on_change,2,99,0,1,1,1,source order intact,1.2,3.37
+loss,on_change,3,99,0,1,1,1,source order intact,1.21,3.25
+loss,on_change,4,99,0,1,1,1,source order intact,1.29,3.33
+loss,on_change,5,99,0,1,1,1,source order intact,1.12,2.87
+loss,on_change,6,99,0,1,1,1,source order intact,1.23,18.04
+loss,on_change,7,99,0,1,1,1,source order intact,1.2,3.42
+loss,on_change,8,99,0,1,1,1,source order intact,1.34,3.58
+loss,on_change,9,99,0,1,1,1,source order intact,0.88,2.12
+loss,on_change,10,99,0,1,1,1,source order intact,1.27,3.21
+loss,on_change,11,99,0,1,1,1,source order intact,1.2,3.92
+loss,on_change,12,99,0,1,1,1,source order intact,0.59,1.5
+loss,on_change,13,99,0,1,1,1,source order intact,1.19,2.87
+loss,on_change,14,99,0,1,1,1,source order intact,0.63,2.63
+loss,on_change,15,99,0,1,1,1,source order intact,1.21,2.79
+loss,on_change,16,99,0,1,1,1,source order intact,1.42,3.17
+loss,on_change,17,99,0,1,1,1,source order intact,1.1,2.12
+loss,on_change,18,99,0,1,1,1,source order intact,1.2,3.08
+loss,on_change,19,99,0,1,1,1,source order intact,2.29,3.46
+blanket_hold,periodic,0,100,0,0,1,1,source order intact,1.27,3.17
+blanket_hold,periodic,1,100,0,0,1,1,source order intact,1.33,2.96
+blanket_hold,periodic,2,100,0,0,1,1,source order intact,1.12,2.58
+blanket_hold,periodic,3,100,0,0,1,1,source order intact,1.16,3.58
+blanket_hold,periodic,4,100,0,0,1,1,source order intact,1.17,2.58
+blanket_hold,periodic,5,100,0,0,1,1,source order intact,0.53,1.67
+blanket_hold,periodic,6,100,0,0,1,1,source order intact,1.19,2.79
+blanket_hold,periodic,7,100,0,0,1,1,source order intact,1.1,2.83
+blanket_hold,periodic,8,100,0,0,1,1,source order intact,1.1,2.54
+blanket_hold,periodic,9,100,0,0,1,1,source order intact,1.09,2.79
+blanket_hold,periodic,10,100,0,0,1,1,source order intact,1.15,2.67
+blanket_hold,periodic,11,100,0,0,1,1,source order intact,1.15,2.96
+blanket_hold,periodic,12,100,0,0,1,1,source order intact,1.15,3.12
+blanket_hold,periodic,13,100,0,0,1,1,source order intact,2.85,3.92
+blanket_hold,periodic,14,100,0,0,1,1,source order intact,1.11,2.83
+blanket_hold,periodic,15,100,0,0,1,1,source order intact,1.17,3.13
+blanket_hold,periodic,16,100,0,0,1,1,source order intact,0.56,1.42
+blanket_hold,periodic,17,100,0,0,1,1,source order intact,0.51,1.08
+blanket_hold,periodic,18,100,0,0,1,1,source order intact,2.39,5.42
+blanket_hold,periodic,19,100,0,0,1,1,source order intact,2.36,14.92
+blanket_hold,on_change,0,50,0,0,1,0,source order intact,0.71,2.08
+blanket_hold,on_change,1,50,0,0,1,0,source order intact,1.29,3.29
+blanket_hold,on_change,2,50,0,0,1,0,source order intact,1.42,3.08
+blanket_hold,on_change,3,50,0,0,1,0,source order intact,1.41,2.54
+blanket_hold,on_change,4,50,0,0,1,0,source order intact,1.32,2.79
+blanket_hold,on_change,5,50,0,0,1,0,source order intact,1.5,4.63
+blanket_hold,on_change,6,50,0,0,1,0,source order intact,1.33,6.46
+blanket_hold,on_change,7,50,0,0,1,0,source order intact,1.41,3.04
+blanket_hold,on_change,8,50,0,0,1,0,source order intact,1.66,3.58
+blanket_hold,on_change,9,50,0,0,1,0,source order intact,1.37,2.96
+blanket_hold,on_change,10,50,0,0,1,0,source order intact,1.56,3.62
+blanket_hold,on_change,11,50,0,0,1,0,source order intact,1.37,3.17
+blanket_hold,on_change,12,50,0,0,1,0,source order intact,4.96,3.71
+blanket_hold,on_change,13,50,0,0,1,0,source order intact,1.65,3.12
+blanket_hold,on_change,14,50,0,0,1,0,source order intact,1.58,3.67
+blanket_hold,on_change,15,50,0,0,1,0,source order intact,1.44,3.46
+blanket_hold,on_change,16,50,0,0,1,0,source order intact,1.95,2.83
+blanket_hold,on_change,17,50,0,0,1,0,source order intact,1.66,3.08
+blanket_hold,on_change,18,50,0,0,1,0,source order intact,1.65,3.37
+blanket_hold,on_change,19,50,0,0,1,0,source order intact,1.43,2.87

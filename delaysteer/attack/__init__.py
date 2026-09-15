@@ -15,3 +15,5 @@ from .profiles import (  # noqa: F401
     LateArrivingContradiction,
     TimeoutCrossing,
 )
+from .strict_delay import HeldObservation, StrictDelayOnceAdapter  # noqa: F401
+from .compromised_channel import CompromisedChannelAdapter  # noqa: F401

@@ -1,0 +1,203 @@
+blueprint:
+  name: Circadian Kelvin Ramp
+  description: >
+    Gradually ramps selected lights across a color temperature range over a
+    configurable time window.
+
+
+    Defaults ramp from 6535K (cool) at 4:00 AM down to 2000K (warm) at 5:00 PM.
+    Swap the start/end kelvin values to invert the direction.
+
+
+    Safety guard: if ANY selected light that is currently ON has a color outside
+    the guard range — including any light in an RGB/HS/XY color mode, which has
+    no kelvin value at all — the entire run is skipped and no light is touched.
+    Lights that are OFF are ignored by the guard and are never turned on by this
+    automation.
+
+
+    Outside the time window the automation does nothing; lights hold whatever
+    value they last had.
+  domain: automation
+
+  input:
+    lights:
+      name: Lights
+      description: The lights to ramp. Only lights that are already on will be adjusted.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: light
+
+    start_time:
+      name: Start time
+      description: When the ramp begins.
+      default: "04:00:00"
+      selector:
+        time: {}
+
+    end_time:
+      name: End time
+      description: >
+        When the ramp finishes. If this is earlier than the start time, the
+        window is treated as crossing midnight (e.g. 18:00 to 06:00).
+      default: "17:00:00"
+      selector:
+        time: {}
+
+    start_kelvin:
+      name: Start kelvin
+      description: Color temperature at the start of the window.
+      default: 6535
+      selector:
+        number:
+          min: 2000
+          max: 6535
+          step: 1
+          unit_of_measurement: K
+          mode: slider
+
+    end_kelvin:
+      name: End kelvin
+      description: Color temperature at the end of the window.
+      default: 2000
+      selector:
+        number:
+          min: 2000
+          max: 6535
+          step: 1
+          unit_of_measurement: K
+          mode: slider
+
+    guard_min_kelvin:
+      name: Guard minimum kelvin
+      description: >
+        If any selected light is on and below this value, the whole run is
+        skipped.
+      default: 2000
+      selector:
+        number:
+          min: 1000
+          max: 10000
+          step: 1
+          unit_of_measurement: K
+          mode: box
+
+    guard_max_kelvin:
+      name: Guard maximum kelvin
+      description: >
+        If any selected light is on and above this value, the whole run is
+        skipped.
+      default: 6535
+      selector:
+        number:
+          min: 1000
+          max: 10000
+          step: 1
+          unit_of_measurement: K
+          mode: box
+
+    update_interval:
+      name: Update interval
+      description: >
+        How often the lights are recalculated. Shorter is smoother but adds
+        more network traffic.
+      default: "/5"
+      selector:
+        select:
+          options:
+            - label: Every minute
+              value: "/1"
+            - label: Every 5 minutes
+              value: "/5"
+            - label: Every 10 minutes
+              value: "/10"
+            - label: Every 15 minutes
+              value: "/15"
+
+    transition:
+      name: Transition
+      description: >
+        Fade duration in seconds for each update. Setting this at or near the
+        update interval makes the change continuous rather than stepped. Set to
+        0 for lights that do not support transitions.
+      default: 300
+      selector:
+        number:
+          min: 0
+          max: 900
+          step: 1
+          unit_of_measurement: s
+          mode: box
+
+mode: single
+max_exceeded: silent
+
+variables:
+  lights: !input lights
+  start_t: !input start_time
+  end_t: !input end_time
+  start_k: !input start_kelvin
+  end_k: !input end_kelvin
+  guard_min: !input guard_min_kelvin
+  guard_max: !input guard_max_kelvin
+  ents: >
+    {{ lights if lights is not string else [lights] }}
+  lights_on: >
+    {{ expand(ents)
+       | selectattr('state', 'eq', 'on')
+       | map(attribute='entity_id')
+       | list }}
+
+triggers:
+  - trigger: time_pattern
+    minutes: !input update_interval
+
+conditions:
+  # 1. Only run inside the configured window. This condition handles
+  #    cross-midnight windows on its own.
+  - condition: time
+    after: !input start_time
+    before: !input end_time
+
+  # 2. At least one selected light is on. Nothing to do otherwise.
+  - condition: template
+    value_template: "{{ lights_on | count > 0 }}"
+
+  # 3. Guard. Abort the whole run if any light that is on sits outside the
+  #    kelvin range, or is in a color mode that has no kelvin value at all.
+  - condition: template
+    value_template: >
+      {% set ns = namespace(ok = true) %}
+      {% for e in lights_on %}
+        {% set k = state_attr(e, 'color_temp_kelvin') %}
+        {% if k is none or k < guard_min or k > guard_max %}
+          {% set ns.ok = false %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.ok }}
+
+actions:
+  - variables:
+      target_kelvin: >
+        {% set t = namespace(s = today_at(start_t), e = today_at(end_t)) %}
+        {% if t.e <= t.s %}
+          {# Window crosses midnight. Decide which side of it we are on. #}
+          {% if now() < t.e %}
+            {% set t.s = t.s - timedelta(days=1) %}
+          {% else %}
+            {% set t.e = t.e + timedelta(days=1) %}
+          {% endif %}
+        {% endif %}
+        {% set total = (t.e - t.s).total_seconds() %}
+        {% set raw = (now() - t.s).total_seconds() / total %}
+        {% set frac = [[raw, 0] | max, 1] | min %}
+        {{ (start_k + (end_k - start_k) * frac) | round | int }}
+
+  - action: light.turn_on
+    target:
+      entity_id: "{{ lights_on }}"
+    data:
+      color_temp_kelvin: "{{ target_kelvin }}"
+      transition: !input transition```

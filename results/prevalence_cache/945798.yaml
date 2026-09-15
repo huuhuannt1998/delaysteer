@@ -1,0 +1,1278 @@
+blueprint:
+  name: KNX - Weather Report
+  description: Use your weather entity to send the weather report to KNX - V1.1.2
+  author: torbenledermann
+  homeassistant:
+    min_version: 2024.6.0
+  domain: automation
+  input:
+    __weather_entity:
+      name: Weather Entity
+      description: The Weather entity, that should be exposed to KNX
+      selector:
+        entity:
+          filter:
+            - domain:
+                - weather
+          multiple: false
+          reorder: false
+    trigger_settings:
+      name: Trigger Settings
+      collapsed: true
+      input:
+        __report_type:
+          name: Report Type
+          description:
+            Define, whether the report should be send to KNX daily at a
+            specific time or hourly
+          selector:
+            select:
+              options:
+                - label: Hourly
+                  value: hourly
+                - label: Daily
+                  value: daily
+              custom_value: false
+              sort: false
+              multiple: false
+          default: hourly
+        __daily_hour:
+          name: Time
+          description: Time for daily triggering
+          selector:
+            time: {}
+          default: 00:00:00
+        __hourly_interval:
+          name: Intervall
+          description: Intervall for hourly triggering in minutes
+          selector:
+            number:
+              max: 60.0
+              min: 1.0
+              step: 1.0
+              mode: slider
+          default: 1
+    report_settings:
+      name: Report Settings
+      collapsed: true
+      input:
+        __forecast_type:
+          name: Forecast Type
+          description: Define, whether you need the report for the next days or hours
+          selector:
+            select:
+              options:
+                - label: Hourly
+                  value: hourly
+                - label: Daily
+                  value: daily
+              custom_value: false
+              sort: false
+              multiple: false
+          default: daily
+        __forecast_number:
+          name: Forecast Number
+          description:
+            "Which information should be exposed. \nThis depends on the
+            Forecast Type setting. \nFor daily: [0] -> Today | [1] -> Tomorrow\nFor
+            hourly: [0] -> Now | [1] -> +1 Hour\n"
+          selector:
+            number:
+              max: 7.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+          default: 0
+    knx_settings:
+      name: KNX Settings
+      collapsed: true
+      input:
+        __knx_trigger_address:
+          name: Trigger Address
+          description: "[DPT 1.001] - Trigger the weather report via a KNX telegram."
+          default:
+        __knx_temperature_address:
+          name: Temperature Address
+          description: "[DPT 9.001] - The temperature forecast."
+          default:
+        __knx_temperature_low_address:
+          name: Temperature Low Address
+          description: "[DPT 9.001] - The lowest temperature forecast."
+          default:
+        __knx_humidity_address:
+          name: Humidity Address
+          description: "[DPT 9.007] - The humidity forecast."
+          default:
+        __knx_wind_speed_address:
+          name: Wind speed Address
+          description: "[DPT 9.005] - The windspeed forecast."
+          default:
+        __knx_rain_amount_address:
+          name: Rain amount Address
+          description: "[DPT 9.026] - The rain amount forecast."
+          default:
+        __knx_description_address:
+          name: Description Address
+          description: "[1 Byte] - Description of the Weatherreport as 1 Byte value."
+          default:
+        __knx_description_string_address:
+          name: Description String Address
+          description: "[DPT 28.001] - Description of the Weatherreport as string."
+          default:
+    report_description_settings:
+      collapsed: true
+      name: Report Description Settings
+      input:
+        __sunny_value:
+          name: Sunny
+          description: Value for sunny Conditions
+          default: 0
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __cloudy_value:
+          name: Cloudy
+          description: Value for cloudy Conditions
+          default: 1
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __fog_value:
+          name: Foggy
+          description: Value for foggy Conditions
+          default: 2
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __hail_value:
+          name: Hail
+          description: Value for hail Conditions
+          default: 3
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __lightning_value:
+          name: Lightning
+          description: Value for lightning Conditions
+          default: 4
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __lightningrainy_value:
+          name: Lightning rainy
+          description: Value for lightning rainy Conditions
+          default: 5
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __partlycloudy_value:
+          name: Partlycloudy
+          description: Value for partlycloudy Conditions
+          default: 6
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __pouring_value:
+          name: Pouring
+          description: Value for pouring Conditions
+          default: 7
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __rainy_value:
+          name: Rainy
+          description: Value for rainy Conditions
+          default: 8
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __snowy_value:
+          name: Snowy
+          description: Value for snowy Conditions
+          default: 9
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __snowyrainy_value:
+          name: Snowy Rainy
+          description: Value for snowy rainy Conditions
+          default: 10
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __windy_value:
+          name: windy
+          description: Value for windy Conditions
+          default: 11
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __windy_variant_value:
+          name: Windy cloudy
+          description: Value for windy cloudy Conditions
+          default: 12
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+        __exceptional_value:
+          name: Exceptional
+          description: Value for exceptional Conditions
+          default: 13
+          selector:
+            number:
+              max: 255.0
+              min: 0.0
+              step: 1.0
+              mode: slider
+    report_description_string_settings:
+      collapsed: true
+      name: Report Description Translation
+      input:
+        __sunny_string_value:
+          name: Sunny
+          description: String for sunny Conditions
+          default: Sunny
+        __cloudy_string_value:
+          name: Cloudy
+          description: String for cloudy Conditions
+          default: Cloudy
+        __fog_string_value:
+          name: Foggy
+          description: String for foggy Conditions
+          default: Foggy
+        __hail_string_value:
+          name: Hail
+          description: String for hail Conditions
+          default: Hail
+        __lightning_string_value:
+          name: Lightning
+          description: String for lightning Conditions
+          default: Lightning
+        __lightningrainy_string_value:
+          name: Lightning rainy
+          description: String for lightning rainy Conditions
+          default: Lightning,rainy
+        __partlycloudy_string_value:
+          name: Partlycloudy
+          description: String for partlycloudy Conditions
+          default: Partlycloudy
+        __pouring_string_value:
+          name: Pouring
+          description: String for pouring Conditions
+          default: Pouring
+        __rainy_string_value:
+          name: Rainy
+          description: String for rainy Conditions
+          default: Rainy
+        __snowy_string_value:
+          name: Snowy
+          description: String for snowy Conditions
+          default: Snowy
+        __snowyrainy_string_value:
+          name: Snowy Rainy
+          description: String for snowy rainy Conditions
+          default: Snowy, rainy
+        __windy_string_value:
+          name: windy
+          description: String for windy Conditions
+          default: Windy
+        __windy_variant_string_value:
+          name: Windy cloudy
+          description: String for windy cloudy Conditions
+          default: Windy, cloudy
+        __exceptional_string_value:
+          name: Exceptional
+          description: String for exceptional Conditions
+          default: Exceptional
+  source_url: https://gist.github.com/torbenledermann/be789b7465821722ea799ca1f66968b4
+mode: single
+trigger_variables:
+  _knx_trigger_address: !input __knx_trigger_address
+  _report_type: !input __report_type
+  _daily_hour: !input __daily_hour
+  _hourly_interval: !input __hourly_interval
+  _knx_temperature_address: !input __knx_temperature_address
+  _knx_temperature_low_address: !input __knx_temperature_low_address
+  _knx_humidity_address: !input __knx_humidity_address
+  _knx_wind_speed_address: !input __knx_wind_speed_address
+  _knx_rain_amount_address: !input __knx_rain_amount_address
+  _knx_description_address: !input __knx_description_address
+  _knx_description_string_address: !input __knx_description_string_address
+variables:
+  _forecast_type: !input __forecast_type
+  _forecast_number: !input __forecast_number
+  _weather_entity: !input __weather_entity
+triggers:
+  - trigger: time
+    at: !input __daily_hour
+    enabled: "{{_report_type == 'daily'}}"
+    id: daily_trigger
+  - trigger: template
+    value_template: "{{ (now().minute % _hourly_interval)|int(2) == 0 }}"
+    enabled: "{{_report_type == 'hourly' and _hourly_interval > 1}}"
+    id: hourly_trigger
+  - trigger: time_pattern
+    hours: "*"
+    minutes: /1
+    seconds: "0"
+    enabled: "{{_report_type == 'hourly' and _hourly_interval == 1}}"
+    id: minute_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_trigger_address
+    enabled: "{{_knx_trigger_address != none}}"
+    id: knx_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_temperature_address
+    enabled: "{{_knx_temperature_address != none}}"
+    id: knx_temperature_read_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_temperature_low_address
+    enabled: "{{_knx_temperature_low_address != none}}"
+    id: knx_temperature_low_read_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_humidity_address
+    enabled: "{{_knx_humidity_address != none}}"
+    id: knx_humidity_read_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_wind_speed_address
+    enabled: "{{_knx_wind_speed_address != none}}"
+    id: knx_wind_speed_read_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_rain_amount_address
+    enabled: "{{_knx_rain_amount_address != none}}"
+    id: knx_rainammount_read_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_description_string_address
+    enabled: "{{_knx_description_string_address != none}}"
+    id: knx_description_string_read_trigger
+  - trigger: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_description_address
+    enabled: "{{_knx_description_address != none}}"
+    id: knx_description_read_trigger
+conditions: []
+actions:
+  - alias: Get Forecast
+    action: weather.get_forecasts
+    metadata: {}
+    data:
+      type: !input __forecast_type
+    target:
+      entity_id: !input __weather_entity
+    response_variable: report
+  - alias: Choose Action based on trigger
+    choose:
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: hourly_trigger
+              - condition: trigger
+                id: minute_trigger
+              - condition: trigger
+                id: daily_trigger
+              - condition: trigger
+                id: knx_trigger
+        sequence:
+          - alias: Temperature
+            if:
+              - condition: template
+                value_template: >
+                  {{ 'temperature' in report[_weather_entity].forecast[_forecast_number] }}
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: !input __knx_temperature_address
+                  payload: "{{ report[_weather_entity].forecast[_forecast_number].temperature }}"
+                  type: temperature
+          - alias: Humidity
+            if:
+              - condition: template
+                value_template: >
+                  {{ 'humidity' in report[_weather_entity].forecast[_forecast_number] }}
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: !input __knx_humidity_address
+                  payload: "{{ report[_weather_entity].forecast[_forecast_number].humidity }}"
+                  type: humidity
+          - alias: Low Temperature
+            if:
+              - condition: template
+                value_template: "{{_forecast_type == 'daily' and 'templow' in report[_weather_entity].forecast[_forecast_number]}}"
+            then:
+              action: knx.send
+              metadata: {}
+              data:
+                response: false
+                address: !input __knx_temperature_low_address
+                payload: "{{report[_weather_entity].forecast[_forecast_number].templow}}"
+                type: temperature
+          - alias: Wind Speed
+            if:
+              - condition: template
+                value_template: "{{'wind_speed' in report[_weather_entity].forecast[_forecast_number]}}"
+            then:
+              action: knx.send
+              metadata: {}
+              data:
+                response: false
+                address: !input __knx_wind_speed_address
+                payload: "{{report[_weather_entity].forecast[_forecast_number].wind_speed}}"
+                type: wind_speed_ms
+          - alias: Precipitation
+            if:
+              - condition: template
+                value_template: "{{'precipitation' in report[_weather_entity].forecast[_forecast_number]}}"
+            then:
+              action: knx.send
+              metadata: {}
+              data:
+                response: false
+                address: !input __knx_rain_amount_address
+                payload: "{{report[_weather_entity].forecast[_forecast_number].precipitation}}"
+                type: rain_amount
+          - alias: Description
+            choose:
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'sunny'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __sunny_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __sunny_string_value
+                      type: string
+                alias: Sunny
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'cloudy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __cloudy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __cloudy_string_value
+                      type: string
+                alias: Cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'fog'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __fog_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __fog_string_value
+                      type: string
+                alias: Fog
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'hail'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __hail_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __hail_string_value
+                      type: string
+                alias: Hail
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'lightning'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __lightning_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __lightning_string_value
+                      type: string
+                alias: Lightning
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'lightning-rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __lightningrainy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __lightningrainy_string_value
+                      type: string
+                alias: Lightning, rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'partlycloudy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __partlycloudy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __partlycloudy_string_value
+                      type: string
+                alias: Partly cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'pouring'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __pouring_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __pouring_string_value
+                      type: string
+                alias: Pouring
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __rainy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __rainy_string_value
+                      type: string
+                alias: Rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'snowy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __snowy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __snowy_string_value
+                      type: string
+                alias: Snowy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'snowy-rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __snowyrainy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __snowyrainy_string_value
+                      type: string
+                alias: Snowy, rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'windy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __windy_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __windy_string_value
+                      type: string
+                alias: Windy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'windy-variant'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __windy_variant_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __windy_variant_value
+                      type: string
+                alias: Windy, cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'exceptional'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_address
+                      payload: !input __exceptional_value
+                      type: 1byte_unsigned
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: false
+                      address: !input __knx_description_string_address
+                      payload: !input __exceptional_string_value
+                      type: string
+                alias: Exceptional
+      - conditions:
+          condition: trigger
+          id: knx_temperature_read_trigger
+        sequence:
+          - alias: Temperature Response
+            if:
+              - condition: template
+                value_template: >
+                  {{ 'temperature' in report[_weather_entity].forecast[_forecast_number] }}
+            then:
+              - action: knx.send
+                data:
+                  response: true
+                  address: !input __knx_temperature_address
+                  payload: "{{ report[_weather_entity].forecast[_forecast_number].temperature }}"
+                  type: temperature
+      - conditions:
+          condition: trigger
+          id: knx_humidity_read_trigger
+        sequence:
+          - alias: Humidity Response
+            if:
+              - condition: template
+                value_template: >
+                  {{ 'humidity' in report[_weather_entity].forecast[_forecast_number] }}
+            then:
+              - action: knx.send
+                data:
+                  response: true
+                  address: !input __knx_humidity_address
+                  payload: "{{ report[_weather_entity].forecast[_forecast_number].humidity }}"
+                  type: humidity
+      - conditions:
+          condition: trigger
+          id: knx_temperature_low_read_trigger
+        sequence:
+          - alias: Temperature Low Response
+            if:
+              - condition: template
+                value_template: "{{_forecast_type == 'daily' and 'templow' in report[_weather_entity].forecast[_forecast_number]}}"
+            then:
+              action: knx.send
+              metadata: {}
+              data:
+                response: true
+                address: !input __knx_temperature_low_address
+                payload: "{{report[_weather_entity].forecast[_forecast_number].templow}}"
+                type: temperature
+      - conditions:
+          condition: trigger
+          id: knx_wind_speed_read_trigger
+        sequence:
+          - alias: Wind Speed Response
+            if:
+              - condition: template
+                value_template: "{{'wind_speed' in report[_weather_entity].forecast[_forecast_number]}}"
+            then:
+              action: knx.send
+              metadata: {}
+              data:
+                response: true
+                address: !input __knx_wind_speed_address
+                payload: "{{report[_weather_entity].forecast[_forecast_number].wind_speed}}"
+                type: wind_speed_ms
+      - conditions:
+          condition: trigger
+          id: knx_rainammount_read_trigger
+        sequence:
+          - alias: Rain Amount Response
+            if:
+              - condition: template
+                value_template: "{{'precipitation' in report[_weather_entity].forecast[_forecast_number]}}"
+            then:
+              action: knx.send
+              metadata: {}
+              data:
+                response: true
+                address: !input __knx_rain_amount_address
+                payload: "{{report[_weather_entity].forecast[_forecast_number].precipitation}}"
+                type: rain_amount
+      - conditions:
+          condition: trigger
+          id: knx_description_string_read_trigger
+        sequence:
+          - alias: Description
+            choose:
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'sunny'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __sunny_string_value
+                      type: string
+                alias: Sunny
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'cloudy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __cloudy_string_value
+                      type: string
+                alias: Cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'fog'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __fog_string_value
+                      type: string
+                alias: Fog
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'hail'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __hail_string_value
+                      type: string
+                alias: Hail
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'lightning'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __lightning_string_value
+                      type: string
+                alias: Lightning
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'lightning-rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __lightningrainy_string_value
+                      type: string
+                alias: Lightning, rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'partlycloudy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __partlycloudy_string_value
+                      type: string
+                alias: Partly cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'pouring'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __pouring_string_value
+                      type: string
+                alias: Pouring
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __rainy_string_value
+                      type: string
+                alias: Rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'snowy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __snowy_string_value
+                      type: string
+                alias: Snowy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'snowy-rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __snowyrainy_string_value
+                      type: string
+                alias: Snowy, rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'windy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __windy_string_value
+                      type: string
+                alias: Windy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'windy-variant'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __windy_variant_value
+                      type: string
+                alias: Windy, cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'exceptional'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_string_address
+                      payload: !input __exceptional_string_value
+                      type: string
+                alias: Exceptional
+      - conditions:
+          condition: trigger
+          id: knx_description_read_trigger
+        sequence:
+          - alias: Description
+            choose:
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'sunny'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __sunny_value
+                      type: 1byte_unsigned
+                alias: Sunny
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'cloudy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __cloudy_value
+                      type: 1byte_unsigned
+                alias: Cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'fog'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __fog_value
+                      type: 1byte_unsigned
+                alias: Fog
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'hail'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __hail_value
+                      type: 1byte_unsigned
+                alias: Hail
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'lightning'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __lightning_value
+                      type: 1byte_unsigned
+                alias: Lightning
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'lightning-rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __lightningrainy_value
+                      type: 1byte_unsigned
+                alias: Lightning, rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'partlycloudy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __partlycloudy_value
+                      type: 1byte_unsigned
+                alias: Partly cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'pouring'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __pouring_value
+                      type: 1byte_unsigned
+                alias: Pouring
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __rainy_value
+                      type: 1byte_unsigned
+                alias: Rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'snowy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __snowy_value
+                      type: 1byte_unsigned
+                alias: Snowy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'snowy-rainy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __snowyrainy_value
+                      type: 1byte_unsigned
+                alias: Snowy, rainy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'windy'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __windy_value
+                      type: 1byte_unsigned
+                alias: Windy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'windy-variant'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __windy_variant_value
+                      type: 1byte_unsigned
+                alias: Windy, cloudy
+              - conditions:
+                  - condition: template
+                    value_template:
+                      "{{report[_weather_entity].forecast[_forecast_number].condition
+                      == 'exceptional'}}"
+                sequence:
+                  - action: knx.send
+                    metadata: {}
+                    data:
+                      response: true
+                      address: !input __knx_description_address
+                      payload: !input __exceptional_value
+                      type: 1byte_unsigned
+                alias: Exceptional

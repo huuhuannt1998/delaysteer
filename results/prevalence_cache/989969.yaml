@@ -1,0 +1,943 @@
+blueprint:
+  name: "💨 Lueftungsempfehlung - Komplett v0.6.0 (Draft 4)"
+  description: "# 💨 Lüftungsempfehlung\n**Version 0.6.0 – Draft 4** · Smarter lüften durch automatische Auswertung der absoluten Luftfeuchtigkeit.\n\n📖 Funktionsweise, Changelog, Roadmap & ToDo-Liste → [💨 Lüftungsempfehlung – HA Blueprint](https://gistpreview.github.io/?7fbb5e8c065e02e8eefa18e8ea37ff59/lueftungsempfehlung_notify_readme.html)\n\nPflichtfelder = *\n"
+  source_url: https://gist.githubusercontent.com/tiwo85/7fbb5e8c065e02e8eefa18e8ea37ff59/raw/lueftungsempfehlung_notify.yaml
+  domain: automation
+  homeassistant:
+    min_version: "2024.6.0"
+  input:
+    sensoren:
+      name: "🌡️ Sensoren"
+      icon: mdi:thermometer
+      collapsed: true
+      input:
+        innen_temperatur:
+          name: 🌡️ Innentemperatur
+          description: "🏠 Temperatursensor im Innenraum (z.B. sensor.wohnzimmer_temperatur)"
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        innen_luftfeuchtigkeit:
+          name: 💧 Innenluftfeuchtigkeit
+          description: "🏠 Luftfeuchtigkeitssensor im Innenraum in Prozent"
+          selector:
+            entity:
+              domain: sensor
+              device_class: humidity
+
+        aussen_temperatur:
+          name: 🌡️ Aussentemperatur
+          description: "🌤️ Temperatursensor im Aussenbereich oder Wetterstation"
+          selector:
+            entity:
+              domain: sensor
+              device_class: temperature
+
+        aussen_luftfeuchtigkeit:
+          name: 💧 Aussenluftfeuchtigkeit
+          description: "🌤️ Luftfeuchtigkeitssensor im Aussenbereich in Prozent"
+          selector:
+            entity:
+              domain: sensor
+              device_class: humidity
+
+        fenster_vorhanden:
+          name: "🪟 Fenster-/Türsensor vorhanden?"
+          description: "Aktivieren wenn ein Sensor verwendet wird."
+          default: false
+          selector:
+            boolean: {}
+
+        fenster_sensor:
+          name: "🪟 Fenster-/Türsensor(en)"
+          description: "Binärsensor(en) für Fenster/Türen. Es werden alle binary_sensor-Entitäten angeboten, damit auch Kontakte mit abweichender oder fehlender Device-Class auswählbar sind. Bestehende Einzel-Auswahl aus v0.5.x bleibt kompatibel."
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+
+        mindest_fenster_offen:
+          name: "🪟 Mindestanzahl offener Fenster"
+          description: "Wie viele der ausgewählten Fenster mindestens offen sein müssen, damit die Lüftung als umgesetzt gilt. Standard: 1."
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 20
+              step: 1
+
+    schwellwerte:
+      name: "⚖️ Schwellwerte"
+      icon: mdi:tune
+      collapsed: true
+      input:
+        schwellwert_differenz:
+          name: ⚖️ Schwellwert absolute Feuchte
+          description: "📏 Mindestdifferenz ab der Lueften empfohlen wird. Empfehlung: 2 g/m³."
+          default: 2
+          selector:
+            number:
+              min: 0.5
+              max: 10
+              step: 0.5
+              unit_of_measurement: "g/m³"
+
+        hysterese:
+          name: 〰️ Hysterese
+          description: "🔁 Puffer gegen Flackern bei Grenzwerten. Lueften bleibt empfohlen bis die Differenz um diesen Wert unter den Schwellwert faellt. 0 = deaktiviert."
+          default: 0.3
+          selector:
+            number:
+              min: 0.0
+              max: 2.0
+              step: 0.1
+              unit_of_measurement: "g/m³"
+
+        max_innen_feuchte:
+          name: 💦 Max. Innenluftfeuchtigkeit
+          description: "📊 Ab diesem Prozentwert wird Lueften empfohlen (zu feucht). Empfehlung: 60%."
+          default: 60
+          selector:
+            number:
+              min: 40
+              max: 80
+              unit_of_measurement: "%"
+
+        min_innen_feuchte:
+          name: 💧 Min. Innenluftfeuchtigkeit (optional)
+          description: "📊 Unter diesem Prozentwert wird Lueften empfohlen wenn die Aussenluft feuchter ist (zu trocken). 0 = deaktiviert. Empfehlung: 35%."
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 60
+              unit_of_measurement: "%"
+
+        min_innen_temperatur:
+          name: "🥶 Mindest-Innentemperatur (optional)"
+          description: "Temperaturschutz: Unterhalb dieses Wertes wird keine Lüftung empfohlen. 0 = deaktiviert."
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 25
+              step: 0.5
+              unit_of_measurement: "°C"
+
+        max_aussen_temperatur:
+          name: "🥵 Maximale Außentemperatur (optional)"
+          description: "Temperaturschutz: Oberhalb dieses Wertes wird keine Lüftung empfohlen. 0 = deaktiviert. Standardmäßig bleibt die Feuchtelogik maßgeblich."
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 45
+              step: 0.5
+              unit_of_measurement: "°C"
+
+    benachrichtigung:
+      name: "🔔 Benachrichtigung"
+      icon: mdi:bell
+      collapsed: true
+      input:
+        benachrichtigung_geraet:
+          name: 📱 Benachrichtigungsgeraet
+          description: "📲 Smartphone mit Home Assistant Companion App. Leer lassen um Push-Benachrichtigungen zu deaktivieren."
+          default: ""
+          selector:
+            device:
+              integration: mobile_app
+              multiple: false
+
+        benachrichtigungs_modus:
+          name: 🔔 Benachrichtigungsmodus
+          description: "⚙️ Wann sollen Benachrichtigungen gesendet werden?"
+          default: "aenderung"
+          selector:
+            select:
+              options:
+                - label: "🔁 Nur bei Änderung"
+                  value: "aenderung"
+                - label: "⏱️ Immer beim Prüfintervall"
+                  value: "immer"
+                - label: "🪟 Nur wenn Fenster geschlossen werden muss"
+                  value: "fenster_zu"
+                - label: "⚡ Bei Änderung + Erinnerung wenn Fenster zu"
+                  value: "erinnerung"
+
+        erinnerung_intervall:
+          name: ⏰ Erinnerungsintervall (nur Modus Erinnerung)
+          description: "🔄 Abstand zwischen Erinnerungen, wenn zu wenige Fenster offen sind oder nach Lüftungsende noch ein Fenster offen ist."
+          default: 60
+          selector:
+            number:
+              min: 5
+              max: 240
+              step: 5
+              unit_of_measurement: "min"
+
+        erinnerung_max:
+          name: 🔢 Max. Erinnerungen (nur Modus Erinnerung)
+          description: "🛑 Maximale Erinnerungen pro neuem Öffnungs- bzw. Schließfall. Beim nächsten Fall steht das volle Kontingent wieder zur Verfügung."
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 20
+              step: 1
+
+        erinnerung_tages_reset:
+          name: 🔄 Erinnerungszähler täglich zurücksetzen?
+          description: "📅 Optionales Sicherheitsnetz: setzt die Erinnerungszähler täglich zurück. Normalerweise werden sie bereits bei jedem neuen Fall zurückgesetzt."
+          default: false
+          selector:
+            boolean: {}
+
+        erinnerung_reset_uhrzeit:
+          name: ⏰ Reset-Uhrzeit
+          description: "🕐 Uhrzeit zu der der Erinnerungszähler täglich zurückgesetzt wird. Nur aktiv wenn Tages-Reset eingeschaltet ist."
+          default: "00:00:00"
+          selector:
+            time: {}
+
+        textvariante:
+          name: 📝 Textauswahl
+          description: "✏️ Stil der Benachrichtigung: kurz, ausfuehrlich oder benutzerdefiniert."
+          default: "kurz"
+          selector:
+            select:
+              options:
+                - label: "💬 Kurzer Hinweis"
+                  value: "kurz"
+                - label: "📄 Ausfuehrlicher Text"
+                  value: "lang"
+                - label: "✍️ Benutzerdefinierter Text"
+                  value: "custom"
+
+        custom_text:
+          name: ✍️ Freier Text (nur fuer Benutzerdefiniert)
+          description: "💡 Eigener Text, kann Templates enthalten."
+          default: ""
+          selector:
+            text:
+
+        dashboard_link:
+          name: 🔗 Dashboard-Link (optional)
+          description: "📊 Lovelace-Pfad z.B. /lovelace/klima. Leer lassen fuer keinen Button."
+          default: ""
+          selector:
+            text:
+
+        persistent_notify:
+          name: 📌 Persistente Nachricht anzeigen?
+          description: "🖥️ Zusaetzliche dauerhafte Nachricht im HA-UI erzeugen."
+          default: false
+          selector:
+            boolean: {}
+
+        alexa_modus:
+          name: 🔊 Alexa-Modus (optional)
+          description: "🗣️ Alexa Media Player (HACS) oder native HA Alexa-Integration. Leer lassen wenn nicht gewuenscht."
+          default: "kein"
+          selector:
+            select:
+              options:
+                - label: "❌ Kein Alexa"
+                  value: "kein"
+                - label: "🔌 Alexa Media Player (HACS)"
+                  value: "hacs"
+                - label: "🏠 Native HA Alexa-Integration"
+                  value: "nativ"
+
+        alexa_media_player:
+          name: 🔌 Alexa Media Player Geraet (nur HACS-Modus)
+          description: "🗣️ media_player Entität des Alexa Media Players (HACS)."
+          default: ""
+          selector:
+            entity:
+              domain: media_player
+
+        alexa_notify_entities:
+          name: 🏠 Alexa Geraete (nur nativer Modus)
+          description: "📣 Alexa notify-Entitäten der nativen Alexa Devices Integration. Mehrere Geräte möglich."
+          default: []
+          selector:
+            entity:
+              integration: alexa_devices
+              domain: notify
+              multiple: true
+
+    zeitsteuerung:
+      name: "⏱️ Zeitsteuerung"
+      icon: mdi:clock-outline
+      collapsed: true
+      input:
+        pruef_intervall:
+          name: ⏱️ Pruefintervall
+          description: "🔄 Wie haeufig werden Temperatur und Luftfeuchtigkeit geprueft."
+          default: "/30"
+          selector:
+            select:
+              options:
+                - label: "⚡ Alle 5 Minuten"
+                  value: "/5"
+                - label: "🕐 Alle 10 Minuten"
+                  value: "/10"
+                - label: "🕐 Alle 15 Minuten"
+                  value: "/15"
+                - label: "🕐 Alle 30 Minuten"
+                  value: "/30"
+                - label: "🕐 Jede Stunde"
+                  value: "/60"
+
+        zeitfenster_start:
+          name: 🌅 Benachrichtigungen ab (Uhrzeit)
+          description: "⏰ Frueheste Uhrzeit fuer Benachrichtigungen z.B. 07:00"
+          default: "07:00:00"
+          selector:
+            time:
+
+        zeitfenster_ende:
+          name: 🌙 Benachrichtigungen bis (Uhrzeit)
+          description: "⏰ Spaeteste Uhrzeit fuer Benachrichtigungen z.B. 22:00"
+          default: "22:00:00"
+          selector:
+            time:
+
+    erweitert:
+      name: "🛠️ Erweitert"
+      icon: mdi:cog
+      collapsed: true
+      input:
+        namens_praferenz:
+          name: 🏷️ Namenspraeferenz
+          description: "🔍 Wie wird der Raumname in der Nachricht angezeigt. Wird ignoriert wenn manueller Name gesetzt ist."
+          default: "auto"
+          selector:
+            select:
+              options:
+                - label: "🤖 Automatisch (Raum > Friendly > Entitaet)"
+                  value: "auto"
+                - label: "🗺️ Nur Raumnamen"
+                  value: "area"
+                - label: "😊 Nur Friendly Name"
+                  value: "friendly"
+                - label: "🔑 Nur Entitaetsname"
+                  value: "entity"
+
+        raum_name_manuell:
+          name: ✏️ Raumname manuell (optional)
+          description: "🏷️ Manueller Raumname fuer die Benachrichtigung. Ueberschreibt die automatische Namenserkennung."
+          default: ""
+          selector:
+            text:
+
+        status_speicher:
+          name: 💾 Status-Speicher (optional)
+          description: "🔁 input_text Helfer (max. 255 Zeichen) für Status, Zeitstempel und Erinnerungszähler als JSON. Für Hysterese/Erinnerungen dringend empfohlen; v0.5.x-Dashboards bleiben kompatibel."
+          default: ""
+          selector:
+            entity:
+              domain: input_text
+
+        debug_modus:
+          name: 🐛 Debug-Modus aktivieren?
+          description: "🔬 Zeigt Messwerte, Differenz, Namensquelle und Blueprint-Version in der Nachricht."
+          default: false
+          selector:
+            boolean: {}
+
+    aktionen:
+      name: "⚡ Aktionen (optional)"
+      icon: mdi:lightning-bolt
+      collapsed: true
+      input:
+        aktion_lueften_start:
+          name: 💨 Lüften Start
+          description: "▶️ Wird ausgeführt wenn Lüften beginnt (Status: jetzt_lueften oder weiter_lueften). Z.B. Lüfter einschalten. Nur bei Statusänderung."
+          default: []
+          selector:
+            action: {}
+
+        aktion_lueften_stop:
+          name: ⏹️ Lüften Stop
+          description: "▶️ Wird ausgeführt wenn Lüften nicht mehr nötig ist (Status: nicht_mehr_lueften oder alles_ok). Z.B. Lüfter ausschalten. Nur bei Statusänderung."
+          default: []
+          selector:
+            action: {}
+
+        aktion_erinnerung:
+          name: 🔔 Aktion bei Erinnerung (nur Modus Erinnerung)
+          description: "▶️ Wird zusätzlich ausgeführt wenn eine Erinnerung fällig ist. Z.B. Lampe kurz blinken lassen."
+          default: []
+          selector:
+            action: {}
+
+    aktionen_signale:
+      name: "🚦 Signale (optional)"
+      icon: mdi:lightbulb-on-outline
+      collapsed: true
+      input:
+        signal_fenster_oeffnen:
+          name: 🟢 Signal Fenster öffnen (Entity)
+          description: "💡 Switch oder Helfer der eingeschaltet wird wenn das Fenster geöffnet werden soll (jetzt_lueften) und ausgeschaltet wird sobald das Fenster offen ist (weiter_lueften). Z.B. Signallampe, input_boolean."
+          default: ""
+          selector:
+            entity:
+              domain:
+                - switch
+                - input_boolean
+                - light
+
+        signal_fenster_schliessen:
+          name: 🔴 Signal Fenster schließen (Entity)
+          description: "💡 Switch oder Helfer der eingeschaltet wird wenn das Fenster geschlossen werden soll (nicht_mehr_lueften) und ausgeschaltet wird sobald das Fenster geschlossen ist (alles_ok). Z.B. Signallampe, input_boolean."
+          default: ""
+          selector:
+            entity:
+              domain:
+                - switch
+                - input_boolean
+                - light
+
+trigger:
+  - platform: time_pattern
+    minutes: !input pruef_intervall
+    id: "intervall"
+  - platform: homeassistant
+    event: start
+    id: "ha_start"
+  - platform: state
+    entity_id: !input fenster_sensor
+    id: "fenster_trigger"
+    enabled: !input fenster_vorhanden
+  - platform: time
+    at: !input erinnerung_reset_uhrzeit
+    id: "erinnerung_reset"
+    enabled: !input erinnerung_tages_reset
+
+variables:
+  blueprint_version: "0.6.0-draft4"
+  trigger_id: >
+    {% if trigger is defined and trigger.id is defined %}{{ trigger.id }}{% else %}manual{% endif %}
+  jetzt_ts: "{{ as_timestamp(now()) | int(0) }}"
+  innen_temp_sensor: !input innen_temperatur
+  innen_hum_sensor: !input innen_luftfeuchtigkeit
+  aussen_temp_sensor: !input aussen_temperatur
+  aussen_hum_sensor: !input aussen_luftfeuchtigkeit
+  fenster_sensor_input: !input fenster_sensor
+  fenster_vorhanden_val: !input fenster_vorhanden
+  mindest_fenster_offen_val: !input mindest_fenster_offen
+  schwellwert: !input schwellwert_differenz
+  hysterese_val: !input hysterese
+  max_feuchte: !input max_innen_feuchte
+  min_feuchte: !input min_innen_feuchte
+  min_innen_temp_val: !input min_innen_temperatur
+  max_aussen_temp_val: !input max_aussen_temperatur
+  geraet_id: !input benachrichtigung_geraet
+  alexa_modus_val: !input alexa_modus
+  alexa_media_player_val: !input alexa_media_player
+  alexa_notify_entities_val: !input alexa_notify_entities
+  persistent_notify_flag: !input persistent_notify
+  dashboard_link_val: !input dashboard_link
+  status_speicher_ent: !input status_speicher
+  debug: !input debug_modus
+  textvar: !input textvariante
+  custom_text_val: !input custom_text
+  namens_pref: !input namens_praferenz
+  raum_name_manuell_val: !input raum_name_manuell
+  zeitfenster_start_val: !input zeitfenster_start
+  zeitfenster_ende_val: !input zeitfenster_ende
+  b_modus: !input benachrichtigungs_modus
+  erinnerung_intervall_val: !input erinnerung_intervall
+  erinnerung_max_val: !input erinnerung_max
+  erinnerung_tages_reset_val: !input erinnerung_tages_reset
+  erinnerung_reset_uhrzeit_val: !input erinnerung_reset_uhrzeit
+  signal_fenster_oeffnen_id: !input signal_fenster_oeffnen
+  signal_fenster_schliessen_id: !input signal_fenster_schliessen
+
+  fenster_sensoren: >
+    {% if not fenster_vorhanden_val %}
+      {{ [] }}
+    {% elif fenster_sensor_input is string %}
+      {{ [fenster_sensor_input] if fenster_sensor_input | length > 0 else [] }}
+    {% else %}
+      {{ fenster_sensor_input | list }}
+    {% endif %}
+  fenster_anzahl: "{{ fenster_sensoren | count }}"
+  mindest_fenster_effektiv: >
+    {% if fenster_anzahl | int(0) > 0 %}
+      {{ [mindest_fenster_offen_val | int(1), fenster_anzahl | int(0)] | min }}
+    {% else %}
+      1
+    {% endif %}
+  offene_fenster: >
+    {% set ns = namespace(n=0) %}
+    {% for ent in fenster_sensoren %}
+      {% if is_state(ent, 'on') %}{% set ns.n = ns.n + 1 %}{% endif %}
+    {% endfor %}
+    {{ ns.n }}
+  fenster_sensoren_ok: >
+    {% if not fenster_vorhanden_val %}
+      {{ true }}
+    {% elif fenster_anzahl | int(0) == 0 %}
+      {{ false }}
+    {% else %}
+      {% set ns = namespace(ok=true) %}
+      {% for ent in fenster_sensoren %}
+        {% if states(ent) in ['unavailable', 'unknown', 'none', ''] %}{% set ns.ok = false %}{% endif %}
+      {% endfor %}
+      {{ ns.ok }}
+    {% endif %}
+  fenster_status_bekannt: "{{ fenster_vorhanden_val and fenster_anzahl | int(0) > 0 and fenster_sensoren_ok }}"
+  fenster_ausreichend_offen: "{{ fenster_status_bekannt and offene_fenster | int(0) >= mindest_fenster_effektiv | int(1) }}"
+  fenster_irgendwie_offen: "{{ fenster_status_bekannt and offene_fenster | int(0) > 0 }}"
+
+  innen_temp_raw: "{{ states(innen_temp_sensor) }}"
+  innen_hum_raw: "{{ states(innen_hum_sensor) }}"
+  aussen_temp_raw: "{{ states(aussen_temp_sensor) }}"
+  aussen_hum_raw: "{{ states(aussen_hum_sensor) }}"
+  klima_sensoren_ok: >
+    {{ is_number(innen_temp_raw) and is_number(innen_hum_raw)
+       and is_number(aussen_temp_raw) and is_number(aussen_hum_raw) }}
+  sensors_verfuegbar: "{{ klima_sensoren_ok and fenster_sensoren_ok }}"
+  innen_temp: "{{ innen_temp_raw | float(0) }}"
+  innen_hum: "{{ innen_hum_raw | float(0) }}"
+  aussen_temp: "{{ aussen_temp_raw | float(0) }}"
+  aussen_hum: "{{ aussen_hum_raw | float(0) }}"
+  abs_hum_innen: >
+    {{ (6.112 * e**(17.67 * innen_temp / (innen_temp + 243.5)) * innen_hum * 2.1674 / (273.15 + innen_temp)) | round(2) if klima_sensoren_ok else 0 }}
+  abs_hum_aussen: >
+    {{ (6.112 * e**(17.67 * aussen_temp / (aussen_temp + 243.5)) * aussen_hum * 2.1674 / (273.15 + aussen_temp)) | round(2) if klima_sensoren_ok else 0 }}
+  differenz: "{{ (abs_hum_innen - abs_hum_aussen) | round(2) }}"
+  differenz_befeuchten: "{{ (abs_hum_aussen - abs_hum_innen) | round(2) }}"
+  ausschalt_schwelle: "{{ [0, (schwellwert | float(0) - hysterese_val | float(0))] | max | round(2) }}"
+  temperatur_ok: >
+    {{ klima_sensoren_ok
+       and (min_innen_temp_val | float(0) <= 0 or innen_temp | float(0) >= min_innen_temp_val | float(0))
+       and (max_aussen_temp_val | float(0) <= 0 or aussen_temp | float(0) <= max_aussen_temp_val | float(0)) }}
+
+  speicher_raw: >
+    {% if status_speicher_ent | length > 0 %}{{ states(status_speicher_ent) }}{% else %}{{ '' }}{% endif %}
+  speicher_json: >
+    {% if speicher_raw is mapping %}
+      {{ speicher_raw }}
+    {% elif speicher_raw is string and (speicher_raw | trim).startswith('{') %}
+      {{ (speicher_raw | trim) | from_json({}) }}
+    {% else %}
+      {{ {} }}
+    {% endif %}
+  letzter_status: >
+    {% if speicher_json is mapping %}{{ speicher_json.get('status', '') }}{% elif speicher_raw | length > 0 %}{{ speicher_raw }}{% else %}{{ '' }}{% endif %}
+  letzter_seit: "{{ speicher_json.get('seit', '') if speicher_json is mapping else '' }}"
+  letzte_erinnerungen_alt: "{{ speicher_json.get('erinnerungen', 0) | int(0) if speicher_json is mapping else 0 }}"
+  letzter_reset_alt: "{{ speicher_json.get('letzter_reset', '') if speicher_json is mapping else '' }}"
+  letzte_differenz_alt: "{{ speicher_json.get('letzte_differenz', 0) | float(0) if speicher_json is mapping else 0 }}"
+  epmax_alt: "{{ speicher_json.get('epmax', 0) | float(0) if speicher_json is mapping else 0 }}"
+  epmin_alt: "{{ speicher_json.get('epmin', 0) | float(0) if speicher_json is mapping else 0 }}"
+  is_alt: >
+    {% set i = speicher_json.get('is', '') if speicher_json is mapping else '' %}
+    {% if i in ['l', 'n'] %}{{ i }}
+    {% elif letzter_status in ['jetzt_lueften', 'weiter_lueften'] %}l
+    {% else %}n{% endif %}
+  g_alt: >
+    {% set g = speicher_json.get('g', '') if speicher_json is mapping else '' %}
+    {% if g in ['e', 'b'] %}{{ g }}
+    {% elif is_alt == 'l' and letzte_differenz_alt | float(0) < 0 %}b
+    {% elif is_alt == 'l' %}e
+    {% else %}{{ '' }}{% endif %}
+  eo_alt: >
+    {% if speicher_json is mapping and 'eo' in speicher_json %}
+      {{ speicher_json.get('eo', 0) | int(0) }}
+    {% elif letzter_status == 'jetzt_lueften' %}
+      {{ letzte_erinnerungen_alt | int(0) }}
+    {% else %}0{% endif %}
+  es_alt: >
+    {% if speicher_json is mapping and 'es' in speicher_json %}
+      {{ speicher_json.get('es', 0) | int(0) }}
+    {% elif letzter_status == 'nicht_mehr_lueften' %}
+      {{ letzte_erinnerungen_alt | int(0) }}
+    {% else %}0{% endif %}
+  t_alt: >
+    {% if speicher_json is mapping and 't' in speicher_json %}
+      {{ speicher_json.get('t', 0) | int(0) }}
+    {% elif letzter_status in ['jetzt_lueften', 'nicht_mehr_lueften'] %}
+      {% set dt = as_datetime(letzter_seit, default=none) %}
+      {{ as_timestamp(dt) | int(0) if dt is not none else jetzt_ts | int(0) }}
+    {% else %}0{% endif %}
+
+  start_entfeuchten: >
+    {{ klima_sensoren_ok and temperatur_ok
+       and innen_hum | float(0) >= max_feuchte | float(0)
+       and differenz | float(0) >= schwellwert | float(0) }}
+  start_befeuchten: >
+    {{ klima_sensoren_ok and temperatur_ok and min_feuchte | float(0) > 0
+       and innen_hum | float(0) <= min_feuchte | float(0)
+       and differenz_befeuchten | float(0) >= schwellwert | float(0) }}
+  soll_lueften: >
+    {% if not klima_sensoren_ok %}
+      {{ is_alt == 'l' }}
+    {% elif not temperatur_ok %}
+      {{ false }}
+    {% elif is_alt == 'l' %}
+      {% if g_alt == 'b' %}
+        {{ min_feuchte | float(0) > 0
+           and innen_hum | float(0) <= min_feuchte | float(0)
+           and differenz_befeuchten | float(0) >= ausschalt_schwelle | float(0) }}
+      {% else %}
+        {{ innen_hum | float(0) >= max_feuchte | float(0)
+           and differenz | float(0) >= ausschalt_schwelle | float(0) }}
+      {% endif %}
+    {% else %}
+      {{ start_entfeuchten or start_befeuchten }}
+    {% endif %}
+  is_neu: "{{ 'l' if soll_lueften else 'n' }}"
+  g_neu: >
+    {% if is_alt != 'l' and is_neu == 'l' %}
+      {{ 'e' if start_entfeuchten else 'b' }}
+    {% elif g_alt in ['e', 'b'] %}
+      {{ g_alt }}
+    {% elif is_neu == 'l' %}
+      {{ 'e' if differenz | float(0) >= 0 else 'b' }}
+    {% else %}{{ '' }}{% endif %}
+  zustand_start: "{{ is_alt != 'l' and is_neu == 'l' and klima_sensoren_ok }}"
+  zustand_stop: "{{ is_alt == 'l' and is_neu != 'l' and klima_sensoren_ok }}"
+
+  current_recommendation: >
+    {% if is_neu == 'l' %}
+      {% if fenster_status_bekannt and fenster_ausreichend_offen %}weiter_lueften{% else %}jetzt_lueften{% endif %}
+    {% else %}
+      {% if fenster_status_bekannt and fenster_irgendwie_offen %}nicht_mehr_lueften{% else %}alles_ok{% endif %}
+    {% endif %}
+  status_geaendert: "{{ current_recommendation != letzter_status }}"
+  seit_neu: >
+    {% if status_geaendert or letzter_seit | string | length < 10 %}
+      {{ utcnow().strftime('%Y-%m-%dT%H:%M:%S+00:00') }}
+    {% else %}
+      {{ letzter_seit }}
+    {% endif %}
+
+  im_zeitfenster: >
+    {% set n = now().strftime('%H:%M:%S') %}
+    {% if zeitfenster_start_val <= zeitfenster_ende_val %}
+      {{ zeitfenster_start_val <= n <= zeitfenster_ende_val }}
+    {% else %}
+      {{ n >= zeitfenster_start_val or n <= zeitfenster_ende_val }}
+    {% endif %}
+
+  tages_reset_faellig: >
+    {{ status_speicher_ent | length > 0 and erinnerung_tages_reset_val
+       and letzter_reset_alt != now().strftime('%Y-%m-%d')
+       and now() >= today_at(erinnerung_reset_uhrzeit_val) }}
+  tages_reset_jetzt: >
+    {{ status_speicher_ent | length > 0 and erinnerung_tages_reset_val
+       and (trigger_id == 'erinnerung_reset' or tages_reset_faellig) }}
+  letzter_reset_neu: "{{ now().strftime('%Y-%m-%d') if tages_reset_jetzt else letzter_reset_alt }}"
+  eo_basis: >
+    {% if tages_reset_jetzt or (status_geaendert and current_recommendation == 'jetzt_lueften') %}0{% else %}{{ eo_alt | int(0) }}{% endif %}
+  es_basis: >
+    {% if tages_reset_jetzt or (status_geaendert and current_recommendation == 'nicht_mehr_lueften') %}0{% else %}{{ es_alt | int(0) }}{% endif %}
+
+  handlungsbedarf: "{{ current_recommendation in ['jetzt_lueften', 'nicht_mehr_lueften'] }}"
+  t_fall_basis: "{{ 0 if status_geaendert else t_alt | int(0) }}"
+  benachrichtigung_daten_ok: >
+    {{ klima_sensoren_ok and (not fenster_vorhanden_val or fenster_status_bekannt) }}
+  initial_modus_passt: >
+    {{ b_modus in ['aenderung', 'erinnerung']
+       or (b_modus == 'fenster_zu' and current_recommendation == 'nicht_mehr_lueften') }}
+  initial_benachrichtigung_faellig: >
+    {{ handlungsbedarf and benachrichtigung_daten_ok and im_zeitfenster
+       and not tages_reset_jetzt and initial_modus_passt and t_fall_basis | int(0) <= 0 }}
+  minuten_seit_benachrichtigung: >
+    {% if t_fall_basis | int(0) <= 0 %}
+      0
+    {% else %}
+      {{ ((as_timestamp(now()) - (t_fall_basis | int(0))) / 60) | int(0) }}
+    {% endif %}
+  erinnerung_oeffnen_faellig: >
+    {{ b_modus == 'erinnerung' and not initial_benachrichtigung_faellig
+       and not tages_reset_jetzt and im_zeitfenster and benachrichtigung_daten_ok
+       and current_recommendation == 'jetzt_lueften' and fenster_status_bekannt
+       and t_fall_basis | int(0) > 0 and eo_basis | int(0) < erinnerung_max_val | int(0)
+       and minuten_seit_benachrichtigung | int(0) >= erinnerung_intervall_val | int(1) }}
+  erinnerung_schliessen_faellig: >
+    {{ b_modus == 'erinnerung' and not initial_benachrichtigung_faellig
+       and not tages_reset_jetzt and im_zeitfenster and benachrichtigung_daten_ok
+       and current_recommendation == 'nicht_mehr_lueften' and fenster_status_bekannt
+       and t_fall_basis | int(0) > 0 and es_basis | int(0) < erinnerung_max_val | int(0)
+       and minuten_seit_benachrichtigung | int(0) >= erinnerung_intervall_val | int(1) }}
+  erinnerung_faellig: "{{ erinnerung_oeffnen_faellig or erinnerung_schliessen_faellig }}"
+  eo_neu: "{{ (eo_basis | int(0) + 1) if erinnerung_oeffnen_faellig else eo_basis | int(0) }}"
+  es_neu: "{{ (es_basis | int(0) + 1) if erinnerung_schliessen_faellig else es_basis | int(0) }}"
+  erinnerungen_neu: >
+    {% if current_recommendation == 'jetzt_lueften' %}{{ eo_neu | int(0) }}
+    {% elif current_recommendation == 'nicht_mehr_lueften' %}{{ es_neu | int(0) }}
+    {% else %}0{% endif %}
+  t_neu: >
+    {% if not handlungsbedarf %}
+      0
+    {% elif initial_benachrichtigung_faellig or erinnerung_faellig %}
+      {{ jetzt_ts | int(0) }}
+    {% elif status_geaendert %}
+      0
+    {% else %}
+      {{ t_alt | int(0) }}
+    {% endif %}
+  letzte_differenz_neu: >
+    {{ differenz if status_geaendert and klima_sensoren_ok else letzte_differenz_alt }}
+  migration_noetig: >
+    {{ status_speicher_ent | length > 0 and
+       (not (speicher_json is mapping) or speicher_json.get('v', 0) | int(0) < 6
+        or 'is' not in speicher_json or 'g' not in speicher_json or 'eo' not in speicher_json
+        or 'es' not in speicher_json or 't' not in speicher_json) }}
+  speicher_schreiben: >
+    {{ status_speicher_ent | length > 0 and
+       (status_geaendert or zustand_start or zustand_stop or erinnerung_faellig
+        or initial_benachrichtigung_faellig or tages_reset_jetzt or migration_noetig
+        or t_neu | int(0) != t_alt | int(0)) }}
+
+  benachrichtigung_erlaubt: "{{ handlungsbedarf and benachrichtigung_daten_ok and im_zeitfenster }}"
+  soll_benachrichtigen_ohne_debug: >
+    {% if tages_reset_jetzt or not benachrichtigung_erlaubt %}false
+    {% elif b_modus == 'immer' %}{{ trigger_id == 'intervall' }}
+    {% elif b_modus == 'aenderung' %}{{ initial_benachrichtigung_faellig }}
+    {% elif b_modus == 'fenster_zu' %}{{ initial_benachrichtigung_faellig and current_recommendation == 'nicht_mehr_lueften' }}
+    {% elif b_modus == 'erinnerung' %}{{ initial_benachrichtigung_faellig or erinnerung_faellig }}
+    {% else %}false{% endif %}
+  soll_benachrichtigen: "{{ debug or soll_benachrichtigen_ohne_debug }}"
+  soll_aktion_lueften_start: "{{ zustand_start }}"
+  soll_aktion_lueften_stop: "{{ zustand_stop }}"
+  soll_aktion_erinnerung: "{{ erinnerung_faellig }}"
+  soll_signal_aktualisieren: "{{ trigger_id == 'ha_start' or status_geaendert }}"
+  soll_signal_oeffnen_an: "{{ soll_signal_aktualisieren and current_recommendation == 'jetzt_lueften' and signal_fenster_oeffnen_id | length > 0 }}"
+  soll_signal_oeffnen_aus: "{{ soll_signal_aktualisieren and current_recommendation != 'jetzt_lueften' and signal_fenster_oeffnen_id | length > 0 }}"
+  soll_signal_schliessen_an: "{{ soll_signal_aktualisieren and current_recommendation == 'nicht_mehr_lueften' and signal_fenster_schliessen_id | length > 0 }}"
+  soll_signal_schliessen_aus: "{{ soll_signal_aktualisieren and current_recommendation != 'nicht_mehr_lueften' and signal_fenster_schliessen_id | length > 0 }}"
+
+  notify_service: >
+    {% if geraet_id | length > 0 %}{{ 'notify.mobile_app_' ~ device_attr(geraet_id, 'name') | slugify }}{% else %}{{ '' }}{% endif %}
+  push_aktiv: "{{ geraet_id | length > 0 }}"
+  raum_info: >
+    {% set manuell = raum_name_manuell_val | trim %}
+    {% if manuell | length > 0 %}
+      {{ manuell }}|||Manuell
+    {% else %}
+      {% set pref = namens_pref %}
+      {% if pref == 'area' %}
+        {% set raum = area_name(innen_temp_sensor) %}{% set quelle = 'Raumname (Area)' %}
+      {% elif pref == 'friendly' %}
+        {% set raum = state_attr(innen_temp_sensor, 'friendly_name') %}{% set quelle = 'Friendly Name' %}
+      {% elif pref == 'entity' %}
+        {% set raum = innen_temp_sensor %}{% set quelle = 'Entitaets-ID' %}
+      {% else %}
+        {% set raum = area_name(innen_temp_sensor) %}
+        {% if raum in [None, '', 'none'] %}
+          {% set raum = state_attr(innen_temp_sensor, 'friendly_name') %}{% set quelle = 'Friendly Name (Fallback)' %}
+        {% else %}{% set quelle = 'Raumname (Auto)' %}{% endif %}
+        {% if raum in [None, '', 'none'] %}{% set raum = innen_temp_sensor %}{% set quelle = 'Entitaets-ID (Fallback)' %}{% endif %}
+      {% endif %}
+      {{ raum }}|||{{ quelle }}
+    {% endif %}
+  raum_name: "{{ raum_info.split('|||')[0] }}"
+  raum_herkunft: "{{ raum_info.split('|||')[1] }}"
+  grund_text: >
+    {% if g_neu == 'b' %}Befeuchten{% elif g_neu == 'e' %}Entfeuchten{% else %}Keiner{% endif %}
+
+condition:
+  - condition: template
+    value_template: >
+      {{ tages_reset_jetzt or speicher_schreiben or soll_benachrichtigen or
+         soll_aktion_lueften_start or soll_aktion_lueften_stop or soll_aktion_erinnerung or
+         soll_signal_oeffnen_an or soll_signal_oeffnen_aus or
+         soll_signal_schliessen_an or soll_signal_schliessen_aus }}
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ speicher_schreiben }}"
+        sequence:
+          - service: input_text.set_value
+            target:
+              entity_id: "{{ status_speicher_ent }}"
+            data:
+              value: >
+                {"status":"{{ current_recommendation }}","seit":"{{ seit_neu }}","erinnerungen":{{ erinnerungen_neu | int(0) }},"letzter_reset":"{{ letzter_reset_neu }}","letzte_differenz":{{ letzte_differenz_neu | float(0) | round(2) }},"epmax":{{ epmax_alt | float(0) | round(2) }},"epmin":{{ epmin_alt | float(0) | round(2) }},"is":"{{ is_neu }}","g":"{{ g_neu }}","eo":{{ eo_neu | int(0) }},"es":{{ es_neu | int(0) }},"t":{{ t_neu | int(0) }},"v":6}
+
+  - variables:
+      b_modus_local: !input benachrichtigungs_modus
+      erinnerung_max_local: !input erinnerung_max
+      text_message: >
+        {% if not klima_sensoren_ok %}
+          ⚠️ Sensorfehler: Ein oder mehrere Klimasensoren sind nicht verfügbar oder nicht numerisch.
+        {% elif fenster_vorhanden_val and not fenster_sensoren_ok %}
+          ⚠️ Fenstersensor-Fehler: Mindestens ein ausgewählter Fenstersensor ist nicht verfügbar.
+        {% elif erinnerung_oeffnen_faellig %}
+          {% if textvar == 'custom' %}{{ custom_text_val }}
+          {% elif textvar == 'lang' %}
+            🔔 Erinnerung: Lüften ist in {{ raum_name }} weiterhin sinnvoll. Bitte öffne mindestens {{ mindest_fenster_effektiv }} der ausgewählten Fenster.
+          {% else %}
+            🔔 Erinnerung: Bitte lüfte in {{ raum_name }}. Noch nicht genügend Fenster geöffnet.
+          {% endif %}
+        {% elif erinnerung_schliessen_faellig %}
+          {% if textvar == 'custom' %}{{ custom_text_val }}
+          {% elif textvar == 'lang' %}
+            🔔 Erinnerung: Lüften ist in {{ raum_name }} nicht mehr sinnvoll. Bitte schließe alle Fenster, damit keine ungünstigere Außenluft bzw. Feuchtigkeit hereinkommt.
+          {% else %}
+            🔔 Erinnerung: Bitte schließe die Fenster in {{ raum_name }}.
+          {% endif %}
+        {% elif textvar == 'custom' %}
+          {{ custom_text_val }}
+        {% elif current_recommendation == 'jetzt_lueften' %}
+          {% if g_neu == 'b' %}
+            {% if textvar == 'lang' %}🌵 Die Innenluft in {{ raum_name }} ist sehr trocken und die Außenluft enthält mehr Feuchtigkeit. Bitte lüften.{% else %}🌵 {{ raum_name }} ist zu trocken – Lüften kann helfen.{% endif %}
+          {% else %}
+            {% if textvar == 'lang' %}💨 Die Luftfeuchtigkeit in {{ raum_name }} ist erhöht und die Außenluft ist günstiger. Bitte lüften.{% else %}🪟 Bitte lüfte in {{ raum_name }}.{% endif %}
+          {% endif %}
+        {% elif current_recommendation == 'nicht_mehr_lueften' %}
+          {% if textvar == 'lang' %}✅ Lüften ist in {{ raum_name }} nicht mehr sinnvoll. Bitte alle Fenster schließen.{% else %}✅ Fenster schließen in {{ raum_name }} – Lüften nicht mehr nötig.{% endif %}
+        {% elif current_recommendation == 'weiter_lueften' %}
+          {% if textvar == 'lang' %}💨 Lüften ist in {{ raum_name }} weiterhin sinnvoll. Die gewünschte Anzahl Fenster ist geöffnet.{% else %}💨 Weiter lüften in {{ raum_name }}.{% endif %}
+        {% else %}
+          {% if textvar == 'lang' %}✅ Die Luftwerte in {{ raum_name }} erfordern aktuell keine Lüftung.{% else %}✅ Lüften nicht notwendig in {{ raum_name }}.{% endif %}
+        {% endif %}
+      notification_title: >
+        {% if erinnerung_oeffnen_faellig %}🔔 Erinnerung – Fenster öffnen
+        {% elif erinnerung_schliessen_faellig %}🔔 Erinnerung – Fenster schließen
+        {% elif current_recommendation == 'jetzt_lueften' %}💨 Lüften empfohlen
+        {% elif current_recommendation == 'nicht_mehr_lueften' %}✅ Lüften beenden
+        {% else %}ℹ️ Lüftungsempfehlung{% endif %}
+      alexa_message: "{{ text_message }}"
+      debug_text: >
+        🕐 {{ now().strftime('%d.%m.%Y %H:%M:%S') }}
+        Innen: {{ innen_temp }}°C / {{ innen_hum }}% ({{ abs_hum_innen }} g/m³)
+        Außen: {{ aussen_temp }}°C / {{ aussen_hum }}% ({{ abs_hum_aussen }} g/m³)
+        D={{ differenz }} g/m³ | SW={{ schwellwert }} | AUS={{ ausschalt_schwelle }} | Hyst={{ hysterese_val }}
+        Status: {{ current_recommendation }} | intern={{ is_neu }} | Grund={{ grund_text }}
+        Fenster: {{ offene_fenster }}/{{ fenster_anzahl }} offen | benötigt={{ mindest_fenster_effektiv }}
+        Temp.-Schutz: {{ 'OK' if temperatur_ok else 'BLOCKIERT' }} | Sensoren: {{ 'OK' if sensors_verfuegbar else 'FEHLER' }}
+        Modus: {{ b_modus_local }} | Erinnerung: {{ erinnerungen_neu }}/{{ erinnerung_max_local }} | Trigger={{ trigger_id }}
+        Notify-Anker t={{ t_neu }} | Zeitfenster={{ 'JA' if im_zeitfenster else 'NEIN' }}
+        Blueprint v{{ blueprint_version }}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_benachrichtigen }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ push_aktiv and dashboard_link_val | length > 0 }}"
+                sequence:
+                  - service: "{{ notify_service }}"
+                    data:
+                      title: "{{ notification_title }}"
+                      message: >
+                        {{ text_message }}{% if debug %}\n\n{{ debug_text }}{% endif %}
+                      data:
+                        actions:
+                          - action: "URI"
+                            title: "📊 Dashboard öffnen"
+                            uri: "{{ dashboard_link_val }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ push_aktiv and dashboard_link_val | length == 0 }}"
+                sequence:
+                  - service: "{{ notify_service }}"
+                    data:
+                      title: "{{ notification_title }}"
+                      message: >
+                        {{ text_message }}{% if debug %}\n\n{{ debug_text }}{% endif %}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ persistent_notify_flag }}"
+                sequence:
+                  - service: persistent_notification.create
+                    data:
+                      title: "{{ notification_title }}"
+                      message: >
+                        {{ text_message }}
+                        {% if dashboard_link_val | length > 0 %}[📊 Zur Seite wechseln]({{ dashboard_link_val }}){% endif %}
+                        {% if debug %}\n\n{{ debug_text }}{% endif %}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_benachrichtigen_ohne_debug and alexa_modus_val == 'hacs' and alexa_media_player_val | length > 0 }}"
+        sequence:
+          - service: media_player.alexa_tts
+            target:
+              entity_id: "{{ alexa_media_player_val }}"
+            data:
+              message: "{{ alexa_message }}"
+              mode: single
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_benachrichtigen_ohne_debug and alexa_modus_val == 'nativ' and alexa_notify_entities_val | length > 0 }}"
+        sequence:
+          - repeat:
+              for_each: "{{ alexa_notify_entities_val }}"
+              sequence:
+                - action: notify.send_message
+                  data:
+                    message: "{{ alexa_message }}"
+                  target:
+                    entity_id: "{{ repeat.item }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_aktion_lueften_start }}"
+        sequence: !input aktion_lueften_start
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_aktion_lueften_stop }}"
+        sequence: !input aktion_lueften_stop
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_signal_oeffnen_an }}"
+        sequence:
+          - service: homeassistant.turn_on
+            target:
+              entity_id: "{{ signal_fenster_oeffnen_id }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_signal_oeffnen_aus }}"
+        sequence:
+          - service: homeassistant.turn_off
+            target:
+              entity_id: "{{ signal_fenster_oeffnen_id }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_signal_schliessen_an }}"
+        sequence:
+          - service: homeassistant.turn_on
+            target:
+              entity_id: "{{ signal_fenster_schliessen_id }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_signal_schliessen_aus }}"
+        sequence:
+          - service: homeassistant.turn_off
+            target:
+              entity_id: "{{ signal_fenster_schliessen_id }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ soll_aktion_erinnerung }}"
+        sequence: !input aktion_erinnerung
+
+mode: single

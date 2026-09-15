@@ -1,0 +1,6 @@
+source,kind,n,mean_s,p50_s,p90_s,p99_s,max_s,budget_rule_s,margin_s
+read:binary_sensor.front_door_contact,read,500,0.001,0.0008,0.0017,0.0027,0.0086,0.5027,0.5
+read:lock.front_door,read,500,0.001,0.0008,0.0017,0.0025,0.0041,0.5025,0.5
+read:alarm_control_panel.home_alarm,read,500,0.001,0.0008,0.0017,0.0026,0.0041,0.5026,0.5
+poll:binary_sensor.front_door_contact,poll,250,0.0022,0.0019,0.0032,0.0044,0.0087,0.5044,0.5
+poll:lock.front_door,poll,250,0.0021,0.0018,0.003,0.0042,0.006,0.5042,0.5

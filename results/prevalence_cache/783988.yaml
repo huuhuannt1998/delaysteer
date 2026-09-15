@@ -1,0 +1,627 @@
+blueprint:
+  name: ZHA - iCasa Black Remote ICZB-RM11S v2
+  description: "This Blueprint controls the ZHA events sent by the iCasa Black Remote ICZB-RM11S.\n 
+    Select a Light (or Group of Lights)(1-4) for each individual Button (1-4) and the standard functions for a dimmer will be performed on the selected Light:\n
+    - Turn Off the Light(s) for a Short Press on Button Off (O)\n
+    - Turn On  the Light(s) for a Short Press on Button On  (I)\n
+    - Dim Down the Light(s) for a Long Press  on Button Off (O)\n
+    - Dim Up   the Light(s) for a Long Press  on Button On  (I)\n
+    \n
+    Press the individual button at least 2 seconds to activate dimming (with a Long Press).\n
+    The brightness can optionally be set to a specific percentage used when turning ON the light.\n
+    The brightness step and the delay between steps can be configured for the Dimming of the lights.\n
+    The dimming step is repeated a configurable maximum number of times but the repeat will be interrupted when the button is released.\n
+    
+    The Short Press and Long Press of the Scene buttons (S1 and S2) can be configured to perform any appropriate action(s).\n
+    Press the Scene button at least 4 seconds to activate a Long Press.\n
+    The the Scene buttons fire off 4 events (for each endpoint_id 1-4) but only endpoint_id == 1 is handled.\n
+    A Release (Stop) event is not applicable for the Long Press of a Scene button.\n
+    \n
+    The Main Off and On buttons have no separate events.\n
+    The Main Off and On buttons fire off 4 events which are the same events as for each of the individual Off or On buttons (1-4).\n
+    \n
+    \n
+    *** OPTIONAL (NO LIGHT SELECTED) ***\n
+    If you want more control over the executed actions for different button presses then you can also configure the separate events per button.
+    If no related Light is selected for an individual button then any appropriate action can be configured for the events of the individual button:\n 
+    \n
+    - For each button without a light a Short Press (Off and On) and a Long Press (Off and On) event is handled.\n
+    - The Long Press actually consists of two events (a Long Press and a Release (Stop) Event).\n
+    - Multiple actions are fired for the Long Press (via a repeat until a next event (e.g. the Release Event) is received).\n
+    - Which actions are performed for the Individual buttons can be selected below but the intended actions are:\n  
+      - for the button (1-4) short press to turn off or on a light (or group of lights)\n
+      - for the button (1-4) long press to decrease or increase the brightness of this light (or group of lights)\n    
+    \n
+    This automation is based upon an earlier blueprint by masteriiz.\n
+    \n
+    To register the iCase remote in the ZHA integration (not exactly like in the manual):\n
+    Press the main On (I) and Off (O) buttons at the sametime for a minimum of 5 seconds (manual say press only the On button)until the green status light goes on continously.
+    Release the On button, followed by releasing the Off button and then short press the Off button. The green status light will start blinking.
+    Now start searching for the device with the ZHA integration in Home Assistant.
+    "    
+  source_url: https://community.home-assistant.io/t/zha-icasa-black-remote-iczb-rm11s/783988
+  domain: automation
+  input:
+    icasa_remote:
+      name: iCasa Black Remote 
+      description: The iCasa Black Remote (ICZB-RM11S) to interact with using the Zigbee Home Automation (ZHA) integration.
+      selector:
+        device:
+          integration: zha
+          manufacturer: icasa
+          model: ICZB-RM11S
+        # multiple: false
+
+# Parameters for the repeat action for the long pressed buttons (1-4):
+    light_1:
+      name: Light(s) 1
+      description: The light(s) to control with button 1
+      default: {}
+      selector:
+        target:
+          entity:
+          - domain:
+            - light
+    light_2:
+      name: Light(s) 2
+      description: The light(s) to control with button 2
+      default: {}
+      selector:
+        target:
+          entity:
+          - domain:
+            - light            
+    light_3:
+      name: Light(s) 3
+      description: The light(s) to control with button 3
+      default: {}
+      selector:
+        target:
+          entity:
+          - domain:
+            - light
+    light_4:
+      name: Light(s) 4
+      description: The light(s) to control with button 4
+      default: {}
+      selector:
+        target:
+          entity:
+          - domain:
+            - light
+            
+# Parameters for the brightness and repeat action:
+    force_brightness:
+      name: Force Turn On Brightness
+      description: Force the brightness to the level set below when the Light is turned on.\nWhen false no brightness will be specified and the light can use its previous brightness.
+      default: false
+      selector:
+        boolean: {}
+    brightness:
+      name: Brightness for Turn Light On
+      description: Brightness (%) of the light(s) when turning the light on.
+      default: 50
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          mode: slider
+          step: 1.0
+          unit_of_measurement: '%'
+    transition:
+      name: Transition for Turn Light On
+      description: Transition Time used when turning the light on.
+      default: 1
+      selector:
+        number:
+          min: 0.0
+          max: 5.0
+          mode: slider
+          step: 0.5
+          unit_of_measurement: 's'
+    brightness_step:
+      name: Brightness Step (%)
+      description: Brightness Step Percentage when dimming the light (-/+).
+      default: 15
+      selector:
+        number:
+          min: 5
+          max: 50
+          mode: slider
+          step: 1
+          unit_of_measurement: '%'
+    brightness_delay:
+      name: Delay Time between (Dimming) Steps
+      description: "Delay in seconds (0.6s-3.0s) between repeated (dim) actions when long pressing the On or Off button.\nLow delay times (e.g. < 0.6s) may result in (too many) lost events (ignored steps by the light or hub).\nTherefore it is better to increase the brightness step when faster dimming is required than to decrease the delay time."
+      default: 1.0
+      selector:
+        number:
+          min: 0.6
+          max: 3.0
+          mode: slider
+          step: 0.2
+          unit_of_measurement: 's'
+    repeat_action_max:
+      name: Repeat Maximum for Dimming
+      description: "Maximum number of (dim) step repeats for a long press.\nThe repeat will be interrupted by the release of the button.\nFor a brightness step value of 10% at least 10 repeats are needed.\nSpecify some extra repeats since sometimes events get lost. Especially for low (< 1s) Delay Times."
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 40
+          mode: slider
+          step: 1
+
+# Actions for Button S1 and S2:
+    button_S1_0_short:
+      name: Short Press S1 (Recall) Scene 1
+      description: "Action to run on S1 short press. For Example: Activate Scene 1."
+      default: []
+      selector:
+        action: {}
+    button_S2_0_short:
+      name: Short Press S2 (Recall) Scene 2
+      description: "Action to run on S2 short press. For Example: Activate Scene 2."
+      default: []
+      selector:
+        action: {}
+    button_S1_0_long:
+      name: Long Press S3 (Store) Scene 1
+      description: "Action to run on S1 long press. For Example: Activate Scene 3 or Save the current Scene as S1."
+      default: []
+      selector:
+        action: {}
+    button_S2_0_long:
+      name: Long Press S4 (Store) Scene 2
+      description: "Action to run on S2 long press. For Example: Activate Scene 4 or Save the current Scene as S2."
+      default: []
+      selector:
+        action: {}
+
+# Separator only
+    individual_actions:
+      name: "*** Optional Separate Event Actions per Button: ***"
+      description: "<b>Only</b> when <b>No</b> light is selected for a button (1,2,3 and/or 4) the following actions per button will be executed:"
+      default: false
+      selector:
+        boolean: {}
+        
+ # Individual Actions for Button 1 Off (O) or On (I):       
+    button_1_0_short:
+      name: Single Press Off (O) for Button 1
+      description: "Action to run on Button 1 Off pressed short. For Example: Turn Light Off"
+      default: []
+      selector:
+        action: {}
+    button_1_1_short:
+      name: Single Press On (I) for Button 1
+      description: "Action to run on Button 1 On pressed short. For Example: Turn Light On at Brightness 30-50%."
+      default: []
+      selector:
+        action: {}
+    button_1_0_long:
+      name: Long Press Off (O) for Button 1
+      description: "Action to run on Button 1 Off pressed long. For Example: Turn Light ON (not OFF) with Brightness Step (percentage) of -15% (Decrease Brightness)."
+      default: []
+      selector:
+        action: {}
+    button_1_1_long:
+      name: Long Press On (I) for Button 1
+      description: "Action to run on Button 1 On pressed long on. For Example: Turn Light ON with Brightness Step (percentage) of 15% (Increase Brightness)." 
+      default: []
+      selector:
+        action: {}
+    button_1_long_press_stop:
+      name: Long Press Off or On (Stop) for Button 1
+      description: "Action to run when Button 1 (Off or On) pressed long is released. Used to interrupt the Long Press of Button 1. Usually no action required!"
+      default: []
+      selector:
+        action: {}
+
+ # Individual Actions for Button 2 Off (O) or On (I):       
+    button_2_0_short:
+      name: Single Press Off (O) for Button 2
+      description: "Action to run on Button 2 Off pressed short."
+      default: []
+      selector:
+        action: {}
+    button_2_1_short:
+      name: Single Press On (I) for Button 2
+      description: "Action to run on Button 2 On pressed short."
+      default: []
+      selector:
+        action: {}
+    button_2_0_long:
+      name: Long Press Off (O) for Button 2
+      description: "Action to run on Button 2 Off pressed long."
+      default: []
+      selector:
+        action: {}
+    button_2_1_long:
+      name: Long Press On (I) for Button 2
+      description: "Action to run on Button 2 On pressed long."
+      default: []
+      selector:
+        action: {}
+    button_2_long_press_stop:
+      name: Long Press Off or On (Stop) for Button 2
+      description: "Action to run when Button 2 (Off or On) pressed long is released. Used to interrupt the Long Press of Button 2. Usually no action required!"
+      default: []
+      selector:
+        action: {}
+
+ # Individual Actions for Button 3 Off (O) or On (I):       
+    button_3_0_short:
+      name: Single Press Off (O) for Button 3
+      description: "Action to run on Button 3 Off pressed short."
+      default: []
+      selector:
+        action: {}
+    button_3_1_short:
+      name: Single Press On (I) for Button 3
+      description: "Action to run on Button 3 On pressed short."
+      default: []
+      selector:
+        action: {}
+    button_3_0_long:
+      name: Long Press Off (O) for Button 3
+      description: "Action to run on Button 3 Off pressed long."
+      default: []
+      selector:
+        action: {}
+    button_3_1_long:
+      name: Long Press On (I) for Button 3
+      description: "Action to run on Button 3 On pressed long."
+      default: []
+      selector:
+        action: {}
+    button_3_long_press_stop:
+      name: Long Press Off or On (Stop) for Button 3
+      description: "Action to run when Button 3 (Off or On) pressed long is released. Used to interrupt the Long Press of Button 3. Usually no action required!"
+      default: []
+      selector:
+        action: {}
+
+ # Individual Actions for Button 4 Off (O) or On (I):       
+    button_4_0_short:
+      name: Single Press Off (O) for Button 4
+      description: "Action to run on Button 4 Off pressed short."
+      default: []
+      selector:
+        action: {}
+    button_4_1_short:
+      name: Single Press On (I) for Button 4
+      description: "Action to run on Button 4 On pressed short."
+      default: []
+      selector:
+        action: {}
+    button_4_0_long:
+      name: Long Press Off (O) for Button 4
+      description: "Action to run on Button 4 Off pressed long."
+      default: []
+      selector:
+        action: {}
+    button_4_1_long:
+      name: Long Press On (I) for Button 4
+      description: "Action to run on Button 4 On pressed long."
+      default: []
+      selector:
+        action: {}
+    button_4_long_press_stop:
+      name: Long Press Off or On (Stop) for Button 4
+      description: "Action to run when Button 4 (Off or On) pressed long is released. Used to interrupt the Long Press of Button 4. Usually no action required!"
+      default: []
+      selector:
+        action: {}
+
+# Automation Mode:
+# Mode Parallel implies that multiple events can be handled at the same time (this was the original mode as defined by masteriiz) and works ok but does not interrupt the repeat events.
+# Mode Restart implies that the automation is restarted when a new event is received and the running one is interrupted (works to interrupt the repeats but causes problems when multiple events for the same Button press (e.g. Main Off/On or S1 or S2 buttons) are sent by the remote).
+# Mode Queued implies that the events are handled one by one (using a queue), this works for the multiple events sent by the Main Off/On and S1/S2 but requires a different implementation of interruption of the repeat in the long press events.
+#mode: parallel  
+#mode: restart
+mode: queued
+
+# Maximum queue size or parallel events
+max: 10
+max_exceeded: debug        
+#max_exceeded: warning        
+#max_exceeded: silent        
+
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input icasa_remote
+action:
+- variables:
+    # input parameters as variables:
+    var_force_brightness: !input force_brightness
+    var_brightness_step: !input brightness_step
+    var_repeat_action_max: !input repeat_action_max
+     
+    # Standard trigger event data variables:
+    command: "{{ trigger.event.data.command | default('') }}"
+    cluster_id: "{{ trigger.event.data.cluster_id | default(0) }}"
+    endpoint_id: "{{ trigger.event.data.endpoint_id | default(0) }}"
+    args: "{{ trigger.event.data.args | default([]) }}"
+    
+    # Additional trigger event data parameters (replacing args array), available depending on the event:
+    params: "{{ trigger.event.data.params | default([]) }}"
+    # Press S1 and S2 events: 
+    group_id: "{{ trigger.event.data.params.group_id | default(-1) }}"
+    scene_id: "{{ trigger.event.data.params.scene_id | default(-1) }}"
+    # Long Press Button 1-4 events: 
+    move_mode: "{{ trigger.event.data.params.move_mode | default(-1) }}"
+    rate: "{{ trigger.event.data.params.rate | default(-1) }}"
+
+    # Set the releated Light for the selected endpoint_id (1-4). Default value is {} when no valid endpoint is available.
+    var_light_1: !input light_1
+    var_light_2: !input light_2
+    var_light_3: !input light_3
+    var_light_4: !input light_4   
+    var_light: "{{ {1: var_light_1, 2: var_light_2, 3: var_light_3, 4: var_light_4}.get(endpoint_id, {}) }}"
+    
+- choose:
+  # *** Events with cluster_id == 6 for endpoint_id-s 1-4 and Short Press Off or On ***
+  # *** Button 1-4 Off (O) or On (I) Short Pressed (less than 2 seconds): ***
+  # Button X Off (O) Short Pressed and Light Set for the endpoint_id:
+  - conditions: "{{ var_light != {} and command == 'off' }}"
+    sequence: 
+    - service: light.turn_off
+      target: "{{ var_light }}"
+  
+  # Button X On (I) Short Pressed and Light set for the endpoint_id:
+  # When a force brightness is selected the brightness percentage will be applied when turning on the light
+  - conditions: "{{ var_light != {} and command == 'on' }}"
+    sequence: 
+    - choose:
+      - conditions: "{{ var_force_brightness }}"
+        sequence:
+        - service: light.turn_on
+          target: "{{ var_light }}"
+          data:
+            transition: !input transition
+            brightness_pct: !input brightness
+      default:
+      - service: light.turn_on
+        target: "{{ var_light }}"
+        data:
+          transition: 1 
+     
+  # *** Events for the related Light with cluster_id == 8 for endpoint_id-s 1-4 and Long Press Off or On ***
+  # *** Button 1-4 Off (O) or On (I) Long Pressed (more than 2 seconds): ***
+  # Move (MoveMode.Down and MoveMode.Up) events are sent after a 2 seconds long press of Button 1-4
+  # Stop (with on off) event is sent when button is released after a long press
+  
+  # Button X (Off) Long Pressed (Dim Down) for the related Light:
+  - conditions: 
+    - "{{ var_light != {} }}"
+    - "{{ command == 'move_with_on_off' }}"
+    - "{{ move_mode == 'MoveMode.Down' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - service: light.turn_on
+          target: "{{ var_light }}"
+          data:
+            brightness_step_pct: "{{ -var_brightness_step }}"  
+            transition: !input brightness_delay
+        # https://community.home-assistant.io/t/repeat-actions-until-an-event-fired/308626/3   
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+            # device_id: !input icasa_remote
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+        # Write to the system log (when debugging): See file home-assistant.log (or Settings->System->Log) for output
+  #     - service: system_log.write
+  #       data:
+  #         message: "Holding button trigger={{ wait.trigger }} index={{ repeat.index }} ..."
+
+  # Button X (On) Long Pressed (Dim Up) for the related Light:
+  - conditions:
+    - "{{ var_light != {} }}"
+    - "{{ command == 'move_with_on_off' }}"
+    - "{{ move_mode == 'MoveMode.Up' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - service: light.turn_on
+          target: "{{ var_light }}"
+          data:
+            brightness_step_pct: "{{ var_brightness_step }}"  
+            transition: !input brightness_delay
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+
+  # Button X (On OR Off) Release (Stop with On Off) after long press for the related Light: 
+  - conditions: "{{ var_light != {} and command == 'stop_with_on_off' }}"
+  # No action(s) but this event will interrupt the repeat in the above Dim Down or Up (in wait_for_trigger) for the related light:
+    sequence: []
+
+  # *** Events with cluster_id == 5 and endpoint_id == 1 for Short (Recall) and Long (Store) Press of S1 and S2 button ***
+  # The remote will sent an event for each endpoint_id (1-4) but the other endpoint_id-s (2-4) are ignored
+  # Button S1 and S2 Short Pressed (Less than 4 seconds) - Recall:
+  - conditions: "{{ endpoint_id == 1 and command == 'recall' and scene_id == 1 }}"
+    sequence: !input button_S1_0_short
+  - conditions: "{{ endpoint_id == 1 and command == 'recall' and scene_id == 2 }}"
+    sequence: !input button_S2_0_short
+  # Button S1 and S2 Long Pressed (more than 4 seconds) - Store:
+  - conditions: "{{ endpoint_id == 1 and command == 'store'  and scene_id == 1 }}"
+    sequence: !input button_S1_0_long
+  - conditions: "{{ endpoint_id == 1 and command == 'store'  and scene_id == 2 }}"
+    sequence: !input button_S2_0_long
+  
+  # *** Individual Events with cluster_id == 8 for endpoint_id-s 1-4 and Long Press Off or On ***
+  # *** Button 1-4 Off (O) or On (I) Short Pressed or Long (more than 2 seconds) Pressed: ***
+  # *** Remark: These individual actions are only fired when NO light has been selected for an endpoint_id!
+    
+  # Button 1-4 (O or I) Short Pressed and no Light set:
+  # Button 1 (O or I) Short Pressed and no Light set: 
+  - conditions: "{{ endpoint_id == 1 and command == 'off' }}"
+    sequence: !input button_1_0_short
+  - conditions: "{{ endpoint_id == 1 and command == 'on' }}"
+    sequence: !input button_1_1_short
+  # Button 2 (O or I) Short Pressed and no Light set:
+  - conditions: "{{ endpoint_id == 2 and command == 'off' }}"
+    sequence: !input button_2_0_short
+  - conditions: "{{ endpoint_id == 2 and command == 'on' }}"
+    sequence: !input button_2_1_short
+  # Button 3 (O or I) Short Pressed and no Light set:
+  - conditions: "{{ endpoint_id == 3 and command == 'off' }}"
+    sequence: !input button_3_0_short
+  - conditions: "{{ endpoint_id == 3 and command == 'on' }}"
+    sequence: !input button_3_1_short
+  # Button 4 (O or I) Short Pressed and no Light set:
+  - conditions: "{{ endpoint_id == 4 and command == 'off' }}"
+    sequence: !input button_4_0_short
+  - conditions: "{{ endpoint_id == 4 and command == 'on' }}"
+    sequence: !input button_4_1_short
+
+  # Button 1-4 (O or I) Long Pressed and Released and no Light set:
+  # Issue: Check args == [1,50] / [0,50] and move_mode == 1 / 0 are not valid (true) anymore, same for command == 'stop'
+  # Reason: I suspect the move_mode attribute of event.data.params has changed in the past in the ZHA integration to become a more complex value (<MoveMode.Down: 1>)
+  # Fix: Use move_mode == 'MoveMode.Down' / 'MoveMode.Up' or args == '[<MoveMode.Down: 1>,50]' / '[<MoveMode.Up: 0>,50]' and command = 'stop_with_on_off'
+
+  # Button 1 (O or I) Long Pressed and Released:
+  # conditions: "{{ endpoint_id == 1 and command == 'move_with_on_off' and args == [1,50] }}"
+  - conditions: "{{ endpoint_id == 1 and command == 'move_with_on_off' and move_mode == 'MoveMode.Down' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_1_0_long
+        # https://community.home-assistant.io/t/repeat-actions-until-an-event-fired/308626/3   
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 1 and command == 'move_with_on_off' and args == [0,50] }}"
+  - conditions: "{{ endpoint_id == 1 and command == 'move_with_on_off' and move_mode == 'MoveMode.Up' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_1_1_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 1 and command == 'stop' }}"
+  - conditions: "{{ endpoint_id == 1 and command == 'stop_with_on_off' }}"
+    sequence: !input button_1_long_press_stop
+
+  # Button 2 (O or I) Long Pressed and Released:
+  # conditions: "{{ endpoint_id == 2 and command == 'move_with_on_off' and args==[1,50] }}"
+  - conditions: "{{ endpoint_id == 2 and command == 'move_with_on_off' and move_mode == 'MoveMode.Down' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_2_0_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 2 and command == 'move_with_on_off' and args==[0,50] }}"
+  - conditions: "{{ endpoint_id == 2 and command == 'move_with_on_off' and move_mode == 'MoveMode.Up' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_2_1_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 2 and command == 'stop' }}"
+  - conditions: "{{ endpoint_id == 2 and command == 'stop_with_on_off' }}"
+    sequence: !input button_2_long_press_stop
+
+  # Button 3 (O or I) Long Pressed and Released:
+  # conditions: "{{ endpoint_id == 3 and command == 'move_with_on_off' and args==[1,50] }}"
+  - conditions: "{{ endpoint_id == 3 and command == 'move_with_on_off' and move_mode == 'MoveMode.Down' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_3_0_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 3 and command == 'move_with_on_off' and args==[0,50] }}"
+  - conditions: "{{ endpoint_id == 3 and command == 'move_with_on_off' and move_mode == 'MoveMode.Up' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_3_1_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 3 and command == 'stop_off' }}"
+  - conditions: "{{ endpoint_id == 3 and command == 'stop_with_on_off' }}"
+    sequence: !input button_3_long_press_stop
+
+  # Button 4 (O or I) Long Pressed and Released:
+  # conditions: "{{ endpoint_id == 4 and command == 'move_with_on_off' and args== [1,50] }}"
+  - conditions: "{{ endpoint_id == 4 and command == 'move_with_on_off' and move_mode == 'MoveMode.Down' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_4_0_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 4 and command == 'move_with_on_off' and args== [0,50] }}"
+  - conditions: "{{ endpoint_id == 4 and command == 'move_with_on_off' and move_mode == 'MoveMode.Up' }}"
+    sequence:
+    - repeat:
+        until: "{{ wait.trigger is not none or repeat.index >= var_repeat_action_max }}"
+        sequence:
+        - sequence: !input button_4_1_long
+        - wait_for_trigger:
+            platform: event
+            event_type: zha_event
+            event_data:
+              device_id: "{{ trigger.event.data.device_id }}"
+          timeout:
+            seconds: !input brightness_delay
+  # conditions: "{{ endpoint_id == 4 and command == 'stop' }}"
+  - conditions: "{{ endpoint_id == 4 and command == 'stop_with_on_off' }}"
+    sequence: !input button_4_long_press_stop

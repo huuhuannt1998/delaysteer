@@ -1,0 +1,1571 @@
+blueprint:
+  name: KNX - Mediaplayer Control
+  description:
+    Use KNX to control a media player entity. Including Feedback from the
+    media player to KNX - V1.4.3
+  author: torbenledermann
+  homeassistant:
+    min_version: 2024.6.0
+  domain: automation
+  input:
+    __mediaplayer_entity:
+      name: Mediaplayer
+      description: The Media player entity, that should be controlled
+      selector:
+        entity:
+          filter:
+            - domain:
+                - media_player
+          multiple: false
+          reorder: false
+    playback controls:
+      collapsed: true
+      name: Playback Controls
+      input:
+        __knx_playpause_address:
+          name: Play/Pause Group Address
+          description:
+            "[DPT 1.xx] - The Value 1 triggers the Play action. The Value
+            0 triggers the Pause action"
+          default:
+        __secondary_play_command_nexttrack:
+          name: Next Track if music is already playing
+          description:
+            If the music is already playing and a telegram with the value
+            1 and the group address of Play/Pause is beeing send, the next track is
+            beeing played
+          selector:
+            boolean: {}
+          default: false
+        __stop_instead_of_pause:
+          name: Stop instead of pause
+          description: Use the stop command instead of the pause Command
+          selector:
+            boolean: {}
+          default: false
+        __knx_playpause_status_address:
+          name: Play/Pause Status Group Address
+          description: "[DPT 1.xx]"
+          default:
+        __knx_onoff_address:
+          name: On/Off Group Address
+          description:
+            "[DPT 1.xx] - Some media players use cant use the play pause
+            action. There you have to use the On/Off Action"
+          default:
+        __knx_onoff_status_address:
+          name: On/Off Status Group Address
+          description: "[DPT 1.xx]"
+          default:
+        __knx_forwardbackward_address:
+          name: Forward/Backward Group Address
+          description:
+            "[DPT 1.xx] - The Value 1 triggers the Forward action. The
+            Value 0 triggers the Backward action"
+          default:
+    volume:
+      collapsed: true
+      name: Volume Control
+      input:
+        __knx_volume_address:
+          name: Volume Control Group Address
+          description:
+            "[DPT 5.001 Percent] - The group address to control the volume
+            in percent"
+          default:
+        __knx_volume_step_address:
+          name: Volume Step Control Group Address
+          description:
+            "[DPT 1.xxx] - The group address to control the volume in stepwise
+            via a 1bit object"
+          default:
+        __knx_volume_step_up_value:
+          name: Turn Up - Value
+          description: Define which Value turns up the volume
+          selector:
+            select:
+              options:
+                - "1"
+                - "0"
+              sort: false
+              custom_value: false
+              multiple: false
+          default: "1"
+        __knx_volume_step_size:
+          name: Volume Group Address
+          description:
+            Define how much the volume should be turned up ord down with
+            each step
+          selector:
+            number:
+              min: 0.0
+              max: 100.0
+              step: 1.0
+              mode: slider
+          default: 5.0
+        __knx_volume_status_address:
+          name: Volume Status Group Address
+          description: "[DPT 5.001 Percent]"
+          default:
+        __knx_mute_address:
+          name: Mute Group Address
+          description: "[DPT 1.xx] - The Value 1 triggers the Mute action."
+          default:
+        __knx_mute_status_address:
+          name: Mute Status Group Address
+          description: "[DPT 1.xx]"
+          default:
+    relative_volume:
+      collapsed: true
+      name: Relative Volume Control [Dimming]
+      description:
+        Kudos to @kalhimeo for his 'KNX - Light entities control' Blueprint
+        from which I inherited the code for relative dimming
+      input:
+        __relative_helper_entity:
+          name: Helper for relative volume control
+          description:
+            If you intend to use the relative Volume control, it is necessary
+            to manually create a 'toggle helper' specificly for this automation (don't
+            change if unused)
+          selector:
+            entity:
+              domain:
+                - input_boolean
+              multiple: false
+              reorder: false
+          default: {}
+        __knx_relative_address:
+          name: Relative Volume Control Group Address
+          description: "[DPT 3.xx]"
+          default:
+        __dimm_time:
+          name: Dimm time
+          description: Define how long it should take to go from 0% to 100%.
+          selector:
+            number:
+              min: 1.0
+              max: 40.0
+              step: 0.1
+              unit_of_measurement: seconds
+              mode: slider
+          default: 15
+        __dimm_steps:
+          name: Dimm steps
+          description: How many steps should be used to dimm from 0 to 100%.
+          selector:
+            number:
+              min: 2.0
+              max: 255.0
+              step: 1.0
+              unit_of_measurement: steps
+              mode: slider
+          default: 50
+    status:
+      collapsed: true
+      name: Status
+      input:
+        __knx_title_address:
+          name: Title Group Address
+          description:
+            "[DPT 16.001 - String ISO8859-1] - Due to limitations with
+            the DPT only the first 14 Characters can be displayed"
+          default:
+        __knx_artist_address:
+          name: Artist Group Address
+          description:
+            "[DPT 16.001 - String ISO8859-1] - Due to limitations with
+            the DPT only the first 14 Characters can be displayed"
+          default:
+        __knx_album_address:
+          name: Album Group Address
+          description:
+            "[DPT 16.001 - String ISO8859-1] - Due to limitations with
+            the DPT only the first 14 Characters can be displayed"
+          default:
+        __send_text_when_paused:
+          name: Send special text, if paused?
+          description: This allows to display a "music paused" state on the device.
+          selector:
+            boolean: {}
+          default: false
+        __paused_title_text:
+          name: Paused - Title text
+          description: Text to display for the title, if paused.
+          default:
+        __paused_artist_text:
+          name: Paused - Artist text
+          description: Text to display for the artist, if paused.
+          default:
+        __paused_album_text:
+          name: Paused - Album text
+          description: Text to display for the album, if paused.
+          default:
+        __send_text_when_turned_off:
+          name: Send special text, if turned off?
+          description: This allows to display a "turned off" state on the device.
+          selector:
+            boolean: {}
+          default: false
+        __turned_off_title_text:
+          name: Turned Off - Title text
+          description: Text to display for the title, if turned off.
+          default:
+        __turned_off_artist_text:
+          name: Turned Off - Artist text
+          description: Text to display for the artist, if turned off
+          default:
+        __turned_off_album_text:
+          name: Turned Off - Album text
+          description: Text to display for the album, if turned off
+          default:
+        __send_text_when_buffering:
+          name: Send special text, if buffering?
+          description:
+            This allows to display a "Buffering" state on the device, when
+            switching between scenes.
+          selector:
+            boolean: {}
+          default: false
+        __buffering_title_text:
+          name: Buffering - Title text
+          description: Text to display for the title, if buffering.
+          default:
+        __buffering_artist_text:
+          name: Buffering - Artist text
+          description: Text to display for the artist, if buffering
+          default:
+        __buffering_album_text:
+          name: Buffering - Album text
+          description: Text to display for the album, if buffering
+          default:
+    scenes:
+      name: Scene Control
+      description:
+        "The Action to be performed with each scene depends on your media
+        player. \nFor Sonos you have to add the playlist/radio to your favourites.
+        Watch out for typos.\n"
+      collapsed: true
+      input:
+        __knx_scenes_address:
+          name: Scenes Group Address
+          description: "[DPT 17.001 - Scene Number]"
+          default:
+        __scenes_mediaplayer_type:
+          name: Mediaplayer type
+          description: Defines the type of media player used
+          selector:
+            select:
+              options:
+                - Standard
+                - Music-Assistant
+                - Squeezebox
+                - Denon Home
+              sort: false
+              custom_value: false
+              multiple: false
+          default: Standard
+        __knx_scene_number1:
+          name: Scenes Number 1
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number1_action:
+          name: Scenes Number 1 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number1_volume:
+          name: Scenes Number 1 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene1_address_1bit:
+          name: Scene 1 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number2:
+          name: Scenes Number 2
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number2_action:
+          name: Scenes Number 2 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number2_volume:
+          name: Scenes Number 2 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene2_address_1bit:
+          name: Scene 2 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number3:
+          name: Scenes Number 3
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number3_action:
+          name: Scenes Number 3 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number3_volume:
+          name: Scenes Number 3 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene3_address_1bit:
+          name: Scene 3 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number4:
+          name: Scenes Number 4
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number4_action:
+          name: Scenes Number 4 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number4_volume:
+          name: Scenes Number 4 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene4_address_1bit:
+          name: Scene 4 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number5:
+          name: Scenes Number 5
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number5_action:
+          name: Scenes Number 5 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number5_volume:
+          name: Scenes Number 5 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene5_address_1bit:
+          name: Scene 5 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number6:
+          name: Scenes Number 6
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number6_action:
+          name: Scenes Number 6 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number6_volume:
+          name: Scenes Number 6 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene6_address_1bit:
+          name: Scene 6 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number7:
+          name: Scenes Number 7
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number7_action:
+          name: Scenes Number 7 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number7_volume:
+          name: Scenes Number 7 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene7_address_1bit:
+          name: Scene 7 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+        __knx_scene_number8:
+          name: Scenes Number 8
+          description: Define which Scene Number shall be reacted to
+          selector:
+            number:
+              min: 1.0
+              max: 65.0
+              step: 1.0
+              mode: slider
+          default: 65
+        __scene_number8_action:
+          name: Scenes Number 8 Action
+          description: The Song/Playlist/Radio to be started
+          default: ""
+        __scene_number8_volume:
+          name: Scenes Number 8 Volume
+          description:
+            Define the Volume that should be set (101 means don't change
+            volume)
+          selector:
+            number:
+              min: 1.0
+              max: 101.0
+              step: 1.0
+              mode: slider
+          default: 101.0
+        __knx_scene8_address_1bit:
+          name: Scene 8 Group Address
+          description:
+            "[DPT 1.001 - Switch] - With a '1' the scene is activated,
+            a '0' pauses the music"
+          default:
+  source_url: https://gist.github.com/torbenledermann/e20c6d9d86406529e9941b71fca82935
+mode: parallel
+max_exceeded: silent
+variables:
+  stop_instead_of_pause: !input __stop_instead_of_pause
+  secondary_play_command_nexttrack: !input __secondary_play_command_nexttrack
+  mediaplayer_entity: !input __mediaplayer_entity
+  knx_playpause_address: !input __knx_playpause_address
+  knx_playpause_status_address: !input __knx_playpause_status_address
+  knx_onoff_address: !input __knx_onoff_address
+  knx_onoff_status_address: !input __knx_onoff_status_address
+  knx_forwardbackward_address: !input __knx_forwardbackward_address
+  knx_volume_address: !input __knx_volume_address
+  knx_volume_status_address: !input __knx_volume_status_address
+  knx_title_address: !input __knx_title_address
+  knx_album_address: !input __knx_album_address
+  knx_artist_address: !input __knx_artist_address
+  send_text_when_paused: !input __send_text_when_paused
+  paused_title_text: !input __paused_title_text
+  paused_album_text: !input __paused_album_text
+  paused_artist_text: !input __paused_artist_text
+  send_text_when_turned_off: !input __send_text_when_turned_off
+  turned_off_title_text: !input __turned_off_title_text
+  turned_off_album_text: !input __turned_off_album_text
+  turned_off_artist_text: !input __turned_off_artist_text
+  send_text_when_buffering: !input __send_text_when_buffering
+  buffering_title_text: !input __buffering_title_text
+  buffering_album_text: !input __buffering_album_text
+  buffering_artist_text: !input __buffering_artist_text
+  knx_mute_address: !input __knx_mute_address
+  knx_mute_status_address: !input __knx_mute_status_address
+  knx_volume_step_address: !input __knx_volume_step_address
+  knx_volume_step_up_value: !input __knx_volume_step_up_value
+  knx_volume_step_size: !input __knx_volume_step_size
+  knx_relative_address: !input __knx_relative_address
+  relative_helper_entity: !input __relative_helper_entity
+  _dimm_time: !input __dimm_time
+  _dimm_steps: !input __dimm_steps
+  dimm_time: "{{ _dimm_time | float(default=4) }}"
+  dimm_steps: "{{ _dimm_steps | int(default=20) }}"
+  dimm_step: "{{ (255 / dimm_steps) }}"
+  dimm_delay: "{{ dimm_time * 1000 / dimm_steps }}"
+  knx_scenes_address: !input __knx_scenes_address
+  knx_scene_numbers:
+    - !input __knx_scene_number1
+    - !input __knx_scene_number2
+    - !input __knx_scene_number3
+    - !input __knx_scene_number4
+    - !input __knx_scene_number5
+    - !input __knx_scene_number6
+    - !input __knx_scene_number7
+    - !input __knx_scene_number8
+  scene_number_actions:
+    - !input __scene_number1_action
+    - !input __scene_number2_action
+    - !input __scene_number3_action
+    - !input __scene_number4_action
+    - !input __scene_number5_action
+    - !input __scene_number6_action
+    - !input __scene_number7_action
+    - !input __scene_number8_action
+  scene_number_volume:
+    - !input __scene_number1_volume
+    - !input __scene_number2_volume
+    - !input __scene_number3_volume
+    - !input __scene_number4_volume
+    - !input __scene_number5_volume
+    - !input __scene_number6_volume
+    - !input __scene_number7_volume
+    - !input __scene_number8_volume
+  scenes_mediaplayer_type: !input __scenes_mediaplayer_type
+  scene_action: ""
+  knx_scene1_address_1bit: !input __knx_scene1_address_1bit
+  knx_scene2_address_1bit: !input __knx_scene2_address_1bit
+  knx_scene3_address_1bit: !input __knx_scene3_address_1bit
+  knx_scene4_address_1bit: !input __knx_scene4_address_1bit
+  knx_scene5_address_1bit: !input __knx_scene5_address_1bit
+  knx_scene6_address_1bit: !input __knx_scene6_address_1bit
+  knx_scene7_address_1bit: !input __knx_scene7_address_1bit
+  knx_scene8_address_1bit: !input __knx_scene8_address_1bit
+trigger_variables:
+  _knx_playpause_address: !input __knx_playpause_address
+  _knx_onoff_address: !input __knx_onoff_address
+  _knx_forwardbackward_address: !input __knx_forwardbackward_address
+  _knx_volume_address: !input __knx_volume_address
+  _knx_mute_address: !input __knx_mute_address
+  _knx_volume_step_address: !input __knx_volume_step_address
+  _knx_relative_address: !input __knx_relative_address
+  _knx_scenes_address: !input __knx_scenes_address
+  _knx_scene1_address_1bit: !input __knx_scene1_address_1bit
+  _knx_scene2_address_1bit: !input __knx_scene2_address_1bit
+  _knx_scene3_address_1bit: !input __knx_scene3_address_1bit
+  _knx_scene4_address_1bit: !input __knx_scene4_address_1bit
+  _knx_scene5_address_1bit: !input __knx_scene5_address_1bit
+  _knx_scene6_address_1bit: !input __knx_scene6_address_1bit
+  _knx_scene7_address_1bit: !input __knx_scene7_address_1bit
+  _knx_scene8_address_1bit: !input __knx_scene8_address_1bit
+
+  _knx_playpause_status_address: !input __knx_playpause_status_address
+  _knx_onoff_status_address: !input __knx_onoff_status_address
+  _knx_volume_status_address: !input __knx_volume_status_address
+  _knx_title_address: !input __knx_title_address
+  _knx_album_address: !input __knx_album_address
+  _knx_artist_address: !input __knx_artist_address
+  _knx_mute_status_address: !input __knx_mute_status_address
+trigger:
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_playpause_address
+    id: knx_playpause
+    enabled: "{{ _knx_playpause_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_onoff_address
+    id: knx_onoff
+    enabled: "{{ _knx_onoff_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_forwardbackward_address
+    id: knx_forwardbackward
+    enabled: "{{ _knx_forwardbackward_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_volume_address
+    type: percent
+    id: knx_volume
+    enabled: "{{ _knx_volume_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_volume_step_address
+    id: knx_volume_step
+    enabled: "{{ _knx_volume_step_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_mute_address
+    id: knx_mute
+    enabled: "{{ _knx_mute_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scenes_address
+    id: knx_scenes
+    enabled: "{{ _knx_scenes_address !=none }}"
+    type: scene_number
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_relative_address
+    id: knx_relative
+    enabled: "{{ _knx_relative_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene1_address_1bit
+    id: knx_scene1
+    enabled: "{{ _knx_scene1_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene2_address_1bit
+    id: knx_scene2
+    enabled: "{{ _knx_scene2_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene3_address_1bit
+    id: knx_scene3
+    enabled: "{{ _knx_scene3_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene4_address_1bit
+    id: knx_scene4
+    enabled: "{{ _knx_scene4_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene5_address_1bit
+    id: knx_scene5
+    enabled: "{{ _knx_scene5_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene6_address_1bit
+    id: knx_scene6
+    enabled: "{{ _knx_scene6_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene7_address_1bit
+    id: knx_scene7
+    enabled: "{{ _knx_scene7_address_1bit !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: false
+    outgoing: false
+    destination: !input __knx_scene8_address_1bit
+    id: knx_scene8
+    enabled: "{{ _knx_scene8_address_1bit !=none }}"
+  - platform: state
+    entity_id: !input __mediaplayer_entity
+    attribute: volume_level
+    id: sonos_volume
+  - platform: state
+    entity_id: !input __mediaplayer_entity
+    attribute: media_title
+    id: sonos_title
+  - platform: state
+    entity_id: !input __mediaplayer_entity
+    attribute: media_artist
+    id: sonos_artist
+  - platform: state
+    entity_id: !input __mediaplayer_entity
+    attribute: media_album_name
+    id: sonos_album
+  - platform: state
+    entity_id: !input __mediaplayer_entity
+    attribute: is_volume_muted
+    id: sonos_muted
+  - platform: state
+    entity_id: !input __mediaplayer_entity
+    id: sonos_state
+
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_playpause_status_address
+    id: knx_read_playpause_status
+    enabled: "{{ _knx_playpause_status_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_onoff_status_address
+    id: knx_read_onoff_status
+    enabled: "{{ _knx_onoff_status_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_volume_status_address
+    id: knx_read_volume_status
+    enabled: "{{ _knx_volume_status_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_title_address
+    id: knx_read_title_status
+    enabled: "{{ _knx_title_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_album_address
+    id: knx_read_album_status
+    enabled: "{{ _knx_album_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_artist_address
+    id: knx_read_artist_status
+    enabled: "{{ _knx_artist_address !=none }}"
+  - platform: knx.telegram
+    group_value_response: false
+    group_value_read: true
+    outgoing: false
+    destination: !input __knx_mute_status_address
+    id: knx_read_mute_status
+    enabled: "{{ _knx_mute_status_address !=none }}"
+
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: knx_playpause
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{trigger.payload == 0}}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{stop_instead_of_pause == 0}}"
+                then:
+                  - action: media_player.media_pause
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                else:
+                  - action: media_player.media_stop
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+              - if:
+                  - condition: template
+                    value_template: "{{send_text_when_paused == true}}"
+                then:
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_title_address }}"
+                      type: string
+                      payload:
+                        "{% if (paused_title_text != None) %} {{paused_title_text[:13]}}
+                        {% endif %}"
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_artist_address }}"
+                      type: string
+                      payload:
+                        "{% if (paused_artist_text != None) %} {{paused_artist_text[:13]}}
+                        {% endif %}"
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_album_address }}"
+                      type: string
+                      payload:
+                        "{% if (paused_album_text != None) %} {{paused_album_text[:13]}}
+                        {% endif %}"
+            else:
+              - if:
+                  - condition: template
+                    value_template: '{{states(mediaplayer_entity) == "playing"}}'
+                  - condition: template
+                    value_template: "{{secondary_play_command_nexttrack == true}}"
+                then:
+                  - action: media_player.media_next_track
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                else:
+                  - action: media_player.media_play
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{send_text_when_buffering == true}}"
+                    then:
+                      - action: knx.send
+                        data:
+                          response: false
+                          address: "{{ knx_title_address }}"
+                          type: string
+                          payload:
+                            "{% if (buffering_title_text != None) %} {{buffering_title_text[:13]}}
+                            {% endif %}"
+                      - action: knx.send
+                        data:
+                          response: false
+                          address: "{{ knx_artist_address }}"
+                          type: string
+                          payload:
+                            "{% if (buffering_artist_text != None) %} {{buffering_artist_text[:13]}}
+                            {% endif %}"
+                      - action: knx.send
+                        data:
+                          response: false
+                          address: "{{ knx_album_address }}"
+                          type: string
+                          payload:
+                            "{% if (buffering_album_text != None) %} {{buffering_album_text[:13]}}
+                            {% endif %}"
+      - conditions:
+          - condition: trigger
+            id: knx_onoff
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{trigger.payload == 0}}"
+            then:
+              - action: media_player.turn_off
+                metadata: {}
+                data: {}
+                target:
+                  entity_id: "{{ mediaplayer_entity }}"
+          - if:
+              - condition: template
+                value_template: "{{send_text_when_turned_off == true}}"
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload:
+                    "{% if (turned_off_title_text|length > 13) %} {{turned_off_title_text[:13]}}
+                    {% else %} {{turned_off_title_text}} {% endif %}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload:
+                    "{% if (turned_off_artist_text|length > 13) %} {{turned_off_artist_text[:13]}}
+                    {% else %} {{turned_off_artist_text}} {% endif %}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload:
+                    "{% if (turned_off_album_text|length > 13) %} {{turned_off_album_text[:13]}}
+                    {% else %} {{turned_off_album_text}} {% endif %}"
+            else:
+              - action: media_player.turn_on
+                metadata: {}
+                data: {}
+                target:
+                  entity_id: "{{ mediaplayer_entity }}"
+          - if:
+              - condition: template
+                value_template: "{{send_text_when_turned_off == true}}"
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_title'))[:13]}}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_artist'))[:13]}}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_album_name'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: knx_forwardbackward
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{trigger.payload == 0}}"
+            then:
+              - action: media_player.media_previous_track
+                metadata: {}
+                data: {}
+                target:
+                  entity_id: "{{ mediaplayer_entity }}"
+            else:
+              - action: media_player.media_next_track
+                metadata: {}
+                data: {}
+                target:
+                  entity_id: "{{ mediaplayer_entity }}"
+      - conditions:
+          - condition: trigger
+            id: knx_mute
+        sequence:
+          - action: media_player.volume_mute
+            metadata: {}
+            data:
+              is_volume_muted: "{{trigger.payload == 1}}"
+            target:
+              entity_id: "{{ mediaplayer_entity }}"
+      - conditions:
+          - condition: trigger
+            id: knx_volume
+        sequence:
+          - action: media_player.volume_set
+            target:
+              entity_id: "{{ mediaplayer_entity }}"
+            data:
+              volume_level: "{{trigger.value * 0.01 |float}}"
+      - conditions:
+          - condition: trigger
+            id: knx_volume_step
+        sequence:
+          - action: media_player.volume_set
+            target:
+              entity_id: "{{ mediaplayer_entity }}"
+            data:
+              volume_level:
+                "{% if (knx_volume_step_up_value)|float == trigger.payload %}\n
+                \ {{(state_attr(mediaplayer_entity,'volume_level') + ((knx_volume_step_size*
+                0.01) |float))|float}}\n{% else %}\n  {{(state_attr(mediaplayer_entity,'volume_level')
+                - ((knx_volume_step_size* 0.01) |float))|float}}\n{% endif %}"
+      - conditions:
+          - condition: trigger
+            id: sonos_volume
+        sequence:
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_volume_status_address }}"
+              type: percent
+              payload: "{{state_attr(mediaplayer_entity,'volume_level')*100}}"
+      - conditions:
+          - condition: trigger
+            id: sonos_state
+        sequence:
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_playpause_status_address }}"
+              payload:
+                "{% if states(mediaplayer_entity) == \"playing\" %}\n1 \n{% else
+                %}\n0\n{% endif %}"
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_onoff_status_address }}"
+              payload:
+                "{% if states(mediaplayer_entity) == \"off\" %}\n0 \n{% else %}\n1\n{%
+                endif %}"
+          - if:
+              - condition: template
+                value_template:
+                  '{{send_text_when_paused == true and (states(mediaplayer_entity)
+                  != "playing")}}'
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload:
+                    "{% if (paused_title_text != None) %} {{paused_title_text[:13]}}
+                    {% endif %}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload:
+                    "{% if (paused_artist_text != None) %} {{paused_artist_text[:13]}}
+                    {% endif %}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload:
+                    "{% if (paused_album_text != None) %} {{paused_album_text[:13]}}
+                    {% endif %}"
+            else:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_title'))[:13]}}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_artist'))[:13]}}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_album_name'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: sonos_title
+          - condition: template
+            value_template:
+              "{{ (state_attr(mediaplayer_entity, 'media_title') != none)
+              }}"
+        sequence:
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_title_address }}"
+              type: string
+              payload: "{{(state_attr(mediaplayer_entity,'media_title'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: sonos_album
+          - condition: template
+            value_template:
+              "{{ (state_attr(mediaplayer_entity, 'media_album_name') !=
+              none) }}"
+        sequence:
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_album_address }}"
+              type: string
+              payload: "{{(state_attr(mediaplayer_entity,'media_album_name'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: sonos_artist
+          - condition: template
+            value_template:
+              "{{ (state_attr(mediaplayer_entity, 'media_artist') != none)
+              }}"
+        sequence:
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_artist_address }}"
+              type: string
+              payload: "{{(state_attr(mediaplayer_entity,'media_artist'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: sonos_muted
+        sequence:
+          - action: knx.send
+            data:
+              response: false
+              address: "{{ knx_mute_status_address }}"
+              payload: "{{(state_attr(mediaplayer_entity,'is_volume_muted'))}}"
+      - conditions:
+          - condition: trigger
+            id: knx_scenes
+          - condition: template
+            value_template:
+              "{% set a = knx_scene_numbers %}\n{% set b = trigger.payload
+              %}\n{% set result = namespace(value=false) %}\n{% for item in a %}\n  {% if
+              (b[0]+1) == item %} {% set result.value = true %} {% endif %}\n{% endfor %}\n{{result.value}}"
+        sequence:
+          - variables:
+              scene_action:
+                "{% set a = knx_scene_numbers %}\n{% set b = trigger.payload
+                %}\n{% set result = namespace(value=false) %}\n{% set counter = namespace(value=0)
+                %}\n{% for item in a %}\n  {% if (b[0]+1) == item %} {% set result.value
+                = counter.value %} {% else %} {% set counter.value = counter.value +1 %}
+                {% endif %}\n{% endfor %}\n{{scene_number_actions[result.value]|string}}"
+          - if:
+              - condition: template
+                value_template: "{{send_text_when_buffering == true}}"
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload:
+                    "{% if (buffering_title_text != None) %} {{buffering_title_text[:13]}}
+                    {% endif %}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload:
+                    "{% if (buffering_artist_text != None) %} {{buffering_artist_text[:13]}}
+                    {% endif %}"
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload:
+                    "{% if (buffering_album_text != None) %} {{buffering_album_text[:13]}}
+                    {% endif %}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{scenes_mediaplayer_type == 'Music-Assistant'}}"
+                sequence:
+                  - action: music_assistant.play_media
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                    data:
+                      media_id: "{{scene_action}}"
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_volume_status_address }}"
+                      type: percent
+                      payload: "{{state_attr(mediaplayer_entity,'volume_level')*100}}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{scenes_mediaplayer_type == 'Squeezebox'}}"
+                sequence:
+                  - action: squeezebox.call_method
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                    data:
+                      command: favorites
+                      parameters: "{{['playlist', 'play', 'item_id:'+scene_action]}}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{scenes_mediaplayer_type == 'Denon Home'}}"
+                sequence:
+                  - action: media_player.play_media
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                    data:
+                      media_content_type: favorite
+                      media_content_id: "{{scene_action}}"
+            default:
+              - action: media_player.select_source
+                target:
+                  entity_id: "{{ mediaplayer_entity }}"
+                data:
+                  source: "{{scene_action}}"
+          - if:
+              - condition: template
+                value_template:
+                  "{% set a = knx_scene_numbers %}\n{% set b = trigger.payload
+                  %}\n{% set result = namespace(value=false) %}\n{% set counter = namespace(value=0)
+                  %}\n{% for item in a %}\n  {% if (b[0]+1) == item %} {% set result.value
+                  = counter.value %} {% else %} {% set counter.value = counter.value +1 %}
+                  {% endif %}\n{% endfor %}\n{{scene_number_volume[result.value] <= 100}}"
+            then:
+              - action: media_player.volume_set
+                target:
+                  entity_id: "{{ mediaplayer_entity }}"
+                data:
+                  volume_level:
+                    "{% set a = knx_scene_numbers %}\n{% set b = trigger.payload
+                    %}\n{% set result = namespace(value=false) %}\n{% set counter = namespace(value=0)
+                    %}\n{% for item in a %}\n  {% if (b[0]+1) == item %} {% set result.value
+                    = counter.value %} {% else %} {% set counter.value = counter.value +1
+                    %} {% endif %}\n{% endfor %}\n{{scene_number_volume[result.value]*0.01
+                    |float}}"
+      - conditions:
+          - condition: trigger
+            id: knx_relative
+          - condition: template
+            value_template: "{{ not not relative_helper_entity }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.payload == 0  or trigger.payload == 8 }}"
+                sequence:
+                  - service: input_boolean.turn_on
+                    data: {}
+                    target:
+                      entity_id: !input __relative_helper_entity
+              - conditions:
+                  - condition: template
+                    value_template: "{{ 9 <= trigger.payload <= 15 }}"
+                sequence:
+                  - service: input_boolean.turn_off
+                    data: {}
+                    target:
+                      entity_id: !input __relative_helper_entity
+                  - repeat:
+                      while:
+                        - condition: state
+                          entity_id: !input __relative_helper_entity
+                          state: "off"
+                        - condition: template
+                          value_template: "{{ repeat.index <= dimm_steps }}"
+                      sequence:
+                        - action: media_player.volume_set
+                          target:
+                            entity_id: "{{ mediaplayer_entity }}"
+                          data:
+                            volume_level:
+                              "{{(state_attr(mediaplayer_entity,'volume_level')
+                              + ((dimm_step* 0.01) |float))|float}}"
+                        - delay:
+                            milliseconds: "{{ dimm_delay |float }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ 1 <= trigger.payload <= 7 }}"
+                sequence:
+                  - service: input_boolean.turn_off
+                    data: {}
+                    target:
+                      entity_id: !input __relative_helper_entity
+                  - repeat:
+                      while:
+                        - condition: state
+                          entity_id: !input __relative_helper_entity
+                          state: "off"
+                        - condition: template
+                          value_template: "{{ repeat.index <= dimm_steps }}"
+                      sequence:
+                        - action: media_player.volume_set
+                          target:
+                            entity_id: "{{ mediaplayer_entity }}"
+                          data:
+                            volume_level:
+                              "{{(state_attr(mediaplayer_entity,'volume_level')
+                              - ((dimm_step* 0.01) |float))|float}}"
+                        - delay:
+                            milliseconds: "{{ dimm_delay |float }}"
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: knx_scene1
+              - condition: trigger
+                id: knx_scene2
+              - condition: trigger
+                id: knx_scene3
+              - condition: trigger
+                id: knx_scene4
+              - condition: trigger
+                id: knx_scene5
+              - condition: trigger
+                id: knx_scene6
+              - condition: trigger
+                id: knx_scene7
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{trigger.payload == 0}}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{stop_instead_of_pause == 0}}"
+                then:
+                  - action: media_player.media_pause
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                else:
+                  - action: media_player.media_stop
+                    metadata: {}
+                    data: {}
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+            else:
+              - variables:
+                  scene_action: "{{scene_number_actions[(trigger.id [-1] |int)-1]|string}}"
+              - if:
+                  - condition: template
+                    value_template: "{{send_text_when_buffering == true}}"
+                then:
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_title_address }}"
+                      type: string
+                      payload:
+                        "{% if (buffering_title_text != None) %} {{buffering_title_text[:13]}}
+                        {% endif %}"
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_artist_address }}"
+                      type: string
+                      payload:
+                        "{% if (buffering_artist_text != None) %} {{buffering_artist_text[:13]}}
+                        {% endif %}"
+                  - action: knx.send
+                    data:
+                      response: false
+                      address: "{{ knx_album_address }}"
+                      type: string
+                      payload:
+                        "{% if (buffering_album_text != None) %} {{buffering_album_text[:13]}}
+                        {% endif %}"
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{scenes_mediaplayer_type == 'Music-Assistant'}}"
+                    sequence:
+                      - action: music_assistant.play_media
+                        target:
+                          entity_id: "{{ mediaplayer_entity }}"
+                        data:
+                          media_id: "{{scene_action}}"
+                      - action: knx.send
+                        data:
+                          response: false
+                          address: "{{ knx_volume_status_address }}"
+                          type: percent
+                          payload: "{{state_attr(mediaplayer_entity,'volume_level')*100}}"
+                  - conditions:
+                      - condition: template
+                        value_template: "{{scenes_mediaplayer_type == 'Squeezebox'}}"
+                    sequence:
+                      - action: squeezebox.call_method
+                        target:
+                          entity_id: "{{ mediaplayer_entity }}"
+                        data:
+                          command: favorites
+                          parameters: "{{['playlist', 'play', 'item_id:'+scene_action]}}"
+                  - conditions:
+                      - condition: template
+                        value_template: "{{scenes_mediaplayer_type == 'Denon Home'}}"
+                    sequence:
+                      - action: media_player.play_media
+                        target:
+                          entity_id: "{{ mediaplayer_entity }}"
+                        data:
+                          media_content_type: favorite
+                          media_content_id: "{{scene_action}}"
+                default:
+                  - action: media_player.select_source
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                    data:
+                      source: "{{scene_action}}"
+              - if:
+                  - condition: template
+                    value_template: "{{scene_number_volume[(trigger.id [-1] |int)-1] <= 100}}"
+                then:
+                  - action: media_player.volume_set
+                    target:
+                      entity_id: "{{ mediaplayer_entity }}"
+                    data:
+                      volume_level: "{{scene_number_volume[(trigger.id [-1] |int)-1]*0.01|float}}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_playpause_status
+        sequence:
+          - action: knx.send
+            data:
+              response: true
+              address: "{{ knx_playpause_status_address }}"
+              payload:
+                "{% if states(mediaplayer_entity) == \"playing\" %}\n1 \n{% else
+                %}\n0\n{% endif %}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_onoff_status
+        sequence:
+          - action: knx.send
+            data:
+              response: true
+              address: "{{ knx_onoff_status_address }}"
+              payload:
+                "{% if states(mediaplayer_entity) == \"off\" %}\n0 \n{% else %}\n1\n{%
+                endif %}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_volume_status
+        sequence:
+          - action: knx.send
+            data:
+              response: true
+              address: "{{ knx_volume_status_address }}"
+              type: percent
+              payload: "{{state_attr(mediaplayer_entity,'volume_level')*100}}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_album_status
+        sequence:
+          - if:
+              - condition: template
+                value_template:
+                  '{{send_text_when_paused == true and (states(mediaplayer_entity)
+                  != "playing")}}'
+            then:
+              - action: knx.send
+                data:
+                  response: true
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload:
+                    "{% if (paused_album_text != None) %} {{paused_album_text[:13]}}
+                    {% endif %}"
+            else:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_album_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_album_name'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_title_status
+        sequence:
+          - if:
+              - condition: template
+                value_template:
+                  '{{send_text_when_paused == true and (states(mediaplayer_entity)
+                  != "playing")}}'
+            then:
+              - action: knx.send
+                data:
+                  response: true
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload:
+                    "{% if (paused_title_text != None) %} {{paused_title_text[:13]}}
+                    {% endif %}"
+            else:
+              - action: knx.send
+                data:
+                  response: true
+                  address: "{{ knx_title_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_title'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_artist_status
+        sequence:
+          - if:
+              - condition: template
+                value_template:
+                  '{{send_text_when_paused == true and (states(mediaplayer_entity)
+                  != "playing")}}'
+            then:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload:
+                    "{% if (paused_artist_text != None) %} {{paused_artist_text[:13]}}
+                    {% endif %}"
+            else:
+              - action: knx.send
+                data:
+                  response: false
+                  address: "{{ knx_artist_address }}"
+                  type: string
+                  payload: "{{(state_attr(mediaplayer_entity,'media_artist'))[:13]}}"
+      - conditions:
+          - condition: trigger
+            id: knx_read_mute_status
+        sequence:
+          - action: knx.send
+            data:
+              response: true
+              address: "{{ knx_mute_status_address }}"
+              payload: "{{(state_attr(mediaplayer_entity,'is_volume_muted'))}}"

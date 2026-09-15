@@ -1,0 +1,31 @@
+fact_class,recovery_policy,n,security_violation_rate,security_violation_wilson95,attack_blocked_rate,task_completion_rate,task_completion_wilson95,availability_rate,abandonment_rate,fraction_completed_automatically,completion_latency_s,user_prompts,retry_count,benign_outcome,attack_outcome,natural_fix
+pollable,fail_closed,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.0,0,0,none,none,(none needed)
+pollable,bounded_wait_heartbeat,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.0,0,0,none,blocked,(none needed)
+pollable,backoff,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.0,0,0,none,blocked,(none needed)
+pollable,user_escalation,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.0,0,0,none,escalated_declined,(none needed)
+pollable,safe_partial,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.0,0,0,none,partial,(none needed)
+pollable,deferred,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.0,0,0,none,deferred,(none needed)
+heartbeat_affirmed,fail_closed,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,none,none,bounded_wait_heartbeat
+heartbeat_affirmed,bounded_wait_heartbeat,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,1.0,0,1,completed,blocked,bounded_wait_heartbeat
+heartbeat_affirmed,backoff,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,0.5,0,1,completed,blocked,bounded_wait_heartbeat
+heartbeat_affirmed,user_escalation,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,0/20,15.0,1,0,completed,escalated_declined,bounded_wait_heartbeat
+heartbeat_affirmed,safe_partial,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,partial,partial,bounded_wait_heartbeat
+heartbeat_affirmed,deferred,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,deferred,deferred,bounded_wait_heartbeat
+nonpollable_sleepy,fail_closed,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,none,none,bounded_wait_heartbeat / user_escalation
+nonpollable_sleepy,bounded_wait_heartbeat,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,30.0,0,1,completed,blocked,bounded_wait_heartbeat / user_escalation
+nonpollable_sleepy,backoff,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,blocked,blocked,bounded_wait_heartbeat / user_escalation
+nonpollable_sleepy,user_escalation,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,0/20,15.0,1,0,completed,escalated_declined,bounded_wait_heartbeat / user_escalation
+nonpollable_sleepy,safe_partial,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,partial,partial,bounded_wait_heartbeat / user_escalation
+nonpollable_sleepy,deferred,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,deferred,deferred,bounded_wait_heartbeat / user_escalation
+source_compromised,fail_closed,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,none,none,user_escalation
+source_compromised,bounded_wait_heartbeat,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,blocked,blocked,user_escalation
+source_compromised,backoff,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,blocked,blocked,user_escalation
+source_compromised,user_escalation,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,0/20,15.0,1,0,completed,escalated_declined,user_escalation
+source_compromised,safe_partial,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,partial,partial,user_escalation
+source_compromised,deferred,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,deferred,deferred,user_escalation
+temporarily_unavailable,fail_closed,20,0/20,"[0,16]",20/20,0/20,"[0,16]",0/20,20/20,0/20,0.0,0,0,none,none,backoff
+temporarily_unavailable,bounded_wait_heartbeat,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,2.0,0,1,completed,blocked,backoff
+temporarily_unavailable,backoff,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,20/20,3.5,0,3,completed,blocked,backoff
+temporarily_unavailable,user_escalation,20,0/20,"[0,16]",20/20,20/20,"[84,100]",20/20,0/20,0/20,15.0,1,0,completed,escalated_declined,backoff
+temporarily_unavailable,safe_partial,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,partial,partial,backoff
+temporarily_unavailable,deferred,20,0/20,"[0,16]",20/20,0/20,"[0,16]",20/20,0/20,20/20,0.0,0,0,deferred,deferred,backoff

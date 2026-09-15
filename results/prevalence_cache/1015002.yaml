@@ -1,0 +1,131 @@
+blueprint:
+  name: "Fenêtres Canicule / Heatwave Windows"
+  description: >
+    Envoie une notification pour ouvrir ou fermer les fenêtres en période de
+    canicule, en comparant les températures extérieures et intérieures.
+
+    Sends a notification to open or close windows during a heatwave,
+    by comparing indoor and outdoor temperatures.
+  domain: automation
+  input:
+    capteurs_exterieurs:
+      name: Capteurs extérieurs / Outdoor sensors
+      description: Sélectionne tous tes capteurs de température extérieurs / Select all outdoor temperature sensors
+      selector:
+        entity:
+          multiple: true
+          device_class: temperature
+    capteurs_interieurs:
+      name: Capteurs intérieurs / Indoor sensors
+      description: Sélectionne tous tes capteurs de température intérieurs / Select all indoor temperature sensors
+      selector:
+        entity:
+          multiple: true
+          device_class: temperature
+    devices_notification:
+      name: Appareils à notifier / Devices to notify
+      description: >
+        Sélectionne un ou plusieurs appareils mobiles (companion app HA).
+        Select one or more mobile devices (HA companion app).
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+    delai_minutes:
+      name: Délai / Delay (minutes)
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: minutes
+    langue:
+      name: Langue / Language
+      default: "fr"
+      selector:
+        select:
+          options:
+            - label: Français
+              value: "fr"
+            - label: English
+              value: "en"
+
+trigger_variables:
+  capteurs_exterieurs: !input capteurs_exterieurs
+  capteurs_interieurs: !input capteurs_interieurs
+
+trigger:
+  - platform: template
+    value_template: >
+      {% set temps_ext = expand(capteurs_exterieurs) | map(attribute='state') | map('float', none) | reject('none') | list %}
+      {% set temps_int = expand(capteurs_interieurs) | map(attribute='state') | map('float', none) | reject('none') | list %}
+      {% if temps_ext | length > 0 and temps_int | length > 0 %}
+        {{ temps_ext | max < temps_int | min }}
+      {% else %}
+        false
+      {% endif %}
+    for:
+      minutes: !input delai_minutes
+    id: ouvrir
+  - platform: template
+    value_template: >
+      {% set temps_ext = expand(capteurs_exterieurs) | map(attribute='state') | map('float', none) | reject('none') | list %}
+      {% set temps_int = expand(capteurs_interieurs) | map(attribute='state') | map('float', none) | reject('none') | list %}
+      {% if temps_ext | length > 0 and temps_int | length > 0 %}
+        {{ temps_ext | max > temps_int | min }}
+      {% else %}
+        false
+      {% endif %}
+    for:
+      minutes: !input delai_minutes
+    id: fermer
+
+action:
+  - variables:
+      capteurs_ext: !input capteurs_exterieurs
+      capteurs_int: !input capteurs_interieurs
+      langue: !input langue
+      devices_raw: !input devices_notification
+  - variables:
+      temp_max_ext: >
+        {% set vals = expand(capteurs_ext) | map(attribute='state') | map('float', none) | reject('none') | list %}
+        {{ vals | max | round(1) if vals | length > 0 else '?' }}
+      temp_min_int: >
+        {% set vals = expand(capteurs_int) | map(attribute='state') | map('float', none) | reject('none') | list %}
+        {{ vals | min | round(1) if vals | length > 0 else '?' }}
+      devices_list: "{{ devices_raw if devices_raw is list else [devices_raw] }}"
+      trigger_id: "{{ trigger.id | default('') }}"
+  - variables:
+      decision: >
+        {% if trigger_id in ['ouvrir', 'fermer'] %}
+          {{ trigger_id }}
+        {% else %}
+          {% set temps_ext = expand(capteurs_ext) | map(attribute='state') | map('float', none) | reject('none') | list %}
+          {% set temps_int = expand(capteurs_int) | map(attribute='state') | map('float', none) | reject('none') | list %}
+          {% if temps_ext | length > 0 and temps_int | length > 0 and temps_ext | max < temps_int | min %}
+            ouvrir
+          {% else %}
+            fermer
+          {% endif %}
+        {% endif %}
+  - variables:
+      device_ids: "{{ devices_list | select('string') | unique | list }}"
+      titre: >
+        {% if decision == 'ouvrir' %}
+          {% if langue == 'fr' %}🪟 Ouvrez les fenêtres !{% else %}🪟 Open the windows!{% endif %}
+        {% else %}
+          {% if langue == 'fr' %}🪟 Fermez les fenêtres !{% else %}🪟 Close the windows!{% endif %}
+        {% endif %}
+      message: >
+        {% if decision == 'ouvrir' %}
+          {% if langue == 'fr' %}Il fait plus frais dehors (max {{ temp_max_ext }}°C) que dedans (min {{ temp_min_int }}°C). C'est le moment de ventiler !{% else %}It's cooler outside (max {{ temp_max_ext }}°C) than inside (min {{ temp_min_int }}°C). Time to ventilate!{% endif %}
+        {% else %}
+          {% if langue == 'fr' %}Il fait plus chaud dehors (max {{ temp_max_ext }}°C) que dedans (min {{ temp_min_int }}°C). Fermez pour garder la fraîcheur !{% else %}It's warmer outside (max {{ temp_max_ext }}°C) than inside (min {{ temp_min_int }}°C). Close to keep the cool air in!{% endif %}
+        {% endif %}
+  - repeat:
+      for_each: "{{ device_ids }}"
+      sequence:
+        - service: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+          data:
+            title: "{{ titre }}"
+            message: "{{ message }}"

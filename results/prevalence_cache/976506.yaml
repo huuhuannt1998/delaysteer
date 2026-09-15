@@ -1,0 +1,9 @@
+blueprint:
+  name: IKEA E2490 BILRESA Scroll Wheel (Zigbee2MQTT + ZHA)
+  description: |
+    Unified controller blueprint for IKEA E2490 BILRESA scroll wheel working with Zigbee2MQTT and ZHA.
+    - Buttons: on, off, on_double, off_double
+    - Scroll: brightness_move_to_level with action_level from Zigbee2MQTT main topic, or ZHA move_to_level args
+    Supports light brightness, media_player volume, light color_temp, light hue.
+    Version: 2026-01-18
+  domain: automation

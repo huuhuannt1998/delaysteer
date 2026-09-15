@@ -1,0 +1,337 @@
+blueprint:
+  name: Reliable Motion Trigger (1.0)
+  description: |
+    # Reliable Motion Trigger
+    **Version: 1.0**
+
+    Source: https://github.com/mimoSK/Reliable-motion-trigger
+
+    Reliable Motion Trigger is a Home Assistant automation blueprint for dependable motion-based lighting and switch control.
+    It is designed to reduce stuck states, recover from transient failures,
+    and provide clear failure feedback when devices do not respond as expected.
+    Useful when your lights or switches are not reliable due to signal losses or other factors. 
+    If you found your lights turned on when they shouldn't be or vice versa, feel free to try this blueprint.
+
+    **What This Blueprint Does:**
+    - Turns one or more lights and/or switches on when motion is detected.
+    - Turns targets off after a configurable no-motion delay.
+    - Supports multiple occupancy sensors and multiple targets.
+    - Optionally only turns on when illuminance is below a threshold.
+    - Optionally blocks motion-based turn-on during a selected time window.
+    - Retries turn-on and turn-off actions with configurable limits and delays.
+    - Handles sensor unavailability safely.
+    - Can run custom failure actions with useful template variables.
+
+    **Required Entities:**
+    - One or more occupancy sensors (`binary_sensor` with `device_class: occupancy`).
+    - One or more target entities (`light` and/or `switch`).
+    - Optional illuminance sensor (`sensor` with `device_class: illuminance`).
+
+    <details>
+    <summary><b>The Automation Process:</b></summary>
+
+    - **Motion on trigger:**
+      - Checks that motion is active.
+      - Optionally checks illuminance threshold and time-window block.
+      - Applies optional custom turn-on conditions.
+      - Retries turn-on until success, motion stops, or retry limit is reached.
+
+    - **Motion off trigger (with wait time):**
+      - When no monitored motion sensor reports occupancy, retries turn-off until success or retry limit is reached.
+
+    - **Motion sensor unavailable trigger:**
+      - If a sensor becomes unavailable and no monitored sensor reports motion, runs the same turn-off branch.
+
+    - **Failure handling:**
+      - If targets cannot reach the expected final state, optional custom failure actions are executed.
+    </details>
+
+    Required = *
+  domain: automation
+  input:
+    motion_sensor:
+      name: Motion Sensor(s)
+      description: One or more sensors that detect occupancy.
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: occupancy
+          multiple: true
+    target_entity:
+      name: Target Light(s) or Switch(es)
+      description: One or more lights or switches to control.
+      selector:
+        entity:
+          domain:
+            - switch
+            - light
+          multiple: true
+    wait_time:
+      name: Wait Time
+      description: "Seconds to wait after motion stops before turning off."
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+    illuminance_sensor:
+      name: Illuminance Sensor (Optional)
+      description: Optional illuminance sensor used to skip turning on when there is already enough light.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    illuminance_threshold:
+      name: Illuminance Threshold
+      description: "Only turn on when illuminance is below this value. Ignored if no illuminance sensor is set."
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 5000
+          step: 1
+          unit_of_measurement: lx
+    disable_turn_on_time_window:
+      name: Disable Turn-On During Time Window
+      description: If enabled, motion will not turn on the target during the selected time window.
+      default: false
+      selector:
+        boolean: {}
+    disable_turn_on_start:
+      name: Disable Turn-On Start Time
+      description: Start of the time window when motion-based turn-on is blocked.
+      default: "07:00:00"
+      selector:
+        time: {}
+    disable_turn_on_end:
+      name: Disable Turn-On End Time
+      description: End of the time window when motion-based turn-on is blocked.
+      default: "21:00:00"
+      selector:
+        time: {}
+    turn_on_custom_conditions:
+      name: Additional Turn-On Conditions (Optional)
+      description: Optional custom conditions that must pass before motion can turn on the target.
+      default: []
+      selector:
+        condition: {}
+    retry_limit_on:
+      name: Retry Limit (On)
+      description: How many times to try turning the entity on.
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 15
+    retry_delay_on:
+      name: Retry Delay (On)
+      description: Seconds to wait between on retries.
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: seconds
+    retry_limit_off:
+      name: Retry Limit (Off)
+      description: How many times to try turning the entity off.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 15
+    retry_delay_off:
+      name: Retry Delay (Off)
+      description: Seconds to wait between off retries.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: seconds
+    failure_notification:
+      name: On Failure Action
+      description: "Available variables: \n
+        {{ attempted_state }} - \"On\" or \"Off\"\n
+        {{ target_id }} - The entity ID of the controlled device\n
+        {{ max_attempts_on }} - The configured retry limit for turning on the target(s)\n
+        {{ max_attempts_off }} - The configured retry limit for turning off the target(s)\n
+        {{ failed_turn_on_targets }} - List of target friendly names that failed to turn on\n
+        {{ failed_turn_off_targets }} - List of target friendly names that failed to turn off\n
+        {{ failed_turn_on_target_ids }} - List of target entity IDs that failed to turn on\n
+        {{ failed_turn_off_target_ids }} - List of target entity IDs that failed to turn off"
+      default: []
+      selector:
+        action: {}
+
+variables:
+  motion_ent: !input motion_sensor
+  target_ent: !input target_entity
+  illuminance_ent: !input illuminance_sensor
+  illuminance_limit: !input illuminance_threshold
+  disable_turn_on_window: !input disable_turn_on_time_window
+  disable_turn_on_from: !input disable_turn_on_start
+  disable_turn_on_to: !input disable_turn_on_end
+  target_id: >
+    {% set ids = expand(target_ent) | map(attribute='entity_id') | list %}
+    {{ ids[0] if ids | count == 1 else ids | join(', ') }}
+  is_dark_enough: >
+    {% if illuminance_ent in [none, '', []] %}
+      true
+    {% else %}
+      {% set lux = states(illuminance_ent) | float(none) %}
+      {{ lux is number and lux < (illuminance_limit | float(0)) }}
+    {% endif %}
+  is_turn_on_time_allowed: >
+    {% if not disable_turn_on_window %}
+      true
+    {% else %}
+      {% set now_t = now() %}
+      {% set from_t = today_at(disable_turn_on_from) %}
+      {% set to_t = today_at(disable_turn_on_to) %}
+      {% if from_t <= to_t %}
+        {{ now_t < from_t or now_t >= to_t }}
+      {% else %}
+        {{ now_t < from_t and now_t >= to_t }}
+      {% endif %}
+    {% endif %}
+  any_motion_on: >
+    {{ expand(motion_ent) | selectattr('state', 'eq', 'on') | list | count > 0 }}
+  all_motion_off: >
+    {{ expand(motion_ent) | selectattr('state', 'eq', 'on') | list | count == 0 }}
+  max_attempts_on: !input retry_limit_on
+  max_attempts_off: !input retry_limit_off
+
+trigger:
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "on"
+    id: motion_on
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "off"
+    for:
+      seconds: !input wait_time
+    id: motion_off
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "unavailable"
+    id: motion_unavailable
+
+action:
+  - choose:
+      # --- BRANCH: MOTION DETECTED (TURN ON) ---
+      - conditions:
+          - condition: template
+            value_template: "{{ any_motion_on }}"
+          - condition: template
+            value_template: "{{ is_dark_enough }}"
+          - condition: template
+            value_template: "{{ is_turn_on_time_allowed }}"
+          - condition: and
+            conditions: !input turn_on_custom_conditions
+        sequence:
+          - variables:
+              attempted_state: "On"
+              max_attempts: "{{ max_attempts_on }}"
+          - repeat:
+              until:
+                - condition: or
+                  conditions:
+                    # Success only if it is actually ON
+                    - condition: template
+                      value_template: >
+                        {% set targets = expand(target_ent) | list %}
+                        {% set target_count = targets | count %}
+                        {% set on_count = targets | selectattr('state', 'eq', 'on') | list | count %}
+                        {% set all_on = target_count > 0 and on_count == target_count %}
+                        {{ all_on }}
+                    # Abort if motion stops
+                    - condition: template
+                      value_template: "{{ all_motion_off }}"
+                    # Safety exit
+                    - condition: template
+                      value_template: "{{ repeat.index >= max_attempts_on }}"
+              sequence:
+                - action: homeassistant.turn_on
+                  target:
+                    entity_id: !input target_entity
+                - delay: !input retry_delay_on
+          - variables:
+              failed_turn_on_targets: >
+                {% set ns = namespace(names=[]) %}
+                {% for target in expand(target_ent) if target.state != 'on' %}
+                  {% set ns.names = ns.names + [target.name if target.name is string else target.entity_id] %}
+                {% endfor %}
+                {{ ns.names }}
+              failed_turn_on_target_ids: >
+                {{ expand(target_ent) | rejectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+          - if:
+              # TRIGGER NOTIFICATION if NOT ON (handles Off, Unavailable, Unknown)
+              - condition: template
+                value_template: >
+                  {% set targets = expand(target_ent) | list %}
+                  {% set target_count = targets | count %}
+                  {% set on_count = targets | selectattr('state', 'eq', 'on') | list | count %}
+                  {% set all_on = target_count > 0 and on_count == target_count %}
+                  {{ not all_on and any_motion_on }}
+            then: !input failure_notification
+
+      # --- BRANCH: NO MOTION (TURN OFF) ---
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ all_motion_off }}"
+              - condition: template
+                value_template: "{{ trigger.id == 'motion_unavailable' and all_motion_off }}"
+        sequence:
+          - variables:
+              attempted_state: "Off"
+              max_attempts: "{{ max_attempts_off }}"
+          - repeat:
+              until:
+                - condition: or
+                  conditions:
+                    # Success only if it is actually OFF
+                    - condition: template
+                      value_template: >
+                        {% set targets = expand(target_ent) | list %}
+                        {% set target_count = targets | count %}
+                        {% set off_count = targets | selectattr('state', 'eq', 'off') | list | count %}
+                        {% set all_off = target_count > 0 and off_count == target_count %}
+                        {{ all_off }}
+                    # Abort if motion restarts
+                    - condition: template
+                      value_template: "{{ any_motion_on }}"
+                    # Safety exit
+                    - condition: template
+                      value_template: "{{ repeat.index >= max_attempts_off }}"
+              sequence:
+                - action: homeassistant.turn_off
+                  target:
+                    entity_id: !input target_entity
+                - delay: !input retry_delay_off
+          - variables:
+              failed_turn_off_targets: >
+                {% set ns = namespace(names=[]) %}
+                {% for target in expand(target_ent) if target.state != 'off' %}
+                  {% set ns.names = ns.names + [target.name if target.name is string else target.entity_id] %}
+                {% endfor %}
+                {{ ns.names }}
+              failed_turn_off_target_ids: >
+                {{ expand(target_ent) | rejectattr('state', 'eq', 'off') | map(attribute='entity_id') | list }}
+          - if:
+              # TRIGGER NOTIFICATION if NOT OFF (handles On, Unavailable, Unknown)
+              - condition: template
+                value_template: >
+                  {% set targets = expand(target_ent) | list %}
+                  {% set target_count = targets | count %}
+                  {% set off_count = targets | selectattr('state', 'eq', 'off') | list | count %}
+                  {% set all_off = target_count > 0 and off_count == target_count %}
+                  {{ not all_off and all_motion_off }}
+            then: !input failure_notification
+
+mode: restart

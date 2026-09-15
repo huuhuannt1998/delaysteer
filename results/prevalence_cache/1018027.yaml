@@ -1,0 +1,96 @@
+blueprint:
+  name: "Octopus Energy: Auto-spin Wheel of Fortune"
+  description: >-
+    Automatically spins the Octopus Energy **Wheel of Fortune** whenever
+    spins are available, for either electricity or gas.
+
+
+    **How it works**
+
+    Triggers when the spins sensor rises above 0 (new spins awarded) and on
+    Home Assistant startup (with a 1-minute delay to let the integration
+    initialise). Spins the wheel once per available spin.
+
+    Optionally records each spin date in an `input_text` helper as a compact
+    JSON list, keeping the last 10 entries — useful for displaying spin history
+    on a dashboard.
+
+
+    **Requirements**
+
+    - [Octopus Energy integration](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy)
+    by BottlecapDave, installed and configured
+
+    - An active Octopus Energy account with Wheel of Fortune enabled
+
+
+    **Tip:** Create two separate automations from this blueprint — one for
+    the electricity sensor and one for the gas sensor.
+  source_url: https://community.home-assistant.io/t/octopus-energy-spin-the-wheel-automatically/1018027/4
+  domain: automation
+  input:
+    spins_sensor:
+      name: Wheel of Fortune Spins Sensor
+      description: >-
+        The sensor showing available spins for your account.
+        In Settings → Devices & Services → Octopus Energy it is named
+        **"Wheel Of Fortune Spins Electricity (A-XXXXXXXX)"** or
+        **"Wheel Of Fortune Spins Gas (A-XXXXXXXX)"**.
+      selector:
+        entity:
+          domain: sensor
+    win_history_helper:
+      name: Win History Helper (optional)
+      description: >-
+        An `input_text` entity to store the last 10 spin dates as a compact
+        JSON list — each entry is `["DD Mon YYYY"]`. Leave blank to skip
+        tracking.
+      default: ""
+      selector:
+        text:
+
+variables:
+  spins_sensor: !input spins_sensor
+  win_history_helper: !input win_history_helper
+
+triggers:
+  - trigger: numeric_state
+    entity_id: !input spins_sensor
+    above: 0
+    id: new_spins
+  - trigger: homeassistant
+    event: start
+    id: ha_start
+
+conditions: []
+
+actions:
+  - if:
+      - condition: trigger
+        id: ha_start
+    then:
+      - delay: "00:01:00"
+  - condition: numeric_state
+    entity_id: !input spins_sensor
+    above: 0
+  - repeat:
+      count: "{{ states(spins_sensor) | int(0) }}"
+      sequence:
+        - action: octopus_energy.spin_wheel_of_fortune
+          target:
+            entity_id: !input spins_sensor
+        - if: "{{ win_history_helper != '' }}"
+          then:
+            - variables:
+                history_raw: "{{ states(win_history_helper) }}"
+                history_list: >-
+                  {{ history_raw | from_json if history_raw not in ['', 'unknown', 'unavailable'] else [] }}
+                new_history: >-
+                  {{ ([[now().strftime('%d %b %Y')]] + history_list)[:10] | to_json }}
+            - action: input_text.set_value
+              target:
+                entity_id: "{{ win_history_helper }}"
+              data:
+                value: "{{ new_history }}"
+
+mode: single

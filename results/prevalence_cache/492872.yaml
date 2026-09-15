@@ -1,0 +1,81 @@
+blueprint:
+  name: Enbrighten Z-Wave Switch Tap Events
+  description: Handle single, double and triple taps for Enlighten light switches.
+  domain: automation
+  input:
+    device:
+      name: Light Switch
+      description: Enlighten Switch that supports multi taps.
+      selector:
+        device:
+          integration: zwave_js
+          manufacturer: Enbrighten
+          entity:
+            domain: light
+    single_tap_on:
+      name: Single Tap On
+      description: Action(s) performed when on is clicked a single time. (light switch turns on by default)
+      default: []
+      selector:
+        action: {}
+    single_tap_off:
+      name: Single Tap Off
+      description: Action(s) performed when off is clicked a single time. (light switch turns off by default)
+      default: []
+      selector:
+        action: {}
+    double_tap_on:
+      name: Double Tap On
+      description: Action(s) performed when on is clicked a two times. (light switch DOES NOT turn on by default)
+      default: []
+      selector:
+        action: {}
+    double_tap_off:
+      name: Double Tap Off
+      description: Action(s) performed when off is clicked a two times. (light switch DOES NOT turn off by default)
+      default: []
+      selector:
+        action: {}
+    triple_tap_on:
+      name: Triple Tap On
+      description: Action(s) performed when on is clicked a three times. (light switch DOES NOT turn on by default)
+      default: []
+      selector:
+        action: {}
+    triple_tap_off:
+      name: Triple Tap Off
+      description: Action(s) performed when off is clicked a three times. (light switch DOES NOT turn off by default)
+      default: []
+      selector:
+        action: {}
+mode: single
+max_exceeded: silent
+trigger:
+  platform: event
+  event_type: zwave_js_value_notification
+  event_data:
+    device_id: !input "device"
+    command_class: 91
+action:
+  - variables:
+      value_raw: "{{ trigger.event.data.value_raw }}"
+      property_key: "{{ trigger.event.data.property_key }}"
+  - choose:
+      - conditions: '{{ property_key ==  "001" }}'
+        sequence:
+          - choose:
+              - conditions: "{{ value_raw ==  0 }}"
+                sequence: !input "single_tap_on"
+              - conditions: "{{ value_raw ==  3 }}"
+                sequence: !input "double_tap_on"
+              - conditions: "{{ value_raw == 4}}"
+                sequence: !input "triple_tap_on"
+      - conditions: '{{ property_key ==  "002" }}'
+        sequence:
+          - choose:
+              - conditions: "{{ value_raw ==  0 }}"
+                sequence: !input "single_tap_off"
+              - conditions: "{{ value_raw ==  3 }}"
+                sequence: !input "double_tap_off"
+              - conditions: "{{ value_raw ==  4 }}"
+                sequence: !input "triple_tap_off"

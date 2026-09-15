@@ -1,0 +1,406 @@
+blueprint:
+  name: "Awtrix 3 | Show Entity State"
+  description: "This blueprint allows you to create a custom app for your Awtrix 3 device. This blueprint is heavily based on https://community.home-assistant.io/t/awtrix-3-blueprint-for-creating-simple-apps-for-dummies/726235 but that stopped working for me for some reason. I also added additional options which you can configure that are not present in the other blueprint. Have fun!\n - To download icons visit: https://developer.lametric.com/icons\n - Don't add too much options! https://blueforcer.github.io/awtrix3/#/api?id=drawing-instructions"
+  domain: automation
+  author: "Tosiman"
+  homeassistant:
+    min_version: "2024.6.0"
+  input:
+    app_name:
+      name: "App Name"
+      description: "The name of the custom app to be displayed on the Awtrix 3 device."
+  
+    mqtt_topic_entity:
+      name: "(Required) MQTT Topic Entity"
+      description: "The device topic entity (sensor.{clock}_device_topic) that contains the MQTT topic for your Awtrix 3 device. Search for 'Device Topic'."
+      selector:
+        entity:
+          domain: sensor
+          integration: mqtt
+  
+    app_icon:
+      name: "App Icon"
+      description: "The icon to be displayed for the custom app. Use a valid icon id from the LaMetric icon library.\n - New icons can be found here: https://developer.lametric.com/icons\n - For more information about icons: https://blueforcer.github.io/awtrix3/#/icons"
+      default: null
+      selector:
+        number:
+
+    duration:
+      name: "App Duration"
+      description: "The duration (in seconds) for which the custom app will be displayed."
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: seconds
+
+    entity:
+      name: "(Required) Entity to Display"
+      description: "The Home Assistant entity whose state will be displayed on app. The app will update whenever the state of this entity changes or if you specify additional triggers."
+      selector:
+        entity:
+          multiple: false
+
+    text_suffix:
+      name: "Text Suffix"
+      description: "Optional text to be appended after the entity's state."
+      default: ""
+
+    text_prefix:
+      name: "Text Prefix"
+      description: "Optional text to be prepended before the entity's state."
+      default: ""     
+
+    Advanced Options:
+      icon: "mdi:cog"
+      name: "Advanced Options"
+      description: "Configure additional triggers, conditions, or actions for the custom app. This allows you to create more complex automations based on various events or states in Home Assistant."
+      collapsed: true
+
+      input:
+        additional_triggers:
+          name: "Additional Triggers"
+          description: "By default, the app will update when the specified entity's state changes. You can add additional triggers to update the app based on other events or conditions in Home Assistant."
+          default: []
+          selector:
+            trigger:
+        
+        additional_conditions:
+          name: "Additional Conditions"
+          description: "Add conditions to control when the custom app should be displayed on the Awtrix 3 device. For example, you can specify that the app should only be shown when certain conditions are met (e.g., time of day, other entity states)."
+          default: []
+          selector:
+            condition:
+
+        additional_actions:
+          name: "Additional Actions"
+          description: "Add actions to be executed when the custom app is triggered. This allows you to perform additional tasks in Home Assistant when the app is updated on the Awtrix 3 device."
+          default: []
+          selector:
+            action:
+
+    Progress Bar:
+      icon: "mdi:gauge"
+      name: "Progress Bar"
+      description: "Configure a progress bar for the custom app."
+      collapsed: true
+
+      input:
+        progress_bar_enabled:
+          name: "Enable"
+          description: "Enable or disable the progress bar for the custom app. All the options below will only apply if the progress bar is enabled. Values need to be between 0 and 100."
+          default: false
+          selector:
+            boolean:
+
+        progress_bar_color:
+          name: "Color"
+          description: "Choose a color for the progress bar. This color will be used to fill the progress bar as it counts down."
+          default: [0, 255, 0]
+          selector:
+            color_rgb:
+
+        progress_bar_background_color:
+          name: "Background Color"
+          description: "Choose a background color for the progress bar. This color will be used for the empty portion of the progress bar."
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+
+    Cosmetic Options:
+      icon: "mdi:format-color-highlight"
+      name: "Cosmetic Options"
+      description: "Configure cosmetic options for the custom app, such as text color, background color"
+      collapsed: true
+
+      input:
+        text_color:
+          name: "Text Color"
+          description: "Choose a color for the text displayed on the custom app. This color will be used for the entity's state and any prefix/suffix text."
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        
+        text_case:
+          name: "Text Case"
+          description: "Changes the Uppercase setting. 0=global setting, 1 = forces uppercase; 2 = shows as sent."
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 2
+        
+        top_text:
+          name: "Draw text on top"
+          description: "Draw the text on top."
+          default: false
+          selector:
+            boolean:
+          
+        text_offset:
+          name: "Text Offset"
+          description: "Offsets the text by a given amount of pixels. Use negative values to offset to the left, positive values to offset to the right."
+          default: 0
+          selector:
+            number:
+              unit_of_measurement: "px"
+              min: -10
+              max: 10
+        
+        center:
+          name: "Center Text"
+          description: "Centers a short, non-scrollable text."
+          default: false
+          selector:
+            boolean:
+
+        blink:
+          name: "Blink Effect"
+          description: "Blinks the text in an given interval in ms, not compatible with gradient or rainbow. Set to 0 to disable."
+          default: 0  
+          selector:
+            number:
+              unit_of_measurement: "ms"
+              min: 0
+              max: 2500
+
+        fade:
+          name: "Fade Effect"
+          description: "Fades the text on and off in an given interval, not compatible with gradient or rainbow. Set to 0 to disable."
+          default: 0  
+          selector:
+            number:
+              unit_of_measurement: "ms"
+              min: 0
+              max: 2500
+
+        background_color:
+          name: "Background Color"
+          description: "Sets a background color."
+          default: [0, 0, 0]
+          selector:
+            color_rgb:
+
+        rainbow:
+          name: "Rainbow Effect"
+          description: "🌈 Enable or disable the rainbow effect for the custom app on the Awtrix 3 device."
+          default: false 
+          selector:
+            boolean:
+
+        overlay:
+          name: "Overlay"
+          description: "Sets an effect overlay (cannot be used with global overlays)."
+          default: "clear"
+          selector:
+            select:
+              options:
+                - clear
+                - snow
+                - rain
+                - drizzle
+                - storm
+                - thunder
+                - frost
+
+    App Options:
+      icon: "mdi:application"
+      name: "App Options"
+      description: "Configure additional options for the custom app"
+      collapsed: true
+      input:
+        repeat:
+          name: "Repeat"
+          description: "Sets how many times the text should be scrolled through the matrix before the app ends."
+          default: -1
+          selector:
+            number:
+              min: 1
+              max: 10
+
+        app_position:
+          name: "App Position"
+          description: "Defines the position of your custom page in the loop, starting at 0 for the first position. This will only apply with your first push. This function is experimental."
+          default: null
+          selector:
+            number:
+              min: 0
+              max: 10
+
+        lifetime:
+          name: "Lifetime"
+          description: "Removes the custom app when there is no update after the given time in seconds. Leave 0 for default behavior."
+          default: 0
+          selector:
+            number:
+              unit_of_measurement: "seconds"
+
+        lifetime_mode:
+          name: "Lifetime Mode"
+          description: "0 = deletes the app, 1 = marks it as staled with a red rectangle around the app."
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 1
+
+        noscroll:
+          name: "No Scroll"
+          description: "Disables the text scrolling"
+          default: false
+          selector:
+            boolean:
+
+        scroll_speed:
+          name: "Scroll Speed"
+          description: "Modifies the scroll speed. Enter a percentage value of the original scroll speed."
+          default: 100
+          selector:
+            number:
+              unit_of_measurement: "%"
+              min: 5
+              max: 500
+
+
+    additional_options:
+      name: "Additional Options"
+      description: "Configure any additional options for the custom app.\nExtra options are avaible here https://blueforcer.github.io/awtrix3/#/api?id=json-properties"
+      default: {}
+      selector:
+        object: 
+
+
+# By default the automation will be triggered when the specified entity's state changes. The user can also specify additional triggers in the blueprint options which will be added here.
+trigger:
+  - trigger: state
+    entity_id: !input entity
+    to: null
+  
+  - platform: homeassistant
+    event: start
+    id: update
+
+  - platform: event
+    event_type: automation_reloaded
+    id: update
+
+  - triggers: !input additional_triggers
+
+
+# By default, there are no conditions. But the user can set conditions in the blueprint options which will be added here.
+conditions: !input additional_conditions
+
+variables:
+  # Main Variables
+  entity: !input entity
+  text_suffix: !input text_suffix
+  text_prefix: !input text_prefix
+  app_icon: !input app_icon
+  rainbow: !input rainbow
+  duration: !input duration
+  mqtt_topic_entity: !input mqtt_topic_entity
+  mqtt_topic: "{{ states(mqtt_topic_entity) }}"
+
+  # Progress Bar Options
+  progress_bar_enabled: !input progress_bar_enabled
+  progress_bar_color: !input progress_bar_color
+  progress_bar_color_json: "{{ progress_bar_color }}"
+  progress_bar_background_color: !input progress_bar_background_color
+  progress_bar_background_color_json: "{{ progress_bar_background_color }}"
+
+  # Cosmetic Options
+  text_color: !input text_color
+  text_color_json: "{{ text_color }}"
+  background_color: !input background_color
+  background_color_json: "{{ background_color }}"
+  blink: !input blink
+  fade: !input fade
+  overlay: !input overlay
+  text_case: !input text_case
+  top_text: !input top_text
+  text_offset: !input text_offset
+  center: !input center
+
+  # App Options
+  repeat: !input repeat
+  app_position: !input app_position
+  lifetime: !input lifetime
+  lifetime_mode: !input lifetime_mode
+  noscroll: !input noscroll
+  scroll_speed: !input scroll_speed
+
+  additional_options: !input additional_options
+
+
+
+action:
+  - choose: [ ]
+    default: !input additional_actions
+
+  - action: mqtt.publish
+    data:
+      topic: "{{ mqtt_topic }}/custom/{{ app_name }}"
+      payload: |
+        {
+          "text": "{{ text_prefix }}{{ states(entity) }}{{ text_suffix }}"
+          {%- if app_icon is not none and app_icon != '' %},
+          "icon": {{ app_icon }}
+          {%- endif %}
+          {%- if rainbow %},
+          "rainbow": true
+          {%- endif %}
+          {%- if progress_bar_enabled %},
+          "progress": {{ states(entity) | int }},
+          "progressC": {{ progress_bar_color_json }},
+          "progressBC": {{ progress_bar_background_color_json }}
+          {%- endif %}
+          {%- if text_color is defined and text_color != [255, 255, 255] %},
+          "color": {{ text_color_json }}
+          {%- endif %}
+          {%- if background_color is defined and background_color != [0, 0, 0] %},
+          "background": {{ background_color_json }}
+          {%- endif %}
+          {%- if blink is defined and blink | int > 0 %},
+          "blinkText": {{ blink }}
+          {%- endif %}
+          {%- if fade is defined and fade | int > 0 %},
+          "fadeText": {{ fade }}
+          {%- endif %}
+          {%- if text_case is defined and text_case != 0 %},
+          "textCase": {{ text_case }}
+          {%- endif %}
+          {%- if top_text %},
+          "topText": true
+          {%- endif %}
+          {%- if text_offset is defined and text_offset | int != 0 %},
+          "textOffset": {{ text_offset }}
+          {%- endif %}
+          {%- if center %},
+          "center": true
+          {%- endif %}
+          {%- if overlay is defined and overlay != 'clear' %},
+          "overlay": "{{ overlay }}"
+          {%- endif %}
+          {%- if additional_options is defined and additional_options | length > 0 %},
+          {% for key, value in additional_options.items() %}"{{ key }}": {{ value }}{% if not loop.last %},{% endif %}
+          {% endfor -%}
+          {%- endif %}
+          {%- if repeat is defined and repeat != -1 %},
+          "repeat": {{ repeat }}
+          {%- endif %}
+          {%- if app_position is defined and app_position is not none %},
+          "pos": {{ app_position }}
+          {%- endif %}
+          {%- if lifetime is defined and lifetime != 0 %},
+          "lifetime": {{ lifetime }},
+          "lifetimeMode": {{ lifetime_mode }}
+          {%- endif %}
+          {%- if noscroll %},
+          "noScroll": true
+          {%- endif %}
+          {%- if scroll_speed is defined and scroll_speed != 100 %},
+          "scrollSpeed": {{ scroll_speed }}
+          {%- endif %},
+          "duration": {{ duration }}
+        }

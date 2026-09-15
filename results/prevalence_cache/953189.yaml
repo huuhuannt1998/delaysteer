@@ -1,0 +1,120 @@
+blueprint:
+  name: Anniversaries Notifier
+  description: >
+    Daily notification for pinkywafer/Anniversaries sensors. <br>
+    Filters names by a single day offset (0=today, 1=tomorrow, 2, 4, ...). <br>
+    You can set up multiple automations if you want to be notified more often. <br>
+    Sends a persistent HA notification and optionally multiple mobile pushes.
+  domain: automation
+  author: zenguru84
+  source_url: https://raw.githubusercontent.com/zenguru84/my-ha-toolbox/main/blueprints/automation/zenguru84/anniversaries_notifier.yaml
+  input:
+    trigger_time:
+      name: Trigger time (daily)
+      default: "10:30:00"
+      selector:
+        time: {}
+
+    day_offset:
+      name: Day offset
+      description: "0 = today, 1 = tomorrow, 2, 4, etc."
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 365
+          mode: box
+
+    mobile_push_enabled:
+      name: Also send mobile push
+      default: false
+      selector:
+        boolean: {}
+
+    mobile_device:
+      name: Mobile App device (optional)
+      description: "Select the device registered via the Mobile App integration."
+      default: null
+      selector:
+        device:
+          integration: mobile_app
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - trigger: time
+    at: !input trigger_time
+
+variables:
+  day_offset: !input day_offset
+  mobile_push_enabled: !input mobile_push_enabled
+  mobile_device: !input mobile_device
+
+  mobile_service_slug: >
+    {% if mobile_device %}
+      {% set name = device_attr(mobile_device, 'name') | lower %}
+      {% set slug = name
+          | replace(' ', '_')
+          | replace("'", '_')
+          | regex_replace('[^a-z0-9_]', '') %}
+      {{ 'mobile_app_' ~ slug }}
+    {% else %}{% endif %}
+
+  mobile_notify_service: >
+    {% if mobile_service_slug %}
+      {{ 'notify.' ~ mobile_service_slug }}
+    {% else %}{% endif %}
+
+  all_entities: >
+    {% set all = integration_entities('anniversaries') | list %}
+    {{ all | select('match', '^sensor\\.') | list | sort }}
+
+  matched_names: >
+    {% set ns = namespace(items=[]) %}
+    {% for e in all_entities %}
+      {% set st = states[e] %}
+      {% if st is not none %}
+        {% set v = st.state | int(default=9999) %}
+        {% if v == (day_offset | int) %}
+          {% set nm = state_attr(e, 'friendly_name') or st.attributes.friendly_name %}
+          {% set ns.items = ns.items + [nm] %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.items | sort }}
+
+  final_title: >
+    {% set d = day_offset | int %}
+    {% if d == 0 %}
+      {% set title = "Anniversaries Today" %}
+    {% elif d == 1 %}
+      {% set title = "Anniversaries Tomorrow" %}
+    {% else %}
+      {% set title = "Anniversaries In " ~ d ~ " Days" %}
+    {% endif %}
+    {{ title }}
+
+  final_message: >
+    {% set count = matched_names | length %}
+    {% if count > 0 %}
+      {{ matched_names | join('\n') }}
+    {% else %}{% endif %}
+
+action:
+  - condition: template
+    value_template: "{{ matched_names | length > 0 }}"
+
+  - action: notify.persistent_notification
+    data:
+      title: "{{ final_title }}"
+      message: "{{ final_message }}"
+
+  - condition: template
+    value_template: >
+      {{ mobile_push_enabled }}
+
+  - action: "{{ mobile_notify_service }}"
+    data:
+      title: "{{ final_title }}"
+      message: "{{ final_message }}"

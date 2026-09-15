@@ -1,0 +1,486 @@
+blueprint:
+  name: Solar Surplus Heater Control
+  description: >-
+    Turns high-power appliances (water heaters, pool pumps, etc.) on and off
+    to consume excess solar energy instead of exporting it.
+
+    To control additional devices, create one automation per device using this
+    blueprint. Devices are chained by priority: the highest-priority device
+    leaves "Higher-priority device" empty, and the lowest-priority device
+    leaves "Lower-priority device" empty. Each device in between points to the
+    one above and below it in the chain.
+  domain: automation
+  source_url: https://raw.githubusercontent.com/oticat/ha-blueprints/refs/heads/main/solar_surplus_heater.yaml
+  homeassistant:
+    min_version: "2024.6.0"
+
+  input:
+    device_section:
+      name: Device
+      icon: mdi:lightning-bolt
+      input:
+        device_name:
+          name: Device name
+          description: Human-readable label used in automation title (e.g. "Boiler")
+          selector:
+            text:
+
+        device_switch:
+          name: Device switch or climate entity
+          description: >-
+            Switch or climate entity to control. For switches the device turns
+            on/off directly. For climate entities (air conditioners) turning on
+            activates the HVAC mode selected below.
+          selector:
+            entity:
+              filter:
+                - domain: switch
+                - domain: climate
+
+        device_hvac_mode:
+          name: AC mode (climate entities only)
+          description: >-
+            HVAC mode to activate when turning on a climate entity. Ignored
+            for switch entities. Common values: cool, heat, fan_only, dry.
+          default: cool
+          selector:
+            select:
+              options:
+                - cool
+                - heat
+                - fan_only
+                - dry
+                - auto
+
+        device_max_watts:
+          name: Device rated power (W)
+          description: >-
+            Expected power draw when running. Used as a pre-flight check: the
+            device only turns on if the current grid reading leaves enough
+            headroom to absorb this full draw without crossing the grid
+            threshold. In zero feed-in mode the check is skipped only when
+            grid = 0 W (inverter has genuine surplus); when grid > 0 W the
+            inverter is already at capacity and the check still applies.
+          default: 1000
+          selector:
+            number:
+              min: 100
+              max: 10000
+              step: 100
+              unit_of_measurement: W
+
+        higher_priority_switch:
+          name: Higher-priority device (optional)
+          description: >-
+            Switch or climate entity of the device that must run before this
+            one. Leave empty if this is the highest-priority device. This
+            device turns on only after the higher-priority one has been on
+            ≥ 40 s, and turns off when the higher-priority one has been off
+            ≥ 40 s.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: switch
+                - domain: climate
+
+        lower_priority_switch:
+          name: Lower-priority device (optional)
+          description: >-
+            Switch or climate entity of the device that runs after this one.
+            Leave empty if this is the lowest-priority device. While that
+            device is on, this device defers grid-overload turn-off — the
+            lower-priority device will react first, and this device
+            re-evaluates 40 s after it turns off.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: switch
+                - domain: climate
+
+    grid_section:
+      name: Grid & Activation
+      icon: mdi:transmission-tower
+      input:
+        grid_sensor:
+          name: Grid power sensor
+          description: >-
+            Sensor for grid power in watts. Two modes:
+            (a) Signed sensor — positive = importing, negative = exporting.
+            Use this when your meter or integration exposes a single signed
+            value (most inverters and smart meters do).
+            (b) Absolute power sensor — always positive; also provide the
+            flow direction sensor below so the blueprint can reconstruct
+            the sign internally.
+          selector:
+            entity:
+              domain: sensor
+              filter:
+                - unit_of_measurement: W
+
+        grid_flow_sensor:
+          name: Grid flow direction sensor (optional)
+          description: >-
+            An entity whose state changes when the grid switches between
+            importing and exporting. When provided, this is used for triggering
+            instead of a template — more reliable for meters that expose
+            direction as a separate entity (e.g. a bidirectional meter with a
+            dedicated flow entity). Leave empty if your grid sensor already
+            provides a signed value from a direct integration.
+          default:
+          selector:
+            entity:
+
+        grid_consuming_state:
+          name: Importing state value
+          description: >-
+            State value of the flow direction sensor that means the grid is
+            currently importing (consuming from the grid). Common values:
+            consuming, import, positive. Only used when a flow direction sensor
+            is configured above.
+          default: "consuming"
+          selector:
+            text:
+
+        zero_feed_in:
+          name: Zero feed-in mode
+          description: >-
+            Enable if the inverter is configured to never export to the grid.
+            Grid power stays ≥ 0 W in this mode — set the threshold near
+            zero (e.g. 50 W) to activate when surplus appears.
+          default: false
+          selector:
+            boolean:
+
+        max_grid_consumption:
+          name: Grid activation threshold (W)
+          description: >-
+            Maximum acceptable grid consumption before the device turns off.
+            Device turns on when grid is below (threshold − margin) and off
+            when above (threshold + margin).
+          default: 200
+          selector:
+            number:
+              min: 0
+              max: 1000
+              step: 50
+              unit_of_measurement: W
+
+        anti_flapping_margin:
+          name: Anti-flapping margin (W)
+          description: >-
+            Hysteresis band around the threshold. Device turns on when grid
+            consumption drops below (threshold − margin) and turns off when it
+            rises above (threshold + margin). Prevents rapid switching when
+            grid power oscillates near the activation point.
+          default: 100
+          selector:
+            number:
+              min: 50
+              max: 500
+              step: 10
+              unit_of_measurement: W
+
+    solar_section:
+      name: Solar Window
+      icon: mdi:weather-sunny
+      collapsed: true
+      input:
+        min_elevation:
+          name: Minimum sun elevation (°)
+          description: >-
+            Do not operate when the sun is below this angle. Prevents
+            activation at dawn/dusk when panels produce little power.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 45
+              step: 1
+              unit_of_measurement: "°"
+
+        min_azimuth:
+          name: East azimuth boundary (°)
+          description: >-
+            Do not operate when sun azimuth < this value (morning shade on
+            panels). 90 = due East. Increase if morning shade ends later.
+          default: 90
+          selector:
+            number:
+              min: 0
+              max: 179
+              step: 1
+              unit_of_measurement: "°"
+
+        max_azimuth:
+          name: West azimuth boundary (°)
+          description: >-
+            Do not operate when sun azimuth > this value (evening shade on
+            panels). 270 = due West. Decrease if afternoon shade starts earlier.
+          default: 270
+          selector:
+            number:
+              min: 181
+              max: 360
+              step: 1
+              unit_of_measurement: "°"
+
+mode: single
+max_exceeded: silent
+
+variables:
+  _switch:       !input device_switch
+  _hvac_mode:    !input device_hvac_mode
+  _hp_switch:    !input higher_priority_switch
+  _grid_id:      !input grid_sensor
+  _flow_id:      !input grid_flow_sensor
+  _consuming:    !input grid_consuming_state
+  _max_grid:     !input max_grid_consumption
+  _margin:       !input anti_flapping_margin
+  _min_elev:     !input min_elevation
+  _min_az:       !input min_azimuth
+  _max_az:       !input max_azimuth
+  _zero_feedin:  !input zero_feed_in
+  _max_watts:    !input device_max_watts
+  _lp_switch:    !input lower_priority_switch
+  _effective_margin: "{{ [(_margin | float), ((_max_grid | float) - 25)] | min }}"
+
+  # True when the controlled entity is currently active.
+  # Switches use the 'on' state; climate entities are active in any mode except 'off'.
+  device_is_on: >-
+    {% if _switch.startswith('climate.') %}
+      {{ states(_switch) not in ['off', 'unavailable', 'unknown'] }}
+    {% else %}
+      {{ states(_switch) == 'on' }}
+    {% endif %}
+
+  # Grid sensor health — both sensors must be valid when flow sensor is configured
+  grid_data_valid: >-
+    {{ states(_grid_id) not in ['unknown', 'unavailable']
+       and (_flow_id is none or states(_flow_id) not in ['unknown', 'unavailable']) }}
+
+  # Signed grid power: reconstructed from absolute + flow direction when flow
+  # sensor is provided, read directly when grid sensor is already signed.
+  grid_power: >-
+    {% set p = states(_grid_id) | float(0) %}
+    {% if _flow_id is not none %}
+      {{ p if states(_flow_id) == _consuming else -p }}
+    {% else %}
+      {{ p }}
+    {% endif %}
+
+  # Sun position
+  sun_elevation: "{{ state_attr('sun.sun', 'elevation') | float(-90) }}"
+  sun_azimuth:   "{{ state_attr('sun.sun', 'azimuth')   | float(180) }}"
+
+  # True when sun is in the usable window (elevation + azimuth range)
+  solar_window_ok: >-
+    {{ (sun_elevation | float) > (_min_elev | float)
+       and (sun_azimuth | float) >= (_min_az | float)
+       and (sun_azimuth | float) <= (_max_az | float) }}
+
+  # Grid allows activation: sensor valid AND enough surplus to absorb this device.
+  # Pre-flight check: require grid_power + device_max_watts < threshold − margin.
+  # This applies both when feed-in is enabled (surplus is visible as negative grid)
+  # AND in zero feed-in mode when grid > 0 (inverter is already at capacity, so any
+  # new load draws from the grid directly). Only skip the deduction when grid = 0
+  # in zero feed-in mode — that means the inverter has genuine headroom to absorb it.
+  grid_allows_on: >-
+    {% set base = (_max_grid | float) - (_effective_margin | float) %}
+    {% set effective = base - (_max_watts | float) if (not _zero_feedin or (grid_power | float) > 0) else base %}
+    {{ grid_data_valid and (grid_power | float) < effective }}
+
+  # Grid forces deactivation: sensor unavailable OR above (threshold + margin)
+  grid_forces_off: >-
+    {{ (not grid_data_valid)
+       or (grid_power | float) > ((_max_grid | float) + (_effective_margin | float)) }}
+
+  # Lower-priority device is currently on — defer grid-overload turn-off to it.
+  # It will react to grid_import first; lp_off fires here 40 s after it turns off.
+  # Works for both switch ('on') and climate (any mode except 'off').
+  lp_is_on: "{{ _lp_switch is not none and states(_lp_switch) not in ['off', 'unavailable', 'unknown'] }}"
+
+  # Higher-priority device has been ON long enough to unlock this device.
+  # Always true when no higher-priority device is configured.
+  # Works for both switch ('on') and climate (any active HVAC mode).
+  hp_on_stable: >-
+    {{ _hp_switch is none
+       or (states(_hp_switch) not in ['off', 'unavailable', 'unknown']
+           and (now() - states[_hp_switch].last_changed).total_seconds() > 40) }}
+
+  # Higher-priority device has been OFF long enough to cascade turn-off.
+  # Never true when no higher-priority device is configured.
+  hp_off_cascade: >-
+    {{ _hp_switch is not none
+       and states(_hp_switch) in ['off', 'unavailable', 'unknown']
+       and (now() - states[_hp_switch].last_changed).total_seconds() > 40 }}
+
+  # Final verdicts
+  should_be_on:  "{{ solar_window_ok and grid_allows_on and hp_on_stable }}"
+  should_be_off: "{{ (not solar_window_ok) or hp_off_cascade or (grid_forces_off and not lp_is_on) }}"
+
+# trigger_variables are evaluated before triggers fire, making !input values
+# safely available to template triggers — returns false when input is not set.
+trigger_variables:
+  _tv_hp:               !input higher_priority_switch
+  _tv_lp:               !input lower_priority_switch
+  _tv_grid:             !input grid_sensor
+  _tv_max_grid:         !input max_grid_consumption
+  _tv_margin:           !input anti_flapping_margin
+  _tv_max_watts:        !input device_max_watts
+  _tv_zero_feedin:      !input zero_feed_in
+  _tv_flow:             !input grid_flow_sensor
+  _tv_consuming:        !input grid_consuming_state
+  _tv_effective_margin: "{{ [(_tv_margin | float), ((_tv_max_grid | float) - 25)] | min }}"
+
+trigger:
+  # Grid drops below turn-on threshold → surplus has appeared
+  - platform: template
+    value_template: >-
+      {% set p = states(_tv_grid) | float(0) %}
+      {% set gp = p if (_tv_flow is none or states(_tv_flow) == _tv_consuming) else -p %}
+      {% set base = (_tv_max_grid | float) - (_tv_effective_margin | float) %}
+      {% set effective = base - (_tv_max_watts | float) if (not _tv_zero_feedin or gp > 0) else base %}
+      {{ gp < effective }}
+    id: grid_surplus
+
+  # Grid rises above turn-off threshold → consumption too high
+  - platform: template
+    value_template: >-
+      {% set p = states(_tv_grid) | float(0) %}
+      {% set gp = p if (_tv_flow is none or states(_tv_flow) == _tv_consuming) else -p %}
+      {{ gp > ((_tv_max_grid | float) + (_tv_effective_margin | float)) }}
+    id: grid_import
+
+  # Flow sensor switches to importing — reliable alternative to grid_surplus/grid_import
+  # when the meter exposes direction as a separate entity. Returns false (never fires)
+  # when grid_flow_sensor is not configured.
+  - platform: template
+    value_template: "{{ _tv_flow is not none and states(_tv_flow) != _tv_consuming }}"
+    id: grid_surplus_flow
+
+  - platform: template
+    value_template: "{{ _tv_flow is not none and states(_tv_flow) == _tv_consuming }}"
+    id: grid_import_flow
+
+  # Sun enters operating elevation (potential turn-on)
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: !input min_elevation
+    id: sun_up
+
+  # Sun drops below operating elevation (turn-off)
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: !input min_elevation
+    id: sun_down
+
+  # Sun azimuth crosses East boundary (morning shade clears)
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: azimuth
+    above: !input min_azimuth
+    id: az_enters_east
+
+  # Sun azimuth crosses West boundary (evening shade begins)
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: azimuth
+    above: !input max_azimuth
+    id: az_exits_west
+
+  # Higher-priority device has been ON for 40 s → cascade turn-on signal
+  # Template returns false (never fires) when higher_priority_switch is not set.
+  # 'not in off/unavailable/unknown' covers both switch ('on') and climate (any active mode).
+  - platform: template
+    value_template: >-
+      {{ _tv_hp is not none and states(_tv_hp) not in ['off', 'unavailable', 'unknown'] }}
+    for:
+      seconds: 40
+    id: hp_on
+
+  # Higher-priority device has been OFF for 40 s → cascade turn-off signal
+  - platform: template
+    value_template: >-
+      {{ _tv_hp is not none and states(_tv_hp) in ['off', 'unavailable', 'unknown'] }}
+    for:
+      seconds: 40
+    id: hp_off
+
+  # Lower-priority device has been OFF for 40 s → re-evaluate this device
+  # Template returns false (never fires) when lower_priority_switch is not set.
+  - platform: template
+    value_template: >-
+      {{ _tv_lp is not none and states(_tv_lp) in ['off', 'unavailable', 'unknown'] }}
+    for:
+      seconds: 40
+    id: lp_off
+
+  # Device recovers from unavailable state → safety turn-off
+  - platform: state
+    entity_id: !input device_switch
+    from: unavailable
+    id: device_recovered
+
+  # Periodic safety check every 5 min — retries if a device ignored a command
+  # or if a trigger edge was missed. lp_is_on guard in should_be_off ensures
+  # only the lowest-priority active device turns off; cascade proceeds normally.
+  - platform: time_pattern
+    minutes: "/5"
+    id: periodic
+
+
+action:
+  - choose:
+
+      # ── 1. TURN ON ────────────────────────────────────────────────────
+      # Fires on grid improvement, sun entering range, hp cascade, or periodic.
+      # All three conditions must hold: solar window OK, grid below threshold,
+      # higher-priority device has been running long enough (or doesn't exist).
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id in
+                   ['grid_surplus', 'grid_surplus_flow',
+                    'sun_up', 'az_enters_east', 'hp_on', 'periodic'] }}
+          - condition: template
+            value_template: "{{ not device_is_on }}"
+          - condition: template
+            value_template: "{{ should_be_on }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ _switch.startswith('climate.') }}"
+                sequence:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ _switch }}"
+                    data:
+                      hvac_mode: "{{ _hvac_mode }}"
+            default:
+              - service: homeassistant.turn_on
+                data:
+                  entity_id: "{{ _switch }}"
+
+      # ── 2. TURN OFF ───────────────────────────────────────────────────
+      # Fires on grid deterioration, sun leaving range, hp cascade, periodic,
+      # or device_recovered (always turns off after unavailable — skip should_be_off).
+      # homeassistant.turn_off works for both switches and climate entities.
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id in
+                   ['grid_import', 'grid_import_flow', 'sun_down', 'az_exits_west',
+                    'hp_off', 'lp_off', 'periodic', 'device_recovered'] }}
+          - condition: template
+            value_template: "{{ device_is_on }}"
+          - condition: template
+            value_template: "{{ should_be_off or trigger.id == 'device_recovered' }}"
+        sequence:
+          - service: homeassistant.turn_off
+            data:
+              entity_id: "{{ _switch }}"

@@ -1,0 +1,163 @@
+blueprint:
+  name: Ultimate Timer V3 (Multi-Instance, Flexible Reset)
+  description: >
+    Universal and reusable timer blueprint with start/stop control,
+    running state, completion state, and configurable daily reset time.
+    Designed for multi-instance usage and robust against race conditions.
+  domain: automation
+
+  input:
+    start_entity:
+      name: Start Trigger (Button)
+      description: Entity used to start the timer (momentary button behavior recommended)
+      selector:
+        entity:
+          domain: input_boolean
+
+    stop_entity:
+      name: Stop Trigger (Optional)
+      description: Entity used to stop the timer before completion
+      selector:
+        entity:
+          domain: input_boolean
+
+    duration:
+      name: Duration (hh:mm:ss)
+      description: Timer duration in hh:mm:ss format
+      default: "00:05:00"
+      selector:
+        text: {}
+
+    done_entity:
+      name: Completion State (DONE)
+      description: Will be turned ON when the timer finishes
+      selector:
+        entity:
+          domain: input_boolean
+
+    running_entity:
+      name: Running State (RUNNING)
+      description: Indicates if the timer is currently active
+      selector:
+        entity:
+          domain: input_boolean
+
+    reset_time:
+      name: Daily Reset Time (hh:mm:ss)
+      description: Time when states are reset daily. Leave empty for default (00:01:00)
+      default: ""
+      selector:
+        text: {}
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  reset_time_final: >
+    {% if (reset_time | string | length) > 0 %}
+      {{ reset_time }}
+    {% else %}
+      00:01:00
+    {% endif %}
+
+trigger:
+  - id: start
+    platform: state
+    entity_id: !input start_entity
+    to: "on"
+
+  - id: stop
+    platform: state
+    entity_id: !input stop_entity
+    to: "on"
+
+  - id: reset
+    platform: template
+    value_template: >
+      {{ now().strftime('%H:%M:%S') == reset_time_final }}
+
+condition: []
+
+action:
+  - choose:
+
+      # 🌙 DAILY RESET
+      - conditions:
+          - condition: trigger
+            id: reset
+        sequence:
+          - service: input_boolean.turn_off
+            target:
+              entity_id:
+                - !input done_entity
+                - !input running_entity
+
+      # ⏹️ STOP HANDLING
+      - conditions:
+          - condition: trigger
+            id: stop
+        sequence:
+          - service: input_boolean.turn_off
+            target:
+              entity_id:
+                - !input running_entity
+                - !input stop_entity
+
+      # ▶️ START HANDLING
+      - conditions:
+          - condition: trigger
+            id: start
+        sequence:
+
+          # Reset start trigger (momentary button behavior)
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input start_entity
+
+          # Set running state
+          - service: input_boolean.turn_on
+            target:
+              entity_id: !input running_entity
+
+          # Reset completion state
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input done_entity
+
+          # Wait for stop or timeout
+          - wait_for_trigger:
+              - platform: state
+                entity_id: !input stop_entity
+                to: "on"
+            timeout: !input duration
+            continue_on_timeout: true
+
+          - choose:
+
+              # ⏹️ STOP detected
+              - conditions:
+                  - condition: state
+                    entity_id: !input stop_entity
+                    state: "on"
+                sequence:
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - !input running_entity
+                        - !input stop_entity
+
+              # ⏱️ TIMER COMPLETED
+              - conditions: []
+                sequence:
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: !input done_entity
+
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: !input running_entity
+
+                  # Ensure start trigger is reset
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: !input start_entity

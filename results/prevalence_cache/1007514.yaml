@@ -1,0 +1,388 @@
+blueprint:
+# Media control via IKEA Symfonisk Gen2 - Shawsky April 2023 - 2026
+# Updated May 2026 v2.01 - Minor bug fix on group/individual volume control
+# Updated December 2025 v2.00 - Add volume ducking, action running when switching from group/single volume control. Action on Play/Pause when no media playing/queued
+# Updated June 2025 - Add multiple options for group or single room volume controls
+# Updated April 2024 - Add additional filtering to prevent triggering from other devices/false positives. Thanks kenno.
+# Updated April 2024 - Add support for device rename in upcoming Z2M release & allow legacy action for Play/Pause
+# Updated September 2023 - Further updates for group/non grouped behaviour / fix issue for volume hold for grouped/non grouped. Allow 100 volume steps.
+# Updated August 2023 - Resolve a volume issue for media players with no group_memeber attribute
+# Updated June 2023 - Resolve filtering issue where multiple devices are in use
+# Updated May 2023 - Add group volume control
+
+# Volume changes originally partially based on https://gist.github.com/erkr/a437ebcb98a2b5ba2deebabd02f5ffae Eric Kreuwels
+# and https://gist.github.com/alexwmaustin/2c25cfa1a0ade1ab9fc1ef0940289672 Alex Austin
+
+  name: Z2M - IKEA Symfonisk sound controller GEN2 for media (v2.01)
+  author: Shawsky
+  description: 
+    'Control the selected media player (and any joined to it in a group) with an IKEA Symfonisk sound controller GEN2 via Zigbee2MQTT (Z2M)
+
+    Supports single press on media buttons, press and hold for volume and single, double and long press for the "dot" buttons.'
+  domain: automation
+  input:
+    remote:
+      name: Remote
+      description: The IKEA Symfonisk controller GEN2 to use
+      selector:
+          device:
+            filter:
+            - integration: mqtt
+              manufacturer: IKEA
+              model: SYMFONISK sound remote gen2 (E2123)
+            - integration: mqtt
+              manufacturer: IKEA
+              model: SYMFONISK sound remote, gen 2 (E2123)
+            - integration: mqtt
+              manufacturer: IKEA
+              model: SYMFONISK sound remote, gen 2
+    base_topic:
+      name: Zigbee2MQTT Base mqtt topic
+      description: The base topic configured in Zigbee2MQTT. If you haven't changed this, leave the default here ("zigbee2mqtt")
+      default: zigbee2mqtt
+    media_player:
+      name: Media Player
+      description: The media player to control with this automation
+      selector:
+        entity:
+          domain: media_player
+          multiple: false
+    allow_group_volume_control:
+      name: Allow Group Volume Control
+      description: Choose whether volume is adjusted for a group of media players where grouping is supported. If disabled only the media player the controller is attached to will be affected by volume changes. Default is enabled.
+      default: true
+      selector:
+        boolean:
+    group_volume_helper:
+      name: "Input Helper for Group / Room Control"
+      description: >
+        An input helper (boolean) to store the current state of volume control. As an automation cannot do this, if you wish to use the option
+        to switch between group and room volume you will need to create a helper and specify it here
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+          multiple: false
+    reset_to_group_control_on_playpause:
+      name: Reset to Group Volume Control when Play/Pause pressed.
+      description: Choose whether volume control is reset to control the group when play/pause is pressed. If disabled the last state will be retained. Default is enabled. Only effective if volume toggling is in use.
+      default: true
+      selector:
+        boolean:
+    dot_button_change_volume_control:
+      name: Choose which button to override for volume toggle
+      description: Select one of the dot button actions to toggle between group and room volume control. Default is None which disables the behaviour
+      default: 'none'
+      selector:
+        select:
+          mode: dropdown
+          options:
+          - label: None
+            value: none
+          - label: Single Dot (Single)
+            value: single
+          - label: Single Dot (Double)
+            value: singledouble
+          - label: Double Dot (Single)
+            value: double
+          - label: Double Dot (Double)
+            value: doubledouble
+          - label: Single Dot (Long)
+            value: singlelong
+          - label: Double Dot (Long)
+            value: doublelong
+          custom_value: false
+          multiple: false
+    change_volume_control_action:
+      name: Volume Control Toggle
+      description: Action to run when the volume control toggles between group and room.
+      default: []
+      selector:
+        action: {}
+    duck_on_vol_toggle:
+      name: Duck on Volume Control Toggle
+      description: When enabled, the volume will duck when using the selected dot button to toggle between group and room only volume control is pressed. Has no effect if 'Choose which button to override for volume toggle' is set to None. Default is enabled.
+      default: true
+      selector:
+        boolean: 
+    duck_volume_time:
+      name: Duck Volume Time
+      description: When using the Duck Volume option, this setting configures how long the ducking lasts for in milliseconds
+      default: 150
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 50
+          unit_of_measurement: "ms"
+          mode: slider
+    volume_steps:
+      name: Volume number of steps
+      description: Controls the volume scale when using volume up or down. The default of 25 is the same scale as the Sonos app.
+      default: 25
+      selector:
+        number:
+          min: 5
+          max: 100
+          step: 5
+          unit_of_measurement: "Steps"
+          mode: slider
+    default_play_pause:
+      name: Play/Pause
+      description: Action to run on play/pause press where no media is playing or paused e.g. empty playlist.
+      default: []
+      selector:
+        action: {}
+    single_dot:
+      name: Single Dot (Single)
+      description: Action to run on single dot press
+      default: []
+      selector:
+        action: {}
+    single_dot_double_press:
+      name: Single Dot (Double)
+      description: Action to run on single dot double press
+      default: []
+      selector:
+        action: {}
+    single_dot_long_press:
+      name: Single Dot (Long)
+      description: Action to run on single dot long press
+      default: []
+      selector: 
+        action: {}
+    double_dot:
+      name: Double Dot (Single)
+      description: Action to run on double dot press
+      default: []
+      selector:
+        action: {}
+    double_dot_double_press:
+      name: Double Dot (Double)
+      description: Action to run on double dot double press
+      default: []
+      selector:
+        action: {}
+    double_dot_long_press:
+      name: Double Dot (Long)
+      description: Action to run on double dot long press
+      default: []
+      selector:
+        action: {}
+      
+mode: queued
+max_exceeded: silent
+
+#variables:
+
+trigger_variables:
+  base_topic: !input base_topic
+  controller: !input remote
+
+trigger:
+  - platform: mqtt
+    topic: "{{ base_topic }}/+/action"
+condition:
+  - condition: template
+    value_template: "{{ trigger.topic == base_topic+'/'+device_attr(controller, 'name')+'/action' }} "  
+action:
+  - variables:
+      controllertopic: "{{ base_topic }}/{{ device_attr(controller, 'name') }}/action"
+      player: !input 'media_player'
+      steps: !input volume_steps
+      stepsize: '{{ 1.0 / steps }}'
+      group_control: !input allow_group_volume_control
+      duck_volume_state: !input duck_on_vol_toggle
+      duck_time: !input duck_volume_time
+      temp_volume: '{{ state_attr(player, "volume_level") }}'
+      dot_button_for_volume_control: !input dot_button_change_volume_control
+      reset_group_volume: !input reset_to_group_control_on_playpause
+      helper: !input 'group_volume_helper'
+      group_volume_control_state: >-
+        {% if states(helper) not in ['', 'none', 'unknown', 'unavailable'] %}
+          {{ states(helper) }}
+        {% elif group_control %}
+          on
+        {% else %}
+          off
+        {% endif %}
+
+  - choose:
+    - conditions:
+      - "{{ trigger.payload != ''}}"
+      - "{{ trigger.topic == controllertopic }}"
+      sequence:
+        - choose:
+          ## Commands
+
+          # Play / Pause
+          - conditions: "{{ trigger.payload == 'toggle' or trigger.payload == 'play_pause' }}"
+            sequence:
+            - choose:
+              - conditions: "{{ states(player) not in ['playing', 'paused'] }}"
+                sequence: !input default_play_pause
+              default: 
+                sequence:
+                  - service: media_player.media_play_pause
+                    entity_id: !input 'media_player'
+                  - if: "{{ reset_group_volume and helper != '' }}"
+                    then:
+                      - service: input_boolean.turn_on
+                        target:
+                          entity_id: "{{ helper }}"
+          # Next Track
+          - conditions: "{{ trigger.payload == 'track_next' }}"
+            sequence:
+            - service: media_player.media_next_track
+              entity_id: !input 'media_player'
+          # Previous Track
+          - conditions: "{{ trigger.payload == 'track_previous' }}"
+            sequence:
+            - service: media_player.media_previous_track
+              entity_id: !input 'media_player'
+
+          ## Volume for media players supporting groups / groups larger than 1 speaker(or pair) in the case of Sonos
+
+          # Volume Up Press
+          - conditions: "{{ trigger.payload == 'volume_up' and state_attr(player, 'group_members') != none and state_attr(player, 'group_members') != [] and state_attr(player, 'group_members') | count > 1 and group_control and group_volume_control_state == 'on' }}"
+            sequence:
+              - repeat:
+                  for_each: "{{ state_attr(player, 'group_members') }}"
+                  sequence:
+                  - service: media_player.volume_set
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      volume_level: >-
+                        {% set volume = state_attr(repeat.item, "volume_level") + stepsize %}
+                        {{ 1.0 if volume > 1.0 else volume }}
+
+          # Volume Down Press
+          - conditions: "{{ trigger.payload == 'volume_down' and state_attr(player, 'group_members') != none and state_attr(player, 'group_members') != [] and state_attr(player, 'group_members') | count > 1 and group_control and group_volume_control_state == 'on' }}"
+            sequence:
+              - repeat:
+                  for_each: "{{ state_attr(player, 'group_members') }}"
+                  sequence:
+                  - service: media_player.volume_set
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      volume_level: >-
+                        {% set volume = state_attr(repeat.item, "volume_level") - stepsize %}
+                        {{ 0.0 if volume < 0.0 else volume }}
+
+          # Volume Up Hold
+          - conditions: "{{ trigger.payload == 'volume_up_hold' and state_attr(player, 'group_members') != none and state_attr(player, 'group_members') != [] and state_attr(player, 'group_members') | count > 1 and group_control and group_volume_control_state == 'on' }}"
+            sequence:
+              - repeat:
+                  for_each: "{{ state_attr(player, 'group_members') }}"
+                  sequence:
+                  - service: media_player.volume_up
+                    target:
+                      entity_id: "{{ repeat.item }}"
+
+          # Volume Down Hold
+          - conditions: "{{ trigger.payload == 'volume_down_hold' and state_attr(player, 'group_members') != none and state_attr(player, 'group_members') != [] and state_attr(player, 'group_members') | count > 1 and group_control and group_volume_control_state == 'on' }}"
+            sequence:
+              - repeat:
+                  for_each: "{{ state_attr(player, 'group_members') }}"
+                  sequence:
+                  - service: media_player.volume_down
+                    target:
+                      entity_id: "{{ repeat.item }}"
+
+          ## Volume for media players not supporting groups (or where Sonos only has one room active)
+
+          # Volume Up
+          - conditions: "{{ trigger.payload == 'volume_up' and ( ((state_attr(player, 'group_members') == none or state_attr(player, 'group_members') == [] or state_attr(player, 'group_members') | count <= 1)) or (not group_control or group_volume_control_state == 'off'))  }}"
+            sequence:
+              - service: media_player.volume_set
+                target:
+                  entity_id: "{{ player }}"
+                data:
+                  volume_level: >-
+                    {% set volume = state_attr(player, "volume_level") + stepsize %}
+                    {{ 1.0 if volume > 1.0 else volume }}
+           
+          # Volume Down Press
+          - conditions: "{{ trigger.payload == 'volume_down' and ( ((state_attr(player, 'group_members') == none or state_attr(player, 'group_members') == [] or state_attr(player, 'group_members') | count <= 1)) or (not group_control or group_volume_control_state == 'off'))  }}"
+            sequence:
+              - service: media_player.volume_set
+                target:
+                  entity_id: "{{ player }}"
+                data:
+                    volume_level: >-
+                      {% set volume = state_attr(player, "volume_level") - stepsize %}
+                      {{ 0.0 if volume < 0.0 else volume }}
+          
+          # Volume Up Hold
+          - conditions: "{{ trigger.payload == 'volume_up_hold' and ( ((state_attr(player, 'group_members') == none or state_attr(player, 'group_members') == [] or state_attr(player, 'group_members') | count <= 1)) or (not group_control or group_volume_control_state == 'off'))  }}"
+            sequence:
+              - service: media_player.volume_up
+                target:
+                  entity_id: "{{ player }}"
+          
+          # Volume Down Hold
+          - conditions: "{{ trigger.payload == 'volume_down_hold' and ( ((state_attr(player, 'group_members') == none or state_attr(player, 'group_members') == [] or state_attr(player, 'group_members') | count <= 1)) or (not group_control or group_volume_control_state == 'off'))  }}"
+            sequence:
+              - service: media_player.volume_down
+                target:
+                  entity_id: "{{ player }}"
+
+          ## Actions
+
+          # If a button override has been selected and the options enabled, do we run the volume control options?
+          
+          # Duck the volume if enabled
+          - conditions: "{{ group_control and ((trigger.payload == 'dots_1_short_release' and dot_button_for_volume_control == 'single') or 
+                          (trigger.payload == 'dots_1_double_press' and dot_button_for_volume_control == 'singledouble') or 
+                          (trigger.payload == 'dots_1_long_press' and dot_button_for_volume_control == 'singlelong') or 
+                          (trigger.payload == 'dots_2_short_release' and dot_button_for_volume_control == 'double') or 
+                          (trigger.payload == 'dots_2_double_press' and dot_button_for_volume_control == 'doubledouble') or 
+                          (trigger.payload == 'dots_2_long_press' and dot_button_for_volume_control == 'doublelong')) }}"
+            # Toggle the helper variable, run the action if configured and duck the volume if enabled
+            sequence:
+              - if: "{{ helper != '' }}"
+                then:
+                  - action: input_boolean.toggle
+                    target:
+                      entity_id: "{{ helper }}"
+              - sequence: !input change_volume_control_action
+              - if:
+                  - condition: template
+                    value_template: "{{ duck_volume_state }}"
+                then:
+                  sequence:
+                    - service: media_player.volume_set
+                      target:
+                        entity_id: "{{ player }}"
+                      data:
+                          volume_level: >-
+                           {% set temp_volume = state_attr(player, "volume_level") %}
+                           {{ 0.1 }}
+                    - delay:
+                        milliseconds: "{{ duck_time }}"
+                    - service: media_player.volume_set
+                      target:
+                        entity_id: "{{ player }}"
+                      data:
+                          volume_level: "{{ temp_volume }}"
+
+          # Single Dot Press
+          - conditions: "{{ trigger.payload == 'dots_1_short_release' }}"
+            sequence: !input single_dot
+          # Single Dot Double Press
+          - conditions: "{{ trigger.payload == 'dots_1_double_press' }}"
+            sequence: !input single_dot_double_press
+          # Single Dot Long Press
+          - conditions: "{{ trigger.payload == 'dots_1_long_press' }}"
+            sequence: !input single_dot_long_press
+          # Double Dot Press
+          - conditions: "{{ trigger.payload == 'dots_2_short_release' }}"
+            sequence: !input double_dot
+          # Double Dot Double Press
+          - conditions: "{{ trigger.payload == 'dots_2_double_press' }}"
+            sequence: !input double_dot_double_press
+          # Double Dot Long Press
+          - conditions: "{{ trigger.payload == 'dots_2_long_press' }}"
+            sequence: !input double_dot_long_press

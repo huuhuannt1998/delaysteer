@@ -52,7 +52,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", default="qwen3:14b,mistral:7b,deepseek-coder-v2:16b")
     ap.add_argument("--repeats", type=int, default=3)       # matches the HA study
-    ap.add_argument("--temperature", type=float, default=0.7)
+    ap.add_argument("--temperature", type=float, default=None,
+                    help="default: DELAYSTEER_TEMPERATURE, else 0.0. NOTE: this is a "
+                         "RATE study -- at T=0 every repeat is identical and the rate "
+                         "is meaningless. Pass >0 (historically 0.7) for a real sweep.")
     args = ap.parse_args()
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     cap = Config().max_react_steps

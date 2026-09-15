@@ -1,0 +1,634 @@
+blueprint:
+  name: Climate ventilation advisory
+  description: >
+    Advises when windows or doors should be opened or closed to use ventilation
+    for indoor temperature regulation. The advisory message states the specific
+    reason for the recommendation.
+  domain: automation
+  author: Christian Skallerup-Børgesen
+  source_url: https://raw.githubusercontent.com/Hoekeren/home-assistant-blueprints/refs/heads/main/automation/climate_ventilation_advisory.yaml
+  homeassistant:
+    min_version: 2024.6.0
+
+  input:
+    advisory_language:
+      name: Advisory language
+      description: Language used in the notification title, message and optional TTS.
+      default: da
+      selector:
+        select:
+          mode: dropdown
+          options:
+            - label: Dansk
+              value: da
+            - label: English
+              value: en
+            - label: Deutsch
+              value: de
+
+    indoor_temperature_sensor:
+      name: Indoor temperature sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+
+    outdoor_temperature_sensor:
+      name: Outdoor temperature sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+
+    weather_entity:
+      name: Weather entity
+      selector:
+        entity:
+          filter:
+            - domain: weather
+
+    opening_entities:
+      name: Windows and doors
+      description: Select the window and door contact sensors to monitor.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: binary_sensor
+
+    person_entities:
+      name: People who must be home
+      description: At least one selected person must be home before an advisory is sent.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: person
+
+    enable_notify:
+      name: Enable notifications
+      default: true
+      selector:
+        boolean: {}
+
+    notify_targets:
+      name: Notification targets
+      default: {}
+      selector:
+        target:
+          entity:
+            - domain: notify
+          device:
+            - integration: mobile_app
+
+    enable_tts:
+      name: Enable optional TTS
+      default: false
+      selector:
+        boolean: {}
+
+    tts_engine:
+      name: TTS engine
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: tts
+
+    tts_media_players:
+      name: TTS media players
+      default: []
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: media_player
+
+    open_indoor_temperature:
+      name: Minimum indoor temperature before opening advisory
+      default: 22.7
+      selector:
+        number:
+          min: 15
+          max: 35
+          step: 0.1
+          mode: box
+          unit_of_measurement: "°C"
+
+    close_indoor_temperature:
+      name: Indoor temperature where closing is advised
+      default: 22.0
+      selector:
+        number:
+          min: 15
+          max: 35
+          step: 0.1
+          mode: box
+          unit_of_measurement: "°C"
+
+    minimum_outdoor_open_temperature:
+      name: Minimum outdoor temperature for opening advisory
+      default: 10
+      selector:
+        number:
+          min: -20
+          max: 35
+          step: 0.5
+          mode: box
+          unit_of_measurement: "°C"
+
+    minimum_outdoor_close_temperature:
+      name: Outdoor temperature where closing is advised
+      default: 8
+      selector:
+        number:
+          min: -20
+          max: 35
+          step: 0.5
+          mode: box
+          unit_of_measurement: "°C"
+
+    open_temperature_difference:
+      name: Minimum cooling benefit before opening advisory
+      default: 1.0
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.1
+          mode: box
+          unit_of_measurement: "°C"
+
+    close_temperature_difference:
+      name: Minimum remaining benefit before keeping windows open
+      default: 0.3
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.1
+          mode: box
+          unit_of_measurement: "°C"
+
+    maximum_wind_speed:
+      name: Maximum wind speed before closing advisory
+      default: 12
+      selector:
+        number:
+          min: 0
+          max: 40
+          step: 0.5
+          mode: box
+
+    stable_minutes:
+      name: Condition must be stable for
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          mode: slider
+          unit_of_measurement: min
+
+    morning_check_time:
+      name: Morning check time
+      default: "06:45:00"
+      selector:
+        time: {}
+
+    evening_check_time:
+      name: Evening check time
+      default: "22:10:00"
+      selector:
+        time: {}
+
+    active_after:
+      name: Active after
+      default: "06:30:00"
+      selector:
+        time: {}
+
+    active_before:
+      name: Active before
+      default: "22:15:00"
+      selector:
+        time: {}
+
+trigger_variables:
+  indoor_sensor: !input indoor_temperature_sensor
+  outdoor_sensor: !input outdoor_temperature_sensor
+  weather_entity_id: !input weather_entity
+  openings: !input opening_entities
+  open_indoor_temperature_value: !input open_indoor_temperature
+  close_indoor_temperature_value: !input close_indoor_temperature
+  minimum_outdoor_open_temperature_value: !input minimum_outdoor_open_temperature
+  minimum_outdoor_close_temperature_value: !input minimum_outdoor_close_temperature
+  open_temperature_difference_value: !input open_temperature_difference
+  close_temperature_difference_value: !input close_temperature_difference
+  maximum_wind_speed_value: !input maximum_wind_speed
+
+variables:
+  advisory_language: !input advisory_language
+  indoor_sensor: !input indoor_temperature_sensor
+  outdoor_sensor: !input outdoor_temperature_sensor
+  weather_entity_id: !input weather_entity
+  openings: !input opening_entities
+  people_entities: !input person_entities
+  enable_notify: !input enable_notify
+  notify_targets_value: !input notify_targets
+  enable_tts: !input enable_tts
+  tts_engine_entity: !input tts_engine
+  tts_media_player_entities: !input tts_media_players
+  open_indoor_temperature_value: !input open_indoor_temperature
+  close_indoor_temperature_value: !input close_indoor_temperature
+  minimum_outdoor_open_temperature_value: !input minimum_outdoor_open_temperature
+  minimum_outdoor_close_temperature_value: !input minimum_outdoor_close_temperature
+  open_temperature_difference_value: !input open_temperature_difference
+  close_temperature_difference_value: !input close_temperature_difference
+  maximum_wind_speed_value: !input maximum_wind_speed
+  bad_weather_states:
+    - rainy
+    - pouring
+    - snowy
+    - snowy-rainy
+    - lightning
+    - lightning-rainy
+    - hail
+
+trigger:
+  - platform: template
+    id: open_windows_cooling
+    alias: Open windows - indoor is warm, outdoor is cooler, and all selected openings are closed
+    value_template: >
+      {% set open_count = expand(openings) | selectattr('state', 'eq', 'on') | list | count %}
+      {% set unavailable_count = expand(openings) | selectattr('state', 'in', ['unknown', 'unavailable']) | list | count %}
+      {% set indoor_valid = states(indoor_sensor) not in ['unknown', 'unavailable', 'none'] %}
+      {% set outdoor_valid = states(outdoor_sensor) not in ['unknown', 'unavailable', 'none'] %}
+      {% set indoor = states(indoor_sensor) | float(0) %}
+      {% set outdoor = states(outdoor_sensor) | float(0) %}
+      {% set bad_weather = states(weather_entity_id) in bad_weather_states %}
+      {% set wind = state_attr(weather_entity_id, 'wind_speed') | float(0) %}
+      {{
+        indoor_valid
+        and outdoor_valid
+        and unavailable_count == 0
+        and open_count == 0
+        and indoor >= (open_indoor_temperature_value | float(0))
+        and outdoor >= (minimum_outdoor_open_temperature_value | float(0))
+        and outdoor <= indoor - (open_temperature_difference_value | float(0))
+        and not bad_weather
+        and wind < (maximum_wind_speed_value | float(0))
+      }}
+    for:
+      minutes: !input stable_minutes
+
+  - platform: template
+    id: close_windows_not_beneficial
+    alias: Close windows - selected openings are open and ventilation is no longer beneficial
+    value_template: >
+      {% set open_count = expand(openings) | selectattr('state', 'eq', 'on') | list | count %}
+      {% set unavailable_count = expand(openings) | selectattr('state', 'in', ['unknown', 'unavailable']) | list | count %}
+      {% set indoor_valid = states(indoor_sensor) not in ['unknown', 'unavailable', 'none'] %}
+      {% set outdoor_valid = states(outdoor_sensor) not in ['unknown', 'unavailable', 'none'] %}
+      {% set indoor = states(indoor_sensor) | float(0) %}
+      {% set outdoor = states(outdoor_sensor) | float(0) %}
+      {% set bad_weather = states(weather_entity_id) in bad_weather_states %}
+      {% set wind = state_attr(weather_entity_id, 'wind_speed') | float(0) %}
+      {{
+        indoor_valid
+        and outdoor_valid
+        and unavailable_count == 0
+        and open_count > 0
+        and (
+          indoor <= (close_indoor_temperature_value | float(0))
+          or outdoor < (minimum_outdoor_close_temperature_value | float(0))
+          or outdoor >= indoor - (close_temperature_difference_value | float(0))
+          or bad_weather
+          or wind >= (maximum_wind_speed_value | float(0))
+        )
+      }}
+    for:
+      minutes: !input stable_minutes
+
+  - platform: time
+    id: morning_check_ventilation
+    alias: Morning check - evaluate ventilation after the night
+    at: !input morning_check_time
+
+  - platform: time
+    id: evening_check_close_windows
+    alias: Evening check - close open windows before night
+    at: !input evening_check_time
+
+condition:
+  - condition: time
+    after: !input active_after
+    before: !input active_before
+
+  - condition: template
+    value_template: >
+      {{ expand(people_entities) | selectattr('state', 'eq', 'home') | list | count > 0 }}
+
+  - condition: template
+    value_template: >
+      {{
+        states(indoor_sensor) not in ['unknown', 'unavailable', 'none']
+        and states(outdoor_sensor) not in ['unknown', 'unavailable', 'none']
+        and states(weather_entity_id) not in ['unknown', 'unavailable', 'none']
+      }}
+
+action:
+  - variables:
+      trigger_id: >
+        {{ trigger.id if trigger is defined and trigger.id is defined else 'manual_run' }}
+      indoor: "{{ states(indoor_sensor) | float(0) }}"
+      outdoor: "{{ states(outdoor_sensor) | float(0) }}"
+      temperature_difference: "{{ (states(indoor_sensor) | float(0) - states(outdoor_sensor) | float(0)) | round(1) }}"
+      weather_state: "{{ states(weather_entity_id) }}"
+      wind_speed: "{{ state_attr(weather_entity_id, 'wind_speed') | float(0) }}"
+      open_count: >
+        {{ expand(openings) | selectattr('state', 'eq', 'on') | list | count }}
+      unavailable_count: >
+        {{ expand(openings) | selectattr('state', 'in', ['unknown', 'unavailable']) | list | count }}
+      open_names: >
+        {{ expand(openings) | selectattr('state', 'eq', 'on') | map(attribute='name') | list | join(', ') }}
+      bad_weather: >
+        {{ states(weather_entity_id) in bad_weather_states }}
+      notify_ready: >
+        {{ enable_notify | bool(false) and (notify_targets_value | count) > 0 }}
+      tts_ready: >
+        {{
+          enable_tts | bool(false)
+          and tts_engine_entity not in ['', 'none', 'None', none]
+          and (tts_media_player_entities | count) > 0
+        }}
+      delivery_ready: >
+        {{
+          (enable_notify | bool(false) and (notify_targets_value | count) > 0)
+          or (
+            enable_tts | bool(false)
+            and tts_engine_entity not in ['', 'none', 'None', none]
+            and (tts_media_player_entities | count) > 0
+          )
+        }}
+
+      weather_reason_da: >
+        {%- set labels = {
+          'rainy': 'regn',
+          'pouring': 'kraftig regn',
+          'snowy': 'sne',
+          'snowy-rainy': 'slud',
+          'lightning': 'torden',
+          'lightning-rainy': 'torden og regn',
+          'hail': 'hagl'
+        } -%}
+        {{ labels.get(weather_state, weather_state) }}
+      weather_reason_en: >
+        {%- set labels = {
+          'rainy': 'rain',
+          'pouring': 'heavy rain',
+          'snowy': 'snow',
+          'snowy-rainy': 'sleet',
+          'lightning': 'thunder',
+          'lightning-rainy': 'thunder and rain',
+          'hail': 'hail'
+        } -%}
+        {{ labels.get(weather_state, weather_state) }}
+      weather_reason_de: >
+        {%- set labels = {
+          'rainy': 'Regen',
+          'pouring': 'starker Regen',
+          'snowy': 'Schnee',
+          'snowy-rainy': 'Schneeregen',
+          'lightning': 'Gewitter',
+          'lightning-rainy': 'Gewitter und Regen',
+          'hail': 'Hagel'
+        } -%}
+        {{ labels.get(weather_state, weather_state) }}
+
+      open_reason_text: >
+        {%- if advisory_language == 'en' -%}
+          outdoor temperature is {{ outdoor | round(1) }} °C and {{ temperature_difference }} °C cooler than indoor
+        {%- elif advisory_language == 'de' -%}
+          außen sind es {{ outdoor | round(1) }} °C und {{ temperature_difference }} °C kühler als innen
+        {%- else -%}
+          udetemperaturen er {{ outdoor | round(1) }} °C og {{ temperature_difference }} °C lavere end inde
+        {%- endif -%}
+
+      close_reason_text: >
+        {%- if bad_weather | bool(false) -%}
+          {%- if advisory_language == 'en' -%}
+            {{ weather_reason_en }} is forecast
+          {%- elif advisory_language == 'de' -%}
+            {{ weather_reason_de }} ist gemeldet
+          {%- else -%}
+            der er varslet {{ weather_reason_da }}
+          {%- endif -%}
+        {%- elif (wind_speed | float(0)) >= (maximum_wind_speed_value | float(0)) -%}
+          {%- if advisory_language == 'en' -%}
+            wind speed is {{ wind_speed | round(1) }}, limit is {{ maximum_wind_speed_value | round(1) }}
+          {%- elif advisory_language == 'de' -%}
+            Wind ist {{ wind_speed | round(1) }}, Grenzwert ist {{ maximum_wind_speed_value | round(1) }}
+          {%- else -%}
+            vinden er {{ wind_speed | round(1) }}, grænsen er {{ maximum_wind_speed_value | round(1) }}
+          {%- endif -%}
+        {%- elif (outdoor | float(0)) > (indoor | float(0)) -%}
+          {%- if advisory_language == 'en' -%}
+            outdoor temperature is higher than indoor: {{ outdoor | round(1) }} °C vs {{ indoor | round(1) }} °C
+          {%- elif advisory_language == 'de' -%}
+            außen ist es wärmer als innen: {{ outdoor | round(1) }} °C gegen {{ indoor | round(1) }} °C
+          {%- else -%}
+            udetemperaturen er højere end indetemperaturen: {{ outdoor | round(1) }} °C mod {{ indoor | round(1) }} °C
+          {%- endif -%}
+        {%- elif (outdoor | float(0)) >= ((indoor | float(0)) - (close_temperature_difference_value | float(0))) -%}
+          {%- if advisory_language == 'en' -%}
+            outdoor is only {{ temperature_difference }} °C cooler; minimum benefit is {{ close_temperature_difference_value | round(1) }} °C
+          {%- elif advisory_language == 'de' -%}
+            außen ist es nur {{ temperature_difference }} °C kühler; Mindestvorteil ist {{ close_temperature_difference_value | round(1) }} °C
+          {%- else -%}
+            ude er kun {{ temperature_difference }} °C køligere; minimumsfordelen er {{ close_temperature_difference_value | round(1) }} °C
+          {%- endif -%}
+        {%- elif (outdoor | float(0)) < (minimum_outdoor_close_temperature_value | float(0)) -%}
+          {%- if advisory_language == 'en' -%}
+            outdoor temperature is too low: {{ outdoor | round(1) }} °C
+          {%- elif advisory_language == 'de' -%}
+            die Außentemperatur ist zu niedrig: {{ outdoor | round(1) }} °C
+          {%- else -%}
+            udetemperaturen er for lav: {{ outdoor | round(1) }} °C
+          {%- endif -%}
+        {%- elif (indoor | float(0)) <= (close_indoor_temperature_value | float(0)) -%}
+          {%- if advisory_language == 'en' -%}
+            target indoor temperature has been reached: {{ indoor | round(1) }} °C
+          {%- elif advisory_language == 'de' -%}
+            die Zieltemperatur innen ist erreicht: {{ indoor | round(1) }} °C
+          {%- else -%}
+            ønsket indetemperatur er nået: {{ indoor | round(1) }} °C
+          {%- endif -%}
+        {%- elif trigger_id == 'evening_check_close_windows' -%}
+          {%- if advisory_language == 'en' -%}
+            evening check before night
+          {%- elif advisory_language == 'de' -%}
+            Abendprüfung vor der Nacht
+          {%- else -%}
+            aftencheck før natten
+          {%- endif -%}
+        {%- else -%}
+          {%- if advisory_language == 'en' -%}
+            ventilation is no longer beneficial
+          {%- elif advisory_language == 'de' -%}
+            Lüften bringt keinen klaren Vorteil mehr
+          {%- else -%}
+            udluftning giver ikke længere klar fordel
+          {%- endif -%}
+        {%- endif -%}
+
+      open_title: >
+        {%- if advisory_language == 'en' -%}
+          Open windows - cooling is beneficial
+        {%- elif advisory_language == 'de' -%}
+          Fenster öffnen - Kühlung ist vorteilhaft
+        {%- else -%}
+          Åbn vinduerne - køling er fordelagtig
+        {%- endif -%}
+
+      close_title: >
+        {%- if advisory_language == 'en' -%}
+          Close windows - {{ close_reason_text }}
+        {%- elif advisory_language == 'de' -%}
+          Fenster schließen - {{ close_reason_text }}
+        {%- else -%}
+          Luk vinduerne - {{ close_reason_text }}
+        {%- endif -%}
+
+      open_message: >
+        {%- if advisory_language == 'en' -%}
+          Open windows - {{ open_reason_text }}.
+        {%- elif advisory_language == 'de' -%}
+          Fenster öffnen - {{ open_reason_text }}.
+        {%- else -%}
+          Åbn vinduerne - {{ open_reason_text }}.
+        {%- endif -%}
+
+      close_message: >
+        {%- if advisory_language == 'en' -%}
+          Close windows - {{ close_reason_text }}. Open: {{ open_names }}.
+        {%- elif advisory_language == 'de' -%}
+          Fenster schließen - {{ close_reason_text }}. Offen: {{ open_names }}.
+        {%- else -%}
+          Luk vinduerne - {{ close_reason_text }}. Åbne: {{ open_names }}.
+        {%- endif -%}
+
+      open_tts_message: >
+        {%- if advisory_language == 'en' -%}
+          Open windows. {{ open_reason_text }}.
+        {%- elif advisory_language == 'de' -%}
+          Fenster öffnen. {{ open_reason_text }}.
+        {%- else -%}
+          Åbn vinduerne. {{ open_reason_text }}.
+        {%- endif -%}
+
+      close_tts_message: >
+        {%- if advisory_language == 'en' -%}
+          Close windows. {{ close_reason_text }}.
+        {%- elif advisory_language == 'de' -%}
+          Fenster schließen. {{ close_reason_text }}.
+        {%- else -%}
+          Luk vinduerne. {{ close_reason_text }}.
+        {%- endif -%}
+
+  - condition: template
+    value_template: "{{ delivery_ready | bool(false) }}"
+
+  - choose:
+      - alias: Advise to open windows or doors
+        conditions:
+          - condition: template
+            value_template: >
+              {{
+                unavailable_count | int(0) == 0
+                and open_count | int(0) == 0
+                and (
+                  trigger_id == 'open_windows_cooling'
+                  or (
+                    trigger_id == 'morning_check_ventilation'
+                    and (indoor | float(0)) >= (open_indoor_temperature_value | float(0))
+                    and (outdoor | float(0)) >= (minimum_outdoor_open_temperature_value | float(0))
+                    and (outdoor | float(0)) <= ((indoor | float(0)) - (open_temperature_difference_value | float(0)))
+                    and not (bad_weather | bool(false))
+                    and (wind_speed | float(0)) < (maximum_wind_speed_value | float(0))
+                  )
+                )
+              }}
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ notify_ready | bool(false) }}"
+            then:
+              - action: notify.send_message
+                target: !input notify_targets
+                data:
+                  title: "{{ open_title }}"
+                  message: "{{ open_message }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ tts_ready | bool(false) }}"
+            then:
+              - action: tts.speak
+                target:
+                  entity_id: "{{ tts_engine_entity }}"
+                data:
+                  cache: true
+                  media_player_entity_id: !input tts_media_players
+                  message: "{{ open_tts_message }}"
+
+      - alias: Advise to close windows or doors
+        conditions:
+          - condition: template
+            value_template: >
+              {{
+                unavailable_count | int(0) == 0
+                and open_count | int(0) > 0
+                and (
+                  trigger_id == 'close_windows_not_beneficial'
+                  or trigger_id == 'evening_check_close_windows'
+                  or (
+                    trigger_id == 'morning_check_ventilation'
+                    and (
+                      (indoor | float(0)) <= (close_indoor_temperature_value | float(0))
+                      or (outdoor | float(0)) < (minimum_outdoor_close_temperature_value | float(0))
+                      or (outdoor | float(0)) >= ((indoor | float(0)) - (close_temperature_difference_value | float(0)))
+                      or (bad_weather | bool(false))
+                      or (wind_speed | float(0)) >= (maximum_wind_speed_value | float(0))
+                    )
+                  )
+                )
+              }}
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ notify_ready | bool(false) }}"
+            then:
+              - action: notify.send_message
+                target: !input notify_targets
+                data:
+                  title: "{{ close_title }}"
+                  message: "{{ close_message }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ tts_ready | bool(false) }}"
+            then:
+              - action: tts.speak
+                target:
+                  entity_id: "{{ tts_engine_entity }}"
+                data:
+                  cache: true
+                  media_player_entity_id: !input tts_media_players
+                  message: "{{ close_tts_message }}"
+
+mode: single
+max_exceeded: silent

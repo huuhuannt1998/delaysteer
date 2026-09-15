@@ -1,0 +1,5 @@
+run_id,position,write_kind,entity,value_written,prior_value,stamp_advanced,stamp_before,stamp_after,mechanism,notes
+20260812T212611,A1,republish_same,binary_sensor.e1_writetest,off,off,False,01:26:11.676,01:26:11.676,states.async_set,identical value: hub suppresses stamp refresh
+20260812T212611,A1,publish_different,binary_sensor.e1_writetest,on,off,True,01:26:11.676,01:26:17.820,states.async_set,value change: hub refreshes stamp at receipt
+20260812T212611,A1,republish_same,binary_sensor.e1_writetest,on,on,False,01:26:17.820,01:26:17.820,states.async_set,identical value: hub suppresses stamp refresh
+20260812T212207,A1,delay_attacker_hold,binary_sensor.front_door_compromised,off,off,False,21:16:30.580,21:16:30.580,delay_attacker._publish,armed hold re-publishes safe value; no-op write; observable age tracks true age

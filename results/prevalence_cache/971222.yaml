@@ -1,0 +1,120 @@
+blueprint:
+  name: Tuya ZG-101Z/D ZHA Events
+  description: Automate Tuya Smart Knob using ZHA events.
+  domain: automation
+  input:
+    smart_knob:
+      name: Smart Knob Device
+      description: Select your Tuya Smart Knob
+      selector:
+        device:
+          integration: zha
+          manufacturer: _TZ3000_gwkzibhs
+          model: TS004F
+          multiple: false
+    
+    action_rotate_right:
+      name: Rotate Right
+      default: []
+      selector:
+        action: {}
+
+    action_rotate_left:
+      name: Rotate Left
+      default: []
+      selector:
+        action: {}
+
+    action_single_press:
+      name: Single Press
+      default: []
+      selector:
+        action: {}
+
+    action_double_press:
+      name: Double Press
+      default: []
+      selector:
+        action: {}
+
+    action_long_press:
+      name: Long Press
+      default: []
+      selector:
+        action: {}
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  # --- ROTATE RIGHT (0) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      params:
+        rotate_type: 0
+    id: "rotate_right"
+
+  # --- ROTATE LEFT (1) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      params:
+        rotate_type: 1
+    id: "rotate_left"
+
+  # --- SINGLE PRESS (0) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      params:
+        press_type: 0
+    id: "single_press"
+
+  # --- DOUBLE PRESS (1) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      params:
+        press_type: 1
+    id: "double_press"
+
+  # --- LONG PRESS (2) ---
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input smart_knob
+      params:
+        press_type: 2
+    id: "long_press"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "rotate_right"
+        sequence: !input action_rotate_right
+
+      - conditions:
+          - condition: trigger
+            id: "rotate_left"
+        sequence: !input action_rotate_left
+
+      - conditions:
+          - condition: trigger
+            id: "single_press"
+        sequence: !input action_single_press
+
+      - conditions:
+          - condition: trigger
+            id: "double_press"
+        sequence: !input action_double_press
+
+      - conditions:
+          - condition: trigger
+            id: "long_press"
+        sequence: !input action_long_press

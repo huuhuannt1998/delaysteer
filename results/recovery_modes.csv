@@ -1,0 +1,6 @@
+recovery_mode,pollable_benign_completes,nonpollable_benign_completes,nonpollable_benign_blocked,attack_violation,attack_blocked,nonpollable_escalations,nonpollable_steps
+fail_closed,1,0,1,0,1,0,6
+retry_notify,1,0,1,0,1,0,6
+defer_fallback,1,0,1,0,1,0,6
+fail_open,1,0,1,0,1,0,6
+escalate,1,1,0,0,1,2,6

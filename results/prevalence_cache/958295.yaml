@@ -1,0 +1,4265 @@
+blueprint:
+  name: Alarm System with Keypad support (Z2M / ZHA / Dashboard)
+  author: danielpetrovic
+  description: |
+    # Alarm System with Keypad support (Z2M / ZHA / Dashboard)
+
+    [![GitHub Repository](https://img.shields.io/badge/My%20GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/danielpetrovic/home-assistant-config) [![Blueprint Code](https://img.shields.io/badge/View-Blueprint%20Code-2ea44f?style=for-the-badge&logo=homeassistant&logoColor=white)](https://github.com/danielpetrovic/home-assistant-config/blob/main/blueprints/automation/danielpetrovic/alarm-system-with-keypad.yaml) [![Community Discussion](https://img.shields.io/badge/Community-Discussion-41bdf5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://community.home-assistant.io/t/alarm-system-with-zigbee-z2m-zha-keypad-support-kepzb-110/958295) ![Version](https://img.shields.io/badge/Version-2026.04.1-blue?style=for-the-badge)
+
+    A comprehensive alarm system blueprint for Home Assistant with multiple keypad integration options. No custom components required.
+
+    ## Features
+    - **Multiple Keypad Options**: Choose Z2M, ZHA, Dashboard, or any combination
+      - **Physical Zigbee Keypads**: Sync states with Z2M or ZHA (tested with frient KEPZB-110)
+      - **Dashboard Keypad**: Custom on-screen numeric keypad for wall tablets/panels or Companion App
+    - **Multiple User Codes**: Unlimited user codes with support for PIN codes (digits) and RFID tags (hexadecimal: 0-9/A-F) (pattern: `^[0-9A-F+]+$`)
+    - **Two-Tier Code System**: Blueprint validates user codes, then sends master code to alarm panel - your alarm panel doesn't need to support multiple codes
+    - **Smart Automation**: Auto-arm when leaving, auto-disarm on arrival, flexible time-based schedules (per day, workday/non-workday, or disabled)
+    - **Rich Notifications**: Text notifications with camera feeds (iOS live/Android snapshot), TTS announcements, critical alerts
+    - **Mode-Specific Configuration**: Different sensors and actions for Away/Home/Night/Arming/Pending/Disarmed/Triggered/Emergency modes
+    - **Emergency Mode**: Silent alarm via keypad SOS button (long-press 5+ seconds) (physical keypads only)
+
+    ## Prerequisites
+    - Home Assistant 2024.8.0 or later
+    - Manual Alarm Control Panel (see setup below)
+    - Text Helper entities for storing codes (see setup below)
+    - Physical Zigbee keypad connected via Z2M or ZHA (optional)
+    - Dashboard helper entities if using Dashboard keypad (see setup below)
+
+    ## Recommended Setup Using Packages
+    Using packages keeps all alarm-related configuration in one file for easy management.
+
+    **1. Enable Packages** in `/config/configuration.yaml`:
+    ```yaml
+    homeassistant:
+      packages: !include_dir_named packages
+    ```
+
+    **2. Create `/config/packages/alarm.yaml`** with all alarm components:
+    ```yaml
+    # Manual Alarm Control Panel
+    alarm_control_panel:
+      - platform: manual
+        name: Alarm
+        code_arm_required: false
+        armed_away:
+          arming_time: 30
+          delay_time: 20
+        armed_home:
+          arming_time: 0
+          delay_time: 10
+        armed_night:
+          arming_time: 0
+          delay_time: 20
+
+    # Input Text Helpers
+    input_text:
+      # Main/Master code (sent to alarm panel)
+      alarm_code_main:
+        name: Alarm Code Main
+        icon: mdi:dialpad
+        mode: password
+        min: 4
+        max: 16
+        pattern: "^[0-9]+$"  # Supports PIN only
+
+      # User codes (validated by blueprint)
+      alarm_code_user_1:
+        name: Alarm Code John
+        icon: mdi:dialpad
+        mode: password
+        min: 4
+        max: 16
+        pattern: "^[0-9A-F+]+$"  # Supports PIN and RFID
+      alarm_code_user_2:
+        name: Alarm Code Jane
+        icon: mdi:dialpad
+        mode: password
+        min: 4
+        max: 16
+        pattern: "^[0-9A-F+]+$"  # Supports PIN and RFID
+
+      # User name storage (updated by blueprint)
+      alarm_code_user_name:
+        name: Alarm Last User Name
+        icon: mdi:account
+        max: 255
+
+    # Template Sensor for Presence Tracking (optional - for automation features)
+    template:
+      - binary_sensor:
+          - name: "Presence"
+            unique_id: presence
+            device_class: presence
+            state: >
+              {{ (states('zone.home') | int) > 0 }}
+    ```
+
+    **3. Restart Home Assistant** to load the new entities.
+
+    **4. Configure this blueprint** using the created entities.
+
+    The field descriptions below reference this `/config/packages/alarm.yaml` file.
+  domain: automation
+  source_url: https://github.com/danielpetrovic/home-assistant-config/blob/main/blueprints/automation/danielpetrovic/alarm-system-with-keypad.yaml
+  input:
+    alarm_control_panel_main:
+      name: Alarm Control Panel
+      description: |
+        `required`
+
+        Select your Manual Alarm Panel. ZHA keypad entities don't support all required states; manual platform does.
+      selector:
+        entity:
+          filter:
+            - domain:
+                - alarm_control_panel
+          multiple: false
+    alarm_code_main:
+      name: Alarm Code (Main)
+      description: |
+        `optional` `input_text`
+
+        Master code for alarm panel. Enables two-tier validation where users enter personal codes, blueprint validates and sends this master code. Requires restart on changes.
+      default: null
+      selector:
+        entity:
+          filter:
+            - domain:
+                - input_text
+          multiple: false
+    alarm_code_user:
+      name: Alarm Codes (Users)
+      description: |
+        `required` `input_text`
+
+        Individual user codes validated when entered on keypad. Use friendly name pattern "Alarm Code [Name]" - only [Name] appears in notifications. Supports PIN codes (digits) and RFID tags (hexadecimal: 0-9/A-F).
+      selector:
+        entity:
+          filter:
+            - domain:
+                - input_text
+          multiple: true
+    alarm_code_user_name:
+      name: User Name (Storage)
+      description: |
+        `required` `input_text`
+
+        Stores the last user's name who armed/disarmed the alarm. Automatically updated by blueprint. Available in notifications via `{user_name}`.
+      selector:
+        entity:
+          filter:
+            - domain:
+                - input_text
+          multiple: false
+    integration_type:
+      name: Keypad Integration
+      description: |
+        `optional`
+
+        Select which integration(s) to use: Z2M, ZHA, Dashboard, or any combination. Leave empty if no keypad integration needed.
+      default: []
+      selector:
+        select:
+          options:
+            - label: Zigbee2MQTT (Z2M)
+              value: z2m
+            - label: Zigbee Home Automation (ZHA)
+              value: zha
+            - label: Dashboard (Custom On-Screen Keypad)
+              value: dashboard
+          multiple: true
+
+    version_info:
+      name: Version History
+      description: |
+        - **2026.04.1: Modular Schedule Mode with Workday Support**
+          - **Breaking Change**: Replaced weekdays/weekends/custom schedules with individual per-day schedules (Monday–Sunday)
+          - Added Schedule Mode selector: choose between Per Day, Workday/Non-Workday, or Disabled
+          - Added Workday/Non-Workday mode: two schedules driven by a Workday integration sensor — handles public holidays automatically
+        - **2026.01.2: Notification Message Improvements & Documentation Updates**
+          - Improved default notification messages for better readability
+          - Moved user/sensor name variables to end of messages for more natural phrasing
+          - Updated all notification defaults: armed modes, disarmed, arming, pending, triggered, and sensor alerts
+          - Updated dashboard keypad script aliases to use dash separator for consistency
+        - **2026.01.1: Bug Fix & Documentation Updates**
+          - Fixed triggered mode notifications not being sent (config exclusion bug)
+          - Added badge-style buttons to blueprint header (GitHub, Blueprint Code, Community, Version)
+          - Added Version History section for tracking changes
+          - Added template binary sensor for presence tracking to package YAML example
+        - **2025.12.11: Sensor Trigger Template Fix**
+          - Fixed invalid trigger enabled templates causing sensor triggers to fail
+        - **2025.12.10: Dashboard Keypad Support**
+          - Added dashboard keypad support with script-based implementation
+          - Added complete Lovelace YAML examples for on-screen keypad
+        - **2025.12.9: Schedule Validation Fix**
+          - Fixed schedule day validation and refactor descriptions
+        - **2025.12.8: Alarm Action Template Fix**
+          - Fixed dynamic alarm action template to use correct service names
+        - **2025.12.7: Initial Release Patch**
+          - Small fixes after initial release
+        - **2025.12.6: Initial Combined Release**
+          - First combined Z2M/ZHA Blueprint version
+          - Merged separate Z2M and ZHA blueprints into one
+          - Added two-tier code system (user codes + master code)
+          - Added emergency mode support
+        - **2025.12.5: Logic Optimization**
+          - Optimized automation logic with template-driven approach
+        - **2025.12.4: Flexible Scheduling**
+          - Replaced fixed disarm/night schedules with flexible mode selection
+        - **2025.12.3: Notification System Extension**
+          - Extended notification system with critical alerts and channel control
+        - **2025.12.2: Presence Automation**
+          - Added presence-based alarm automation with flexible scheduling
+        - **2025.12.1: Notification Optimization**
+          - Optimized alarm system blueprint notifications
+        - **2025.12.0: First Combined Version**
+          - First combined Z2M/ZHA Blueprint version (merged from separate blueprints)
+          - **Breaking Changes**: No upgrade path from old versions - setup required
+      collapsed: true
+      icon: mdi:history
+      input: {}
+
+    z2m:
+      name: Zigbee2MQTT (Z2M)
+      description: Configure Zigbee2MQTT keypad integration settings.
+      icon: mdi:zigbee
+      collapsed: true
+      input:
+        z2m_base_topic:
+          name: Base Topic
+          description: |
+            `optional` `text`
+
+            MQTT base topic for Zigbee2MQTT installation. Default is `zigbee2mqtt`. Leave empty if not using Z2M.
+          default: ""
+          selector:
+            text: {}
+        z2m_alarm_keypad:
+          name: Keypad Friendly Name
+          description: |
+            `optional` `text`
+
+            Friendly name of your Zigbee keypad in Z2M (case-sensitive). Compatible models: Frient KEPZB-110, Linkind ZS130000078, Hive KEYPAD001. Leave empty if not using Z2M.
+          default: ""
+          selector:
+            text: {}
+
+    zha:
+      name: Zigbee Home Automation (ZHA)
+      description: Configure ZHA keypad integration settings.
+      icon: mdi:zigbee
+      collapsed: true
+      input:
+        zha_alarm_keypad_device:
+          name: Keypad Device
+          description: |
+            `optional` `device`
+
+            ZHA device for your Zigbee keypad. Compatible models: Frient KEPZB-110, Develco KEYZB-110. Note: ZHA LED indicators don't accurately reflect alarm state (known ZHA bug). Leave empty if not using ZHA.
+          default: null
+          selector:
+            device:
+              filter:
+                - integration: zha
+              multiple: false
+        zha_alarm_control_panel_keypad:
+          name: Keypad Control Panel
+          description: |
+            `optional` `alarm_control_panel`
+
+            Alarm panel entity created by ZHA for your keypad. Syncs alarm states to keypad display. Leave empty if not using ZHA.
+          default: null
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - alarm_control_panel
+              multiple: false
+        zha_alarm_code_keypad:
+          name: Keypad Code
+          description: |
+            `optional` `input_text`
+
+            Code sent to ZHA keypad's alarm panel when changing states. Use same value as `alarm_code_main` for simplicity. Leave empty if not using ZHA.
+          default: null
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - input_text
+              multiple: false
+
+    dashboard:
+      name: Dashboard Keypad
+      description: Configure custom on-screen numeric keypad for wall tablets/panels or Home Assistant Companion App.
+      icon: mdi:tablet-dashboard
+      collapsed: true
+      input:
+        alarm_dashboard_code:
+          name: Code Helper
+          description: |
+            `optional` `input_text`
+
+            Helper storing digits as user taps number buttons. Creates `input_text.alarm_dashboard_code` with name "Alarm Dashboard Code", pattern `^[0-9]*$` and max 16 characters. Leave empty if not using dashboard keypad.
+          default: null
+          selector:
+            entity:
+              filter:
+                - domain: input_text
+        alarm_dashboard_action:
+          name: Action Helper
+          description: |
+            `optional` `input_text`
+
+            Helper storing requested action (arm_away, arm_home, arm_night, disarm). Creates `input_text.alarm_dashboard_action` with name "Alarm Dashboard Action". Leave empty if not using dashboard keypad.
+          default: null
+          selector:
+            entity:
+              filter:
+                - domain: input_text
+
+    dashboard_scripts:
+      name: Dashboard Keypad - Setup Instructions
+      description: |
+        Add these sections to `/config/packages/alarm.yaml` and restart Home Assistant:
+
+        ```yaml
+        input_text:
+          # Dashboard keypad helpers
+          alarm_dashboard_code:
+            name: Alarm Dashboard Code
+            icon: mdi:numeric
+            min: 0
+            max: 16
+            mode: password
+            initial: ""
+            pattern: "^[0-9]*$"
+          alarm_dashboard_action:
+            name: Alarm Dashboard Action
+            icon: mdi:shield-lock
+            min: 0
+            max: 20
+            initial: ""
+
+        # Dashboard keypad scripts (required - button cards don't support templates)
+        script:
+          alarm_dashboard_append_1:
+            alias: "Alarm Dashboard - Append 1"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '1' }}"
+          alarm_dashboard_append_2:
+            alias: "Alarm Dashboard - Append 2"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '2' }}"
+          alarm_dashboard_append_3:
+            alias: "Alarm Dashboard - Append 3"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '3' }}"
+          alarm_dashboard_append_4:
+            alias: "Alarm Dashboard - Append 4"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '4' }}"
+          alarm_dashboard_append_5:
+            alias: "Alarm Dashboard - Append 5"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '5' }}"
+          alarm_dashboard_append_6:
+            alias: "Alarm Dashboard - Append 6"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '6' }}"
+          alarm_dashboard_append_7:
+            alias: "Alarm Dashboard - Append 7"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '7' }}"
+          alarm_dashboard_append_8:
+            alias: "Alarm Dashboard - Append 8"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '8' }}"
+          alarm_dashboard_append_9:
+            alias: "Alarm Dashboard - Append 9"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '9' }}"
+          alarm_dashboard_append_0:
+            alias: "Alarm Dashboard - Append 0"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code') + '0' }}"
+          alarm_dashboard_clear:
+            alias: "Alarm Dashboard - Clear"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: ""
+          alarm_dashboard_backspace:
+            alias: "Alarm Dashboard - Backspace"
+            sequence:
+              - action: input_text.set_value
+                target:
+                  entity_id: input_text.alarm_dashboard_code
+                data:
+                  value: "{{ states('input_text.alarm_dashboard_code')[:-1] }}"
+        ```
+      icon: mdi:script-text
+      collapsed: true
+      input: {}
+
+    dashboard_lovelace_example:
+      name: Dashboard Keypad - Lovelace YAML
+      description: |
+        Add this card to your Lovelace dashboard:
+
+        ```yaml
+        type: vertical-stack
+        cards:
+          - type: heading
+            heading: Alarm Keypad
+            heading_style: title
+            icon: mdi:shield-lock
+          - type: horizontal-stack
+            cards:
+              - type: tile
+                entity: alarm_control_panel.alarm
+                name: Status
+                vertical: false
+                tap_action:
+                  action: none
+                icon_tap_action:
+                  action: none
+                features_position: bottom
+              - type: tile
+                entity: input_text.alarm_code_user_name
+                name: Last User
+                icon: mdi:account
+                vertical: false
+                tap_action:
+                  action: none
+                icon_tap_action:
+                  action: none
+                features_position: bottom
+          - type: markdown
+            content: >
+              {% set code = states('input_text.alarm_dashboard_code') %}
+
+              <div style="height: 60px; display: flex; align-items: center; justify-content: center; font-size: 48px; letter-spacing: 8px; font-family: monospace;">
+                {% if code == '' %}
+                  ____
+                {% else %}
+                  {{ '●' * (code | length) }}
+                {% endif %}
+              </div>
+          - square: false
+            type: grid
+            columns: 3
+            cards:
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-1
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_1
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-2
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_2
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-3
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_3
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-4
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_4
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-5
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_5
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-6
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_6
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-7
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_7
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-8
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_8
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-9
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_9
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:close-circle
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_clear
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:numeric-0
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_append_0
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:backspace
+                tap_action:
+                  action: call-service
+                  service: script.alarm_dashboard_backspace
+          - type: horizontal-stack
+            cards:
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:shield-lock
+                icon_height: 50px
+                tap_action:
+                  action: call-service
+                  service: input_text.set_value
+                  target:
+                    entity_id: input_text.alarm_dashboard_action
+                  data:
+                    value: arm_away
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:shield-home
+                icon_height: 50px
+                tap_action:
+                  action: call-service
+                  service: input_text.set_value
+                  target:
+                    entity_id: input_text.alarm_dashboard_action
+                  data:
+                    value: arm_home
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:shield-moon
+                icon_height: 50px
+                tap_action:
+                  action: call-service
+                  service: input_text.set_value
+                  target:
+                    entity_id: input_text.alarm_dashboard_action
+                  data:
+                    value: arm_night
+              - type: button
+                show_name: false
+                show_icon: true
+                icon: mdi:shield-off
+                icon_height: 50px
+                tap_action:
+                  action: call-service
+                  service: input_text.set_value
+                  target:
+                    entity_id: input_text.alarm_dashboard_action
+                  data:
+                    value: disarm
+        ```
+      icon: mdi:code-braces
+      collapsed: true
+      input: {}
+
+    alarm_automation_main:
+      name: Automation - Main Settings
+      description: Configure automatic arm/disarm based on presence and time schedules.
+      icon: mdi:home-automation
+      collapsed: true
+      input:
+        alarm_presence_sensor:
+          name: Presence Sensor
+          description: |
+            `optional` `binary_sensor`
+
+            Binary sensor indicating if anyone is home (on=home, off=away). Required for auto-arm/disarm and schedule automation. Leave empty if not using automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - occupancy
+                    - presence
+              multiple: false
+        alarm_auto_arm_away:
+          name: Auto-Arm Away When Leaving
+          description: |
+            `optional` `boolean`
+
+            Automatically arm in Away mode when everyone leaves (presence sensor on → off). No built-in delay. Requires presence sensor.
+          default: false
+          selector:
+            boolean:
+        alarm_auto_disarm_arriving:
+          name: Auto-Disarm When Arriving
+          description: |
+            `optional` `boolean`
+
+            Automatically disarm when someone arrives (presence sensor off → on), but only during scheduled hours. Prevents unexpected disarming at unusual times. Requires presence sensor and active schedule.
+          default: false
+          selector:
+            boolean:
+
+        schedule_mode:
+          name: Schedule Mode
+          description: |
+            `optional` `select`
+
+            Choose how time-based scheduling works.
+            - **Per Day**: Set individual start/end times for each day of the week.
+            - **Workday / Non-Workday**: Two schedules switched by a Workday sensor (handles holidays automatically).
+            - **Disabled**: No time-based scheduling. Presence-based auto-arm/disarm still works.
+          default: "per_day"
+          selector:
+            select:
+              options:
+                - label: "Per Day"
+                  value: "per_day"
+                - label: "Workday / Non-Workday"
+                  value: "workday"
+                - label: "Disabled"
+                  value: "disabled"
+        alarm_workday_sensor:
+          name: Workday Sensor
+          description: |
+            `optional` `entity`
+
+            Binary sensor from the Workday integration (`on` = workday, `off` = non-workday/holiday). Only used when Schedule Mode is Workday / Non-Workday.
+
+            **Setup:** Settings → Devices & Services → Add Integration → Workday
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: binary_sensor
+              multiple: false
+
+    alarm_automation_monday:
+      name: Automation - Monday
+      description: Configure automatic alarm mode changes for Monday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_mon_enabled:
+          name: Enable Monday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Monday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_mon_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Monday (e.g., when you wake up).
+          default: "07:30:00"
+          selector:
+            time:
+        alarm_schedule_mon_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_mon_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Monday (e.g., at bedtime).
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_mon_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_tuesday:
+      name: Automation - Tuesday
+      description: Configure automatic alarm mode changes for Tuesday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_tue_enabled:
+          name: Enable Tuesday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Tuesday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_tue_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Tuesday.
+          default: "07:30:00"
+          selector:
+            time:
+        alarm_schedule_tue_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_tue_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Tuesday.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_tue_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_wednesday:
+      name: Automation - Wednesday
+      description: Configure automatic alarm mode changes for Wednesday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_wed_enabled:
+          name: Enable Wednesday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Wednesday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_wed_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Wednesday.
+          default: "07:30:00"
+          selector:
+            time:
+        alarm_schedule_wed_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_wed_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Wednesday.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_wed_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_thursday:
+      name: Automation - Thursday
+      description: Configure automatic alarm mode changes for Thursday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_thu_enabled:
+          name: Enable Thursday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Thursday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_thu_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Thursday.
+          default: "07:30:00"
+          selector:
+            time:
+        alarm_schedule_thu_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_thu_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Thursday.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_thu_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_friday:
+      name: Automation - Friday
+      description: Configure automatic alarm mode changes for Friday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_fri_enabled:
+          name: Enable Friday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Friday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_fri_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Friday.
+          default: "07:30:00"
+          selector:
+            time:
+        alarm_schedule_fri_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_fri_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Friday.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_fri_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_saturday:
+      name: Automation - Saturday
+      description: Configure automatic alarm mode changes for Saturday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_sat_enabled:
+          name: Enable Saturday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Saturday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_sat_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Saturday.
+          default: "08:30:00"
+          selector:
+            time:
+        alarm_schedule_sat_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_sat_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Saturday.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_sat_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_sunday:
+      name: Automation - Sunday
+      description: Configure automatic alarm mode changes for Sunday. Only used when Schedule Mode is Per Day.
+      icon: mdi:calendar-clock
+      collapsed: true
+      input:
+        alarm_schedule_sun_enabled:
+          name: Enable Sunday
+          description: |
+            `optional` `boolean`
+
+            Enable automatic mode changes for Sunday.
+          default: true
+          selector:
+            boolean:
+        alarm_schedule_sun_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on Sunday.
+          default: "08:30:00"
+          selector:
+            time:
+        alarm_schedule_sun_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time. Only changes mode if someone is home.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_sun_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on Sunday.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_sun_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time. Only changes mode if someone is home.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_workday:
+      name: Automation - Workday Schedule
+      description: Schedule for workdays (sensor on). Only used when Schedule Mode is Workday / Non-Workday.
+      icon: mdi:briefcase
+      collapsed: true
+      input:
+        alarm_schedule_workday_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on workdays.
+          default: "07:30:00"
+          selector:
+            time:
+        alarm_schedule_workday_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time on workdays.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_workday_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on workdays.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_workday_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time on workdays.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_automation_nonworkday:
+      name: Automation - Non-Workday Schedule
+      description: Schedule for non-workdays (weekends + holidays). Only used when Schedule Mode is Workday / Non-Workday.
+      icon: mdi:calendar-weekend
+      collapsed: true
+      input:
+        alarm_schedule_nonworkday_start_time:
+          name: Start Time
+          description: |
+            `optional` `time`
+
+            When to switch to daytime mode on non-workdays (weekends and holidays).
+          default: "08:30:00"
+          selector:
+            time:
+        alarm_schedule_nonworkday_start_mode:
+          name: Start Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at start time on non-workdays.
+          default: disarmed
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+        alarm_schedule_nonworkday_end_time:
+          name: End Time
+          description: |
+            `optional` `time`
+
+            When to switch to nighttime mode on non-workdays.
+          default: "23:00:00"
+          selector:
+            time:
+        alarm_schedule_nonworkday_end_mode:
+          name: End Mode
+          description: |
+            `optional` `select`
+
+            Alarm mode to set at end time on non-workdays.
+          default: armed_night
+          selector:
+            select:
+              options:
+                - label: Disarmed
+                  value: disarmed
+                - label: Armed Home
+                  value: armed_home
+                - label: Armed Night
+                  value: armed_night
+
+    alarm_notifications:
+      name: Notifications & Announcements
+      description: Configure devices for text notifications and audio announcements.
+      icon: mdi:bell-ring
+      collapsed: true
+      input:
+        alarm_default_user_name:
+          name: Default User Name
+          description: |
+            `required` `text`
+
+            Fallback name used in notifications when the actual user is unknown (automations, sensors, or undetermined users). Use `{user_name}` template variable in notification messages.
+          default: "Home Assistant"
+          selector:
+            text:
+        alarm_notifications_target:
+          name: Text Notifications Target
+          description: |
+            `optional` `device`
+
+            Mobile devices to receive alarm notifications via Home Assistant Companion app. Supports single or multiple devices. Leave empty to disable text notifications.
+          default: []
+          selector:
+            device:
+              filter:
+                - integration: mobile_app
+              multiple: true
+        alarm_announcements_engine:
+          name: Audio Announcements Engine
+          description: |
+            `optional` `tts`
+
+            TTS engine for spoken alarm announcements. Must be configured in Home Assistant first. Leave empty to disable audio announcements.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: tts
+        alarm_announcements_player:
+          name: Audio Announcements Player
+          description: |
+            `optional` `media_player`
+
+            Media player(s) for TTS announcements. Supports smart speakers, audio systems, or multiple players. Leave empty to disable audio announcements.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - media_player
+              multiple: true
+
+    alarm_mode_away:
+      name: Mode - Armed Away
+      description: Configure sensors, notifications, and scripts for Away mode.
+      icon: mdi:shield-lock
+      collapsed: true
+      input:
+        alarm_sensor_away:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Binary sensors that trigger the alarm in Away mode. Any sensor activating will trigger the alarm (OR logic). Leave empty to disable sensor monitoring.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - door
+                    - motion
+                    - occupancy
+                    - opening
+                    - presence
+                    - window
+              multiple: true
+        alarm_notifications_armed_away:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when entering Armed Away mode. Use `{user_name}` template variable for the person who armed the alarm.
+          default: "The alarm is now armed in Away mode by {user_name}."
+          selector:
+            text:
+        alarm_notifications_critical_armed_away:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_armed_away:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-lock"
+          selector:
+            icon:
+              placeholder: mdi:shield-lock
+        alarm_notifications_channel_armed_away:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_armed_away:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_away:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when entering Armed Away mode. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_away:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in Armed Away notification. iOS shows live video feed, Android shows static snapshot. Leave empty to disable camera preview.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_away_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_home:
+      name: Mode - Armed Home
+      description: Configure sensors, notifications, and scripts for Home mode.
+      icon: mdi:shield-home
+      collapsed: true
+      input:
+        alarm_sensor_home:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Binary sensors that trigger the alarm in Home mode. Typically perimeter sensors only (no motion sensors). Any sensor activating will trigger the alarm (OR logic).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - door
+                    - motion
+                    - occupancy
+                    - opening
+                    - presence
+                    - window
+              multiple: true
+        alarm_notifications_armed_home:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when entering Armed Home mode. Use `{user_name}` template variable for the person who armed the alarm.
+          default: "The alarm is now armed in Home mode by {user_name}."
+          selector:
+            text:
+        alarm_notifications_critical_armed_home:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_armed_home:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-home"
+          selector:
+            icon:
+              placeholder: mdi:shield-home
+        alarm_notifications_channel_armed_home:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_armed_home:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_home:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when entering Armed Home mode. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_home:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in Armed Home notification. iOS shows live video feed, Android shows static snapshot. Leave empty to disable camera preview.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_home_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_night:
+      name: Mode - Armed Night
+      description: Configure sensors, notifications, and scripts for Night mode.
+      icon: mdi:shield-moon
+      collapsed: true
+      input:
+        alarm_sensor_night:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Binary sensors that trigger the alarm in Night mode. Typically perimeter sensors and optional ground floor motion sensors (not bedroom/upstairs sensors). Any sensor activating will trigger (OR logic).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - door
+                    - motion
+                    - occupancy
+                    - opening
+                    - presence
+                    - window
+              multiple: true
+        alarm_notifications_armed_night:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when entering Armed Night mode. Use `{user_name}` template variable for the person who armed the alarm.
+          default: "The alarm is now armed in Night mode by {user_name}."
+          selector:
+            text:
+        alarm_notifications_critical_armed_night:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_armed_night:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-moon"
+          selector:
+            icon:
+              placeholder: mdi:shield-moon
+        alarm_notifications_channel_armed_night:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_armed_night:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_night:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when entering Armed Night mode. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_night:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in Armed Night notification. iOS shows live video feed, Android shows static snapshot. Leave empty to disable camera preview.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_night_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_arming:
+      name: Mode - Arming
+      description: Configure notifications and scripts for when the alarm is arming (countdown before armed).
+      icon: mdi:shield-half-full
+      collapsed: true
+      input:
+        alarm_notifications_arming:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message during arming countdown. Use `{user_name}` template variable for the person who is arming the alarm.
+          default: "The alarm is being armed by {user_name}. Please exit the house promptly!"
+          selector:
+            text:
+        alarm_notifications_critical_arming:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_arming:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-half-full"
+          selector:
+            icon:
+              placeholder: mdi:shield-half-full
+        alarm_notifications_channel_arming:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_arming:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_arming:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when entering arming countdown. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+
+    alarm_mode_pending:
+      name: Mode - Pending
+      description: Configure notifications and scripts for when the alarm is pending (delay before triggering).
+      icon: mdi:shield-outline
+      collapsed: true
+      input:
+        alarm_notifications_pending:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when sensor triggers pending countdown. Use `{trigger_name}` template variable for the sensor that triggered the alarm.
+          default: "The alarm was triggered by {trigger_name}! Please disarm the alarm to prevent it from activating!"
+          selector:
+            text:
+        alarm_notifications_critical_pending:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_pending:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-outline"
+          selector:
+            icon:
+              placeholder: mdi:shield-outline
+        alarm_notifications_channel_pending:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_pending:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_pending:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when entering pending state. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+
+    alarm_mode_disarmed:
+      name: Mode - Disarmed
+      description: Configure notifications and scripts for when the alarm is disarmed.
+      icon: mdi:shield-off
+      collapsed: true
+      input:
+        alarm_notifications_disarmed:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when alarm is disarmed. Use `{user_name}` template variable for the person who disarmed the alarm.
+          default: "The alarm is now disarmed by {user_name}."
+          selector:
+            text:
+        alarm_notifications_critical_disarmed:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_disarmed:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-off"
+          selector:
+            icon:
+              placeholder: mdi:shield-off
+        alarm_notifications_channel_disarmed:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_disarmed:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_disarmed:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when alarm is disarmed. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+
+    alarm_mode_triggered:
+      name: Mode - Triggered
+      description: Configure notifications and scripts for when the alarm is triggered (active alarm).
+      icon: mdi:shield-alert
+      collapsed: true
+      input:
+        alarm_notifications_triggered:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when alarm is fully triggered. Use `{trigger_name}` template variable for the sensor that triggered the alarm.
+          default: "The alarm was triggered by {trigger_name}! The alarm has been activated!"
+          selector:
+            text:
+        alarm_notifications_critical_triggered:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: true
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_triggered:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-alert"
+          selector:
+            icon:
+              placeholder: mdi:shield-alert
+        alarm_notifications_channel_triggered:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_notifications_group_triggered:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_triggered:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when alarm triggers. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_triggered:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in triggered alarm notification. iOS shows live video feed, Android shows static snapshot. Leave empty to disable camera preview.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_triggered_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_emergency:
+      name: Mode - Emergency
+      description: Configure notifications and scripts for Emergency mode (activated by long-pressing SOS on keypad, no PIN required). This mode is independent of the alarm control panel.
+      icon: mdi:shield-star
+      collapsed: true
+      input:
+        alarm_notifications_emergency:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when Emergency mode is activated (long-press SOS button on keypad). Requires no PIN code for instant activation.
+          default: Emergency mode activated!
+          selector:
+            text:
+        alarm_notifications_critical_emergency:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: true
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_emergency:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield-star"
+          selector:
+            icon:
+              placeholder: mdi:shield-star
+        alarm_notifications_channel_emergency:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "Emergency"
+          selector:
+            text:
+        alarm_notifications_group_emergency:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_emergency:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when Emergency mode is activated. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_emergency:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in Emergency mode notification. iOS shows live video feed, Android shows static snapshot. Leave empty to disable camera preview.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_emergency_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_always:
+      name: Sensors - Always Active
+      description: Configure sensors and notifications that trigger regardless of alarm state (does not trigger the alarm itself).
+      icon: mdi:shield
+      collapsed: true
+      input:
+        alarm_sensor_always:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Binary sensors monitored 24/7 regardless of alarm state. Sends notifications only, does not trigger alarm. Leave empty to disable always-active monitoring.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - door
+                    - motion
+                    - occupancy
+                    - opening
+                    - presence
+                    - window
+              multiple: true
+        alarm_notifications_always:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when an always-active sensor triggers. Use `{trigger_name}` template variable for the sensor name.
+          default: "Sensor triggered: {trigger_name}!"
+          selector:
+            text:
+        alarm_notifications_critical_always:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS). Enable for important security events, disable for routine changes.
+          default: false
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_always:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:shield"
+          selector:
+            icon:
+              placeholder: mdi:shield
+        alarm_notifications_channel_always:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds per mode. Configure in HA Companion app → Settings → Notifications → Manage Channels.
+          default: "General"
+          selector:
+            text:
+        alarm_notifications_group_always:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple alarm notifications together. Prevents notification spam by combining them into an expandable group.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_always:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when always-active sensors trigger. All scripts run in parallel. Leave empty to disable script automation.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_always:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in always-active sensor notifications. iOS shows live video feed, Android shows static snapshot. Leave empty to disable camera preview.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_always_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_fire:
+      name: Sensors - Fire/Smoke/Heat
+      description: Configure fire, smoke, and heat sensors with emergency notifications (does not trigger the alarm itself).
+      icon: mdi:fire-alert
+      collapsed: true
+      input:
+        alarm_sensor_fire:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Fire, smoke, and heat sensors that trigger emergency notifications. Does not trigger alarm itself. Leave empty to disable fire monitoring.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - heat
+                    - smoke
+              multiple: true
+        alarm_notifications_fire:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when fire sensor triggers. Use `{trigger_name}` template variable for the sensor name.
+          default: "{trigger_name} detected a fire!"
+          selector:
+            text:
+        alarm_notifications_critical_fire:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS).
+          default: true
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_fire:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:fire-alert"
+          selector:
+            icon:
+              placeholder: mdi:fire-alert
+        alarm_notifications_channel_fire:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds. Configure in HA Companion app.
+          default: "Emergency"
+          selector:
+            text:
+        alarm_notifications_group_fire:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple notifications together.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_fire:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when fire sensors trigger. All scripts run in parallel. Leave empty to disable.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_fire:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in fire notifications. iOS shows live video, Android shows snapshot. Leave empty to disable.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_fire_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_gas:
+      name: Sensors - Gas/CO
+      description: Configure carbon monoxide and gas sensors with emergency notifications (does not trigger the alarm itself).
+      icon: mdi:smoke-detector-alert
+      collapsed: true
+      input:
+        alarm_sensor_gas:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Carbon monoxide and gas sensors that trigger emergency notifications. Does not trigger alarm itself. Leave empty to disable gas monitoring.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - carbon_monoxide
+                    - gas
+              multiple: true
+        alarm_notifications_gas:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when gas sensor triggers. Use `{trigger_name}` template variable for the sensor name.
+          default: "{trigger_name} detected gas!"
+          selector:
+            text:
+        alarm_notifications_critical_gas:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS).
+          default: true
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_gas:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:smoke-detector-alert"
+          selector:
+            icon:
+              placeholder: mdi:smoke-detector-alert
+        alarm_notifications_channel_gas:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds. Configure in HA Companion app.
+          default: "Emergency"
+          selector:
+            text:
+        alarm_notifications_group_gas:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple notifications together.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_gas:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when gas sensors trigger. All scripts run in parallel. Leave empty to disable.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_gas:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in gas notifications. iOS shows live video, Android shows snapshot. Leave empty to disable.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_gas_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+    alarm_mode_moisture:
+      name: Sensors - Moisture
+      description: Configure moisture sensors with emergency notifications (does not trigger the alarm itself).
+      icon: mdi:water-alert
+      collapsed: true
+      input:
+        alarm_sensor_moisture:
+          name: Sensors
+          description: |
+            `optional` `binary_sensor`
+
+            Moisture sensors that trigger emergency notifications. Does not trigger alarm itself. Leave empty to disable moisture monitoring.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - binary_sensor
+                  device_class:
+                    - moisture
+              multiple: true
+        alarm_notifications_moisture:
+          name: Notification Message
+          description: |
+            `required` `text`
+
+            Notification message when moisture sensor triggers. Use `{trigger_name}` template variable for the sensor name.
+          default: "{trigger_name} detected moisture!"
+          selector:
+            text:
+        alarm_notifications_critical_moisture:
+          name: Critical Notification
+          description: |
+            `optional` `boolean` `android` `ios`
+
+            Make notification high-priority, bypassing Do Not Disturb (Android) and Focus modes (iOS).
+          default: true
+          selector:
+            boolean:
+        alarm_notifications_status_bar_icon_moisture:
+          name: Status Bar Icon
+          description: |
+            `optional` `icon` `android`
+
+            Custom icon for Android notification status bar.
+          default: "mdi:water-alert"
+          selector:
+            icon:
+              placeholder: mdi:water-alert
+        alarm_notifications_channel_moisture:
+          name: Notification Channel
+          description: |
+            `optional` `text` `android`
+
+            Android notification channel for custom sounds. Configure in HA Companion app.
+          default: "Emergency"
+          selector:
+            text:
+        alarm_notifications_group_moisture:
+          name: Notification Group
+          description: |
+            `optional` `text` `android`
+
+            Android notification grouping to organize multiple notifications together.
+          default: "Alarm"
+          selector:
+            text:
+        alarm_scripts_moisture:
+          name: Scripts
+          description: |
+            `optional` `script`
+
+            Scripts to execute when moisture sensors trigger. All scripts run in parallel. Leave empty to disable.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - script
+              multiple: true
+        alarm_camera_moisture:
+          name: Camera
+          description: |
+            `optional` `camera` `ios` `android`
+
+            Camera to include in moisture notifications. iOS shows live video, Android shows snapshot. Leave empty to disable.
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain:
+                    - camera
+              multiple: false
+        alarm_camera_moisture_click_action:
+          name: Camera Click Action
+          description: |
+            `optional` `text` `android`
+
+            Lovelace dashboard path to open when tapping camera notification. Format: `/lovelace/view_name`. Leave empty for default view.
+          default: ""
+          selector:
+            text:
+
+mode: parallel
+max_exceeded: silent
+
+trigger_variables:
+  integration_type: !input integration_type
+  z2m_base_topic: !input z2m_base_topic
+  z2m_alarm_keypad: !input z2m_alarm_keypad
+  alarm_dashboard_action: !input alarm_dashboard_action
+  notification_actions:
+    - action: disarm
+      title: Alarm Disarm
+      icon: "sfsymbols:bell.slash"
+    - action: arm_home
+      title: Alarm Home
+      icon: "sfsymbols:bell.fill"
+    - action: arm_night
+      title: Alarm Night
+      icon: "sfsymbols:bell"
+
+triggers:
+  - trigger: state
+    entity_id: !input alarm_control_panel_main
+    alias: alarm_main
+    id: alarm_main
+  - trigger: mqtt
+    topic: "{{ z2m_base_topic ~ '/' ~ z2m_alarm_keypad }}"
+    alias: z2m_keypad
+    id: z2m_keypad
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: !input zha_alarm_keypad_device
+      command: arm
+    alias: zha_keypad
+    id: zha_keypad
+  - trigger: state
+    entity_id: !input alarm_sensor_away
+    to: "on"
+    alias: alarm_sensor_away
+    id: alarm_sensor_away
+  - trigger: state
+    entity_id: !input alarm_sensor_home
+    to: "on"
+    alias: alarm_sensor_home
+    id: alarm_sensor_home
+  - trigger: state
+    entity_id: !input alarm_sensor_night
+    to: "on"
+    alias: alarm_sensor_night
+    id: alarm_sensor_night
+  - trigger: state
+    entity_id: !input alarm_sensor_always
+    to: "on"
+    alias: alarm_sensor_always
+    id: alarm_sensor_always
+  - trigger: state
+    entity_id: !input alarm_sensor_fire
+    to: "on"
+    alias: alarm_sensor_fire
+    id: alarm_sensor_fire
+    for: "00:00:02"
+  - trigger: state
+    entity_id: !input alarm_sensor_gas
+    to: "on"
+    alias: alarm_sensor_gas
+    id: alarm_sensor_gas
+    for: "00:00:02"
+  - trigger: state
+    entity_id: !input alarm_sensor_moisture
+    to: "on"
+    alias: alarm_sensor_moisture
+    id: alarm_sensor_moisture
+    for: "00:00:02"
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: "arm_home"
+    alias: action_arm_home
+    id: action_arm_home
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: "arm_night"
+    alias: action_arm_night
+    id: action_arm_night
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: "disarm"
+    alias: action_disarm
+    id: action_disarm
+  - trigger: state
+    entity_id: !input alarm_presence_sensor
+    alias: presence_change
+    id: presence_change
+  - trigger: time
+    at: !input alarm_schedule_mon_start_time
+    alias: time_mon_start
+    id: time_mon_start
+  - trigger: time
+    at: !input alarm_schedule_mon_end_time
+    alias: time_mon_end
+    id: time_mon_end
+  - trigger: time
+    at: !input alarm_schedule_tue_start_time
+    alias: time_tue_start
+    id: time_tue_start
+  - trigger: time
+    at: !input alarm_schedule_tue_end_time
+    alias: time_tue_end
+    id: time_tue_end
+  - trigger: time
+    at: !input alarm_schedule_wed_start_time
+    alias: time_wed_start
+    id: time_wed_start
+  - trigger: time
+    at: !input alarm_schedule_wed_end_time
+    alias: time_wed_end
+    id: time_wed_end
+  - trigger: time
+    at: !input alarm_schedule_thu_start_time
+    alias: time_thu_start
+    id: time_thu_start
+  - trigger: time
+    at: !input alarm_schedule_thu_end_time
+    alias: time_thu_end
+    id: time_thu_end
+  - trigger: time
+    at: !input alarm_schedule_fri_start_time
+    alias: time_fri_start
+    id: time_fri_start
+  - trigger: time
+    at: !input alarm_schedule_fri_end_time
+    alias: time_fri_end
+    id: time_fri_end
+  - trigger: time
+    at: !input alarm_schedule_sat_start_time
+    alias: time_sat_start
+    id: time_sat_start
+  - trigger: time
+    at: !input alarm_schedule_sat_end_time
+    alias: time_sat_end
+    id: time_sat_end
+  - trigger: time
+    at: !input alarm_schedule_sun_start_time
+    alias: time_sun_start
+    id: time_sun_start
+  - trigger: time
+    at: !input alarm_schedule_sun_end_time
+    alias: time_sun_end
+    id: time_sun_end
+  - trigger: time
+    at: !input alarm_schedule_workday_start_time
+    alias: time_workday_start
+    id: time_workday_start
+  - trigger: time
+    at: !input alarm_schedule_workday_end_time
+    alias: time_workday_end
+    id: time_workday_end
+  - trigger: time
+    at: !input alarm_schedule_nonworkday_start_time
+    alias: time_nonworkday_start
+    id: time_nonworkday_start
+  - trigger: time
+    at: !input alarm_schedule_nonworkday_end_time
+    alias: time_nonworkday_end
+    id: time_nonworkday_end
+  - trigger: template
+    value_template: "{{ alarm_dashboard_action != none and states(alarm_dashboard_action) not in ['', 'unknown', 'unavailable'] }}"
+    alias: dashboard_keypad
+    id: dashboard_keypad
+
+variables:
+  alarm_main: !input alarm_control_panel_main
+  alarm_code_main: !input alarm_code_main
+  alarm_code_main_state: "{{ states(alarm_code_main) if alarm_code_main != none else '' }}"
+  alarm_codes: !input alarm_code_user
+  alarm_codes_state: "{{ alarm_codes | map('states') | list }}"
+  alarm_code_user_name: !input alarm_code_user_name
+  alarm_default_user_name: !input alarm_default_user_name
+  integration_type: !input integration_type
+  z2m_base_topic: !input z2m_base_topic
+  z2m_alarm_keypad: !input z2m_alarm_keypad
+  zha_alarm_keypad_device: !input zha_alarm_keypad_device
+  zha_alarm_control_panel_keypad: !input zha_alarm_control_panel_keypad
+  zha_alarm_code_keypad: !input zha_alarm_code_keypad
+  zha_alarm_code_keypad_state: "{{ states(zha_alarm_code_keypad) if zha_alarm_code_keypad != none else '' }}"
+  alarm_announcements_engine: !input alarm_announcements_engine
+  alarm_announcements_player: !input alarm_announcements_player
+  alarm_notifications_target: !input alarm_notifications_target
+  alarm_notifications_armed_away: !input alarm_notifications_armed_away
+  alarm_notifications_critical_armed_away: !input alarm_notifications_critical_armed_away
+  alarm_notifications_status_bar_icon_armed_away: !input alarm_notifications_status_bar_icon_armed_away
+  alarm_notifications_channel_armed_away: !input alarm_notifications_channel_armed_away
+  alarm_notifications_group_armed_away: !input alarm_notifications_group_armed_away
+  alarm_notifications_armed_home: !input alarm_notifications_armed_home
+  alarm_notifications_critical_armed_home: !input alarm_notifications_critical_armed_home
+  alarm_notifications_status_bar_icon_armed_home: !input alarm_notifications_status_bar_icon_armed_home
+  alarm_notifications_channel_armed_home: !input alarm_notifications_channel_armed_home
+  alarm_notifications_group_armed_home: !input alarm_notifications_group_armed_home
+  alarm_notifications_armed_night: !input alarm_notifications_armed_night
+  alarm_notifications_critical_armed_night: !input alarm_notifications_critical_armed_night
+  alarm_notifications_status_bar_icon_armed_night: !input alarm_notifications_status_bar_icon_armed_night
+  alarm_notifications_channel_armed_night: !input alarm_notifications_channel_armed_night
+  alarm_notifications_group_armed_night: !input alarm_notifications_group_armed_night
+  alarm_notifications_arming: !input alarm_notifications_arming
+  alarm_notifications_critical_arming: !input alarm_notifications_critical_arming
+  alarm_notifications_status_bar_icon_arming: !input alarm_notifications_status_bar_icon_arming
+  alarm_notifications_channel_arming: !input alarm_notifications_channel_arming
+  alarm_notifications_group_arming: !input alarm_notifications_group_arming
+  alarm_notifications_pending: !input alarm_notifications_pending
+  alarm_notifications_critical_pending: !input alarm_notifications_critical_pending
+  alarm_notifications_status_bar_icon_pending: !input alarm_notifications_status_bar_icon_pending
+  alarm_notifications_channel_pending: !input alarm_notifications_channel_pending
+  alarm_notifications_group_pending: !input alarm_notifications_group_pending
+  alarm_notifications_triggered: !input alarm_notifications_triggered
+  alarm_notifications_critical_triggered: !input alarm_notifications_critical_triggered
+  alarm_notifications_status_bar_icon_triggered: !input alarm_notifications_status_bar_icon_triggered
+  alarm_notifications_channel_triggered: !input alarm_notifications_channel_triggered
+  alarm_notifications_group_triggered: !input alarm_notifications_group_triggered
+  alarm_notifications_disarmed: !input alarm_notifications_disarmed
+  alarm_notifications_critical_disarmed: !input alarm_notifications_critical_disarmed
+  alarm_notifications_status_bar_icon_disarmed: !input alarm_notifications_status_bar_icon_disarmed
+  alarm_notifications_channel_disarmed: !input alarm_notifications_channel_disarmed
+  alarm_notifications_group_disarmed: !input alarm_notifications_group_disarmed
+  alarm_notifications_emergency: !input alarm_notifications_emergency
+  alarm_notifications_critical_emergency: !input alarm_notifications_critical_emergency
+  alarm_notifications_status_bar_icon_emergency: !input alarm_notifications_status_bar_icon_emergency
+  alarm_notifications_channel_emergency: !input alarm_notifications_channel_emergency
+  alarm_notifications_group_emergency: !input alarm_notifications_group_emergency
+  alarm_notifications_always: !input alarm_notifications_always
+  alarm_notifications_critical_always: !input alarm_notifications_critical_always
+  alarm_notifications_status_bar_icon_always: !input alarm_notifications_status_bar_icon_always
+  alarm_notifications_channel_always: !input alarm_notifications_channel_always
+  alarm_notifications_group_always: !input alarm_notifications_group_always
+  alarm_notifications_fire: !input alarm_notifications_fire
+  alarm_notifications_critical_fire: !input alarm_notifications_critical_fire
+  alarm_notifications_status_bar_icon_fire: !input alarm_notifications_status_bar_icon_fire
+  alarm_notifications_channel_fire: !input alarm_notifications_channel_fire
+  alarm_notifications_group_fire: !input alarm_notifications_group_fire
+  alarm_notifications_gas: !input alarm_notifications_gas
+  alarm_notifications_critical_gas: !input alarm_notifications_critical_gas
+  alarm_notifications_status_bar_icon_gas: !input alarm_notifications_status_bar_icon_gas
+  alarm_notifications_channel_gas: !input alarm_notifications_channel_gas
+  alarm_notifications_group_gas: !input alarm_notifications_group_gas
+  alarm_notifications_moisture: !input alarm_notifications_moisture
+  alarm_notifications_critical_moisture: !input alarm_notifications_critical_moisture
+  alarm_notifications_status_bar_icon_moisture: !input alarm_notifications_status_bar_icon_moisture
+  alarm_notifications_channel_moisture: !input alarm_notifications_channel_moisture
+  alarm_notifications_group_moisture: !input alarm_notifications_group_moisture
+  alarm_sensor_fire: !input alarm_sensor_fire
+  alarm_sensor_gas: !input alarm_sensor_gas
+  alarm_sensor_moisture: !input alarm_sensor_moisture
+  alarm_sensor_away: !input alarm_sensor_away
+  alarm_sensor_home: !input alarm_sensor_home
+  alarm_sensor_night: !input alarm_sensor_night
+  alarm_sensor_always: !input alarm_sensor_always
+  alarm_scripts_away: !input alarm_scripts_away
+  alarm_scripts_home: !input alarm_scripts_home
+  alarm_scripts_night: !input alarm_scripts_night
+  alarm_scripts_disarmed: !input alarm_scripts_disarmed
+  alarm_scripts_arming: !input alarm_scripts_arming
+  alarm_scripts_pending: !input alarm_scripts_pending
+  alarm_scripts_triggered: !input alarm_scripts_triggered
+  alarm_scripts_emergency: !input alarm_scripts_emergency
+  alarm_scripts_always: !input alarm_scripts_always
+  alarm_scripts_fire: !input alarm_scripts_fire
+  alarm_scripts_gas: !input alarm_scripts_gas
+  alarm_scripts_moisture: !input alarm_scripts_moisture
+  alarm_presence_sensor: !input alarm_presence_sensor
+  alarm_auto_arm_away: !input alarm_auto_arm_away
+  alarm_auto_disarm_arriving: !input alarm_auto_disarm_arriving
+  alarm_schedule_mode: !input schedule_mode
+  alarm_workday_sensor: !input alarm_workday_sensor
+  alarm_schedule_mon_enabled: !input alarm_schedule_mon_enabled
+  alarm_schedule_mon_start_time: !input alarm_schedule_mon_start_time
+  alarm_schedule_mon_start_mode: !input alarm_schedule_mon_start_mode
+  alarm_schedule_mon_end_time: !input alarm_schedule_mon_end_time
+  alarm_schedule_mon_end_mode: !input alarm_schedule_mon_end_mode
+  alarm_schedule_tue_enabled: !input alarm_schedule_tue_enabled
+  alarm_schedule_tue_start_time: !input alarm_schedule_tue_start_time
+  alarm_schedule_tue_start_mode: !input alarm_schedule_tue_start_mode
+  alarm_schedule_tue_end_time: !input alarm_schedule_tue_end_time
+  alarm_schedule_tue_end_mode: !input alarm_schedule_tue_end_mode
+  alarm_schedule_wed_enabled: !input alarm_schedule_wed_enabled
+  alarm_schedule_wed_start_time: !input alarm_schedule_wed_start_time
+  alarm_schedule_wed_start_mode: !input alarm_schedule_wed_start_mode
+  alarm_schedule_wed_end_time: !input alarm_schedule_wed_end_time
+  alarm_schedule_wed_end_mode: !input alarm_schedule_wed_end_mode
+  alarm_schedule_thu_enabled: !input alarm_schedule_thu_enabled
+  alarm_schedule_thu_start_time: !input alarm_schedule_thu_start_time
+  alarm_schedule_thu_start_mode: !input alarm_schedule_thu_start_mode
+  alarm_schedule_thu_end_time: !input alarm_schedule_thu_end_time
+  alarm_schedule_thu_end_mode: !input alarm_schedule_thu_end_mode
+  alarm_schedule_fri_enabled: !input alarm_schedule_fri_enabled
+  alarm_schedule_fri_start_time: !input alarm_schedule_fri_start_time
+  alarm_schedule_fri_start_mode: !input alarm_schedule_fri_start_mode
+  alarm_schedule_fri_end_time: !input alarm_schedule_fri_end_time
+  alarm_schedule_fri_end_mode: !input alarm_schedule_fri_end_mode
+  alarm_schedule_sat_enabled: !input alarm_schedule_sat_enabled
+  alarm_schedule_sat_start_time: !input alarm_schedule_sat_start_time
+  alarm_schedule_sat_start_mode: !input alarm_schedule_sat_start_mode
+  alarm_schedule_sat_end_time: !input alarm_schedule_sat_end_time
+  alarm_schedule_sat_end_mode: !input alarm_schedule_sat_end_mode
+  alarm_schedule_sun_enabled: !input alarm_schedule_sun_enabled
+  alarm_schedule_sun_start_time: !input alarm_schedule_sun_start_time
+  alarm_schedule_sun_start_mode: !input alarm_schedule_sun_start_mode
+  alarm_schedule_sun_end_time: !input alarm_schedule_sun_end_time
+  alarm_schedule_sun_end_mode: !input alarm_schedule_sun_end_mode
+  alarm_schedule_workday_start_time: !input alarm_schedule_workday_start_time
+  alarm_schedule_workday_start_mode: !input alarm_schedule_workday_start_mode
+  alarm_schedule_workday_end_time: !input alarm_schedule_workday_end_time
+  alarm_schedule_workday_end_mode: !input alarm_schedule_workday_end_mode
+  alarm_schedule_nonworkday_start_time: !input alarm_schedule_nonworkday_start_time
+  alarm_schedule_nonworkday_start_mode: !input alarm_schedule_nonworkday_start_mode
+  alarm_schedule_nonworkday_end_time: !input alarm_schedule_nonworkday_end_time
+  alarm_schedule_nonworkday_end_mode: !input alarm_schedule_nonworkday_end_mode
+  alarm_dashboard_code: !input alarm_dashboard_code
+  alarm_dashboard_action: !input alarm_dashboard_action
+
+conditions:
+  - condition: template
+    value_template: "{{ alarm_main != none }}"
+
+actions:
+  - alias: Main Alarm → Keypads (concurrent sync)
+    parallel:
+      - alias: "Alarm Main → Z2M Keypad"
+        if:
+          - condition: trigger
+            id: alarm_main
+          - condition: template
+            value_template: "{{ 'z2m' in integration_type and z2m_alarm_keypad != '' and z2m_alarm_keypad != none }}"
+        then:
+          - variables:
+              z2m_action: |
+                {% if is_state(alarm_main, 'armed_away') %}
+                  {  "arm_mode":   {    "mode": "arm_all_zones"  }}
+                {% elif is_state(alarm_main, 'armed_home') %}
+                  {  "arm_mode":   {    "mode": "arm_day_zones"  }}
+                {% elif is_state(alarm_main, 'armed_night') %}
+                  {  "arm_mode":   {    "mode": "arm_night_zones"  }}
+                {% elif is_state(alarm_main, 'disarmed') %}
+                  {  "arm_mode":   {    "mode": "disarm"  }}
+                {% elif is_state(alarm_main, 'arming') %}
+                  {  "arm_mode":   {    "mode": "exit_delay"  }}
+                {% elif is_state(alarm_main, 'pending') %}
+                  {  "arm_mode":   {    "mode": "entry_delay"  }}
+                {% elif is_state(alarm_main, 'triggered') %}
+                  {  "arm_mode":   {    "mode": "in_alarm"  }}
+                {% endif %}
+          - action: mqtt.publish
+            data:
+              topic: "{{ z2m_base_topic ~ '/' ~ z2m_alarm_keypad ~ '/set' }}"
+              payload: "{{ z2m_action }}"
+            continue_on_error: true
+
+      - alias: "Alarm Main → ZHA Keypad"
+        if:
+          - condition: trigger
+            id: alarm_main
+          - condition: template
+            value_template: "{{ 'zha' in integration_type and zha_alarm_control_panel_keypad != none and zha_alarm_control_panel_keypad != '' and zha_alarm_code_keypad != none and zha_alarm_code_keypad != '' }}"
+        then:
+          - variables:
+              zha_action: |
+                {% if is_state(alarm_main, 'armed_away') %}
+                  alarm_control_panel.alarm_arm_away
+                {% elif is_state(alarm_main, 'armed_home') %}
+                  alarm_control_panel.alarm_arm_home
+                {% elif is_state(alarm_main, 'armed_night') %}
+                  alarm_control_panel.alarm_arm_night
+                {% elif is_state(alarm_main, 'disarmed') %}
+                  alarm_control_panel.alarm_disarm
+                {% elif is_state(alarm_main, 'arming') %}
+                  alarm_control_panel.alarm_trigger
+                {% elif is_state(alarm_main, 'pending') %}
+                  alarm_control_panel.alarm_trigger
+                {% elif is_state(alarm_main, 'triggered') %}
+                  alarm_control_panel.alarm_trigger
+                {% endif %}
+          - action: "{{ zha_action }}"
+            data:
+              code: "{{ zha_alarm_code_keypad_state }}"
+            target:
+              entity_id: !input zha_alarm_control_panel_keypad
+            continue_on_error: true
+
+  - alias: Keypads → Main Alarm (concurrent sync)
+    parallel:
+      - alias: "Z2M Keypad → Alarm Main"
+        if:
+          - condition: trigger
+            id: z2m_keypad
+          - condition: template
+            value_template: "{{ trigger.payload_json.action_code in alarm_codes_state or (alarm_code_main_state != '' and trigger.payload_json.action_code == alarm_code_main_state) }}"
+        then:
+          - variables:
+              z2m_arm_action: |
+                {% if trigger.payload_json.action == "arm_all_zones" %}
+                  alarm_control_panel.alarm_arm_away
+                {% elif trigger.payload_json.action == "arm_day_zones" %}
+                  alarm_control_panel.alarm_arm_home
+                {% elif trigger.payload_json.action == "arm_night_zones" %}
+                  alarm_control_panel.alarm_arm_night
+                {% elif trigger.payload_json.action == "disarm" %}
+                  alarm_control_panel.alarm_disarm
+                {% endif %}
+              triggered_code: "{{ trigger.payload_json.action_code }}"
+              triggered_user_name: >
+                {% set code_to_match = trigger.payload_json.action_code | string %}
+                {% set ns = namespace(name=none) %}
+                {% for code_entity in alarm_codes %}
+                  {% if states(code_entity) | string == code_to_match %}
+                    {% set full_name = state_attr(code_entity, 'friendly_name') or code_entity.split('.')[1].replace('_', ' ').title() %}
+                    {% set ns.name = full_name.replace('Alarm Code ', '', 1) %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.name if ns.name != none else alarm_default_user_name }}
+          - if:
+              - condition: template
+                value_template: "{{ alarm_code_user_name != none }}"
+            then:
+              - action: input_text.set_value
+                target:
+                  entity_id: "{{ alarm_code_user_name }}"
+                data:
+                  value: "{{ triggered_user_name }}"
+          - action: "{{ z2m_arm_action }}"
+            data:
+              code: "{{ alarm_code_main_state if alarm_code_main_state != '' else triggered_code }}"
+            target:
+              entity_id: "{{ alarm_main }}"
+            continue_on_error: true
+
+      - alias: "ZHA Keypad → Alarm Main"
+        if:
+          - condition: trigger
+            id: zha_keypad
+          - condition: template
+            value_template: "{{ trigger.event.data.args.code in alarm_codes_state or (alarm_code_main_state != '' and trigger.event.data.args.code == alarm_code_main_state) }}"
+        then:
+          - variables:
+              zha_arm_action: |
+                {% if trigger.event.data.args.arm_mode == 3 %}
+                  alarm_control_panel.alarm_arm_away
+                {% elif trigger.event.data.args.arm_mode == 1 %}
+                  alarm_control_panel.alarm_arm_home
+                {% elif trigger.event.data.args.arm_mode == 2 %}
+                  alarm_control_panel.alarm_arm_night
+                {% elif trigger.event.data.args.arm_mode == 0 %}
+                  alarm_control_panel.alarm_disarm
+                {% endif %}
+              triggered_code: "{{ trigger.event.data.args.code }}"
+              triggered_user_name: >
+                {% set code_to_match = trigger.event.data.args.code | string %}
+                {% set ns = namespace(name=none) %}
+                {% for code_entity in alarm_codes %}
+                  {% if states(code_entity) | string == code_to_match %}
+                    {% set full_name = state_attr(code_entity, 'friendly_name') or code_entity.split('.')[1].replace('_', ' ').title() %}
+                    {% set ns.name = full_name.replace('Alarm Code ', '', 1) %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.name if ns.name != none else alarm_default_user_name }}
+          - if:
+              - condition: template
+                value_template: "{{ alarm_code_user_name != none }}"
+            then:
+              - action: input_text.set_value
+                target:
+                  entity_id: "{{ alarm_code_user_name }}"
+                data:
+                  value: "{{ triggered_user_name }}"
+          - action: "{{ zha_arm_action }}"
+            data:
+              code: "{{ alarm_code_main_state if alarm_code_main_state != '' else triggered_code }}"
+            target:
+              entity_id: "{{ alarm_main }}"
+            continue_on_error: true
+
+  - alias: Dashboard Keypad → Main Alarm
+    if:
+      - condition: trigger
+        id: dashboard_keypad
+      - condition: template
+        value_template: >
+          {{ alarm_dashboard_code != none and
+             alarm_dashboard_action != none and
+             trigger.to_state.state != '' }}
+    then:
+      - variables:
+          dashboard_code: "{{ states(alarm_dashboard_code) }}"
+          dashboard_action_raw: "{{ trigger.to_state.state }}"
+          dashboard_alarm_action: |
+            {% if dashboard_action_raw == "arm_away" %}
+              alarm_control_panel.alarm_arm_away
+            {% elif dashboard_action_raw == "arm_home" %}
+              alarm_control_panel.alarm_arm_home
+            {% elif dashboard_action_raw == "arm_night" %}
+              alarm_control_panel.alarm_arm_night
+            {% elif dashboard_action_raw == "disarm" %}
+              alarm_control_panel.alarm_disarm
+            {% else %}
+              invalid
+            {% endif %}
+          code_is_valid: >
+            {% set code_match = namespace(found=false) %}
+            {% set dashboard_code_str = dashboard_code | string %}
+            {% for code_entity in alarm_codes %}
+              {% if states(code_entity) | string == dashboard_code_str %}
+                {% set code_match.found = true %}
+              {% endif %}
+            {% endfor %}
+            {{ code_match.found or (alarm_code_main_state != '' and dashboard_code_str == alarm_code_main_state | string) }}
+          dashboard_user_name: >
+            {% set code_to_match = dashboard_code | string %}
+            {% set ns = namespace(name=none) %}
+            {% for code_entity in alarm_codes %}
+              {% if states(code_entity) | string == code_to_match %}
+                {% set full_name = state_attr(code_entity, 'friendly_name') or code_entity.split('.')[1].replace('_', ' ').title() %}
+                {% set ns.name = full_name.replace('Alarm Code ', '', 1) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.name if ns.name != none else '' }}
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ code_is_valid and dashboard_alarm_action != 'invalid' }}"
+            sequence:
+              - if:
+                  - condition: template
+                    value_template: "{{ alarm_code_user_name != none }}"
+                then:
+                  - action: input_text.set_value
+                    target:
+                      entity_id: "{{ alarm_code_user_name }}"
+                    data:
+                      value: "{{ dashboard_user_name }}"
+              - action: "{{ dashboard_alarm_action }}"
+                data:
+                  code: "{{ alarm_code_main_state if alarm_code_main_state != '' else dashboard_code }}"
+                target:
+                  entity_id: "{{ alarm_main }}"
+                continue_on_error: true
+              - parallel:
+                  - action: input_text.set_value
+                    target:
+                      entity_id: "{{ alarm_dashboard_code }}"
+                    data:
+                      value: ""
+                  - action: input_text.set_value
+                    target:
+                      entity_id: "{{ alarm_dashboard_action }}"
+                    data:
+                      value: ""
+              - delay:
+                  seconds: 5
+              - if:
+                  - condition: template
+                    value_template: "{{ alarm_code_user_name != none }}"
+                then:
+                  - action: input_text.set_value
+                    target:
+                      entity_id: "{{ alarm_code_user_name }}"
+                    data:
+                      value: ""
+        default:
+          - if:
+              - condition: template
+                value_template: "{{ alarm_code_user_name != none }}"
+            then:
+              - action: input_text.set_value
+                target:
+                  entity_id: "{{ alarm_code_user_name }}"
+                data:
+                  value: "Invalid Code"
+          - delay:
+              seconds: 2
+          - parallel:
+              - action: input_text.set_value
+                target:
+                  entity_id: "{{ alarm_dashboard_code }}"
+                data:
+                  value: ""
+              - action: input_text.set_value
+                target:
+                  entity_id: "{{ alarm_dashboard_action }}"
+                data:
+                  value: ""
+              - if:
+                  - condition: template
+                    value_template: "{{ alarm_code_user_name != none }}"
+                then:
+                  - action: input_text.set_value
+                    target:
+                      entity_id: "{{ alarm_code_user_name }}"
+                    data:
+                      value: ""
+
+  - alias: Alarm State Change Handler
+    if:
+      - condition: trigger
+        id: alarm_main
+    then:
+      - variables:
+          # Get the user name from the storage helper (updated by keypad actions)
+          triggered_user: >
+            {% if alarm_code_user_name != none %}
+              {% set user = states(alarm_code_user_name) %}
+              {{ user if user not in ['', 'unknown', 'unavailable', 'none'] else alarm_default_user_name }}
+            {% else %}
+              {{ alarm_default_user_name }}
+            {% endif %}
+          # Entity name that triggered the alarm (for pending/triggered states)
+          triggered_entity_name: "{{ trigger.to_state.name }}"
+          # Scripts configuration per state
+          scripts_config:
+            armed_away: "{{ alarm_scripts_away }}"
+            armed_home: "{{ alarm_scripts_home }}"
+            armed_night: "{{ alarm_scripts_night }}"
+            arming: "{{ alarm_scripts_arming }}"
+            pending: "{{ alarm_scripts_pending }}"
+            disarmed: "{{ alarm_scripts_disarmed }}"
+            triggered: "{{ alarm_scripts_triggered }}"
+          # Notification configuration per state
+          state_config:
+            armed_away:
+              message: "{{ alarm_notifications_armed_away | replace('{user_name}', triggered_user) }}"
+              critical: "{{ alarm_notifications_critical_armed_away }}"
+              icon: "{{ alarm_notifications_status_bar_icon_armed_away }}"
+              channel: "{{ alarm_notifications_channel_armed_away }}"
+              group: "{{ alarm_notifications_group_armed_away }}"
+              tag: "alarm-armed-away"
+              camera: !input alarm_camera_away
+              clickAction: !input alarm_camera_away_click_action
+            armed_home:
+              message: "{{ alarm_notifications_armed_home | replace('{user_name}', triggered_user) }}"
+              critical: "{{ alarm_notifications_critical_armed_home }}"
+              icon: "{{ alarm_notifications_status_bar_icon_armed_home }}"
+              channel: "{{ alarm_notifications_channel_armed_home }}"
+              group: "{{ alarm_notifications_group_armed_home }}"
+              tag: "alarm-armed-home"
+              camera: !input alarm_camera_home
+              clickAction: !input alarm_camera_home_click_action
+            armed_night:
+              message: "{{ alarm_notifications_armed_night | replace('{user_name}', triggered_user) }}"
+              critical: "{{ alarm_notifications_critical_armed_night }}"
+              icon: "{{ alarm_notifications_status_bar_icon_armed_night }}"
+              channel: "{{ alarm_notifications_channel_armed_night }}"
+              group: "{{ alarm_notifications_group_armed_night }}"
+              tag: "alarm-armed-night"
+              camera: !input alarm_camera_night
+              clickAction: !input alarm_camera_night_click_action
+            arming:
+              message: "{{ alarm_notifications_arming | replace('{user_name}', triggered_user) }}"
+              critical: "{{ alarm_notifications_critical_arming }}"
+              icon: "{{ alarm_notifications_status_bar_icon_arming }}"
+              channel: "{{ alarm_notifications_channel_arming }}"
+              group: "{{ alarm_notifications_group_arming }}"
+              tag: "alarm-arming"
+              camera: null
+              clickAction: ""
+            disarmed:
+              message: "{{ alarm_notifications_disarmed | replace('{user_name}', triggered_user) }}"
+              critical: "{{ alarm_notifications_critical_disarmed }}"
+              icon: "{{ alarm_notifications_status_bar_icon_disarmed }}"
+              channel: "{{ alarm_notifications_channel_disarmed }}"
+              group: "{{ alarm_notifications_group_disarmed }}"
+              tag: "alarm-disarmed"
+              camera: null
+              clickAction: ""
+            triggered:
+              message: "{{ alarm_notifications_triggered | replace('{trigger_name}', triggered_entity_name) }}"
+              critical: "{{ alarm_notifications_critical_triggered }}"
+              icon: "{{ alarm_notifications_status_bar_icon_triggered }}"
+              channel: "{{ alarm_notifications_channel_triggered }}"
+              group: "{{ alarm_notifications_group_triggered }}"
+              tag: "alarm-triggered"
+              camera: !input alarm_camera_triggered
+              clickAction: !input alarm_camera_triggered_click_action
+          current_state: "{{ states(alarm_main) }}"
+          current_scripts: "{{ scripts_config.get(current_state, []) }}"
+          config: "{{ state_config.get(current_state) if current_state not in ['pending'] else none }}"
+      - parallel:
+          # Run scripts for this state
+          - if:
+              - condition: template
+                value_template: "{{ current_scripts | count > 0 }}"
+            then:
+              - action: script.turn_on
+                target:
+                  entity_id: "{{ current_scripts }}"
+          # Send notifications
+          - if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 and config is not none }}"
+            then:
+              - parallel:
+                  - if:
+                      - condition: template
+                        value_template: "{{ config.critical == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ config.message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ config.camera if config.camera else none }}"
+                                image: >-
+                                  {% if config.camera %}
+                                    /api/camera_proxy/{{ config.camera }}
+                                  {% endif %}
+                                clickAction: "{{ config.clickAction if config.clickAction else '' }}"
+                                notification_icon: "{{ config.icon }}"
+                                channel: alarm_stream
+                                group: "{{ config.group }}"
+                                tag: "{{ config.tag }}"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                    else:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ config.message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ config.camera if config.camera else none }}"
+                                image: >-
+                                  {% if config.camera %}
+                                    /api/camera_proxy/{{ config.camera }}
+                                  {% endif %}
+                                clickAction: "{{ config.clickAction if config.clickAction else '' }}"
+                                notification_icon: "{{ config.icon }}"
+                                channel: "{{ config.channel }}"
+                                group: "{{ config.group }}"
+                                tag: "{{ config.tag }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ config.message }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+
+  - alias: Alarm Triggers
+    choose:
+      - alias: alarm_sensor_away
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_away
+          - condition: state
+            entity_id: !input alarm_control_panel_main
+            state: armed_away
+        sequence:
+          - alias: Trigger alarm
+            action: alarm_control_panel.alarm_trigger
+            target:
+              entity_id: !input alarm_control_panel_main
+          - alias: Send pending/triggered notification
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - variables:
+                  notification_message: "{{ (alarm_notifications_pending if is_state(alarm_main, 'pending') else alarm_notifications_triggered) | replace('{trigger_name}', trigger.to_state.name) }}"
+                  notification_critical: "{{ alarm_notifications_critical_pending if is_state(alarm_main, 'pending') else alarm_notifications_critical_triggered }}"
+                  notification_icon: "{{ alarm_notifications_status_bar_icon_pending if is_state(alarm_main, 'pending') else alarm_notifications_status_bar_icon_triggered }}"
+                  notification_channel: "{{ alarm_notifications_channel_pending if is_state(alarm_main, 'pending') else alarm_notifications_channel_triggered }}"
+                  notification_group: "{{ alarm_notifications_group_pending if is_state(alarm_main, 'pending') else alarm_notifications_group_triggered }}"
+                  notification_tag: "{{ 'alarm-pending' if is_state(alarm_main, 'pending') else 'alarm-triggered' }}"
+                  notification_camera: "{{ none if is_state(alarm_main, 'pending') else alarm_camera_triggered }}"
+                  notification_click_action: "{{ '' if is_state(alarm_main, 'pending') else alarm_camera_triggered_click_action }}"
+              - parallel:
+                  - if:
+                      - condition: template
+                        value_template: "{{ notification_critical == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ notification_message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ notification_camera if notification_camera else none }}"
+                                image: >-
+                                  {% if notification_camera %}
+                                    /api/camera_proxy/{{ notification_camera }}
+                                  {% endif %}
+                                clickAction: "{{ notification_click_action }}"
+                                notification_icon: "{{ notification_icon }}"
+                                channel: alarm_stream
+                                group: "{{ notification_group }}"
+                                tag: "{{ notification_tag }}"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                    else:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ notification_message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ notification_camera if notification_camera else none }}"
+                                image: >-
+                                  {% if notification_camera %}
+                                    /api/camera_proxy/{{ notification_camera }}
+                                  {% endif %}
+                                clickAction: "{{ notification_click_action }}"
+                                notification_icon: "{{ notification_icon }}"
+                                channel: "{{ notification_channel }}"
+                                group: "{{ notification_group }}"
+                                tag: "{{ notification_tag }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ notification_message }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+      - alias: alarm_sensor_home
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_home
+          - condition: state
+            entity_id: !input alarm_control_panel_main
+            state: armed_home
+        sequence:
+          - alias: Trigger alarm
+            action: alarm_control_panel.alarm_trigger
+            target:
+              entity_id: !input alarm_control_panel_main
+          - alias: Send pending/triggered notification
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - variables:
+                  notification_message: "{{ (alarm_notifications_pending if is_state(alarm_main, 'pending') else alarm_notifications_triggered) | replace('{trigger_name}', trigger.to_state.name) }}"
+                  notification_critical: "{{ alarm_notifications_critical_pending if is_state(alarm_main, 'pending') else alarm_notifications_critical_triggered }}"
+                  notification_icon: "{{ alarm_notifications_status_bar_icon_pending if is_state(alarm_main, 'pending') else alarm_notifications_status_bar_icon_triggered }}"
+                  notification_channel: "{{ alarm_notifications_channel_pending if is_state(alarm_main, 'pending') else alarm_notifications_channel_triggered }}"
+                  notification_group: "{{ alarm_notifications_group_pending if is_state(alarm_main, 'pending') else alarm_notifications_group_triggered }}"
+                  notification_tag: "{{ 'alarm-pending' if is_state(alarm_main, 'pending') else 'alarm-triggered' }}"
+                  notification_camera: "{{ none if is_state(alarm_main, 'pending') else alarm_camera_triggered }}"
+                  notification_click_action: "{{ '' if is_state(alarm_main, 'pending') else alarm_camera_triggered_click_action }}"
+              - parallel:
+                  - if:
+                      - condition: template
+                        value_template: "{{ notification_critical == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ notification_message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ notification_camera if notification_camera else none }}"
+                                image: >-
+                                  {% if notification_camera %}
+                                    /api/camera_proxy/{{ notification_camera }}
+                                  {% endif %}
+                                clickAction: "{{ notification_click_action }}"
+                                notification_icon: "{{ notification_icon }}"
+                                channel: alarm_stream
+                                group: "{{ notification_group }}"
+                                tag: "{{ notification_tag }}"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                    else:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ notification_message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ notification_camera if notification_camera else none }}"
+                                image: >-
+                                  {% if notification_camera %}
+                                    /api/camera_proxy/{{ notification_camera }}
+                                  {% endif %}
+                                clickAction: "{{ notification_click_action }}"
+                                notification_icon: "{{ notification_icon }}"
+                                channel: "{{ notification_channel }}"
+                                group: "{{ notification_group }}"
+                                tag: "{{ notification_tag }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ notification_message }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+      - alias: alarm_sensor_night
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_night
+          - condition: state
+            entity_id: !input alarm_control_panel_main
+            state: armed_night
+        sequence:
+          - alias: Trigger alarm
+            action: alarm_control_panel.alarm_trigger
+            target:
+              entity_id: !input alarm_control_panel_main
+          - alias: Send pending/triggered notification
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - variables:
+                  notification_message: "{{ (alarm_notifications_pending if is_state(alarm_main, 'pending') else alarm_notifications_triggered) | replace('{trigger_name}', trigger.to_state.name) }}"
+                  notification_critical: "{{ alarm_notifications_critical_pending if is_state(alarm_main, 'pending') else alarm_notifications_critical_triggered }}"
+                  notification_icon: "{{ alarm_notifications_status_bar_icon_pending if is_state(alarm_main, 'pending') else alarm_notifications_status_bar_icon_triggered }}"
+                  notification_channel: "{{ alarm_notifications_channel_pending if is_state(alarm_main, 'pending') else alarm_notifications_channel_triggered }}"
+                  notification_group: "{{ alarm_notifications_group_pending if is_state(alarm_main, 'pending') else alarm_notifications_group_triggered }}"
+                  notification_tag: "{{ 'alarm-pending' if is_state(alarm_main, 'pending') else 'alarm-triggered' }}"
+                  notification_camera: "{{ none if is_state(alarm_main, 'pending') else alarm_camera_triggered }}"
+                  notification_click_action: "{{ '' if is_state(alarm_main, 'pending') else alarm_camera_triggered_click_action }}"
+              - parallel:
+                  - if:
+                      - condition: template
+                        value_template: "{{ notification_critical == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ notification_message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ notification_camera if notification_camera else none }}"
+                                image: >-
+                                  {% if notification_camera %}
+                                    /api/camera_proxy/{{ notification_camera }}
+                                  {% endif %}
+                                clickAction: "{{ notification_click_action }}"
+                                notification_icon: "{{ notification_icon }}"
+                                channel: alarm_stream
+                                group: "{{ notification_group }}"
+                                tag: "{{ notification_tag }}"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                    else:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ notification_message }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ notification_camera if notification_camera else none }}"
+                                image: >-
+                                  {% if notification_camera %}
+                                    /api/camera_proxy/{{ notification_camera }}
+                                  {% endif %}
+                                clickAction: "{{ notification_click_action }}"
+                                notification_icon: "{{ notification_icon }}"
+                                channel: "{{ notification_channel }}"
+                                group: "{{ notification_group }}"
+                                tag: "{{ notification_tag }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ notification_message }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+
+  - alias: Keypad Emergency Mode
+    choose:
+      - alias: Z2M Keypad Emergency
+        conditions:
+          - condition: trigger
+            id: z2m_keypad
+          - condition: template
+            value_template: "{{ trigger.payload_json.action == 'emergency' }}"
+        sequence:
+          - action: script.turn_on
+            target:
+              entity_id: "{{ alarm_scripts_emergency }}"
+
+  - alias: Emergency Notifications
+    if:
+      - condition: trigger
+        id: z2m_keypad
+      - condition: template
+        value_template: "{{ trigger.payload_json.action == 'emergency' }}"
+      - condition: template
+        value_template: "{{ alarm_notifications_target | count > 0 }}"
+    then:
+      - variables:
+          emergency_camera: !input alarm_camera_emergency
+          emergency_camera_image: >-
+            {% set cam = emergency_camera %}
+            {% if cam %}
+              /api/camera_proxy/{{ cam }}
+            {% else %}
+
+            {% endif %}
+          emergency_click_action: !input alarm_camera_emergency_click_action
+      - parallel:
+          # Critical notifications
+          - if:
+              - condition: template
+                value_template: "{{ alarm_notifications_critical_emergency == true }}"
+            then:
+              repeat:
+                for_each: !input alarm_notifications_target
+                sequence:
+                  - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      message: "{{ alarm_notifications_emergency }}"
+                      data:
+                        actions: "{{ notification_actions }}"
+                        entity_id: "{{ emergency_camera if emergency_camera else none }}"
+                        image: "{{ emergency_camera_image }}"
+                        clickAction: "{{ emergency_click_action }}"
+                        notification_icon: "{{ alarm_notifications_status_bar_icon_emergency }}"
+                        channel: alarm_stream
+                        group: "{{ alarm_notifications_group_emergency }}"
+                        tag: "emergency"
+                        importance: high
+                        priority: high
+                        ttl: 0
+                        push:
+                          sound:
+                            name: default
+                            critical: 1
+                            volume: 1
+          # Normal notifications
+          - if:
+              - condition: template
+                value_template: "{{ alarm_notifications_critical_emergency == false }}"
+            then:
+              repeat:
+                for_each: !input alarm_notifications_target
+                sequence:
+                  - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      message: "{{ alarm_notifications_emergency }}"
+                      data:
+                        actions: "{{ notification_actions }}"
+                        entity_id: "{{ emergency_camera if emergency_camera else none }}"
+                        image: "{{ emergency_camera_image }}"
+                        clickAction: "{{ emergency_click_action }}"
+                        notification_icon: "{{ alarm_notifications_status_bar_icon_emergency }}"
+                        channel: "{{ alarm_notifications_channel_emergency }}"
+                        group: "{{ alarm_notifications_group_emergency }}"
+                        tag: "emergency"
+          # TTS announcements
+          - if:
+              - condition: template
+                value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+            then:
+              action: tts.speak
+              data:
+                cache: true
+                media_player_entity_id: "{{ alarm_announcements_player }}"
+                message: "{{ alarm_notifications_emergency }}"
+              target:
+                entity_id: "{{ alarm_announcements_engine }}"
+
+  - alias: Sensor Scripts
+    choose:
+      - alias: alarm_scripts_always
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_always
+        sequence:
+          - action: script.turn_on
+            target:
+              entity_id: "{{ alarm_scripts_always }}"
+      - alias: alarm_scripts_fire
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_fire
+        sequence:
+          - action: script.turn_on
+            target:
+              entity_id: "{{ alarm_scripts_fire }}"
+      - alias: alarm_scripts_gas
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_gas
+        sequence:
+          - action: script.turn_on
+            target:
+              entity_id: "{{ alarm_scripts_gas }}"
+      - alias: alarm_scripts_moisture
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_moisture
+        sequence:
+          - action: script.turn_on
+            target:
+              entity_id: "{{ alarm_scripts_moisture }}"
+
+  - alias: Sensor Notifications
+    choose:
+      - alias: alarm_sensor_always
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_always
+        sequence:
+          - variables:
+              sensor_camera: !input alarm_camera_always
+              sensor_camera_image: >-
+                {% set cam = sensor_camera %}
+                {% if cam %}
+                  /api/camera_proxy/{{ cam }}
+                {% else %}
+                  
+                {% endif %}
+              sensor_click_action: !input alarm_camera_always_click_action
+          - alias: Notify
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - parallel:
+                  - alias: Notify Critical
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_always == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_always | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_always }}"
+                                channel: alarm_stream
+                                group: "{{ alarm_notifications_group_always }}"
+                                tag: "sensor-always"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                  - alias: Notify Normal
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_always == false }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_always | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_always }}"
+                                channel: "{{ alarm_notifications_channel_always }}"
+                                group: "{{ alarm_notifications_group_always }}"
+                                tag: "sensor-always"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ alarm_notifications_always | replace('{trigger_name}', trigger.to_state.name) }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+      - alias: alarm_sensor_fire
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_fire
+        sequence:
+          - variables:
+              sensor_camera: !input alarm_camera_fire
+              sensor_camera_image: >-
+                {% set cam = sensor_camera %}
+                {% if cam %}
+                  /api/camera_proxy/{{ cam }}
+                {% else %}
+                  
+                {% endif %}
+              sensor_click_action: !input alarm_camera_fire_click_action
+          - alias: Notify
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - parallel:
+                  - alias: Notify Critical
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_fire == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_fire | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_fire }}"
+                                channel: alarm_stream
+                                group: "{{ alarm_notifications_group_fire }}"
+                                tag: "sensor-fire"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                  - alias: Notify Normal
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_fire == false }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_fire | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_fire }}"
+                                channel: "{{ alarm_notifications_channel_fire }}"
+                                group: "{{ alarm_notifications_group_fire }}"
+                                tag: "sensor-fire"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ alarm_notifications_fire | replace('{trigger_name}', trigger.to_state.name) }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+      - alias: alarm_sensor_gas
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_gas
+        sequence:
+          - variables:
+              sensor_camera: !input alarm_camera_gas
+              sensor_camera_image: >-
+                {% set cam = sensor_camera %}
+                {% if cam %}
+                  /api/camera_proxy/{{ cam }}
+                {% else %}
+                  
+                {% endif %}
+              sensor_click_action: !input alarm_camera_gas_click_action
+          - alias: Notify
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - parallel:
+                  - alias: Notify Critical
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_gas == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_gas | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_gas }}"
+                                channel: alarm_stream
+                                group: "{{ alarm_notifications_group_gas }}"
+                                tag: "sensor-gas"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                  - alias: Notify Normal
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_gas == false }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_gas | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_gas }}"
+                                channel: "{{ alarm_notifications_channel_gas }}"
+                                group: "{{ alarm_notifications_group_gas }}"
+                                tag: "sensor-gas"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ alarm_notifications_gas | replace('{trigger_name}', trigger.to_state.name) }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+      - alias: alarm_sensor_moisture
+        conditions:
+          - condition: trigger
+            id: alarm_sensor_moisture
+        sequence:
+          - variables:
+              sensor_camera: !input alarm_camera_moisture
+              sensor_camera_image: >-
+                {% set cam = sensor_camera %}
+                {% if cam %}
+                  /api/camera_proxy/{{ cam }}
+                {% else %}
+                  
+                {% endif %}
+              sensor_click_action: !input alarm_camera_moisture_click_action
+          - alias: Notify
+            if:
+              - condition: template
+                value_template: "{{ alarm_notifications_target | count > 0 }}"
+            then:
+              - parallel:
+                  - alias: Notify Critical
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_moisture == true }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_moisture | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_moisture }}"
+                                channel: alarm_stream
+                                group: "{{ alarm_notifications_group_moisture }}"
+                                tag: "sensor-moisture"
+                                importance: high
+                                priority: high
+                                ttl: 0
+                                push:
+                                  sound:
+                                    name: default
+                                    critical: 1
+                                    volume: 1
+                  - alias: Notify Normal
+                    if:
+                      - condition: template
+                        value_template: "{{ alarm_notifications_critical_moisture == false }}"
+                    then:
+                      repeat:
+                        for_each: !input alarm_notifications_target
+                        sequence:
+                          - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                            data:
+                              message: "{{ alarm_notifications_moisture | replace('{trigger_name}', trigger.to_state.name) }}"
+                              data:
+                                actions: "{{ notification_actions }}"
+                                entity_id: "{{ sensor_camera if sensor_camera else none }}"
+                                image: "{{ sensor_camera_image }}"
+                                clickAction: "{{ sensor_click_action }}"
+                                notification_icon: "{{ alarm_notifications_status_bar_icon_moisture }}"
+                                channel: "{{ alarm_notifications_channel_moisture }}"
+                                group: "{{ alarm_notifications_group_moisture }}"
+                                tag: "sensor-moisture"
+                  - if:
+                      - condition: template
+                        value_template: "{{ alarm_announcements_player is defined and alarm_announcements_engine is defined }}"
+                    then:
+                      action: tts.speak
+                      data:
+                        cache: true
+                        media_player_entity_id: "{{ alarm_announcements_player }}"
+                        message: "{{ alarm_notifications_moisture | replace('{trigger_name}', trigger.to_state.name) }}"
+                      target:
+                        entity_id: "{{ alarm_announcements_engine }}"
+
+  - alias: Notification Actions
+    choose:
+      - alias: action_arm_home
+        conditions:
+          - condition: trigger
+            id: action_arm_home
+        sequence:
+          - action: alarm_control_panel.alarm_arm_home
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: action_arm_night
+        conditions:
+          - condition: trigger
+            id: action_arm_night
+        sequence:
+          - action: alarm_control_panel.alarm_arm_night
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: action_disarm
+        conditions:
+          - condition: trigger
+            id: action_disarm
+        sequence:
+          - action: alarm_control_panel.alarm_disarm
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+
+  - alias: Alarm Automation Logic
+    choose:
+      - alias: Auto-Arm Away When Leaving
+        conditions:
+          - condition: trigger
+            id: presence_change
+          - condition: template
+            value_template: "{{ alarm_auto_arm_away and alarm_presence_sensor != none }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "off"
+        sequence:
+          - action: alarm_control_panel.alarm_arm_away
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: Auto-Disarm When Arriving Home - Per Day
+        conditions:
+          - condition: trigger
+            id: presence_change
+          - condition: template
+            value_template: "{{ alarm_auto_disarm_arriving and alarm_presence_sensor != none and alarm_schedule_mode == 'per_day' }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "on"
+        sequence:
+          - variables:
+              schedules:
+                - name: mon
+                  enabled: "{{ alarm_schedule_mon_enabled }}"
+                  day: mon
+                  start_time: "{{ alarm_schedule_mon_start_time }}"
+                  end_time: "{{ alarm_schedule_mon_end_time }}"
+                  mode: "{{ alarm_schedule_mon_start_mode }}"
+                - name: tue
+                  enabled: "{{ alarm_schedule_tue_enabled }}"
+                  day: tue
+                  start_time: "{{ alarm_schedule_tue_start_time }}"
+                  end_time: "{{ alarm_schedule_tue_end_time }}"
+                  mode: "{{ alarm_schedule_tue_start_mode }}"
+                - name: wed
+                  enabled: "{{ alarm_schedule_wed_enabled }}"
+                  day: wed
+                  start_time: "{{ alarm_schedule_wed_start_time }}"
+                  end_time: "{{ alarm_schedule_wed_end_time }}"
+                  mode: "{{ alarm_schedule_wed_start_mode }}"
+                - name: thu
+                  enabled: "{{ alarm_schedule_thu_enabled }}"
+                  day: thu
+                  start_time: "{{ alarm_schedule_thu_start_time }}"
+                  end_time: "{{ alarm_schedule_thu_end_time }}"
+                  mode: "{{ alarm_schedule_thu_start_mode }}"
+                - name: fri
+                  enabled: "{{ alarm_schedule_fri_enabled }}"
+                  day: fri
+                  start_time: "{{ alarm_schedule_fri_start_time }}"
+                  end_time: "{{ alarm_schedule_fri_end_time }}"
+                  mode: "{{ alarm_schedule_fri_start_mode }}"
+                - name: sat
+                  enabled: "{{ alarm_schedule_sat_enabled }}"
+                  day: sat
+                  start_time: "{{ alarm_schedule_sat_start_time }}"
+                  end_time: "{{ alarm_schedule_sat_end_time }}"
+                  mode: "{{ alarm_schedule_sat_start_mode }}"
+                - name: sun
+                  enabled: "{{ alarm_schedule_sun_enabled }}"
+                  day: sun
+                  start_time: "{{ alarm_schedule_sun_start_time }}"
+                  end_time: "{{ alarm_schedule_sun_end_time }}"
+                  mode: "{{ alarm_schedule_sun_start_mode }}"
+              matching_schedule: >
+                {% set ns = namespace(schedule=none) %}
+                {% for s in schedules %}
+                  {% if s.enabled %}
+                    {% set current_time = now().strftime('%H:%M:%S') %}
+                    {% set current_day = now().strftime('%a').lower() %}
+                    {% if current_day == s.day and s.start_time <= current_time < s.end_time %}
+                      {% set ns.schedule = s %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                {{ ns.schedule }}
+          - condition: template
+            value_template: "{{ matching_schedule != none }}"
+          - action: "alarm_control_panel.{{ 'alarm_disarm' if matching_schedule.mode == 'disarmed' else 'alarm_arm_' ~ matching_schedule.mode.replace('armed_', '') }}"
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: Auto-Disarm When Arriving Home - Workday
+        conditions:
+          - condition: trigger
+            id: presence_change
+          - condition: template
+            value_template: "{{ alarm_auto_disarm_arriving and alarm_presence_sensor != none and alarm_schedule_mode == 'workday' and alarm_workday_sensor not in [none, []] }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "on"
+        sequence:
+          - variables:
+              current_time: "{{ now().strftime('%H:%M:%S') }}"
+              is_workday: "{{ is_state(alarm_workday_sensor, 'on') }}"
+              schedule_start: "{{ alarm_schedule_workday_start_time if is_workday else alarm_schedule_nonworkday_start_time }}"
+              schedule_end: "{{ alarm_schedule_workday_end_time if is_workday else alarm_schedule_nonworkday_end_time }}"
+              schedule_mode_val: "{{ alarm_schedule_workday_start_mode if is_workday else alarm_schedule_nonworkday_start_mode }}"
+          - condition: template
+            value_template: "{{ schedule_start <= current_time < schedule_end }}"
+          - action: "alarm_control_panel.{{ 'alarm_disarm' if schedule_mode_val == 'disarmed' else 'alarm_arm_' ~ schedule_mode_val.replace('armed_', '') }}"
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: Scheduled Mode Change - Start Time
+        conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: time_mon_start
+              - condition: trigger
+                id: time_tue_start
+              - condition: trigger
+                id: time_wed_start
+              - condition: trigger
+                id: time_thu_start
+              - condition: trigger
+                id: time_fri_start
+              - condition: trigger
+                id: time_sat_start
+              - condition: trigger
+                id: time_sun_start
+          - condition: template
+            value_template: "{{ alarm_schedule_mode == 'per_day' }}"
+          - condition: template
+            value_template: "{{ alarm_presence_sensor != none }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "on"
+        sequence:
+          - variables:
+              schedule_map:
+                time_mon_start:
+                  enabled: "{{ alarm_schedule_mon_enabled }}"
+                  day: mon
+                  mode: "{{ alarm_schedule_mon_start_mode }}"
+                time_tue_start:
+                  enabled: "{{ alarm_schedule_tue_enabled }}"
+                  day: tue
+                  mode: "{{ alarm_schedule_tue_start_mode }}"
+                time_wed_start:
+                  enabled: "{{ alarm_schedule_wed_enabled }}"
+                  day: wed
+                  mode: "{{ alarm_schedule_wed_start_mode }}"
+                time_thu_start:
+                  enabled: "{{ alarm_schedule_thu_enabled }}"
+                  day: thu
+                  mode: "{{ alarm_schedule_thu_start_mode }}"
+                time_fri_start:
+                  enabled: "{{ alarm_schedule_fri_enabled }}"
+                  day: fri
+                  mode: "{{ alarm_schedule_fri_start_mode }}"
+                time_sat_start:
+                  enabled: "{{ alarm_schedule_sat_enabled }}"
+                  day: sat
+                  mode: "{{ alarm_schedule_sat_start_mode }}"
+                time_sun_start:
+                  enabled: "{{ alarm_schedule_sun_enabled }}"
+                  day: sun
+                  mode: "{{ alarm_schedule_sun_start_mode }}"
+              current_schedule: "{{ schedule_map[trigger.id] }}"
+          - condition: template
+            value_template: "{{ current_schedule.enabled and now().strftime('%a').lower() == current_schedule.day }}"
+          - action: "alarm_control_panel.{{ 'alarm_disarm' if current_schedule.mode == 'disarmed' else 'alarm_arm_' ~ current_schedule.mode.replace('armed_', '') }}"
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: Scheduled Mode Change - End Time
+        conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: time_mon_end
+              - condition: trigger
+                id: time_tue_end
+              - condition: trigger
+                id: time_wed_end
+              - condition: trigger
+                id: time_thu_end
+              - condition: trigger
+                id: time_fri_end
+              - condition: trigger
+                id: time_sat_end
+              - condition: trigger
+                id: time_sun_end
+          - condition: template
+            value_template: "{{ alarm_schedule_mode == 'per_day' }}"
+          - condition: template
+            value_template: "{{ alarm_presence_sensor != none }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "on"
+        sequence:
+          - variables:
+              schedule_map:
+                time_mon_end:
+                  enabled: "{{ alarm_schedule_mon_enabled }}"
+                  day: mon
+                  mode: "{{ alarm_schedule_mon_end_mode }}"
+                time_tue_end:
+                  enabled: "{{ alarm_schedule_tue_enabled }}"
+                  day: tue
+                  mode: "{{ alarm_schedule_tue_end_mode }}"
+                time_wed_end:
+                  enabled: "{{ alarm_schedule_wed_enabled }}"
+                  day: wed
+                  mode: "{{ alarm_schedule_wed_end_mode }}"
+                time_thu_end:
+                  enabled: "{{ alarm_schedule_thu_enabled }}"
+                  day: thu
+                  mode: "{{ alarm_schedule_thu_end_mode }}"
+                time_fri_end:
+                  enabled: "{{ alarm_schedule_fri_enabled }}"
+                  day: fri
+                  mode: "{{ alarm_schedule_fri_end_mode }}"
+                time_sat_end:
+                  enabled: "{{ alarm_schedule_sat_enabled }}"
+                  day: sat
+                  mode: "{{ alarm_schedule_sat_end_mode }}"
+                time_sun_end:
+                  enabled: "{{ alarm_schedule_sun_enabled }}"
+                  day: sun
+                  mode: "{{ alarm_schedule_sun_end_mode }}"
+              current_schedule: "{{ schedule_map[trigger.id] }}"
+          - condition: template
+            value_template: "{{ current_schedule.enabled and now().strftime('%a').lower() == current_schedule.day }}"
+          - action: "alarm_control_panel.{{ 'alarm_disarm' if current_schedule.mode == 'disarmed' else 'alarm_arm_' ~ current_schedule.mode.replace('armed_', '') }}"
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: Workday Scheduled Mode Change - Start Time
+        conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: time_workday_start
+              - condition: trigger
+                id: time_nonworkday_start
+          - condition: template
+            value_template: "{{ alarm_schedule_mode == 'workday' }}"
+          - condition: template
+            value_template: "{{ alarm_workday_sensor not in [none, []] }}"
+          - condition: template
+            value_template: >
+              {{ (trigger.id == 'time_workday_start' and is_state(alarm_workday_sensor, 'on'))
+                 or (trigger.id == 'time_nonworkday_start' and is_state(alarm_workday_sensor, 'off')) }}
+          - condition: template
+            value_template: "{{ alarm_presence_sensor != none }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "on"
+        sequence:
+          - variables:
+              current_mode: >
+                {{ alarm_schedule_workday_start_mode if trigger.id == 'time_workday_start'
+                   else alarm_schedule_nonworkday_start_mode }}
+          - action: "alarm_control_panel.{{ 'alarm_disarm' if current_mode == 'disarmed' else 'alarm_arm_' ~ current_mode.replace('armed_', '') }}"
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main
+      - alias: Workday Scheduled Mode Change - End Time
+        conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: time_workday_end
+              - condition: trigger
+                id: time_nonworkday_end
+          - condition: template
+            value_template: "{{ alarm_schedule_mode == 'workday' }}"
+          - condition: template
+            value_template: "{{ alarm_workday_sensor not in [none, []] }}"
+          - condition: template
+            value_template: >
+              {{ (trigger.id == 'time_workday_end' and is_state(alarm_workday_sensor, 'on'))
+                 or (trigger.id == 'time_nonworkday_end' and is_state(alarm_workday_sensor, 'off')) }}
+          - condition: template
+            value_template: "{{ alarm_presence_sensor != none }}"
+          - condition: state
+            entity_id: !input alarm_presence_sensor
+            state: "on"
+        sequence:
+          - variables:
+              current_mode: >
+                {{ alarm_schedule_workday_end_mode if trigger.id == 'time_workday_end'
+                   else alarm_schedule_nonworkday_end_mode }}
+          - action: "alarm_control_panel.{{ 'alarm_disarm' if current_mode == 'disarmed' else 'alarm_arm_' ~ current_mode.replace('armed_', '') }}"
+            data:
+              code: "{{ alarm_code_main_state }}"
+            target:
+              entity_id: !input alarm_control_panel_main

@@ -1,0 +1,321 @@
+blueprint:
+  name: Radiator Fan Controller
+  description: "Automatically controls a fan based on radiator temperature with hysteresis and optional window contact monitoring. Version 1.2.0"
+  domain: automation
+  author: HubEight
+  source_url: https://github.com/HubEight/home-assistant-blueprints/blob/main/radiator-fan-controller/radiator_fan_controller.yaml
+  # match: any on a state condition arrived in 2022.5. Without this line an
+  # older installation fails the import with "extra keys not allowed @ match",
+  # which reads like a broken blueprint rather than an outdated Home Assistant.
+  homeassistant:
+    min_version: "2022.5.0"
+
+  input:
+    temperature_sensor:
+      name: Temperature Sensor
+      description: Temperature sensor on the radiator
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+
+    fan_switch:
+      name: Fan Switch
+      description: >-
+        Switch, outlet or fan driving the radiator. Several may be selected;
+        they are switched together.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain:
+                - switch
+                - fan
+
+    temp_on:
+      name: Temperature ON (°C)
+      description: Turn fan ON when temperature reaches this value
+      default: 30
+      selector:
+        number:
+          min: 10
+          max: 80
+          step: 1
+          unit_of_measurement: "°C"
+
+    temp_on_helper:
+      name: Temperature ON Helper (Optional)
+      description: Optional input_number helper for dynamic temperature control.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: input_number
+          multiple: false
+
+    temp_off:
+      name: Temperature OFF (°C)
+      description: Turn fan OFF when temperature drops to this value
+      default: 28
+      selector:
+        number:
+          min: 10
+          max: 80
+          step: 1
+          unit_of_measurement: "°C"
+
+    temp_off_helper:
+      name: Temperature OFF Helper (Optional)
+      description: Optional input_number helper for dynamic temperature control.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: input_number
+          multiple: false
+
+    window_sensors:
+      name: Window Sensors (Optional)
+      description: Window contact sensors. Fan turns OFF when any window is open.
+      default: []
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class:
+                - window
+                - door
+                - opening
+          multiple: true
+
+mode: single
+max_exceeded: silent
+
+variables:
+  temperature_sensor: !input temperature_sensor
+  fan_switch: !input fan_switch
+  window_sensors: !input window_sensors
+  temp_on_helper: !input temp_on_helper
+  temp_off_helper: !input temp_off_helper
+  temp_on_direct: !input temp_on
+  temp_off_direct: !input temp_off
+
+  temp_on_value: >
+    {% if temp_on_helper | length > 0 %}
+      {{ states(temp_on_helper) | float }}
+    {% else %}
+      {{ temp_on_direct }}
+    {% endif %}
+
+  temp_off_value: >
+    {% if temp_off_helper | length > 0 %}
+      {{ states(temp_off_helper) | float }}
+    {% else %}
+      {{ temp_off_direct }}
+    {% endif %}
+
+  # One expression, no branch. The previous version had an {% else %} that wrote
+  # a bare "false", which rendered as the string 'false' - and a non-empty
+  # string is truthy, so "not any_window_open" was always False and the fan
+  # could never be switched on unless window sensors were configured.
+  # expand([]) is empty, so the count is 0 and this is a real boolean either way.
+  any_window_open: "{{ expand(window_sensors) | selectattr('state', 'eq', 'on') | list | count > 0 }}"
+
+  current_temp: "{{ states(temperature_sensor) | float(default=0) }}"
+
+  # previous_temp only from temperature sensor state change
+  previous_temp: >
+    {% if trigger.id == "temp_change" and trigger.entity_id == temperature_sensor and trigger.from_state.state not in ['unknown', 'unavailable'] %}
+      {{ trigger.from_state.state | float }}
+    {% else %}
+      {{ current_temp }}
+    {% endif %}
+
+  case_normal: "{{ temp_on_value > temp_off_value }}"
+  case_equal: "{{ temp_on_value == temp_off_value }}"
+  case_inverted: "{{ temp_on_value < temp_off_value }}"
+
+  rising: "{{ current_temp > previous_temp }}"
+  falling: "{{ current_temp < previous_temp }}"
+
+  # Helper change only triggers re-evaluation on next temp change
+  helper_changed: "{{ trigger.id == 'temp_change' and trigger.entity_id in [temp_on_helper, temp_off_helper] }}"
+
+trigger:
+  - platform: homeassistant
+    event: start
+    id: "check"
+
+  - platform: state
+    entity_id: !input temperature_sensor
+    id: "temp_change"
+
+  - platform: state
+    entity_id: !input temp_on_helper
+    id: "temp_change"
+
+  - platform: state
+    entity_id: !input temp_off_helper
+    id: "temp_change"
+
+  - platform: state
+    entity_id: !input temperature_sensor
+    to: [unavailable, unknown]
+    id: "turn_off"
+
+  - platform: state
+    entity_id: !input window_sensors
+    to: "on"
+    id: "turn_off"
+
+  - platform: state
+    entity_id: !input window_sensors
+    to: "off"
+    id: "check"
+
+action:
+  - choose:
+      # 1. Immediate OFF: window open, sensor bad, or explicit turn_off
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ any_window_open }}"
+              - condition: state
+                entity_id: !input temperature_sensor
+                state: [unavailable, unknown]
+              - condition: trigger
+                id: "turn_off"
+          - condition: state
+            entity_id: !input fan_switch
+            state: "on"
+            match: any
+        sequence:
+          - service: homeassistant.turn_off
+            target:
+              entity_id: !input fan_switch
+
+      # 2. Full logic: only on temperature change or initial check
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: "check"
+              - condition: and
+                conditions:
+                  - condition: trigger
+                    id: "temp_change"
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == temperature_sensor }}"
+        sequence:
+          # --- CASE 1: temp_on > temp_off ---
+          - if:
+              - condition: template
+                value_template: "{{ case_normal }}"
+              - condition: template
+                value_template: "{{ current_temp >= temp_on_value }}"
+              - condition: template
+                value_template: "{{ not any_window_open }}"
+              - condition: state
+                entity_id: !input fan_switch
+                state: "off"
+                match: any
+            then:
+              - service: homeassistant.turn_on
+                target:
+                  entity_id: !input fan_switch
+
+          - if:
+              - condition: template
+                value_template: "{{ case_normal }}"
+              - condition: template
+                value_template: "{{ current_temp <= temp_off_value }}"
+              - condition: state
+                entity_id: !input fan_switch
+                state: "on"
+                match: any
+            then:
+              - service: homeassistant.turn_off
+                target:
+                  entity_id: !input fan_switch
+
+          # --- CASE 2: temp_on == temp_off ---
+          - if:
+              - condition: template
+                value_template: "{{ case_equal }}"
+              - condition: template
+                value_template: "{{ current_temp >= temp_on_value }}"
+              - condition: template
+                value_template: "{{ not any_window_open }}"
+              - condition: state
+                entity_id: !input fan_switch
+                state: "off"
+                match: any
+            then:
+              - service: homeassistant.turn_on
+                target:
+                  entity_id: !input fan_switch
+
+          - if:
+              - condition: template
+                value_template: "{{ case_equal }}"
+              - condition: template
+                value_template: "{{ current_temp < temp_on_value }}"
+              - condition: state
+                entity_id: !input fan_switch
+                state: "on"
+                match: any
+            then:
+              - service: homeassistant.turn_off
+                target:
+                  entity_id: !input fan_switch
+
+          # --- CASE 3: temp_on < temp_off (path-dependent) ---
+          - if:
+              - condition: template
+                value_template: "{{ case_inverted }}"
+              - condition: template
+                value_template: "{{ rising }}"
+              - condition: or
+                conditions:
+                  - condition: template
+                    value_template: "{{ current_temp >= temp_on_value and previous_temp < temp_on_value }}"
+                  - condition: template
+                    value_template: "{{ current_temp >= temp_off_value and previous_temp < temp_off_value }}"
+              - condition: template
+                value_template: "{{ not any_window_open }}"
+              - condition: state
+                entity_id: !input fan_switch
+                state: "off"
+                match: any
+            then:
+              - service: homeassistant.turn_on
+                target:
+                  entity_id: !input fan_switch
+
+          - if:
+              - condition: template
+                value_template: "{{ case_inverted }}"
+              - condition: template
+                value_template: "{{ falling }}"
+              - condition: or
+                conditions:
+                  - condition: template
+                    value_template: "{{ current_temp <= temp_on_value and previous_temp > temp_on_value }}"
+                  - condition: template
+                    value_template: "{{ current_temp <= temp_off_value and previous_temp > temp_off_value }}"
+              - condition: state
+                entity_id: !input fan_switch
+                state: "on"
+                match: any
+            then:
+              - service: homeassistant.turn_off
+                target:
+                  entity_id: !input fan_switch
+
+      # 3. Helper change: DO NOTHING to fan (only updates values for next temp change)
+      - conditions:
+          - condition: template
+            value_template: "{{ helper_changed }}"
+        sequence: []

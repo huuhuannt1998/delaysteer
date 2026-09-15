@@ -1,0 +1,137 @@
+blueprint:
+  name: Reminders - Create and List
+  description: "Effortlessly set reminders and fetch tasks using conversational commands. This automation supports relative and exact time inputs, intelligently deducing 2 AM or 2 PM based on context for a seamless experience."
+  domain: automation
+  input:
+    todo_entity:
+      name: Reminder Entity
+      description: The entity ID of the todo list to store reminders.
+      selector:
+        entity:
+          domain: todo
+    add_reminder_commands:
+      name: Add Reminder Commands
+      description: List of conversational commands for adding reminders.
+      default:
+        - Remind me to {reminder} [at] {datetime}
+        - I need to remember to {reminder} [at] {datetime}
+        - Set a reminder [to] {reminder} {datetime}
+        - Can you remind me about {reminder} at {datetime}
+        - Remind me in {datetime} to {reminder}
+        - In {datetime} remind me to {reminder}
+        - Add {reminder} to my (tasks|reminders|to do list) for {datetime}
+        - Add [a] reminder [to] {reminder} {datetime}
+        - Remind me tomorrow [to] {reminder}
+        - Please remind me next week to {reminder}
+        - Remind me to {reminder} in {datetime}
+        - Schedule {reminder} {datetime}
+    fetch_reminder_commands:
+      name: Fetch Reminder Commands
+      description: List of conversational commands for fetching reminders.
+      default:
+        - What tasks (are left|remain|are incomplete)
+        - Whats on (the|my) reminder list
+        - >-
+          (What are|Tell me|Read|List|Show me) [(my|the)] [pending]
+          (reminders|tasks|to-do list)
+
+trigger:
+  - platform: conversation
+    command: !input add_reminder_commands
+    id: add_reminder
+
+  - platform: conversation
+    command: !input fetch_reminder_commands
+    id: fetch_reminders
+
+condition: []
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: add_reminder
+        sequence:
+          - variables:
+              reminder: >
+                {% set slots = trigger.slots | default({}) %}
+                {{ slots.reminder if slots.reminder else "No reminder specified" }}
+              raw_datetime: >
+                {% set slots = trigger.slots | default({}) %}
+                {{ slots.datetime if slots.datetime else "none" }}
+          - variables:
+              due_date_str: >
+                {% set raw_datetime = raw_datetime | string %}
+                {% if raw_datetime == 'none' %}
+                  {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+                {% elif 'minute' in raw_datetime or 'hour' in raw_datetime %}
+                  {{ (now() + timedelta(seconds=raw_datetime | regex_replace(find='[^0-9]', replace='') | int * 60)).strftime('%Y-%m-%d %H:%M:%S') }}
+                {% elif ':' in raw_datetime and ('AM' in raw_datetime or 'PM' in raw_datetime) %}
+                  {% set time_24h = strptime(raw_datetime, '%I:%M %p').strftime('%H:%M') %}
+                  {{ as_timestamp(now().strftime('%Y-%m-%d') + ' ' + time_24h) | timestamp_custom('%Y-%m-%d %H:%M:%S', true) }}
+                {% elif ':' in raw_datetime %}
+                  {% set time_object = strptime(raw_datetime, '%H:%M') %}
+                  {% set now_time = now().replace(second=0, microsecond=0) %}
+                  {% set parsed_time = now().replace(hour=time_object.hour, minute=time_object.minute, second=0, microsecond=0) %}
+                  {% if parsed_time < now_time %}
+                    {% set parsed_time = parsed_time + timedelta(days=1) %}
+                  {% endif %}
+                  {{ parsed_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% elif 'AM' in raw_datetime or 'PM' in raw_datetime %}
+                  {% set time_24h = strptime(raw_datetime, '%I %p').strftime('%H:%M') %}
+                  {{ as_timestamp(now().strftime('%Y-%m-%d') + ' ' + time_24h) | timestamp_custom('%Y-%m-%d %H:%M:%S', true) }}
+                {% elif raw_datetime.isdigit() %}
+                  {% set hour = raw_datetime | int %}
+                  {% set am_time = now().replace(hour=hour, minute=0, second=0, microsecond=0) %}
+                  {% set pm_time = now().replace(hour=(hour + 12) % 24, minute=0, second=0, microsecond=0) %}
+                  {% if am_time < now() %}
+                    {% set am_time = am_time + timedelta(days=1) %}
+                  {% endif %}
+                  {% if pm_time < now() %}
+                    {% set pm_time = pm_time + timedelta(days=1) %}
+                  {% endif %}
+                  {% set parsed_time = am_time if am_time < pm_time else pm_time %}
+                  {{ parsed_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% else %}
+                  {{ as_timestamp(raw_datetime) | timestamp_custom('%Y-%m-%d %H:%M:%S', true) }}
+                {% endif %}
+          - service: todo.add_item
+            data:
+              item: "{{ reminder }}"
+              due_datetime: "{{ due_date_str }}"
+              description: >-
+                Created by voice command on {{ now() }}. Original request was
+                '{{ trigger.user_input.text }}'.
+            target:
+              entity_id: !input todo_entity
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 2
+          - set_conversation_response: "Done, I will remind you to {{ reminder }} on {{ due_date_str }}."
+
+      - conditions:
+          - condition: trigger
+            id: fetch_reminders
+        sequence:
+          - service: todo.get_items
+            data:
+              status: [needs_action]
+            target:
+              entity_id: !input todo_entity
+            response_variable: tasks
+          - set_conversation_response: >-
+              {% if tasks['!input todo_entity']['items'] | length == 0 %}
+                You have no outstanding tasks.
+              {% else %}
+                You have {{ tasks['!input todo_entity']['items'] | length }} tasks pending. Here are your tasks:
+                {% for task in tasks['!input todo_entity']['items'] %}
+                  - {{ task['summary'] }}
+                    {% if task['due'] is defined and task['due'] | as_timestamp(default=None) is not none %}
+                      (Due at: {{
+                        task['due'] | as_timestamp | timestamp_custom("%-d %B at %-I:%M %p", true)
+                      }})
+                    {% endif %}
+                {% endfor %}
+              {% endif %}
+mode: single

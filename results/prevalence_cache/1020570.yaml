@@ -1,0 +1,164 @@
+blueprint:
+  name: Sync Two Covers
+  description: >-
+    Keeps two covers (e.g. roller shutters) in sync, bidirectionally.
+    When either cover starts opening or closing, the other one mirrors the
+    movement, and when the first one stops, the other one is driven to the
+    same position (or simply stopped). It does not matter which cover is
+    controlled — wall button, Home Assistant UI or a service call — the
+    other one always follows. Built-in loop protection, no helper
+    entities required.
+  domain: automation
+  author: Steffen Wagner
+  homeassistant:
+    min_version: 2024.10.0
+  # Points at the latest GitHub release asset, so re-importing the blueprint
+  # always fetches the newest released version.
+  source_url: https://github.com/wagnst/ha-blueprints/releases/latest/download/sync_two_covers.yaml
+  input:
+    cover_a:
+      name: First cover
+      description: One of the two covers to keep in sync.
+      selector:
+        entity:
+          filter:
+            domain: cover
+    cover_b:
+      name: Second cover
+      description: The other cover to keep in sync.
+      selector:
+        entity:
+          filter:
+            domain: cover
+    position_sync:
+      name: Exact position sync
+      description: >-
+        When one cover stops, let the other one continue to the exact same
+        position instead of stopping it immediately. Requires both covers to
+        report and accept positions (e.g. calibrated Shelly covers). Disable
+        this if your covers are not calibrated — the follower is then stopped
+        as soon as the controlled cover stops.
+      default: true
+      selector:
+        boolean: {}
+
+mode: queued
+max: 10
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id:
+      - !input cover_a
+      - !input cover_b
+    to:
+      - opening
+      - closing
+      - open
+      - closed
+
+variables:
+  cover_a: !input cover_a
+  cover_b: !input cover_b
+  position_sync: !input position_sync
+  source: "{{ trigger.entity_id }}"
+  target: "{{ cover_b if source == cover_a else cover_a }}"
+  # Ignore restarts, reloads and covers dropping off / coming back online.
+  is_available: >-
+    {{ trigger.from_state is not none
+       and trigger.from_state.state not in ['unavailable', 'unknown']
+       and states(target) not in ['unavailable', 'unknown'] }}
+  # Echo guard: if this automation commanded a cover less than 2 seconds
+  # ago, a new movement state is most likely the echo of that command (e.g.
+  # a direction change caused by cover.set_cover_position), not a user
+  # action, and must not be mirrored back. Only runs that actually command
+  # a cover update last_triggered (see conditions below), so this window
+  # does not extend itself.
+  echo_ok: >-
+    {{ this.attributes.last_triggered is none
+       or now() - this.attributes.last_triggered > timedelta(seconds=2) }}
+  # Source started opening -> mirror, unless the target is already opening
+  # (breaks the direct feedback loop), already fully open, or the movement
+  # is a command echo.
+  do_mirror_open: >-
+    {{ trigger.to_state.state == 'opening'
+       and states(target) != 'opening'
+       and (state_attr(target, 'current_position') is none
+            or state_attr(target, 'current_position') < 100)
+       and echo_ok }}
+  # Source started closing -> same guards, mirrored.
+  do_mirror_close: >-
+    {{ trigger.to_state.state == 'closing'
+       and states(target) != 'closing'
+       and (state_attr(target, 'current_position') is none
+            or state_attr(target, 'current_position') > 0)
+       and echo_ok }}
+  # Source stopped while the target is still moving -> the target must be
+  # stopped or steered to the source's position. Never guarded by echo_ok:
+  # stopping the follower must always work. A target that is not moving is
+  # never touched — nudging a stationary cover would start a ping-pong loop.
+  do_stop_sync: >-
+    {{ trigger.from_state is not none
+       and trigger.from_state.state in ['opening', 'closing']
+       and trigger.to_state.state in ['open', 'closed']
+       and states(target) in ['opening', 'closing'] }}
+
+conditions:
+  # Reject runs that would not act. This keeps last_triggered equal to "the
+  # last time this automation actually commanded a cover", which the echo
+  # guard above relies on, and keeps traces free of no-op runs.
+  - condition: template
+    value_template: >-
+      {{ is_available and (do_mirror_open or do_mirror_close or do_stop_sync) }}
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ do_mirror_open }}"
+        sequence:
+          - action: cover.open_cover
+            target:
+              entity_id: "{{ target }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ do_mirror_close }}"
+        sequence:
+          - action: cover.close_cover
+            target:
+              entity_id: "{{ target }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ do_stop_sync }}"
+        sequence:
+          - choose:
+              # Send the target to the source's position only when that is a
+              # continuation of the target's current travel. A position
+              # command that would make the target reverse direction is
+              # never sent: the resulting opening/closing state would be
+              # indistinguishable from a user command and re-trigger the
+              # sync — the ping-pong loop this blueprint must avoid.
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ position_sync
+                         and state_attr(source, 'current_position') is not none
+                         and state_attr(target, 'current_position') is not none
+                         and ((states(target) == 'opening'
+                               and state_attr(target, 'current_position')
+                                   < state_attr(source, 'current_position'))
+                              or (states(target) == 'closing'
+                                  and state_attr(target, 'current_position')
+                                      > state_attr(source, 'current_position'))) }}
+                sequence:
+                  - action: cover.set_cover_position
+                    target:
+                      entity_id: "{{ target }}"
+                    data:
+                      position: "{{ state_attr(source, 'current_position') }}"
+            default:
+              - action: cover.stop_cover
+                target:
+                  entity_id: "{{ target }}"

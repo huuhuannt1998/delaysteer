@@ -1,0 +1,28 @@
+{
+  "intercepts_only_included_models": {
+    "log_odds_attack": 2.8277,
+    "posterior_sd": 0.1921,
+    "odds_ratio": 16.91,
+    "or_ci95": [
+      11.6,
+      24.64
+    ],
+    "n_runs": 353,
+    "n_models": 5,
+    "excluded_models": [
+      "gemma2:9b",
+      "granite3.1-dense:8b"
+    ]
+  },
+  "logit_scale_variance_components": {
+    "model": 3.43942,
+    "template": 0.09
+  },
+  "slope_heterogeneity_test": {
+    "spec": "LR test, logit(y) ~ attack*C(model) vs attack + C(model)",
+    "lr_stat": 50.53,
+    "df": 4,
+    "p": 2.80438724852515e-10,
+    "reading": "the attack effect differs by planner"
+  }
+}

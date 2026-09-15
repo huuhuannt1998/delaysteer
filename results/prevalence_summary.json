@@ -1,0 +1,53 @@
+{
+  "frame": {
+    "source": "community.home-assistant.io category 53",
+    "ordering": "category default listing order",
+    "pages": 12,
+    "fetched_utc": "2026-08-25T12:23:17Z",
+    "inclusion": "all topics in window except pinned About post",
+    "extraction": "longest YAML document containing a top-level blueprint: key"
+  },
+  "n_topics_in_window": 359,
+  "n_with_retrievable_yaml": 305,
+  "n_parsed_blueprints": 305,
+  "retrieval_rate_pct": 85.0,
+  "high_impact": {
+    "k": 24,
+    "n": 305,
+    "pct": 7.9,
+    "wilson95": [
+      5.3,
+      11.4
+    ]
+  },
+  "high_impact_and_sensor_gated": {
+    "k": 15,
+    "n": 305,
+    "pct": 4.9,
+    "wilson95": [
+      3.0,
+      8.0
+    ]
+  },
+  "no_freshness_contract_given_gated": {
+    "k": 10,
+    "n": 15,
+    "pct": 66.7,
+    "wilson95": [
+      41.7,
+      84.8
+    ]
+  },
+  "temporal_breakdown_given_gated": {
+    "none": 9,
+    "age_check": 5,
+    "dwell_only": 1
+  },
+  "classifier_error": {
+    "audit": "all 24 high-impact blueprints read by hand; all 305 scanned for security-domain services outside the flagged set",
+    "false_negatives_found": 1,
+    "false_negative_detail": "topic 1005033 (NSPanel) composes the service name in a Jinja template and dispatches via action: '{{ action_to_call }}'; a literal-name matcher cannot see it",
+    "false_positives_found": 0,
+    "direction": "all three conservative choices (generic turn_off excluded, age-check credited document-wide, template-dispatched services invisible) bias the estimate DOWNWARD; report as a lower bound"
+  }
+}

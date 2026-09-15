@@ -1,0 +1,231 @@
+blueprint:
+  name: "VPD- und Temperatur-basierte Steuerung von Luftbefeuchter, Kühler, Heizung und Luftentfeuchter"
+  description: >
+    Dieser Blueprint steuert einen Luftbefeuchter, einen Kühler, eine Heizung und einen Luftentfeuchter als einfache On/Off-Schalter,
+    jeweils unabhängig, basierend auf dem aktuellen VPD-Wert (in kPa), der Temperatur (in °C) und der Luftfeuchtigkeit (%).
+    Der Kühler wird durch eine hohe Temperatur aktiviert, auch wenn der VPD-Wert im normalen Bereich liegt.
+  domain: automation
+
+  input:
+    vpd_sensor:
+      name: VPD Sensor
+      description: "Die Entität, die den aktuellen VPD-Wert in kPa liefert."
+      selector:
+        entity:
+          domain: sensor
+    temperature_sensor:
+      name: Temperatur Sensor
+      description: "Die Entität, die die aktuelle Temperatur liefert."
+      selector:
+        entity:
+          domain: sensor
+    humidity_sensor:
+      name: Luftfeuchtigkeit Sensor
+      description: "Die Entität, die die aktuelle Luftfeuchtigkeit liefert."
+      selector:
+        entity:
+          domain: sensor
+    humidifier:
+      name: Luftbefeuchter-Schalter
+      description: "Schalt-Entität für den Luftbefeuchter."
+      selector:
+        entity:
+          domain: switch
+    cooler:
+      name: Kühler-Schalter
+      description: "Schalt-Entität für den Kühler."
+      selector:
+        entity:
+          domain: switch
+    heater:
+      name: Heizung-Schalter
+      description: "Schalt-Entität für die Heizung."
+      selector:
+        entity:
+          domain: switch
+    dehumidifier:
+      name: Luftentfeuchter-Schalter
+      description: "Schalt-Entität für den Luftentfeuchter."
+      selector:
+        entity:
+          domain: switch
+    humidifier_turn_on_threshold:
+      name: "Luftbefeuchter: Einschalt-Schwellwert (kPa)"
+      default: 1.0
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.01
+    humidifier_turn_off_threshold:
+      name: "Luftbefeuchter: Ausschalt-Schwellwert (kPa)"
+      default: 0.9
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.01
+    cooler_turn_on_threshold:
+      name: "Kühler: Einschalt-Schwellwert (kPa)"
+      default: 1.2
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.01
+    cooler_turn_off_threshold:
+      name: "Kühler: Ausschalt-Schwellwert (kPa)"
+      default: 1.1
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.01
+    temperature_cooler_threshold:
+      name: "Temperatur-Schwellenwert für Kühler (°C)"
+      default: 28
+      selector:
+        number:
+          min: 15
+          max: 40
+          step: 0.1
+    temperature_cooler_off_threshold:
+      name: "Temperatur-Ausschalt-Schwellenwert für Kühler (°C)"
+      default: 27
+      selector:
+        number:
+          min: 15
+          max: 40
+          step: 0.1
+    heater_turn_on_threshold:
+      name: "Heizung: Einschalt-Schwellenwert (°C)"
+      default: 20
+      selector:
+        number:
+          min: 10
+          max: 30
+          step: 0.1
+    heater_turn_off_threshold:
+      name: "Heizung: Ausschalt-Schwellenwert (°C)"
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          step: 0.1
+    dehumidifier_turn_on_threshold:
+      name: "Luftentfeuchter: Einschalt-Schwellenwert (%)"
+      default: 70
+      selector:
+        number:
+          min: 40
+          max: 90
+          step: 1
+    dehumidifier_turn_off_threshold:
+      name: "Luftentfeuchter: Ausschalt-Schwellenwert (%)"
+      default: 65
+      selector:
+        number:
+          min: 40
+          max: 90
+          step: 1
+
+trigger:
+  - platform: state
+    entity_id: !input vpd_sensor
+  - platform: state
+    entity_id: !input temperature_sensor
+  - platform: state
+    entity_id: !input humidity_sensor
+  - platform: time_pattern
+    seconds: "/10"
+
+action:
+  # 🌫️ Luftbefeuchter-Steuerung
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input vpd_sensor
+            above: !input humidifier_turn_on_threshold
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input humidifier
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input vpd_sensor
+            below: !input humidifier_turn_off_threshold
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input humidifier
+
+  # ❄️ Kühler-Steuerung (VPD- und Temperatur-basiert)
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input vpd_sensor
+            above: !input cooler_turn_on_threshold
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input cooler
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input temperature_sensor
+            above: !input temperature_cooler_threshold
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input cooler
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input temperature_sensor
+            below: !input temperature_cooler_off_threshold
+          - condition: numeric_state
+            entity_id: !input vpd_sensor
+            below: !input cooler_turn_on_threshold
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input cooler
+
+  # 🔥 Heizung-Steuerung
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input temperature_sensor
+            below: !input heater_turn_on_threshold
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input heater
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input temperature_sensor
+            above: !input heater_turn_off_threshold
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input heater
+
+  # 💨 Luftentfeuchter-Steuerung
+  - choose:
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input humidity_sensor
+            above: !input dehumidifier_turn_on_threshold
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input dehumidifier
+      - conditions:
+          - condition: numeric_state
+            entity_id: !input humidity_sensor
+            below: !input dehumidifier_turn_off_threshold
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input dehumidifier
+
+mode: restart

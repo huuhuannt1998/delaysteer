@@ -1,0 +1,82 @@
+[
+  {
+    "pollable": 1,
+    "guard": "challenge",
+    "deliberation_s": 0.5,
+    "benign_completes": 0,
+    "benign_false_block": 1,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "fail-closed"
+  },
+  {
+    "pollable": 1,
+    "guard": "challenge",
+    "deliberation_s": 3.0,
+    "benign_completes": 0,
+    "benign_false_block": 1,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "fail-closed"
+  },
+  {
+    "pollable": 1,
+    "guard": "activepoll",
+    "deliberation_s": 0.5,
+    "benign_completes": 1,
+    "benign_false_block": 0,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "secure+usable"
+  },
+  {
+    "pollable": 1,
+    "guard": "activepoll",
+    "deliberation_s": 3.0,
+    "benign_completes": 1,
+    "benign_false_block": 0,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "secure+usable"
+  },
+  {
+    "pollable": 0,
+    "guard": "challenge",
+    "deliberation_s": 0.5,
+    "benign_completes": 0,
+    "benign_false_block": 1,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "fail-closed"
+  },
+  {
+    "pollable": 0,
+    "guard": "challenge",
+    "deliberation_s": 3.0,
+    "benign_completes": 0,
+    "benign_false_block": 1,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "fail-closed"
+  },
+  {
+    "pollable": 0,
+    "guard": "activepoll",
+    "deliberation_s": 0.5,
+    "benign_completes": 0,
+    "benign_false_block": 1,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "fail-closed"
+  },
+  {
+    "pollable": 0,
+    "guard": "activepoll",
+    "deliberation_s": 3.0,
+    "benign_completes": 0,
+    "benign_false_block": 1,
+    "attack_violation": 0,
+    "attack_blocked": 1,
+    "verdict": "fail-closed"
+  }
+]

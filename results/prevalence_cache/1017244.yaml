@@ -1,0 +1,184 @@
+blueprint:
+  name: Sonos Announcement
+  description: Play audio files or TTS messages on Sonos when the state of entity changes, without interrupting current music.
+  domain: automation
+  input:
+    trigger_entities:
+      name: Trigger Entities
+      description: Select one or more entities with ON/OFF states (e.g., binary_sensors, switches, lights).
+      selector:
+        entity:
+          multiple: true
+    sonos_speakers:
+      name: Sonos Speakers
+      description: Select one or more Sonos speakers to play the announcement.
+      selector:
+        entity:
+          domain: media_player
+          integration: sonos
+          multiple: true
+    announce_volume:
+      name: Announcement Volume
+      description: Independent volume level for the announcement (0.1 to 1.0).
+      default: 0.5
+      selector:
+        number:
+          min: 0.1
+          max: 1.0
+          step: 0.05
+    tts_provider:
+      name: TTS Provider Entity
+      description: Select your TTS entity (e.g., tts.google_en_com, tts.piper). Used if TTS is selected for either action.
+      default: tts.google_translate_en_com
+      selector:
+        entity:
+          domain: tts
+
+    # ================= ON ACTION CONFIGURATION =================
+    on_action_type:
+      name: "ON Action Type"
+      description: Choose what to do when an entity turns ON.
+      default: audio
+      selector:
+        select:
+          options:
+            - label: "Audio File"
+              value: "audio"
+            - label: "Text-to-Speech"
+              value: "tts"
+            - label: "Disabled"
+              value: "disabled"
+    chime_media_on:
+      name: "ON Audio Selector"
+      description: Select an audio file played when an entity turns ON.
+      default: ""
+      selector:
+        media: {}
+    tts_message_on:
+      name: "ON TTS Message"
+      description: The text spoken when an entity turns ON.
+      default: ""
+      selector:
+        text: {}
+
+    # ================= OFF ACTION CONFIGURATION =================
+    off_action_type:
+      name: "OFF Action Type"
+      description: Choose what to do when an entity turns OFF.
+      default: audio
+      selector:
+        select:
+          options:
+            - label: "Audio File"
+              value: "audio"
+            - label: "Text-to-Speech"
+              value: "tts"
+            - label: "Disabled"
+              value: "disabled"
+    chime_media_off:
+      name: "OFF Audio Selector"
+      description: Select an audio file played when an entity turns OFF.
+      default: ""
+      selector:
+        media: {}
+    tts_message_off:
+      name: "OFF TTS Message"
+      description: The text spoken when an entity turns OFF.
+      default: ""
+      selector:
+        text: {}
+
+mode: queued
+max: 10
+
+# Map blueprint inputs to variables for Jinja2 template evaluation
+variables:
+  tts_provider: !input tts_provider
+  on_action_type: !input on_action_type
+  chime_media_on: !input chime_media_on
+  tts_message_on: !input tts_message_on
+  off_action_type: !input off_action_type
+  chime_media_off: !input chime_media_off
+  tts_message_off: !input tts_message_off
+
+trigger:
+  # Trigger ID "turned_on" when any selected entity goes from off to on
+  - trigger: state
+    entity_id: !input trigger_entities
+    from: "off"
+    to: "on"
+    id: turned_on
+  # Trigger ID "turned_off" when any selected entity goes from on to off
+  - trigger: state
+    entity_id: !input trigger_entities
+    from: "on"
+    to: "off"
+    id: turned_off
+
+action:
+  - choose:
+      # ----------------- CASE 1: ENTITY TURNED ON -----------------
+      - conditions:
+          - condition: trigger
+            id: turned_on
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ on_action_type == 'audio' }}"
+                sequence:
+                  - action: media_player.play_media
+                    target:
+                      entity_id: !input sonos_speakers
+                    data:
+                      media_content_id: "{{ chime_media_on.get('media_content_id', '') if chime_media_on is mapping else chime_media_on }}"
+                      media_content_type: "{{ chime_media_on.get('media_content_type', 'music') if chime_media_on is mapping else 'music' }}"
+                      announce: true
+                      extra:
+                        volume_level: !input announce_volume
+              - conditions:
+                  - condition: template
+                    value_template: "{{ on_action_type == 'tts' }}"
+                sequence:
+                  - action: media_player.play_media
+                    target:
+                      entity_id: !input sonos_speakers
+                    data:
+                      media_content_id: "{{ 'media-source://tts/' ~ tts_provider ~ '?message=' ~ (tts_message_on | urlencode) }}"
+                      media_content_type: "music"
+                      announce: true
+                      extra:
+                        volume_level: !input announce_volume
+
+      # ----------------- CASE 2: ENTITY TURNED OFF -----------------
+      - conditions:
+          - condition: trigger
+            id: turned_off
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ off_action_type == 'audio' }}"
+                sequence:
+                  - action: media_player.play_media
+                    target:
+                      entity_id: !input sonos_speakers
+                    data:
+                      media_content_id: "{{ chime_media_off.get('media_content_id', '') if chime_media_off is mapping else chime_media_off }}"
+                      media_content_type: "{{ chime_media_off.get('media_content_type', 'music') if chime_media_off is mapping else 'music' }}"
+                      announce: true
+                      extra:
+                        volume_level: !input announce_volume
+              - conditions:
+                  - condition: template
+                    value_template: "{{ off_action_type == 'tts' }}"
+                sequence:
+                  - action: media_player.play_media
+                    target:
+                      entity_id: !input sonos_speakers
+                    data:
+                      media_content_id: "{{ 'media-source://tts/' ~ tts_provider ~ '?message=' ~ (tts_message_off | urlencode) }}"
+                      media_content_type: "music"
+                      announce: true
+                      extra:
+                        volume_level: !input announce_volume

@@ -1,0 +1,1286 @@
+blueprint:
+  name: "Xat0X Smart Smoke System 🚨"
+  author: "Xat0X"
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  description: |
+    # Smart Smoke System
+    
+    Linked fire-alarm handling for Zigbee smoke detectors with a guided self-test wizard.
+    
+    GitHub: https://github.com/Xat0X/Smart-Smoke-System-The-Ultimate-Firealarm-Linker
+    
+    ## Features
+    *   **Coordinated Alarm:** Monitors all detectors; if one goes off, the system manages notifications and sirens.
+    *   **Pre-Alarm:** Optional verification stage to prevent false alarms.
+    *   **Guided Self-Test:** Interactive walk-through to test buttons physically.
+    *   **Watchdog:** Self-test aborts immediately if real smoke is detected elsewhere.
+    *   **Sound Test:** Test your custom iOS/Android notification sounds without triggering actual sirens.
+    
+    ## Self-Test Quick Start
+    1.  Define a "Test Start Trigger" below (recommended: `input_button` helper).
+    2.  Select one phone as "Maintenance Device".
+    3.  Press the selected trigger entity from your dashboard to start the wizard.
+    4.  Follow phone prompts room-by-room until the summary appears.
+    
+    ## Setup Guidance
+    -   Add all smoke detector entities in "Smoke Detectors" so full-house alarm propagation works.
+    -   Keep "Enable Pre-Alarm" on unless you explicitly want immediate full sirens.
+    -   Configure Android `alarm_stream` channel for max importance and DND override.
+    -   Use monthly self-tests to verify detector button reporting and automations.
+
+    ## Requirements
+    -   **iOS:** Enable 'Critical Alerts' in iOS Settings -> Home Assistant -> Notifications.
+    -   **Android:** Notifications are sent to channel `alarm_stream`. Configure this channel in Android Settings to "Override Do Not Disturb".
+
+  input:
+    section_devices:
+      name: Devices & Triggers
+      description: Define your detectors, notification devices, and the button to
+        start the test wizard.
+      icon: mdi:smoke-detector-variant
+      collapsed: false
+      input:
+        smoke_detector_devices:
+          name: Smoke Detectors
+          description: Select smoke sensor entities from your Zigbee smoke detectors
+            (ZHA or Zigbee2MQTT, incl. SMSZB-120).
+          selector:
+            entity:
+              filter:
+              - integration: mqtt
+                domain:
+                - binary_sensor
+                device_class:
+                - smoke
+              - integration: zha
+                domain:
+                - binary_sensor
+                device_class:
+                - smoke
+              multiple: true
+              reorder: false
+
+        test_start_trigger:
+          name: Test Start Trigger
+          description: 'Entity used to start the Self-Test Wizard. Best option: an
+            input_button helper. Also supports button/switch/input_boolean/sensor/binary_sensor.'
+          selector:
+            entity:
+              domain:
+              - input_button
+              - button
+              - binary_sensor
+              - switch
+              - input_boolean
+              - sensor
+              multiple: false
+              reorder: false
+
+        sound_test_trigger:
+          name: Notification Sound Test Trigger
+          description: 'Entity used to test custom notification sounds on your devices without triggering sirens. Best option: an input_button helper.'
+          selector:
+            entity:
+              domain:
+              - input_button
+              - button
+              - binary_sensor
+              - switch
+              - input_boolean
+              multiple: false
+              reorder: false
+
+        alarm__notify_devices:
+          name: Alarm Notification Devices
+          description: Mobile devices to receive CRITICAL FIRE ALARMS.
+          selector:
+            device:
+              integration: mobile_app
+              multiple: true
+
+        test__notify_device:
+          name: Maintenance Device
+          description: The specific phone that will receive the interactive Self-Test
+            Wizard prompts.
+          selector:
+            device:
+              integration: mobile_app
+              multiple: false
+
+    section_prealarm:
+      name: Pre-Alarm Verification
+      description: Optional warning before the full sirens go off, allowing you to
+        confirm or abort.
+      icon: mdi:shield-alert
+      collapsed: true
+      input:
+        firstalarm__activated:
+          name: Enable Pre-Alarm
+          description: If enabled, sends a confirmation notification before triggering
+            the main siren.
+          default: true
+          selector:
+            boolean: {}
+        firstalarm__waittimeout_seconds:
+          name: Pre-Alarm Timeout
+          description: How long to wait for user confirmation before escalating to
+            full alarm.
+          default: 15
+          selector:
+            number:
+              min: 0.0
+              max: 300.0
+              unit_of_measurement: seconds
+              mode: box
+              step: 1.0
+        firstalarm__notify_title:
+          name: Notification Title
+          default: Smoke detected - confirm?
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        firstalarm__notify_message:
+          name: Notification Message
+          default: '<b>Smoke detected!</b>
+
+
+            Check immediately. Is there a fire?'
+          selector:
+            text:
+              multiline: true
+              multiple: false
+        firstalarm__notify_button_fire:
+          name: 'Button: Confirm Fire'
+          default: YES - Alarm!
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        firstalarm__notify_button_nofire:
+          name: 'Button: False Alarm'
+          default: No - False alarm
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        firstalarm__ios_sound_name:
+          name: iOS Sound (Pre-Alarm)
+          description: Choose or type an iOS notification sound filename (e.g. alarm.caf).
+          default: default
+          selector:
+            select:
+              options:
+              - label: Default
+                value: default
+              - label: Silent (none)
+                value: none
+              custom_value: true
+              sort: false
+              multiple: false
+        firstalarm__android_sound_name:
+          name: Android Sound (Pre-Alarm)
+          description: Choose or type an Android notification sound name. Use 'default'
+            for default app/channel sound.
+          default: default
+          selector:
+            select:
+              options:
+              - label: Default
+                value: default
+              - label: Silent (none)
+                value: none
+              custom_value: true
+              sort: false
+              multiple: false
+        firstalarm__action:
+          name: Pre-Alarm Actions
+          description: Optional actions to run during the pre-alarm phase (e.g., turn
+            on lights).
+          default: []
+          selector:
+            action: {}
+
+    section_mainalarm:
+      name: Main Alarm Configuration
+      description: Settings for when the alarm is fully triggered.
+      icon: mdi:bell-ring
+      collapsed: true
+      input:
+        critical__enabled:
+          name: Enable Critical Alerts
+          description: Bypass silent mode on supported devices (iOS).
+          default: true
+          selector:
+            boolean: {}
+        ios__critical_volume:
+          name: iOS Critical Volume
+          default: 1.0
+          selector:
+            number:
+              min: 0.0
+              max: 1.0
+              step: 0.1
+              mode: slider
+        mute__duration_seconds:
+          name: Mute Duration
+          description: How long the sirens stay muted when the Mute button is pressed.
+          default: 120
+          selector:
+            number:
+              min: 10.0
+              max: 600.0
+              step: 5.0
+              unit_of_measurement: seconds
+              mode: slider
+        allalarm__notify_title:
+          name: Alarm Title
+          default: FIRE - EVACUATE!
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        allalarm__notify_message:
+          name: Alarm Message
+          default: '<b>FIRE ALARM</b>
+
+
+            Smoke detected! Leave the building immediately.'
+          selector:
+            text:
+              multiline: true
+              multiple: false
+        allalarm__notify_button_deletenotification:
+          name: 'Button: Dismiss'
+          default: Dismiss
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        allalarm__notify_button_mutealarm:
+          name: 'Button: Mute Sirens'
+          default: Mute
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        allalarm__ios_sound_name:
+          name: iOS Sound (Main Alarm)
+          description: Choose or type an iOS notification sound filename (e.g. alarm.caf).
+          default: default
+          selector:
+            select:
+              options:
+              - label: Default
+                value: default
+              - label: Silent (none)
+                value: none
+              custom_value: true
+              sort: false
+              multiple: false
+        allalarm__android_sound_name:
+          name: Android Sound (Main Alarm)
+          description: Choose or type an Android notification sound name. Use 'default'
+            for default app/channel sound.
+          default: default
+          selector:
+            select:
+              options:
+              - label: Default
+                value: default
+              - label: Silent (none)
+                value: none
+              custom_value: true
+              sort: false
+              multiple: false
+        allalarm__action:
+          name: Alarm Actions
+          description: Actions to run when the alarm triggers (e.g., unlock doors,
+            turn on all lights).
+          default: []
+          selector:
+            action: {}
+
+    section_selftest:
+      name: Self-Test Wizard
+      description: Configuration for the guided maintenance walk-through.
+      icon: mdi:clipboard-check
+      collapsed: true
+      input:
+        selftest__activated:
+          name: Enable Self-Test Mode
+          default: true
+          selector:
+            boolean: {}
+        selftest__waittimeout_minutes:
+          name: Step Timeout
+          description: Max time to wait for a button press at each detector.
+          default: 2
+          selector:
+            number:
+              min: 1.0
+              max: 10.0
+              unit_of_measurement: minutes
+              step: 1.0
+              mode: slider
+        selftest__notify_title:
+          name: Wizard Title
+          default: Smoke Detector Self-Test
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        selftest__notify_message:
+          name: Wizard Instructions
+          default: 'Go to the indicated room.
+
+            Press PHYSICAL BUTTON on device.'
+          selector:
+            text:
+              multiline: true
+              multiple: false
+        selftest__notify_button_testnow:
+          name: 'Button: Test Remote'
+          default: Test Remote
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        selftest__notify_button_skip:
+          name: 'Button: Skip'
+          default: Skip
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        selftest__notify_button_stoptesting:
+          name: 'Button: Stop'
+          default: Stop
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        notification__ios_hint:
+          name: iOS Hint Text
+          default: '(iOS: long-press notification for actions)'
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        smoketest__activated:
+          name: Enable Smoke Spray Test
+          description: After the button test, ask to perform a real smoke spray test.
+          default: true
+          selector:
+            boolean: {}
+        smoketest__waittimeout_minutes:
+          name: Smoke Test Timeout
+          default: 3
+          selector:
+            number:
+              min: 1.0
+              max: 10.0
+              unit_of_measurement: minutes
+              step: 1.0
+              mode: slider
+        smoketest__notify_title:
+          name: Spray Test Title
+          default: Start Smoke Test?
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        smoketest__notify_message:
+          name: Spray Test Message
+          default: Run a test that behaves like a REAL alarm?
+          selector:
+            text:
+              multiline: true
+              multiple: false
+        smoketest__notify_button_yes:
+          name: 'Button: Start Spray Test'
+          default: Start Test
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        smoketest__notify_button_no:
+          name: 'Button: No'
+          default: 'No'
+          selector:
+            text:
+              multiple: false
+              multiline: false
+
+    section_advanced:
+      name: Advanced & Localization
+      description: Technical timings and text customization for the summary report.
+      icon: mdi:cog
+      collapsed: true
+      input:
+        wakeup__delay_seconds:
+          name: Zigbee Wake-up Delay
+          description: Delay to ensure battery devices wake up before receiving commands.
+          default: 2
+          selector:
+            number:
+              min: 0.0
+              max: 30.0
+              unit_of_measurement: seconds
+              step: 1.0
+              mode: slider
+        selftest__finished_waittimeout_minutes:
+          name: Post-Test Cooldown
+          description: Time to wait after testing before returning to normal operation.
+          default: 1
+          selector:
+            number:
+              min: 0.0
+              max: 5.0
+              unit_of_measurement: minutes
+              step: 1.0
+              mode: slider
+        heartbeat__posttest_final_state:
+          name: Heartbeat LED after Test
+          description: Final state for the device LED indicator after self-test completes.
+          default: restore
+          selector:
+            select:
+              options:
+              - label: Restore to initial
+                value: restore
+              - label: Force ON
+                value: 'on'
+              - label: Force OFF
+                value: 'off'
+              custom_value: false
+              multiple: false
+              sort: false
+        txt_summary_title:
+          name: Summary Title
+          default: Self-test Result
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        txt_summary_line_total:
+          name: 'Summary: Total'
+          default: Total
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        txt_summary_line_testnow:
+          name: 'Summary: Tested'
+          default: Tested
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        txt_summary_line_skip:
+          name: 'Summary: Skipped'
+          default: Skipped
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        txt_summary_line_timeout:
+          name: 'Summary: Timeout'
+          default: Timeout
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        txt_summary_line_stop:
+          name: 'Summary: Stopped'
+          default: Stopped
+          selector:
+            text:
+              multiple: false
+              multiline: false
+        txt_summary_line_reason:
+          name: 'Summary: Reason'
+          default: Reason
+          selector:
+            text:
+              multiple: false
+              multiline: false
+
+  source_url: https://github.com/Xat0X/Smart-Smoke-System-The-Ultimate-Firealarm-Linker/blob/main/xat0x-smoke-linker-ultimate.yaml
+
+mode: single
+max_exceeded: silent
+
+trigger_variables:
+  raw_smoke_devices: !input smoke_detector_devices
+
+trigger:
+- platform: template
+  value_template: >
+    {% set ns = namespace(alarm_active=false) %}
+    {% for item in raw_smoke_devices %}
+      {% set dev_id = device_id(item) if item is string and item is match('^[a-z_]+[.][a-z0-9_]+$') else item %}
+      {% if dev_id %}
+        {% set entities = device_entities(dev_id) %}
+        {% if entities %}
+          {% set active_smoke = expand(entities) 
+              | selectattr('domain', 'equalto', 'binary_sensor') 
+              | selectattr('attributes.device_class', 'equalto', 'smoke') 
+              | selectattr('state', 'equalto', 'on') 
+              | list %}
+          {% if active_smoke | length > 0 %}
+            {% set ns.alarm_active = true %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.alarm_active }}
+  for:
+    seconds: 5
+  id: triggered_alarm
+
+- platform: state
+  entity_id: !input test_start_trigger
+  id: triggered_test_any
+
+- platform: state
+  entity_id: !input sound_test_trigger
+  id: triggered_sound_test
+
+- platform: template
+  value_template: >
+    {% set ns = namespace(test_active=false) %}
+    {% for item in raw_smoke_devices %}
+      {% set dev_id = device_id(item) if item is string and item is match('^[a-z_]+[.][a-z0-9_]+$') else item %}
+      {% if dev_id %}
+        {% set entities = device_entities(dev_id) %}
+        {% if entities %}
+          {% set test_sensors = entities | select('match', 'binary_sensor[.].*_test$') | list %}
+          {% if test_sensors | length > 0 %}
+            {% if expand(test_sensors) | selectattr('state', 'equalto', 'on') | list | length > 0 %}
+              {% set ns.test_active = true %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.test_active }}
+  id: triggered_test_sensor
+
+variables:
+  input_smoke_detector_devices_raw: !input smoke_detector_devices
+  input_smoke_detector_devices: "{% set data = namespace(devices=[]) %} {% for item in input_smoke_detector_devices_raw %}\n  {% set dev = item %}\n  {% if item is string %}\n    {# Entity IDs follow domain.entity_id. #}\n    {% set is_entity_id = item is match('^[a-z_]+[.][a-z0-9_]+$') %}\n    {% if is_entity_id %}\n      {% set dev = device_id(item) %}\n    {% endif %}\n  {% endif %}\n  {% if dev %}\n    {% set data.devices = data.devices + [dev] %}\n  {% endif %}\n{% endfor %}\n{{ data.devices | unique | list }}"
+  smoke_sensors: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set entity = expand(device_entities(device))\n      | selectattr('domain', 'equalto', 'binary_sensor')\n      | selectattr('attributes.device_class', 'equalto', 'smoke')\n      | map(attribute='entity_id')\n      | list %}\n  {% set data.entities = data.entities + entity %}\n{% endfor %}\n{{ data.entities }}"
+  test_sensors: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set entity = device_entities(device) | select('match', 'binary_sensor[.].*_test$') | list %}\n  {% if entity | length == 0 %}\n     {% set entity = expand(device_entities(device))\n         | selectattr('domain', 'equalto', 'binary_sensor')\n         | selectattr('attributes.device_class', 'equalto', 'smoke')\n         | map(attribute='entity_id')\n         | list %}\n  {% endif %}\n  {% set data.entities = data.entities + entity %}\n{% endfor %}\n{{ data.entities }}"
+  test_sensors_dedicated: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set entity = device_entities(device) | select('match', 'binary_sensor[.].*_test$') | list %}\n  {% set data.entities = data.entities + entity %}\n{% endfor %}\n{{ data.entities }}"
+  input_alarm__notify_devices: !input alarm__notify_devices
+  input_test__notify_device: !input test__notify_device
+  input_test_start_trigger: !input test_start_trigger
+  input_sound_test_trigger: !input sound_test_trigger
+  input_critical__enabled: !input critical__enabled
+  input_ios__critical_volume: !input ios__critical_volume
+  input_wakeup__delay_seconds: !input wakeup__delay_seconds
+  input_mute__duration_seconds: !input mute__duration_seconds
+  input_firstalarm__activated: !input firstalarm__activated
+  input_firstalarm__notify_title: !input firstalarm__notify_title
+  input_firstalarm__notify_message: !input firstalarm__notify_message
+  input_firstalarm__notify_button_fire: !input firstalarm__notify_button_fire
+  input_firstalarm__notify_button_nofire: !input firstalarm__notify_button_nofire
+  input_firstalarm__waittimeout_seconds: !input firstalarm__waittimeout_seconds
+  input_firstalarm__ios_sound_name: !input firstalarm__ios_sound_name
+  input_firstalarm__android_sound_name: !input firstalarm__android_sound_name
+  input_allalarm__notify_title: !input allalarm__notify_title
+  input_allalarm__notify_message: !input allalarm__notify_message
+  input_allalarm__notify_button_deletenotification: !input allalarm__notify_button_deletenotification
+  input_allalarm__notify_button_mutealarm: !input allalarm__notify_button_mutealarm
+  input_allalarm__ios_sound_name: !input allalarm__ios_sound_name
+  input_allalarm__android_sound_name: !input allalarm__android_sound_name
+  input_selftest__activated: !input selftest__activated
+  input_selftest__notify_title: !input selftest__notify_title
+  input_selftest__notify_message: !input selftest__notify_message
+  input_selftest__notify_button_testnow: !input selftest__notify_button_testnow
+  input_selftest__notify_button_skip: !input selftest__notify_button_skip
+  input_selftest__notify_button_stoptesting: !input selftest__notify_button_stoptesting
+  input_selftest__waittimeout_minutes: !input selftest__waittimeout_minutes
+  input_selftest__finished_waittimeout_minutes: !input selftest__finished_waittimeout_minutes
+  input_smoketest__activated: !input smoketest__activated
+  input_smoketest__notify_title: !input smoketest__notify_title
+  input_smoketest__notify_message: !input smoketest__notify_message
+  input_smoketest__notify_button_yes: !input smoketest__notify_button_yes
+  input_smoketest__notify_button_no: !input smoketest__notify_button_no
+  input_smoketest__waittimeout_minutes: !input smoketest__waittimeout_minutes
+  ios_hold_hint: !input notification__ios_hint
+  summary_title: !input txt_summary_title
+  summary_line_total: !input txt_summary_line_total
+  summary_line_testnow: !input txt_summary_line_testnow
+  summary_line_skip: !input txt_summary_line_skip
+  summary_line_timeout: !input txt_summary_line_timeout
+  summary_line_stop: !input txt_summary_line_stop
+  summary_line_reason: !input txt_summary_line_reason
+  tag_alarm: smoke-detector-alarm
+  tag_selftest: smoke-detector-selftest
+  tag_smoketest: smoke-detector-smoketest
+  prepared_firstalarm_ios_sound: "{{ (input_firstalarm__ios_sound_name | default('default') | trim) or 'default' }}"
+  prepared_firstalarm_android_sound: "{{ (input_firstalarm__android_sound_name | default('default') | trim) or 'default' }}"
+  prepared_allalarm_ios_sound: "{{ (input_allalarm__ios_sound_name | default('default') | trim) or 'default' }}"
+  prepared_allalarm_android_sound: "{{ (input_allalarm__android_sound_name | default('default') | trim) or 'default' }}"
+  
+  buzzers_all: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set ent = device_entities(device) | select('match', 'select[.].*_(buzzer|siren_for_automation_only|warning|alarm)$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  sirens_all: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set ent = device_entities(device) | select('match', 'siren[.].*') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  silence_switches_all: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set ent = device_entities(device) | select('match', 'switch[.].*_silence$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  alarm_switches_all: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set ent = device_entities(device) | select('match', 'switch[.].*_alarm$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  manual_mute_sensors_all: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set ent = device_entities(device) | select('match', 'binary_sensor[.].*_buzzer_manual_mute$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  detectors__heartbeat_switch: "{% set data = namespace(entities=[]) %} {% for device in input_smoke_detector_devices %}\n  {% set ent = device_entities(device) | select('match', 'switch[.].*_heartbeat_indicator$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+
+  sensors_smoke_detected: '{{ expand(smoke_sensors) | selectattr(''state'', ''equalto'', ''on'') | map(attribute=''entity_id'') | list }}'
+  sensors_smoke_notdetected: '{{ expand(smoke_sensors) | rejectattr(''state'', ''equalto'', ''on'') | map(attribute=''entity_id'') | list }}'
+
+  realfire__areas_smoke_detected: '{% set areas = sensors_smoke_detected | map(''area_name'') | list %} {% set areas = areas | reject(''equalto'', none) | list %} {% if areas | length > 0 %}{{ areas | unique | join('', '') }}{% else %}Unknown Area{% endif %}'
+
+  buzzers_set_manual_alarm: "{% set data = namespace(entities=[]) %} {% for entity in sensors_smoke_notdetected %}\n  {% set dev = device_id(entity) %}\n  {% set ent = device_entities(dev) | select('match', 'select[.].*_(buzzer|siren_for_automation_only|warning|alarm)$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  sirens_set_manual_alarm: "{% set data = namespace(entities=[]) %} {% for entity in sensors_smoke_notdetected %}\n  {% set dev = device_id(entity) %}\n  {% set ent = device_entities(dev) | select('match', 'siren[.].*') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  silence_switches_set_manual_alarm: "{% set data = namespace(entities=[]) %} {% for entity in sensors_smoke_notdetected %}\n  {% set dev = device_id(entity) %}\n  {% set ent = device_entities(dev) | select('match', 'switch[.].*_silence$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  alarm_switches_set_manual_alarm: "{% set data = namespace(entities=[]) %} {% for entity in sensors_smoke_notdetected %}\n  {% set dev = device_id(entity) %}\n  {% set ent = device_entities(dev) | select('match', 'switch[.].*_alarm$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  buzzers_check_manual_alarm_set: "{% set data = namespace(entities=[]) %} {% for entity in buzzers_set_manual_alarm %}\n  {% set dev = device_id(entity) %}\n  {% set ent = device_entities(dev) | select('match', 'binary_sensor[.].*_buzzer_manual_alarm$') | list %}\n  {% set data.entities = data.entities + ent %}\n{% endfor %}\n{{ data.entities }}"
+  sensors_test_settestalarmto: '{{ test_sensors }}'
+  prepared_allalarm_notify_title: "{% if trigger is defined and (trigger.id in ['triggered_test_any', 'triggered_test_sensor']) %}\n  {{ '!TEST! ' ~ input_allalarm__notify_title ~ ' !TEST!' }}\n{% else %}\n  {{ input_allalarm__notify_title }}\n{% endif %}"
+  prepared_allalarm_notify_message: "{% if trigger is defined and (trigger.id in ['triggered_test_any', 'triggered_test_sensor']) %}\n  !THIS IS A TEST!\n  {{ input_allalarm__notify_message }}\n  !THIS IS A TEST!\n{% else %}\n  {{ input_allalarm__notify_message }}\n{% endif %}"
+  heartbeat_posttest_final_state: !input heartbeat__posttest_final_state
+  heartbeat_initial_on: "{% if detectors__heartbeat_switch | length > 0 %}\n  {{ expand(detectors__heartbeat_switch) | selectattr('state','equalto','on') | map(attribute='entity_id') | list }}\n{% else %}[]{% endif %}"
+
+action:
+- choose:
+  - conditions:
+    - condition: template
+      value_template: '{{ trigger is defined and trigger.id == "triggered_sound_test" }}'
+    sequence:
+    - repeat:
+        for_each: '{{ input_alarm__notify_devices }}'
+        sequence:
+        - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+          data:
+            title: 'TEST - Pre-Alarm Sound'
+            message: 'This is a test of the Pre-Alarm sound configuration.'
+            data:
+              channel: alarm_stream
+              priority: high
+              sound: '{{ prepared_firstalarm_android_sound }}'
+              push:
+                sound:
+                  name: '{{ prepared_firstalarm_ios_sound }}'
+                  critical: '{{ 1 if input_critical__enabled else 0 }}'
+                  volume: '{{ input_ios__critical_volume }}'
+        - delay: 5
+        - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+          data:
+            title: 'TEST - Main Alarm Sound'
+            message: 'This is a test of the Main Alarm sound configuration.'
+            data:
+              channel: alarm_stream
+              priority: high
+              sound: '{{ prepared_allalarm_android_sound }}'
+              push:
+                sound:
+                  name: '{{ prepared_allalarm_ios_sound }}'
+                  critical: '{{ 1 if input_critical__enabled else 0 }}'
+                  volume: '{{ input_ios__critical_volume }}'
+    - stop: "Sound test completed. Sirens will not ring."
+
+- parallel:
+  - sequence:
+    - if: '{{ detectors__heartbeat_switch | length > 0 }}'
+      then:
+      - action: switch.toggle
+        target:
+          entity_id: '{{ detectors__heartbeat_switch }}'
+      - delay: '{{ input_wakeup__delay_seconds }}'
+      - action: switch.toggle
+        target:
+          entity_id: '{{ detectors__heartbeat_switch }}'
+
+  - sequence:
+    - variables:
+        selftest_ran: false
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ trigger is defined and trigger.id == ''triggered_alarm'' }}'
+        sequence:
+        - alias: Pre-Alarm Verification
+          if: '{{ input_firstalarm__activated }}'
+          then:
+          - variables:
+              action_fire_confirm: FIRE_CONFIRM_{{ context.id }}
+              action_fire_false: FIRE_FALSE_{{ context.id }}
+              tries: 0
+              max_tries: 1
+          - repeat:
+              while:
+              - condition: template
+                value_template: '{{ tries < max_tries }}'
+              sequence:
+              - repeat:
+                  for_each: '{{ input_alarm__notify_devices }}'
+                  sequence:
+                  - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                    data:
+                      title: '{{ realfire__areas_smoke_detected ~ '' - '' ~ input_firstalarm__notify_title }}'
+                      message: '{{ input_firstalarm__notify_message }}'
+                      data:
+                        tag: '{{ tag_alarm }}'
+                        channel: alarm_stream
+                        priority: high
+                        ttl: 0
+                        sound: '{{ prepared_firstalarm_android_sound }}'
+                        push:
+                          sound:
+                            name: '{{ prepared_firstalarm_ios_sound }}'
+                            critical: '{{ 1 if input_critical__enabled else 0 }}'
+                            volume: '{{ input_ios__critical_volume }}'
+                        actions:
+                        - action: '{{ action_fire_confirm }}'
+                          title: '{{ input_firstalarm__notify_button_fire }}'
+                        - action: '{{ action_fire_false }}'
+                          title: '{{ input_firstalarm__notify_button_nofire }}'
+              - wait_for_trigger:
+                - platform: event
+                  event_type: mobile_app_notification_action
+                  event_data:
+                    action: '{{ action_fire_confirm }}'
+                - platform: event
+                  event_type: mobile_app_notification_action
+                  event_data:
+                    action: '{{ action_fire_false }}'
+                - platform: event
+                  event_type: mobile_app_notification_cleared
+                  event_data:
+                    tag: '{{ tag_alarm }}'
+                timeout: '{{ input_firstalarm__waittimeout_seconds }}'
+              - choose:
+                - conditions: '{{ wait.trigger and wait.trigger.event.event_type == ''mobile_app_notification_action'' }}'
+                  sequence:
+                  - variables:
+                      tries: '{{ max_tries }}'
+                - conditions: []
+                  sequence:
+                  - variables:
+                      tries: '{{ tries + 1 }}'
+          - if: '{{ wait.trigger and wait.trigger.event.event_type == ''mobile_app_notification_action'' and wait.trigger.event.data.action == action_fire_false }}'
+            then:
+            - repeat:
+                for_each: '{{ buzzers_all }}'
+                sequence:
+                - variables:
+                    repeat_options: '{{ state_attr(repeat.item, ''options'') | default([], true) }}'
+                - choose:
+                  - conditions: '{{ ''mute'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: mute
+                  - conditions: '{{ ''stop'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: stop
+                  - conditions: '{{ ''no_alarm'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: no_alarm
+                  - conditions: '{{ ''off'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: 'off'
+                  - conditions: '{{ ''OFF'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: 'OFF'
+            - if: '{{ sirens_all | length > 0 }}'
+              then:
+              - action: siren.turn_off
+                target:
+                  entity_id: '{{ sirens_all }}'
+            - if: '{{ silence_switches_all | length > 0 }}'
+              then:
+              - action: switch.turn_on
+                target:
+                  entity_id: '{{ silence_switches_all }}'
+            - if: '{{ alarm_switches_all | length > 0 }}'
+              then:
+              - action: switch.turn_off
+                target:
+                  entity_id: '{{ alarm_switches_all }}'
+            - stop: User reported FALSE ALARM
+
+      - conditions:
+        - condition: template
+          value_template: '{{ trigger is not defined or trigger.id in [''triggered_test_any'', ''triggered_test_sensor''] }}'
+        sequence:
+        - variables:
+            selftest_ran: true
+        - alias: Guided Self-Test
+          if: '{{ input_selftest__activated }}'
+          then:
+          - variables:
+              abort_to_alarm: false
+              selftest_total: '{{ sensors_test_settestalarmto | length }}'
+              selftest_count_testnow: 0
+              selftest_count_skip: 0
+              selftest_count_stop: 0
+              selftest_count_timeout: 0
+              selftest_stopped: false
+              selftest_stop_reason: completed
+          - repeat:
+              for_each: '{{ sensors_test_settestalarmto }}'
+              sequence:
+              - if: '{{ selftest_stopped or abort_to_alarm }}'
+                then:
+                - stop: Loop Stopped
+              - variables:
+                  act_now: TEST_NOW_{{ context.id }}
+                  act_skip: TEST_SKIP_{{ context.id }}
+                  act_stop: TEST_STOP_{{ context.id }}
+                  step: '{{ repeat.index }}'
+                  area: '{{ area_name(repeat.item) or ''Unknown Room'' }}'
+                  current_ent: '{{ repeat.item }}'
+                  tries_step: 0
+                  max_tries_step: 10
+                  got_result: false
+              - repeat:
+                  while:
+                  - condition: template
+                    value_template: '{{ (not got_result) and (tries_step < max_tries_step) }}'
+                  sequence:
+                  - action: notify.mobile_app_{{ device_attr(input_test__notify_device, 'name') | slugify }}
+                    data:
+                      title: '{{ input_selftest__notify_title }} ({{ step }}/{{ selftest_total }})'
+                      message: '{{ input_selftest__notify_message }}
+
+
+                        Room: {{ area }}
+
+
+                        {{ ios_hold_hint }}'
+                      data:
+                        tag: '{{ tag_selftest }}'
+                        channel: alarm_stream
+                        priority: high
+                        ttl: 0
+                        actions:
+                        - action: '{{ act_now }}'
+                          title: '{{ input_selftest__notify_button_testnow }}'
+                        - action: '{{ act_skip }}'
+                          title: '{{ input_selftest__notify_button_skip }}'
+                        - action: '{{ act_stop }}'
+                          title: '{{ input_selftest__notify_button_stoptesting }}'
+                  - wait_for_trigger:
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: '{{ act_now }}'
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: '{{ act_skip }}'
+                    - platform: event
+                      event_type: mobile_app_notification_action
+                      event_data:
+                        action: '{{ act_stop }}'
+                    - platform: template
+                      value_template: '{{ is_state(current_ent, ''on'') }}'
+                      id: physical_press
+                    - platform: event
+                      event_type: state_changed
+                      event_data:
+                        entity_id: '{{ current_ent }}'
+                      id: physical_press_event
+                    - platform: template
+                      value_template: "{{\n  expand(smoke_sensors)\n  | rejectattr('entity_id', 'equalto', current_ent)\n  | selectattr('state', 'equalto', 'on')\n  | selectattr('last_changed', 'lt', now() - timedelta(seconds=5))\n  | list | length > 0\n}}"
+                      id: watchdog
+                    - platform: event
+                      event_type: mobile_app_notification_cleared
+                      event_data:
+                        tag: '{{ tag_selftest }}'
+                    timeout:
+                      minutes: '{{ input_selftest__waittimeout_minutes }}'
+                  - choose:
+                    - conditions: "{{ wait.trigger and (\n    (wait.trigger.event.event_type == 'mobile_app_notification_action')\n    or (wait.trigger.id in ['physical_press','physical_press_event','watchdog'])\n  ) }}"
+                      sequence:
+                      - variables:
+                          got_result: true
+                    - conditions: []
+                      sequence:
+                      - variables:
+                          tries_step: '{{ tries_step + 1 }}'
+              - action: notify.mobile_app_{{ device_attr(input_test__notify_device, 'name') | slugify }}
+                data:
+                  message: clear_notification
+                  data:
+                    tag: '{{ tag_selftest }}'
+              - choose:
+                - conditions: '{{ not wait.trigger }}'
+                  sequence:
+                  - variables:
+                      selftest_count_timeout: '{{ selftest_count_timeout + 1 }}'
+                      selftest_stopped: true
+                      selftest_stop_reason: timeout
+                - conditions: '{{ wait.trigger.event.data.action == act_stop }}'
+                  sequence:
+                  - variables:
+                      selftest_count_stop: '{{ selftest_count_stop + 1 }}'
+                      selftest_stopped: true
+                      selftest_stop_reason: stop_button
+                - conditions: '{{ wait.trigger.event.data.action == act_skip }}'
+                  sequence:
+                  - variables:
+                      selftest_count_skip: '{{ selftest_count_skip + 1 }}'
+                - conditions:
+                  - condition: or
+                    conditions:
+                    - '{{ wait.trigger.event.data.action == act_now }}'
+                    - '{{ wait.trigger.id == ''physical_press'' }}'
+                    - '{{ wait.trigger.id == ''physical_press_event'' }}'
+                  sequence:
+                  - variables:
+                      selftest_count_testnow: '{{ selftest_count_testnow + 1 }}'
+                  - if: '{{ wait.trigger.platform == ''event'' and wait.trigger.event.event_type == ''mobile_app_notification_action'' }}'
+                    then:
+                    - variables:
+                        btn: '{% set dev = device_id(repeat.item) %} {{ device_entities(dev) | select(''match'', ''button[.].*_selftest$'') | list | join }}'
+                    - if: '{{ btn != '''' }}'
+                      then:
+                      - action: button.press
+                        target:
+                          entity_id: '{{ btn }}'
+                - conditions: '{{ wait.trigger.id == ''watchdog'' }}'
+                  sequence:
+                  - variables:
+                      abort_to_alarm: true
+                      selftest_stopped: true
+          - if: '{{ not abort_to_alarm }}'
+            then:
+            - delay:
+                minutes: '{{ input_selftest__finished_waittimeout_minutes }}'
+            - variables:
+                smoke_result: not_requested
+            - if: '{{ input_smoketest__activated }}'
+              then:
+              - variables:
+                  act_yes: SMOKE_YES_{{ context.id }}
+                  act_no: SMOKE_NO_{{ context.id }}
+              - action: notify.mobile_app_{{ device_attr(input_test__notify_device, 'name') | slugify }}
+                data:
+                  title: '{{ input_smoketest__notify_title }}'
+                  message: '{{ input_smoketest__notify_message }}'
+                  data:
+                    tag: '{{ tag_smoketest }}'
+                    actions:
+                    - action: '{{ act_yes }}'
+                      title: '{{ input_smoketest__notify_button_yes }}'
+                    - action: '{{ act_no }}'
+                      title: '{{ input_smoketest__notify_button_no }}'
+              - wait_for_trigger:
+                - platform: event
+                  event_type: mobile_app_notification_action
+                  event_data:
+                    action: '{{ act_yes }}'
+                - platform: event
+                  event_type: mobile_app_notification_action
+                  event_data:
+                    action: '{{ act_no }}'
+                timeout:
+                  minutes: '{{ input_smoketest__waittimeout_minutes }}'
+              - variables:
+                  smoke_result: '{% if not wait.trigger %}timeout {% elif wait.trigger.event.data.action == act_yes %}accepted {% else %}declined{% endif %}'
+            - variables:
+                reason_txt: '{% if selftest_stop_reason == ''timeout'' %}Timeout {% elif selftest_stop_reason == ''stop_button'' %}Stopped {% else %}Completed{% endif %}'
+            - action: notify.mobile_app_{{ device_attr(input_test__notify_device, 'name') | slugify }}
+              data:
+                title: '{{ summary_title }}'
+                message: '{{ summary_line_reason }}: {{ reason_txt }} {{ summary_line_total }}: {{ selftest_total }} {{ summary_line_testnow }}: {{ selftest_count_testnow }} {{ summary_line_skip }}: {{ selftest_count_skip }} {{ summary_line_timeout }}: {{ selftest_count_timeout }} Smoke test: {{ smoke_result }}'
+                data:
+                  tag: '{{ tag_selftest }}-summary'
+
+    - if: '{{ selftest_ran | default(false) and detectors__heartbeat_switch | length > 0 }}'
+      then:
+      - choose:
+        - conditions: '{{ heartbeat_posttest_final_state == ''off'' }}'
+          sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: '{{ detectors__heartbeat_switch }}'
+        - conditions: '{{ heartbeat_posttest_final_state == ''on'' }}'
+          sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: '{{ detectors__heartbeat_switch }}'
+        - conditions: '{{ heartbeat_posttest_final_state == ''restore'' }}'
+          sequence:
+          - if: '{{ heartbeat_initial_on | length > 0 }}'
+            then:
+            - action: switch.turn_on
+              target:
+                entity_id: '{{ heartbeat_initial_on }}'
+          - variables:
+              heartbeat_restore_off: '{{ detectors__heartbeat_switch | reject(''in'', heartbeat_initial_on) | list }}'
+          - if: '{{ heartbeat_restore_off | length > 0 }}'
+            then:
+            - action: switch.turn_off
+              target:
+                entity_id: '{{ heartbeat_restore_off }}'
+
+    - variables:
+        alarm_triggered: '{{ trigger is defined and trigger.id == ''triggered_alarm'' }}'
+        smoke_test_go: '{{ smoke_result is defined and smoke_result == ''accepted'' }}'
+        aborted_to_alarm: '{{ abort_to_alarm | default(false) }}'
+        should_propagate: '{{ alarm_triggered or smoke_test_go or aborted_to_alarm }}'
+
+    - if: '{{ should_propagate }}'
+      then:
+      - alias: Trigger Sirens (Select entities)
+        repeat:
+          for_each: '{{ buzzers_set_manual_alarm }}'
+          sequence:
+          - variables:
+              repeat_options: '{{ state_attr(repeat.item, ''options'') | default([], true) }}'
+          - choose:
+            - conditions: '{{ ''alarm'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: alarm
+            - conditions: '{{ ''fire'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: fire
+            - conditions: '{{ ''fire_alarm'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: fire_alarm
+            - conditions: '{{ ''emergency'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: emergency
+            - conditions: '{{ ''smoke_siren'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: smoke_siren
+            - conditions: '{{ ''on'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: 'on'
+            - conditions: '{{ ''ON'' in repeat_options }}'
+              sequence:
+              - action: select.select_option
+                target:
+                  entity_id: '{{ repeat.item }}'
+                data:
+                  option: 'ON'
+      - if: '{{ sirens_set_manual_alarm | length > 0 }}'
+        then:
+        - alias: Trigger Sirens (siren entities)
+          action: siren.turn_on
+          target:
+            entity_id: '{{ sirens_set_manual_alarm }}'
+      - if: '{{ silence_switches_set_manual_alarm | length > 0 }}'
+        then:
+        - alias: Ensure silence disabled before alarm
+          action: switch.turn_off
+          target:
+            entity_id: '{{ silence_switches_set_manual_alarm }}'
+      - if: '{{ alarm_switches_set_manual_alarm | length > 0 }}'
+        then:
+        - alias: Trigger Sirens (switch alarm entities)
+          action: switch.turn_on
+          target:
+            entity_id: '{{ alarm_switches_set_manual_alarm }}'
+      - choose: []
+        default: !input allalarm__action
+      - variables:
+          act_mute: MUTE_ALL_{{ context.id }}
+          act_dismiss: DISMISS_{{ context.id }}
+          tries_alarm: 0
+          max_tries_alarm: 5
+      - repeat:
+          for_each: '{{ input_alarm__notify_devices }}'
+          sequence:
+          - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+            data:
+              title: '{{ realfire__areas_smoke_detected ~ '' - '' ~ prepared_allalarm_notify_title }}'
+              message: '{{ prepared_allalarm_notify_message }}'
+              data:
+                tag: '{{ tag_alarm }}'
+                channel: alarm_stream
+                priority: high
+                ttl: 0
+                sound: '{{ prepared_allalarm_android_sound }}'
+                push:
+                  sound:
+                    name: '{{ prepared_allalarm_ios_sound }}'
+                    critical: '{{ 1 if input_critical__enabled else 0 }}'
+                    volume: '{{ input_ios__critical_volume }}'
+                actions:
+                - action: '{{ act_dismiss }}'
+                  title: '{{ input_allalarm__notify_button_deletenotification }}'
+                - action: '{{ act_mute }}'
+                  title: '{{ input_allalarm__notify_button_mutealarm }}'
+      - repeat:
+          while:
+          - condition: template
+            value_template: '{{ tries_alarm < max_tries_alarm }}'
+          sequence:
+          - wait_for_trigger:
+            - platform: event
+              event_type: mobile_app_notification_action
+              event_data:
+                action: '{{ act_dismiss }}'
+            - platform: event
+              event_type: mobile_app_notification_action
+              event_data:
+                action: '{{ act_mute }}'
+            - platform: event
+              event_type: mobile_app_notification_cleared
+              event_data:
+                tag: '{{ tag_alarm }}'
+            - platform: template
+              value_template: >
+                {% set s1 = expand(silence_switches_all) | selectattr("state", "equalto", "on") | list if silence_switches_all | length > 0 else [] %}
+                {% set s2 = expand(manual_mute_sensors_all) | selectattr("state", "equalto", "on") | list if manual_mute_sensors_all | length > 0 else [] %}
+                {% set s3 = expand(buzzers_all) | selectattr("state", "equalto", "mute") | list if buzzers_all | length > 0 else [] %}
+                {{ s1 | length > 0 or s2 | length > 0 or s3 | length > 0 }}
+              id: physical_mute
+            - platform: template
+              value_template: '{{ expand(smoke_sensors) | selectattr("state", "equalto", "on") | list | length == 0 }}'
+              id: smoke_cleared
+            timeout: '{{ input_firstalarm__waittimeout_seconds }}'
+          - choose:
+            - conditions: '{{ wait.trigger and (wait.trigger.platform == "template" or (wait.trigger.platform == "event" and wait.trigger.event.event_type == "mobile_app_notification_action")) }}'
+              sequence:
+              - variables:
+                  tries_alarm: '{{ max_tries_alarm }}'
+            - conditions: []
+              sequence:
+              - variables:
+                  tries_alarm: '{{ tries_alarm + 1 }}'
+              - repeat:
+                  for_each: '{{ input_alarm__notify_devices }}'
+                  sequence:
+                  - action: notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}
+                    data:
+                      title: '{{ realfire__areas_smoke_detected ~ '' - '' ~ prepared_allalarm_notify_title }}'
+                      message: '{{ prepared_allalarm_notify_message }}'
+                      data:
+                        tag: '{{ tag_alarm }}'
+                        channel: alarm_stream
+                        priority: high
+                        ttl: 0
+                        sound: '{{ prepared_allalarm_android_sound }}'
+                        push:
+                          sound:
+                            name: '{{ prepared_allalarm_ios_sound }}'
+                            critical: '{{ 1 if input_critical__enabled else 0 }}'
+                            volume: '{{ input_ios__critical_volume }}'
+                        actions:
+                        - action: '{{ act_dismiss }}'
+                          title: '{{ input_allalarm__notify_button_deletenotification }}'
+                        - action: '{{ act_mute }}'
+                          title: '{{ input_allalarm__notify_button_mutealarm }}'
+      - if: '{{ wait.trigger and (wait.trigger.id == "physical_mute" or wait.trigger.id == "smoke_cleared" or (wait.trigger.platform == "event" and wait.trigger.event.event_type == "mobile_app_notification_action" and wait.trigger.event.data.action == act_mute)) }}'
+        then:
+        - variables:
+            start_time: '{{ now() | as_timestamp }}'
+        - alias: Aggressive Mute Loop
+          repeat:
+            while:
+            - condition: template
+              value_template: '{{ (now() | as_timestamp - start_time) < input_mute__duration_seconds }}'
+            sequence:
+            - repeat:
+                for_each: '{{ buzzers_all }}'
+                sequence:
+                - variables:
+                    repeat_options: '{{ state_attr(repeat.item, ''options'') | default([], true) }}'
+                - choose:
+                  - conditions: '{{ ''mute'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: mute
+                  - conditions: '{{ ''stop'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: stop
+                  - conditions: '{{ ''no_alarm'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: no_alarm
+                  - conditions: '{{ ''off'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: 'off'
+                  - conditions: '{{ ''OFF'' in repeat_options }}'
+                    sequence:
+                    - action: select.select_option
+                      target:
+                        entity_id: '{{ repeat.item }}'
+                      data:
+                        option: 'OFF'
+            - if: '{{ sirens_all | length > 0 }}'
+              then:
+              - action: siren.turn_off
+                target:
+                  entity_id: '{{ sirens_all }}'
+            - if: '{{ silence_switches_all | length > 0 }}'
+              then:
+              - action: switch.turn_on
+                target:
+                  entity_id: '{{ silence_switches_all }}'
+            - if: '{{ alarm_switches_all | length > 0 }}'
+              then:
+              - action: switch.turn_off
+                target:
+                  entity_id: '{{ alarm_switches_all }}'
+            - delay: 5

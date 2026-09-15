@@ -1,0 +1,3527 @@
+blueprint:
+  name: Climate Seasonal Comfort Controller (°F / Imperial)
+  author: Quatermelon
+  description: >
+    Controls a climate entity using a winter-mode helper, occupancy and guest mode,
+    a built-in comfort schedule (time periods that set the target and act as the
+    permission gate), a room-and-outdoor thermal demand filter with optional
+    forecast trend, timed boost, compressor minimum run/off protection, and
+    condensation-aware dry sweeps.
+    Imperial (°F) variant — all temperatures, offsets, and thresholds are in Fahrenheit.
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    climate_section:
+      name: Climate Device
+      icon: mdi:heat-pump
+      collapsed: true
+      description: >
+        The climate entity this automation controls and the HVAC modes it supports.
+        This blueprint works with heat pumps (heat / cool / dry), AC units
+        (heat / cool), heating-only devices, and cooling-only devices.
+        Select only the modes your device actually supports — the automation
+        will never attempt to use an unselected mode.
+      input:
+        climate_entity:
+          name: Climate entity
+          description: The climate entity to control.
+          selector:
+            entity:
+              filter:
+                domain: climate
+        supported_hvac_modes:
+          name: Supported HVAC modes
+          description: >
+            Select every mode your device supports. Heat-only device? Select
+            Heat only. No dry/dehumidify mode? Leave Dry unticked — dry mode
+            will be disabled automatically regardless of the dry mode settings.
+          default:
+            - heat
+            - cool
+            - dry
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Heat
+                  value: heat
+                - label: Cool
+                  value: cool
+                - label: "Dry (dehumidify)"
+                  value: dry
+        minimum_run_minutes:
+          name: Minimum run time
+          description: Minimum minutes before heat or cool can turn off.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 1
+              mode: box
+              unit_of_measurement: min
+        minimum_off_minutes:
+          name: Minimum off time
+          description: >
+            Minimum minutes the unit must stay off before it can restart.
+            Prevents short-cycling. Set to 0 to disable.
+          default: 15
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 1
+              mode: box
+              unit_of_measurement: min
+        manual_takeover_minutes:
+          name: Manual takeover duration
+          description: >
+            When the device is changed outside the automation — in Home
+            Assistant, or on the unit's own remote/app if it reports its state
+            back to HA — the automation pauses for this many minutes before
+            resuming control. Set to 0 to disable manual takeover entirely.
+          default: 60
+          selector:
+            number:
+              min: 0
+              max: 480
+              step: 5
+              mode: box
+              unit_of_measurement: min
+        manual_takeover_helper:
+          name: Manual control helper (optional)
+          description: >
+            Optional input_boolean helper for the most reliable manual takeover
+            detection. Whenever the device changes, the automation compares the
+            new mode and setpoint against what it intended; if they differ,
+            someone changed it, so it raises this flag and leaves the device
+            alone for the takeover duration before resuming control. The flag
+            clears itself when the duration elapses, you can switch it on from a
+            dashboard to pause the automation on demand, and it persists across
+            Home Assistant restarts. Leave it empty and the automation still
+            respects manual changes with a lighter check, though that one may
+            briefly pause right after a restart. Set the takeover duration to 0
+            to disable manual takeover entirely.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+        status_helper:
+          name: Status text helper (optional)
+          description: >
+            Optional input_text helper. When set, the automation writes a short
+            one-line summary of its current decision to it on every run — the
+            mode and target, which period (or boost/setback) is driving it, and
+            whether the room is occupied or a manual hold is active. Handy on a
+            dashboard so you can see what the controller is doing at a glance
+            without opening a trace. Purely informational; leave empty to skip.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: input_text
+        room_temperature_sensor:
+          name: Room temperature sensor (optional)
+          description: >
+            Alternative temperature sensor for the room this device controls.
+            When provided, this sensor is used instead of the climate entity's
+            own built-in sensor for all thermal demand and comfort calculations.
+            Leave empty to use the climate entity's reported temperature.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: sensor
+                device_class: temperature
+        outdoor_temp_source:
+          name: Outdoor temperature source
+          description: >
+            The source used as the outdoor temperature signal. Accepts either:
+              • A temperature sensor entity (e.g. a weather station or
+                integration sensor) — state is read directly as °F.
+              • A weather entity (e.g. weather.home) — the current temperature
+                attribute is used.
+            Used for two purposes: the outdoor stability signal in the thermal
+            demand filter (active regardless of dry mode), and as the window
+            surface temperature proxy in the condensation dew-point calculation
+            when dry mode is enabled.
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+                  device_class: temperature
+                - domain: weather
+
+    season_section:
+      name: Season Mode
+      icon: mdi:sun-snowflake
+      collapsed: true
+      description: Select the helper that stores winter or summer mode.
+      input:
+        winter_mode_sensor:
+          name: Winter mode helper
+          description: Binary threshold helper. On means winter; off means summer.
+          selector:
+            entity:
+              filter:
+                domain: binary_sensor
+
+    presence_section:
+      name: Presence & Out-of-Comfort (optional)
+      icon: mdi:home-account
+      collapsed: true
+      description: >
+        Optional. With occupancy configured, comfort only runs while someone is
+        home — heating starts once presence is detected — and this section sets
+        what happens otherwise (no period scheduled, or away): turn off, or hold
+        a setback temperature. Leave occupancy and guest mode empty to skip
+        presence altogether and run on just the schedule and thermal demand
+        filter; the device then follows the periods and turns off between them.
+      input:
+        occupancy_entities:
+          name: Home occupancy entities (optional)
+          description: >
+            People, phones, zone.home, or sensors that mean someone is home. When
+            set, heating only runs while someone is home — it starts once presence
+            is detected — and the out-of-comfort action applies when away. Leave
+            empty (along with guest mode) to skip presence entirely and run purely
+            on the schedule and thermal demand filter.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: person
+                - domain: device_tracker
+                - domain: zone
+                - domain: binary_sensor
+        guest_mode_switch:
+          name: Guest mode (optional)
+          description: >
+            On treats the home as occupied even when trackers leave. Leave empty
+            if you don't use it.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+        room_presence_entities:
+          name: Room presence entities (optional)
+          description: >
+            Sensors that indicate THIS room is occupied — e.g. an mmWave/presence
+            sensor or a motion sensor for the room this device heats. When set,
+            comfort is allowed only while the room is occupied: if a period is
+            scheduled but the room is empty, the device follows the Room Vacancy
+            Response below (ease back, then optionally off). Leave empty to fall
+            back to whole-home occupancy (no change). Room occupancy comes only
+            from these sensors — guest mode is a whole-home signal and does not
+            force an individual room occupied.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+                - domain: input_boolean
+                - domain: sensor
+        winter_away_action:
+          name: Winter out-of-comfort action
+          description: >
+            What the device does in winter whenever it is not in active comfort
+            (no period scheduled, or nobody home): turn off, or hold the setback
+            temperature below.
+          default: "off"
+          selector:
+            select:
+              options:
+                - label: Turn off
+                  value: "off"
+                - label: Hold setback
+                  value: "setback"
+        away_winter_setback_temperature:
+          name: Winter setback temperature
+          description: Winter heat target when the winter out-of-comfort action is setback.
+          default: 61
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_away_action:
+          name: Summer out-of-comfort action
+          description: >
+            What the device does in summer whenever it is not in active comfort
+            (no period scheduled, or nobody home): turn off, or hold the setback
+            temperature below.
+          default: "off"
+          selector:
+            select:
+              options:
+                - label: Turn off
+                  value: "off"
+                - label: Hold setback
+                  value: "setback"
+        away_summer_setback_temperature:
+          name: Summer setback temperature
+          description: Summer cool target when the summer out-of-comfort action is setback.
+          default: 82
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    room_vacancy_section:
+      name: Room Vacancy Response
+      icon: mdi:account-clock
+      collapsed: true
+      description: >
+        When room presence sensors are configured (in the Presence section), this
+        controls what happens during a comfort period when the HOUSE is occupied
+        but THIS room is empty — someone is home, just not here. (Nobody home, or
+        no period scheduled, still uses the out-of-comfort action above.) Two
+        optional stages let the room ease back gradually — e.g. drop 2° after 10
+        minutes empty, then turn off after 30. Adjustments are relative to the
+        current comfort target: the offset drops the target in winter and raises
+        it in summer.
+      input:
+        room_vacancy_stage1_minutes:
+          name: Stage 1 delay
+          description: >
+            How long the room must be continuously empty (during a comfort
+            period, house occupied) before the Stage 1 action applies.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 240
+              step: 1
+              mode: box
+              unit_of_measurement: min
+        winter_room_vacancy_stage1_action:
+          name: Winter Stage 1 action
+          description: What to do in winter once the room has been empty for the Stage 1 delay.
+          default: adjust
+          selector:
+            select:
+              options:
+                - label: Adjust (drop below comfort)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold comfort (no change)
+                  value: hold
+        winter_room_vacancy_stage1_offset:
+          name: Winter Stage 1 offset
+          description: Degrees to drop below the comfort target when the Winter Stage 1 action is Adjust.
+          default: 4
+          selector:
+            number:
+              min: 0
+              max: 18
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_room_vacancy_stage1_action:
+          name: Summer Stage 1 action
+          description: What to do in summer once the room has been empty for the Stage 1 delay.
+          default: adjust
+          selector:
+            select:
+              options:
+                - label: Adjust (raise above comfort)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold comfort (no change)
+                  value: hold
+        summer_room_vacancy_stage1_offset:
+          name: Summer Stage 1 offset
+          description: Degrees to raise above the comfort target when the Summer Stage 1 action is Adjust.
+          default: 4
+          selector:
+            number:
+              min: 0
+              max: 18
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        room_vacancy_stage2_minutes:
+          name: Stage 2 delay (optional)
+          description: >
+            Longer empty time before the deeper Stage 2 action applies. Should be
+            larger than the Stage 1 delay. Set to 0 to disable Stage 2.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 480
+              step: 1
+              mode: box
+              unit_of_measurement: min
+        winter_room_vacancy_stage2_action:
+          name: Winter Stage 2 action
+          description: What to do in winter once the room has been empty for the Stage 2 delay.
+          default: "off"
+          selector:
+            select:
+              options:
+                - label: Adjust (drop below comfort)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold comfort (no change)
+                  value: hold
+        winter_room_vacancy_stage2_offset:
+          name: Winter Stage 2 offset
+          description: Degrees to drop below the comfort target when the Winter Stage 2 action is Adjust.
+          default: 7
+          selector:
+            number:
+              min: 0
+              max: 18
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_room_vacancy_stage2_action:
+          name: Summer Stage 2 action
+          description: What to do in summer once the room has been empty for the Stage 2 delay.
+          default: "off"
+          selector:
+            select:
+              options:
+                - label: Adjust (raise above comfort)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold comfort (no change)
+                  value: hold
+        summer_room_vacancy_stage2_offset:
+          name: Summer Stage 2 offset
+          description: Degrees to raise above the comfort target when the Summer Stage 2 action is Adjust.
+          default: 7
+          selector:
+            number:
+              min: 0
+              max: 18
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    window_door_section:
+      name: Window / Door
+      icon: mdi:window-open-variant
+      collapsed: true
+      description: >
+        Optional. Pause or ease back the unit while a window or door is open, so
+        it isn't conditioning the outdoors. A short open delay ignores brief
+        openings, and an optional second stage can escalate (e.g. drop a few
+        degrees after a couple of minutes, then turn off after longer). A manual
+        boost still overrides this; otherwise an open window takes priority over
+        comfort, room vacancy and setback, and suppresses dry sweeps. Behaviour
+        resumes when everything is closed again.
+      input:
+        window_door_entities:
+          name: Window / door sensors (optional)
+          description: >
+            Open/close sensors for this room (open = on). When any is open past
+            the Stage 1 delay below, the per-season action applies. Leave empty
+            to disable this feature.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+                - domain: input_boolean
+        window_door_stage1_minutes:
+          name: Stage 1 delay
+          description: >
+            How long a window/door must be open before the Stage 1 action
+            applies, to ignore brief openings. 0 acts as soon as it opens.
+          default: 2
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 1
+              mode: box
+              unit_of_measurement: min
+        winter_window_door_stage1_action:
+          name: Winter Stage 1 action
+          description: What to do in winter once a window/door has been open for the Stage 1 delay.
+          default: adjust
+          selector:
+            select:
+              options:
+                - label: Adjust (drop below the current target)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold (no change)
+                  value: hold
+        winter_window_door_stage1_offset:
+          name: Winter Stage 1 offset
+          description: Degrees to drop below the would-be target when the Winter Stage 1 action is Adjust.
+          default: 7
+          selector:
+            number:
+              min: 0
+              max: 27
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_window_door_stage1_action:
+          name: Summer Stage 1 action
+          description: What to do in summer once a window/door has been open for the Stage 1 delay.
+          default: adjust
+          selector:
+            select:
+              options:
+                - label: Adjust (raise above the current target)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold (no change)
+                  value: hold
+        summer_window_door_stage1_offset:
+          name: Summer Stage 1 offset
+          description: Degrees to raise above the would-be target when the Summer Stage 1 action is Adjust.
+          default: 7
+          selector:
+            number:
+              min: 0
+              max: 27
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        window_door_stage2_minutes:
+          name: Stage 2 delay (optional)
+          description: >
+            Longer open time before the deeper Stage 2 action applies. Should be
+            larger than the Stage 1 delay. Set to 0 to disable Stage 2.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 240
+              step: 1
+              mode: box
+              unit_of_measurement: min
+        winter_window_door_stage2_action:
+          name: Winter Stage 2 action
+          description: What to do in winter once a window/door has been open for the Stage 2 delay.
+          default: "off"
+          selector:
+            select:
+              options:
+                - label: Adjust (drop below the current target)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold (no change)
+                  value: hold
+        winter_window_door_stage2_offset:
+          name: Winter Stage 2 offset
+          description: Degrees to drop below the would-be target when the Winter Stage 2 action is Adjust.
+          default: 7
+          selector:
+            number:
+              min: 0
+              max: 27
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_window_door_stage2_action:
+          name: Summer Stage 2 action
+          description: What to do in summer once a window/door has been open for the Stage 2 delay.
+          default: "off"
+          selector:
+            select:
+              options:
+                - label: Adjust (raise above the current target)
+                  value: adjust
+                - label: Turn off
+                  value: "off"
+                - label: Hold (no change)
+                  value: hold
+        summer_window_door_stage2_offset:
+          name: Summer Stage 2 offset
+          description: Degrees to raise above the would-be target when the Summer Stage 2 action is Adjust.
+          default: 7
+          selector:
+            number:
+              min: 0
+              max: 27
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    frost_protection_section:
+      name: Frost Protection
+      icon: mdi:snowflake-alert
+      collapsed: true
+      description: >
+        A safety floor. If the room temperature drops below the minimum, the unit
+        heats to that minimum regardless of schedule, occupancy, room vacancy, an
+        open window, a boost, a manual change, or even the season being set to
+        summer. Heat-only; it never cools. Leave disabled if you don't want it.
+      input:
+        frost_protection_enabled:
+          name: Enable frost protection
+          description: Force heating whenever the room falls below the minimum below.
+          default: false
+          selector:
+            boolean:
+        frost_minimum_temperature:
+          name: Frost minimum temperature
+          description: >
+            The lowest the room is allowed to reach. Below this the unit heats up
+            to it (with a small margin to avoid rapid cycling).
+          default: 46
+          selector:
+            number:
+              min: 37
+              max: 61
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    thermal_demand_section:
+      name: Thermal Demand Filter
+      icon: mdi:thermometer-lines
+      collapsed: true
+      description: >
+        During an active comfort period the schedule has given permission to run;
+        this filter then decides whether running is genuinely required, so the
+        unit only operates when it needs to. It is not a thermostat replacement —
+        the device's own thermostat holds the target once it is running.
+
+        Two stages, based on whether the unit is already running:
+
+        Starting (currently off) — room only: start when the room has drifted
+        more than the comfort band below the target (winter) or above it (summer).
+
+        Keeping it running (already on) — room OR outdoor OR forecast: keep going
+        while the room is short of target, OR outdoor is still past the threshold,
+        OR the forecast shows outdoor moving the wrong way over the next few
+        hours. It switches off only once the room is satisfied AND the weather no
+        longer warrants it AND the forecast isn't about to turn.
+
+        The outdoor threshold and the forecast both sit only on the keep-running
+        side, so the unit won't flip on and off as readings hover near a limit,
+        and won't cut out just before a cold spell.
+      input:
+        winter_comfort_band:
+          name: Winter comfort band
+          description: >
+            How far the room may drift BELOW the current heating target before
+            heating starts (e.g. 2 °F → with a 70 °F target it starts at 68 °F).
+            The band follows whatever target is active right now — a scheduled
+            period, a setback, or a boost.
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 9
+              step: 0.5
+              mode: slider
+              unit_of_measurement: "°F"
+        winter_outdoor_cold_threshold:
+          name: Winter outdoor cold threshold
+          description: >
+            Once heating, the unit keeps running while outdoor stays below this,
+            even after the room reaches its target. Low value = shuts off sooner
+            when the day warms; high value = keeps running through cold nights
+            (good for all-night bedroom heating). A draughty house wants a higher
+            value.
+          default: 57
+          selector:
+            number:
+              min: 14
+              max: 77
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_comfort_band:
+          name: Summer comfort band
+          description: >
+            How far the room may drift ABOVE the current cooling target before
+            cooling starts (e.g. 2 °F → with a 75 °F target it starts at 77 °F).
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 9
+              step: 0.5
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_outdoor_hot_threshold:
+          name: Summer outdoor hot threshold
+          description: >
+            Once cooling, the unit keeps running while outdoor stays above this,
+            even after the room reaches its target. High value = shuts off sooner
+            when the evening cools; low value = keeps running through hot days.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 104
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        forecast_feature_enabled:
+          name: Enable forecast trend
+          description: >
+            Optional. While the unit is ALREADY running, keep it running if the
+            forecast shows outdoor temperature dropping (winter) or rising
+            (summer) over the next few hours — so it won't switch off just before
+            a cold/hot spell. Keep-running only; it never starts the unit
+            pre-emptively. Requires a weather entity below.
+          default: false
+          selector:
+            boolean:
+        weather_forecast_entity:
+          name: Weather forecast entity (optional)
+          description: >
+            Weather entity providing an hourly forecast, used only when the
+            forecast trend toggle above is on. If your outdoor source is already
+            a weather entity you can select the same one.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: weather
+        forecast_lookahead_hours:
+          name: Forecast look-ahead window
+          description: How many hours of forecast to inspect for the trend.
+          default: 4
+          selector:
+            number:
+              min: 1
+              max: 12
+              step: 1
+              mode: slider
+              unit_of_measurement: h
+        indoor_trend_enabled:
+          name: Enable indoor temperature trend
+          description: >
+            Optional. Start heating/cooling a little earlier when the room itself
+            is changing fast — a cold snap, an open door — instead of waiting for
+            the full comfort band. Start-side only; it never changes the
+            keep-running or switch-off logic. Requires the rate-of-change sensor
+            below.
+          default: false
+          selector:
+            boolean:
+        indoor_trend_sensor:
+          name: Indoor rate-of-change sensor (optional)
+          description: >
+            A sensor giving the room's temperature change in °F per hour
+            (positive = warming, negative = cooling). The easiest way to get one
+            is a Derivative helper on the room temperature sensor, with a time
+            window of about 10-15 minutes and unit °F/h. Used only when the
+            toggle above is on.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: sensor
+        indoor_trend_rate:
+          name: Trend rate threshold
+          description: >
+            How fast the room must be changing to trigger the early start, in °F
+            per hour. e.g. 2 means begin as soon as the room is dropping
+            (winter) or rising (summer) faster than 2 °F/hour, rather than
+            waiting for it to drift a full band past the target.
+          default: 2
+          selector:
+            number:
+              min: 0.5
+              max: 9
+              step: 0.5
+              mode: slider
+              unit_of_measurement: "°F/h"
+
+    boost_section:
+      name: Timed Boost
+      icon: mdi:rocket-launch
+      collapsed: true
+      description: >
+        Boost temporarily shifts the target by your adjustment (warmer in
+        winter, cooler in summer) for a set duration, then turns itself off.
+        It deviates from the current scheduled period target; when no period is
+        active it deviates from the setback temperature, so it still works out of
+        hours. Entirely optional — leave the feature toggle off if unused.
+        Enable the toggle, create an input_boolean helper, and select it below.
+      input:
+        boost_feature_enabled:
+          name: Enable boost feature
+          description: >
+            Master toggle for boost. When off all boost settings are ignored
+            and the switch helper below is not required.
+          default: false
+          selector:
+            boolean:
+        boost_switch:
+          name: Boost switch helper (optional)
+          description: >
+            Input boolean helper used to activate boost from a dashboard button
+            or automation. Only used when the feature toggle above is on.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+        winter_boost_adjustment:
+          name: Winter boost adjustment
+          description: Added to the active winter target. Positive heats more.
+          default: 4
+          selector:
+            number:
+              min: -18
+              max: 18
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        winter_boost_minutes:
+          name: Winter boost duration
+          description: Minutes before boost automatically turns itself off in winter.
+          default: 60
+          selector:
+            number:
+              min: 5
+              max: 240
+              step: 5
+              mode: slider
+              unit_of_measurement: min
+        summer_boost_adjustment:
+          name: Summer boost adjustment
+          description: Added to the active summer target. Negative cools more.
+          default: -4
+          selector:
+            number:
+              min: -18
+              max: 18
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        summer_boost_minutes:
+          name: Summer boost duration
+          description: Minutes before boost automatically turns itself off in summer.
+          default: 60
+          selector:
+            number:
+              min: 5
+              max: 240
+              step: 5
+              mode: slider
+              unit_of_measurement: min
+
+    condensation_section:
+      name: Condensation & Dry Mode
+      icon: mdi:water-percent
+      collapsed: true
+      description: >
+        Dry mode is a moisture mitigation mode — it runs opportunistically in
+        winter when dew-point physics indicate condensation is likely on windows.
+        It is NOT a comfort or temperature control mode. It never overrides
+        heating logic; heating always takes priority.
+
+        Condensation rule: risk is TRUE when
+          dew_point ≥ outdoor_temperature + condensation_margin
+        where dew_point = indoor_temp − ((100 − indoor_humidity) × 0.36)
+
+        Dry mode may run ONLY when:
+          • the feature toggle below is ON (and the optional runtime switch,
+            if one is configured, is also ON)
+          • the device supports Dry mode (selected in Climate Device section)
+          • winter mode is active
+          • condensation risk is TRUE
+          • it is allowed right now — when the house is empty (if "run when
+            empty" is on) and/or inside the scheduled time window (if "run
+            during window" is on)
+          • no physical window or door is open (the window/door feature is
+            not inhibiting)
+          • nobody has recently taken manual control of the unit
+          • the room is not already below its comfort floor
+          • it has been out of dry mode for the minimum off time
+
+        It stops, but only after the minimum runtime has elapsed, when
+        condensation clears, winter mode ends, the scheduled time window
+        closes, the house becomes occupied (where that was the permission it
+        was running under), or the maximum runtime is reached.
+
+        It stops immediately, overriding the minimum runtime, if a physical
+        window or door is opened, someone takes manual control, or indoor
+        temperature drops to its comfort floor.
+      input:
+        dry_mode_feature_enabled:
+          name: Enable dry mode feature
+          description: >
+            Master toggle for the entire dry mode feature. Set to OFF to
+            completely disable dry sweeps without removing any other settings.
+            When OFF all dry mode inputs below are ignored.
+          default: false
+          selector:
+            boolean:
+        dry_mode_switch:
+          name: Dry mode runtime switch (optional)
+          description: >
+            Optional input_boolean helper for dashboard on/off control at
+            runtime. When provided this switch must also be ON for dry mode
+            to run. Leave empty if you prefer to control dry mode solely
+            through the feature toggle above.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: input_boolean
+        indoor_temperature_sensor:
+          name: Indoor temperature sensor
+          description: >
+            Used for dew point calculation and comfort protection.
+            Only required when the dry mode feature is enabled.
+            Leave empty if dry mode is not in use.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: sensor
+                device_class: temperature
+        indoor_humidity_sensor:
+          name: Indoor humidity sensor
+          description: >
+            Used to calculate the indoor dew point.
+            Only required when the dry mode feature is enabled.
+            Leave empty if dry mode is not in use.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: sensor
+                device_class: humidity
+        condensation_margin:
+          name: Condensation trigger margin
+          description: >
+            Dry mode triggers when: dew_point ≥ outdoor_temp + this value.
+            0 = trigger exactly at dew point.
+            Positive = trigger earlier (more aggressive moisture control).
+            Negative = trigger only when condensation is very likely.
+          default: 2
+          selector:
+            number:
+              min: -6
+              max: 9
+              step: 0.5
+              mode: slider
+              unit_of_measurement: "°F"
+        dry_allow_when_empty:
+          name: Run dry mode when the house is empty
+          description: >
+            Allow dry sweeps whenever nobody is home, at any time of day.
+            Turn this OFF if you only want dry mode during the scheduled window.
+          default: true
+          selector:
+            boolean:
+        dry_allow_in_window:
+          name: Run dry mode during the scheduled window
+          description: >
+            Allow dry sweeps during the time window below, whether or not anyone
+            is home. Turn this OFF if you only want dry mode while the house is
+            empty (e.g. a bedroom). These two toggles are independent — enable
+            either, both, or (to disable dry scheduling entirely) neither.
+          default: true
+          selector:
+            boolean:
+        dry_mode_window_start:
+          name: Dry mode window — start
+          description: >
+            Start of the dry-mode window. Only used when "Run dry mode during the
+            scheduled window" above is on.
+          default: "22:00:00"
+          selector:
+            time:
+        dry_mode_window_end:
+          name: Dry mode window — end
+          description: >
+            End of the dry-mode window. Wraps midnight if end is before start
+            (e.g. 22:00 → 07:00 = overnight). Only used when "Run dry mode during
+            the scheduled window" is on.
+          default: "07:00:00"
+          selector:
+            time:
+        max_dry_cool_delta:
+          name: Maximum cooling tolerance
+          description: >
+            Inside a comfort period, dry mode stops if indoor temperature drops
+            more than this below the scheduled target. Protects comfort —
+            prevents moisture control from making the house cold.
+          default: 5.5
+          selector:
+            number:
+              min: 2
+              max: 11
+              step: 0.5
+              mode: slider
+              unit_of_measurement: "°F"
+        dry_minimum_temperature:
+          name: Dry mode minimum temperature
+          description: >
+            Absolute floor used when dry mode runs OUTSIDE any comfort period
+            (e.g. overnight). Dry mode stops if indoor temperature falls below
+            this. Inside a period the cooling tolerance above is used instead.
+          default: 61
+          selector:
+            number:
+              min: 41
+              max: 77
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        dry_minimum_run_minutes:
+          name: Minimum dry mode runtime
+          description: >
+            Once started, dry mode cannot stop early (except for the comfort
+            protection limit above). Prevents short on/off cycling.
+          default: 10
+          selector:
+            number:
+              min: 5
+              max: 60
+              step: 5
+              mode: slider
+              unit_of_measurement: min
+        dry_minimum_off_minutes:
+          name: Minimum dry mode off time
+          description: >
+            After a dry sweep ends, the unit must stay out of dry mode for at
+            least this long before another sweep can begin. Separate from the
+            heating minimum off time — set higher if dry mode is cycling on and
+            off too often. Set to 0 to disable.
+          default: 15
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 5
+              mode: slider
+              unit_of_measurement: min
+        dry_sweep_minutes:
+          name: Maximum dry mode runtime
+          description: >
+            Dry mode is force-stopped after this duration even if condensation
+            risk persists. Acts as a safety cap.
+          default: 30
+          selector:
+            number:
+              min: 10
+              max: 180
+              step: 5
+              mode: slider
+              unit_of_measurement: min
+
+    mould_protection_section:
+      name: Mould Protection
+      icon: mdi:home-flood
+      collapsed: true
+      description: >
+        Independent of dry mode. Where dry mode dehumidifies to stop condensation,
+        this is a humidity-driven warmth floor: when relative humidity stays high,
+        it holds the room at a minimum temperature so it doesn't sit cold and
+        damp (warmer air carries the same moisture at a lower RH). It's a floor —
+        a higher comfort or boost target always wins — and it only adds heat when
+        the room would otherwise be off or cooler than the minimum. It yields to
+        an open window and to active cooling, and frost protection still overrides
+        it. Enable this, dry mode, both, or neither, as you like.
+      input:
+        mould_protection_enabled:
+          name: Enable mould protection
+          description: Hold a minimum temperature whenever humidity stays high.
+          default: false
+          selector:
+            boolean:
+        mould_humidity_threshold:
+          name: Humidity threshold
+          description: >
+            Relative humidity at or above which mould protection engages. It
+            releases 3% below this to avoid flapping.
+          default: 70
+          selector:
+            number:
+              min: 50
+              max: 90
+              step: 1
+              mode: slider
+              unit_of_measurement: "%"
+        mould_humidity_sensor:
+          name: Humidity sensor (optional)
+          description: >
+            The humidity source for mould protection. Point it at a mean-RH
+            statistics helper (e.g. average over 2-3 hours) to act on sustained
+            dampness rather than brief spikes, or leave it empty to use the
+            instantaneous indoor humidity sensor from the Condensation section.
+          default: ""
+          selector:
+            entity:
+              filter:
+                domain: sensor
+        mould_minimum_temperature:
+          name: Mould minimum temperature
+          description: >
+            The temperature to hold while humidity is high. A higher scheduled or
+            boost target takes precedence; this only lifts the room when it would
+            otherwise be cooler.
+          default: 61
+          selector:
+            number:
+              min: 50
+              max: 72
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_1_section:
+      name: Comfort Period 1
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_1_winter_enabled:
+          name: Period 1 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_1_summer_enabled:
+          name: Period 1 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_1_name:
+          name: Period 1 name
+          description: Display name for this period.
+          default: "Period 1"
+          selector:
+            text:
+        period_1_start:
+          name: Period 1 start time
+          description: Time this period begins.
+          default: "06:00:00"
+          selector:
+            time:
+        period_1_end:
+          name: Period 1 end time
+          description: Time this period ends.
+          default: "22:00:00"
+          selector:
+            time:
+        period_1_days:
+          name: Period 1 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_1_winter_temperature:
+          name: Period 1 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_1_summer_temperature:
+          name: Period 1 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_2_section:
+      name: Comfort Period 2
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_2_winter_enabled:
+          name: Period 2 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_2_summer_enabled:
+          name: Period 2 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_2_name:
+          name: Period 2 name
+          description: Display name for this period.
+          default: "Period 2"
+          selector:
+            text:
+        period_2_start:
+          name: Period 2 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_2_end:
+          name: Period 2 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_2_days:
+          name: Period 2 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_2_winter_temperature:
+          name: Period 2 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_2_summer_temperature:
+          name: Period 2 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_3_section:
+      name: Comfort Period 3
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_3_winter_enabled:
+          name: Period 3 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_3_summer_enabled:
+          name: Period 3 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_3_name:
+          name: Period 3 name
+          description: Display name for this period.
+          default: "Period 3"
+          selector:
+            text:
+        period_3_start:
+          name: Period 3 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_3_end:
+          name: Period 3 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_3_days:
+          name: Period 3 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_3_winter_temperature:
+          name: Period 3 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_3_summer_temperature:
+          name: Period 3 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_4_section:
+      name: Comfort Period 4
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_4_winter_enabled:
+          name: Period 4 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_4_summer_enabled:
+          name: Period 4 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_4_name:
+          name: Period 4 name
+          description: Display name for this period.
+          default: "Period 4"
+          selector:
+            text:
+        period_4_start:
+          name: Period 4 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_4_end:
+          name: Period 4 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_4_days:
+          name: Period 4 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_4_winter_temperature:
+          name: Period 4 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_4_summer_temperature:
+          name: Period 4 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_5_section:
+      name: Comfort Period 5
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_5_winter_enabled:
+          name: Period 5 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_5_summer_enabled:
+          name: Period 5 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_5_name:
+          name: Period 5 name
+          description: Display name for this period.
+          default: "Period 5"
+          selector:
+            text:
+        period_5_start:
+          name: Period 5 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_5_end:
+          name: Period 5 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_5_days:
+          name: Period 5 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_5_winter_temperature:
+          name: Period 5 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_5_summer_temperature:
+          name: Period 5 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_6_section:
+      name: Comfort Period 6
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_6_winter_enabled:
+          name: Period 6 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_6_summer_enabled:
+          name: Period 6 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_6_name:
+          name: Period 6 name
+          description: Display name for this period.
+          default: "Period 6"
+          selector:
+            text:
+        period_6_start:
+          name: Period 6 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_6_end:
+          name: Period 6 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_6_days:
+          name: Period 6 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_6_winter_temperature:
+          name: Period 6 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_6_summer_temperature:
+          name: Period 6 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_7_section:
+      name: Comfort Period 7
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_7_winter_enabled:
+          name: Period 7 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_7_summer_enabled:
+          name: Period 7 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_7_name:
+          name: Period 7 name
+          description: Display name for this period.
+          default: "Period 7"
+          selector:
+            text:
+        period_7_start:
+          name: Period 7 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_7_end:
+          name: Period 7 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_7_days:
+          name: Period 7 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_7_winter_temperature:
+          name: Period 7 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_7_summer_temperature:
+          name: Period 7 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_8_section:
+      name: Comfort Period 8
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_8_winter_enabled:
+          name: Period 8 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_8_summer_enabled:
+          name: Period 8 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_8_name:
+          name: Period 8 name
+          description: Display name for this period.
+          default: "Period 8"
+          selector:
+            text:
+        period_8_start:
+          name: Period 8 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_8_end:
+          name: Period 8 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_8_days:
+          name: Period 8 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_8_winter_temperature:
+          name: Period 8 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_8_summer_temperature:
+          name: Period 8 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_9_section:
+      name: Comfort Period 9
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_9_winter_enabled:
+          name: Period 9 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_9_summer_enabled:
+          name: Period 9 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_9_name:
+          name: Period 9 name
+          description: Display name for this period.
+          default: "Period 9"
+          selector:
+            text:
+        period_9_start:
+          name: Period 9 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_9_end:
+          name: Period 9 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_9_days:
+          name: Period 9 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_9_winter_temperature:
+          name: Period 9 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_9_summer_temperature:
+          name: Period 9 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+    comfort_period_10_section:
+      name: Comfort Period 10
+      icon: mdi:calendar-clock
+      collapsed: true
+      description: >
+        A scheduled comfort period. When enabled and the current time is inside
+        its window on a selected day, it sets the comfort target for the active
+        season. Periods ARE the schedule — outside every enabled period the
+        device follows the out-of-comfort action. If periods overlap, the one
+        that started most recently wins. Enable per season.
+      input:
+        period_10_winter_enabled:
+          name: Period 10 — active in winter
+          description: Use this period during winter mode.
+          default: false
+          selector:
+            boolean:
+        period_10_summer_enabled:
+          name: Period 10 — active in summer
+          description: Use this period during summer mode.
+          default: false
+          selector:
+            boolean:
+        period_10_name:
+          name: Period 10 name
+          description: Display name for this period.
+          default: "Period 10"
+          selector:
+            text:
+        period_10_start:
+          name: Period 10 start time
+          description: Time this period begins.
+          default: "00:00:00"
+          selector:
+            time:
+        period_10_end:
+          name: Period 10 end time
+          description: Time this period ends.
+          default: "00:00:00"
+          selector:
+            time:
+        period_10_days:
+          name: Period 10 active days
+          description: >
+            Days this period applies. For overnight windows (start later than
+            end) the selected day is the day the window begins.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+        period_10_winter_temperature:
+          name: Period 10 winter target
+          description: Winter heat target during this period.
+          default: 70
+          selector:
+            number:
+              min: 41
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+        period_10_summer_temperature:
+          name: Period 10 summer target
+          description: Summer cool target during this period.
+          default: 75
+          selector:
+            number:
+              min: 50
+              max: 95
+              step: 1
+              mode: slider
+              unit_of_measurement: "°F"
+
+variables:
+  climate_entity: !input climate_entity
+  supported_hvac_modes: !input supported_hvac_modes
+  minimum_run_minutes: !input minimum_run_minutes
+  minimum_off_minutes: !input minimum_off_minutes
+  manual_takeover_minutes: !input manual_takeover_minutes
+  manual_takeover_helper: !input manual_takeover_helper
+  status_helper: !input status_helper
+  room_temperature_sensor: !input room_temperature_sensor
+  winter_mode_sensor: !input winter_mode_sensor
+  occupancy_entities: !input occupancy_entities
+  guest_mode_switch: !input guest_mode_switch
+  room_presence_entities: !input room_presence_entities
+  winter_away_action: !input winter_away_action
+  away_winter_setback_temperature: !input away_winter_setback_temperature
+  summer_away_action: !input summer_away_action
+  away_summer_setback_temperature: !input away_summer_setback_temperature
+  room_vacancy_stage1_minutes: !input room_vacancy_stage1_minutes
+  winter_room_vacancy_stage1_action: !input winter_room_vacancy_stage1_action
+  winter_room_vacancy_stage1_offset: !input winter_room_vacancy_stage1_offset
+  summer_room_vacancy_stage1_action: !input summer_room_vacancy_stage1_action
+  summer_room_vacancy_stage1_offset: !input summer_room_vacancy_stage1_offset
+  room_vacancy_stage2_minutes: !input room_vacancy_stage2_minutes
+  winter_room_vacancy_stage2_action: !input winter_room_vacancy_stage2_action
+  winter_room_vacancy_stage2_offset: !input winter_room_vacancy_stage2_offset
+  summer_room_vacancy_stage2_action: !input summer_room_vacancy_stage2_action
+  summer_room_vacancy_stage2_offset: !input summer_room_vacancy_stage2_offset
+  window_door_entities: !input window_door_entities
+  window_door_stage1_minutes: !input window_door_stage1_minutes
+  winter_window_door_stage1_action: !input winter_window_door_stage1_action
+  winter_window_door_stage1_offset: !input winter_window_door_stage1_offset
+  summer_window_door_stage1_action: !input summer_window_door_stage1_action
+  summer_window_door_stage1_offset: !input summer_window_door_stage1_offset
+  window_door_stage2_minutes: !input window_door_stage2_minutes
+  winter_window_door_stage2_action: !input winter_window_door_stage2_action
+  winter_window_door_stage2_offset: !input winter_window_door_stage2_offset
+  summer_window_door_stage2_action: !input summer_window_door_stage2_action
+  summer_window_door_stage2_offset: !input summer_window_door_stage2_offset
+  frost_protection_enabled: !input frost_protection_enabled
+  frost_minimum_temperature: !input frost_minimum_temperature
+  mould_protection_enabled: !input mould_protection_enabled
+  mould_humidity_threshold: !input mould_humidity_threshold
+  mould_humidity_sensor: !input mould_humidity_sensor
+  mould_minimum_temperature: !input mould_minimum_temperature
+  winter_comfort_band: !input winter_comfort_band
+  winter_outdoor_cold_threshold: !input winter_outdoor_cold_threshold
+  summer_comfort_band: !input summer_comfort_band
+  summer_outdoor_hot_threshold: !input summer_outdoor_hot_threshold
+  forecast_feature_enabled: !input forecast_feature_enabled
+  weather_forecast_entity: !input weather_forecast_entity
+  forecast_lookahead_hours: !input forecast_lookahead_hours
+  indoor_trend_enabled: !input indoor_trend_enabled
+  indoor_trend_sensor: !input indoor_trend_sensor
+  indoor_trend_rate: !input indoor_trend_rate
+  period_1_winter_enabled: !input period_1_winter_enabled
+  period_1_summer_enabled: !input period_1_summer_enabled
+  period_1_name: !input period_1_name
+  period_1_start: !input period_1_start
+  period_1_end: !input period_1_end
+  period_1_days: !input period_1_days
+  period_1_winter_temperature: !input period_1_winter_temperature
+  period_1_summer_temperature: !input period_1_summer_temperature
+  period_2_winter_enabled: !input period_2_winter_enabled
+  period_2_summer_enabled: !input period_2_summer_enabled
+  period_2_name: !input period_2_name
+  period_2_start: !input period_2_start
+  period_2_end: !input period_2_end
+  period_2_days: !input period_2_days
+  period_2_winter_temperature: !input period_2_winter_temperature
+  period_2_summer_temperature: !input period_2_summer_temperature
+  period_3_winter_enabled: !input period_3_winter_enabled
+  period_3_summer_enabled: !input period_3_summer_enabled
+  period_3_name: !input period_3_name
+  period_3_start: !input period_3_start
+  period_3_end: !input period_3_end
+  period_3_days: !input period_3_days
+  period_3_winter_temperature: !input period_3_winter_temperature
+  period_3_summer_temperature: !input period_3_summer_temperature
+  period_4_winter_enabled: !input period_4_winter_enabled
+  period_4_summer_enabled: !input period_4_summer_enabled
+  period_4_name: !input period_4_name
+  period_4_start: !input period_4_start
+  period_4_end: !input period_4_end
+  period_4_days: !input period_4_days
+  period_4_winter_temperature: !input period_4_winter_temperature
+  period_4_summer_temperature: !input period_4_summer_temperature
+  period_5_winter_enabled: !input period_5_winter_enabled
+  period_5_summer_enabled: !input period_5_summer_enabled
+  period_5_name: !input period_5_name
+  period_5_start: !input period_5_start
+  period_5_end: !input period_5_end
+  period_5_days: !input period_5_days
+  period_5_winter_temperature: !input period_5_winter_temperature
+  period_5_summer_temperature: !input period_5_summer_temperature
+  period_6_winter_enabled: !input period_6_winter_enabled
+  period_6_summer_enabled: !input period_6_summer_enabled
+  period_6_name: !input period_6_name
+  period_6_start: !input period_6_start
+  period_6_end: !input period_6_end
+  period_6_days: !input period_6_days
+  period_6_winter_temperature: !input period_6_winter_temperature
+  period_6_summer_temperature: !input period_6_summer_temperature
+  period_7_winter_enabled: !input period_7_winter_enabled
+  period_7_summer_enabled: !input period_7_summer_enabled
+  period_7_name: !input period_7_name
+  period_7_start: !input period_7_start
+  period_7_end: !input period_7_end
+  period_7_days: !input period_7_days
+  period_7_winter_temperature: !input period_7_winter_temperature
+  period_7_summer_temperature: !input period_7_summer_temperature
+  period_8_winter_enabled: !input period_8_winter_enabled
+  period_8_summer_enabled: !input period_8_summer_enabled
+  period_8_name: !input period_8_name
+  period_8_start: !input period_8_start
+  period_8_end: !input period_8_end
+  period_8_days: !input period_8_days
+  period_8_winter_temperature: !input period_8_winter_temperature
+  period_8_summer_temperature: !input period_8_summer_temperature
+  period_9_winter_enabled: !input period_9_winter_enabled
+  period_9_summer_enabled: !input period_9_summer_enabled
+  period_9_name: !input period_9_name
+  period_9_start: !input period_9_start
+  period_9_end: !input period_9_end
+  period_9_days: !input period_9_days
+  period_9_winter_temperature: !input period_9_winter_temperature
+  period_9_summer_temperature: !input period_9_summer_temperature
+  period_10_winter_enabled: !input period_10_winter_enabled
+  period_10_summer_enabled: !input period_10_summer_enabled
+  period_10_name: !input period_10_name
+  period_10_start: !input period_10_start
+  period_10_end: !input period_10_end
+  period_10_days: !input period_10_days
+  period_10_winter_temperature: !input period_10_winter_temperature
+  period_10_summer_temperature: !input period_10_summer_temperature
+  boost_switch: !input boost_switch
+  boost_feature_enabled: !input boost_feature_enabled
+  winter_boost_adjustment: !input winter_boost_adjustment
+  winter_boost_minutes: !input winter_boost_minutes
+  summer_boost_adjustment: !input summer_boost_adjustment
+  summer_boost_minutes: !input summer_boost_minutes
+  outdoor_temp_source: !input outdoor_temp_source
+  indoor_temperature_sensor: !input indoor_temperature_sensor
+  indoor_humidity_sensor: !input indoor_humidity_sensor
+  dry_mode_feature_enabled: !input dry_mode_feature_enabled
+  dry_mode_switch: !input dry_mode_switch
+  dry_sweep_minutes: !input dry_sweep_minutes
+  condensation_margin: !input condensation_margin
+  dry_allow_when_empty: !input dry_allow_when_empty
+  dry_allow_in_window: !input dry_allow_in_window
+  dry_mode_window_start: !input dry_mode_window_start
+  dry_mode_window_end: !input dry_mode_window_end
+  max_dry_cool_delta: !input max_dry_cool_delta
+  dry_minimum_temperature: !input dry_minimum_temperature
+  dry_minimum_run_minutes: !input dry_minimum_run_minutes
+  dry_minimum_off_minutes: !input dry_minimum_off_minutes
+
+triggers:
+  - trigger: homeassistant
+    event: start
+    id: homeassistant_start
+  - trigger: time_pattern
+    minutes: "/1"
+    id: periodic_check
+  - trigger: state
+    entity_id: !input winter_mode_sensor
+    id: season_changed
+  - trigger: state
+    entity_id: !input occupancy_entities
+    id: occupancy_changed
+  - trigger: state
+    entity_id: !input climate_entity
+    id: climate_changed
+
+conditions: []
+
+actions:
+  # ── UNAVAILABLE-DEVICE GUARD ──────────────────────────────────────────────────
+  # If the climate entity is offline (IR blaster down, wifi dropped) bail out
+  # cleanly rather than computing on stale data or firing commands that fail.
+  - if:
+      - condition: template
+        value_template: "{{ states(climate_entity) in ['unavailable', 'unknown'] }}"
+    then:
+      - stop: Climate entity unavailable — skipping run.
+  - variables:
+      trigger_id: "{{ trigger.id if trigger is defined else 'manual_run' }}"
+      season_is_winter: "{{ is_state(winter_mode_sensor, 'on') }}"
+      season_is_summer: "{{ is_state(winter_mode_sensor, 'off') }}"
+
+  # ── BOOST AUTO-SHUTOFF ────────────────────────────────────────────────────────
+  # Without entity triggers, boost duration is tracked via the helper's own
+  # last_changed timestamp. The periodic check evaluates this every minute.
+  # Auto-shutoff fires within one minute of the configured duration elapsing.
+  - choose:
+      - alias: Turn winter boost off after its duration
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ boost_feature_enabled | bool
+                 and boost_switch != ''
+                 and is_state(boost_switch, 'on')
+                 and season_is_winter | bool
+                 and (as_timestamp(now()) - as_timestamp(states[boost_switch].last_changed)) | int(0)
+                    >= ((winter_boost_minutes | int(60)) * 60) }}
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ boost_switch }}"
+          - stop: Winter boost duration finished.
+      - alias: Turn summer boost off after its duration
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ boost_feature_enabled | bool
+                 and boost_switch != ''
+                 and is_state(boost_switch, 'on')
+                 and season_is_summer | bool
+                 and (as_timestamp(now()) - as_timestamp(states[boost_switch].last_changed)) | int(0)
+                    >= ((summer_boost_minutes | int(60)) * 60) }}
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ boost_switch }}"
+          - stop: Summer boost duration finished.
+
+  # ── FORECAST FETCH (optional) ─────────────────────────────────────────────
+  # Pull an hourly forecast only when the forecast-trend feature is on and a
+  # weather entity is configured. continue_on_error keeps the automation
+  # resilient if the weather integration can't return a forecast right now.
+  - if:
+      - condition: template
+        value_template: >-
+          {{ forecast_feature_enabled | bool and weather_forecast_entity != '' }}
+    then:
+      - action: weather.get_forecasts
+        continue_on_error: true
+        data:
+          type: hourly
+        target:
+          entity_id: !input weather_forecast_entity
+        response_variable: forecast_response
+
+  - variables:
+      now_time: "{{ now().strftime('%H:%M:%S') }}"
+      season_is_winter: "{{ is_state(winter_mode_sensor, 'on') }}"
+      season_is_summer: "{{ is_state(winter_mode_sensor, 'off') }}"
+      # ── DEVICE CAPABILITIES ───────────────────────────────────────────────────
+      # Gates every HVAC command — never attempt a mode the device doesn't have.
+      supports_heat: "{{ 'heat' in supported_hvac_modes }}"
+      supports_cool: "{{ 'cool' in supported_hvac_modes }}"
+      supports_dry: "{{ 'dry' in supported_hvac_modes }}"
+      guest_mode_is_on: "{{ guest_mode_switch != '' and is_state(guest_mode_switch, 'on') }}"
+      occupied_by_entity: >-
+        {% set ns = namespace(occupied=false) %}
+        {% for entity_id in occupancy_entities %}
+          {% set state = states(entity_id) %}
+          {% if state in ['home', 'on', 'occupied', 'present', 'detected'] or (state | float(0)) > 0 %}
+            {% set ns.occupied = true %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.occupied }}
+      # PRESENCE OPTIONAL: when no occupancy entities and no guest-mode helper are
+      # configured, the home is treated as always occupied — so a bare schedule +
+      # thermal demand runs with no presence gating. Configure occupancy to make
+      # heating wait until presence is detected (and to enable the away action).
+      presence_configured: "{{ occupancy_entities | count > 0 or guest_mode_switch != '' }}"
+      house_is_occupied: >-
+        {% if not (presence_configured | bool) %}
+          true
+        {% else %}
+          {{ guest_mode_is_on | bool or occupied_by_entity | bool }}
+        {% endif %}
+      # ROOM-LEVEL OCCUPANCY: when room presence entities are configured, gates
+      # comfort on whether THIS room is occupied (someone may be home but in
+      # another room), purely from the room sensors — guest mode is a whole-home
+      # signal and does NOT force an individual room occupied. With none set, or
+      # if all room sensors are unavailable, it falls back to whole-home
+      # occupancy. House occupancy still drives the away context and dry's
+      # "run when empty" gate.
+      room_is_occupied: >-
+        {% if room_presence_entities | count > 0 %}
+          {% set ns = namespace(present=false, available=false) %}
+          {% for entity_id in room_presence_entities %}
+            {% set state = states(entity_id) %}
+            {% if state not in ['unknown', 'unavailable', 'none', ''] %}
+              {% set ns.available = true %}
+              {% if state in ['home', 'on', 'occupied', 'present', 'detected'] or (state | float(0)) > 0 %}
+                {% set ns.present = true %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if not ns.available %}
+            {{ house_is_occupied | bool }}
+          {% else %}
+            {{ ns.present }}
+          {% endif %}
+        {% else %}
+          {{ house_is_occupied | bool }}
+        {% endif %}
+      # Seconds the room has been continuously empty — the staged vacancy
+      # response escalates against this. Time since the most recent room-sensor
+      # change while the room is empty; 0 when occupied or no sensors configured.
+      room_vacant_seconds: >-
+        {% if room_presence_entities | count > 0 and not (room_is_occupied | bool) %}
+          {% set ns = namespace(latest=0) %}
+          {% for entity_id in room_presence_entities %}
+            {% set s = states[entity_id] %}
+            {% if s is not none %}
+              {% set ts = as_timestamp(s.last_changed) | float(0) %}
+              {% if ts > ns.latest %}{% set ns.latest = ts %}{% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ (as_timestamp(now()) - ns.latest) | int(0) if ns.latest > 0 else 999999 }}
+        {% else %}
+          0
+        {% endif %}
+      boost_is_active: >-
+        {{ boost_feature_enabled | bool
+           and boost_switch != ''
+           and is_state(boost_switch, 'on') }}
+      # ── COMFORT PERIODS (the schedule) ────────────────────────────────────────
+      # Each period is the schedule itself: when it is enabled for the active
+      # season, the current time is inside its window, and today is a selected
+      # day, it sets the comfort target. period_N_ago = minutes since the period
+      # began (smaller = started more recently); 99999 means the period is not
+      # active right now. comfort_target picks the active period that started
+      # most recently, so overlaps resolve deterministically. -999 = no period
+      # active (device falls back to the out-of-comfort action).
+      period_1_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_1_start %}
+        {% set e = period_1_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_1_days %}
+        {% set season_on = (season_is_winter | bool and period_1_winter_enabled | bool)
+                           or (season_is_summer | bool and period_1_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_2_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_2_start %}
+        {% set e = period_2_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_2_days %}
+        {% set season_on = (season_is_winter | bool and period_2_winter_enabled | bool)
+                           or (season_is_summer | bool and period_2_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_3_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_3_start %}
+        {% set e = period_3_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_3_days %}
+        {% set season_on = (season_is_winter | bool and period_3_winter_enabled | bool)
+                           or (season_is_summer | bool and period_3_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_4_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_4_start %}
+        {% set e = period_4_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_4_days %}
+        {% set season_on = (season_is_winter | bool and period_4_winter_enabled | bool)
+                           or (season_is_summer | bool and period_4_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_5_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_5_start %}
+        {% set e = period_5_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_5_days %}
+        {% set season_on = (season_is_winter | bool and period_5_winter_enabled | bool)
+                           or (season_is_summer | bool and period_5_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_6_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_6_start %}
+        {% set e = period_6_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_6_days %}
+        {% set season_on = (season_is_winter | bool and period_6_winter_enabled | bool)
+                           or (season_is_summer | bool and period_6_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_7_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_7_start %}
+        {% set e = period_7_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_7_days %}
+        {% set season_on = (season_is_winter | bool and period_7_winter_enabled | bool)
+                           or (season_is_summer | bool and period_7_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_8_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_8_start %}
+        {% set e = period_8_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_8_days %}
+        {% set season_on = (season_is_winter | bool and period_8_winter_enabled | bool)
+                           or (season_is_summer | bool and period_8_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_9_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_9_start %}
+        {% set e = period_9_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_9_days %}
+        {% set season_on = (season_is_winter | bool and period_9_winter_enabled | bool)
+                           or (season_is_summer | bool and period_9_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_10_ago: >-
+        {% set now_min = now().hour * 60 + now().minute %}
+        {% set s = period_10_start %}
+        {% set e = period_10_end %}
+        {% set start_min = (s[0:2] | int) * 60 + (s[3:5] | int) %}
+        {% set end_min = (e[0:2] | int) * 60 + (e[3:5] | int) %}
+        {% set in_win = (start_min <= end_min and now_min >= start_min and now_min < end_min)
+                        or (start_min > end_min and (now_min >= start_min or now_min < end_min)) %}
+        {% set days_map = ['mon','tue','wed','thu','fri','sat','sun'] %}
+        {% set wd = now().weekday() %}
+        {% set wrapped = start_min > end_min %}
+        {% set ref_day = days_map[(wd - 1) % 7] if (wrapped and now_min < end_min) else days_map[wd] %}
+        {% set day_ok = ref_day in period_10_days %}
+        {% set season_on = (season_is_winter | bool and period_10_winter_enabled | bool)
+                           or (season_is_summer | bool and period_10_summer_enabled | bool) %}
+        {% if in_win and day_ok and season_on %}
+          {{ (now_min - start_min) % 1440 }}
+        {% else %}
+          99999
+        {% endif %}
+      period_1_target: >-
+        {{ period_1_winter_temperature | float if season_is_winter | bool else period_1_summer_temperature | float }}
+      period_2_target: >-
+        {{ period_2_winter_temperature | float if season_is_winter | bool else period_2_summer_temperature | float }}
+      period_3_target: >-
+        {{ period_3_winter_temperature | float if season_is_winter | bool else period_3_summer_temperature | float }}
+      period_4_target: >-
+        {{ period_4_winter_temperature | float if season_is_winter | bool else period_4_summer_temperature | float }}
+      period_5_target: >-
+        {{ period_5_winter_temperature | float if season_is_winter | bool else period_5_summer_temperature | float }}
+      period_6_target: >-
+        {{ period_6_winter_temperature | float if season_is_winter | bool else period_6_summer_temperature | float }}
+      period_7_target: >-
+        {{ period_7_winter_temperature | float if season_is_winter | bool else period_7_summer_temperature | float }}
+      period_8_target: >-
+        {{ period_8_winter_temperature | float if season_is_winter | bool else period_8_summer_temperature | float }}
+      period_9_target: >-
+        {{ period_9_winter_temperature | float if season_is_winter | bool else period_9_summer_temperature | float }}
+      period_10_target: >-
+        {{ period_10_winter_temperature | float if season_is_winter | bool else period_10_summer_temperature | float }}
+      comfort_target: >-
+        {% set ns = namespace(best=99999, target=-999) %}
+        {% for ago, tgt in [
+             (period_1_ago | int, period_1_target | float),
+             (period_2_ago | int, period_2_target | float),
+             (period_3_ago | int, period_3_target | float),
+             (period_4_ago | int, period_4_target | float),
+             (period_5_ago | int, period_5_target | float),
+             (period_6_ago | int, period_6_target | float),
+             (period_7_ago | int, period_7_target | float),
+             (period_8_ago | int, period_8_target | float),
+             (period_9_ago | int, period_9_target | float),
+             (period_10_ago | int, period_10_target | float)] %}
+          {% if ago < ns.best %}
+            {% set ns.best = ago %}
+            {% set ns.target = tgt %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.target }}
+      comfort_period_active: "{{ (comfort_target | float(-999)) != -999 }}"
+      # Name of the active (winning) period — the most-recently-started one — for
+      # the status output. Mirrors the comfort_target selection but tracks names.
+      active_period_name: >-
+        {% set ns = namespace(best=99999, name='') %}
+        {% for ago, nm in [
+             (period_1_ago | int, period_1_name),
+             (period_2_ago | int, period_2_name),
+             (period_3_ago | int, period_3_name),
+             (period_4_ago | int, period_4_name),
+             (period_5_ago | int, period_5_name),
+             (period_6_ago | int, period_6_name),
+             (period_7_ago | int, period_7_name),
+             (period_8_ago | int, period_8_name),
+             (period_9_ago | int, period_9_name),
+             (period_10_ago | int, period_10_name)] %}
+          {% if ago < ns.best %}
+            {% set ns.best = ago %}
+            {% set ns.name = nm %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.name }}
+      # ── OCCUPANCY-BASED COMFORT STATES ────────────────────────────────────────
+      # Three mutually exclusive cases, evaluated against the active period:
+      #   comfort_active     — period + house occupied + THIS room occupied
+      #   room_vacant_active — period + house occupied + room empty (someone home,
+      #                        just not here) → the staged Room Vacancy response
+      #   house_reduced      — no period, OR nobody home → house out-of-comfort
+      #                        action (off / setback), independent of room presence
+      comfort_active: >-
+        {{ comfort_period_active | bool
+           and house_is_occupied | bool
+           and room_is_occupied | bool }}
+      room_vacant_active: >-
+        {{ comfort_period_active | bool
+           and house_is_occupied | bool
+           and not (room_is_occupied | bool)
+           and room_presence_entities | count > 0 }}
+      house_reduced_active: "{{ not (comfort_period_active | bool and house_is_occupied | bool) }}"
+      winter_setback_is_active: >-
+        {{ house_reduced_active | bool
+           and season_is_winter | bool
+           and winter_away_action == 'setback' }}
+      summer_setback_is_active: >-
+        {{ house_reduced_active | bool
+           and season_is_summer | bool
+           and summer_away_action == 'setback' }}
+      # ── ROOM VACANCY STAGE ────────────────────────────────────────────────────
+      # 0 = within the grace window / not vacant (hold the comfort target); 1 / 2 =
+      # staged actions once the room has been empty past the respective delay.
+      # Stage 2 (delay 0 = disabled) is tested first so the longer threshold wins
+      # when both are exceeded.
+      room_vacancy_stage: >-
+        {% if not (room_vacant_active | bool) %}
+          0
+        {% elif (room_vacancy_stage2_minutes | int(0)) > 0
+                and (room_vacant_seconds | int(0)) >= (room_vacancy_stage2_minutes | int(0)) * 60 %}
+          2
+        {% elif (room_vacant_seconds | int(0)) >= (room_vacancy_stage1_minutes | int(0)) * 60 %}
+          1
+        {% else %}
+          0
+        {% endif %}
+      # Per-season action ('adjust' / 'off' / 'hold') and resulting target for the
+      # active stage. Adjust drops the offset below comfort in winter, raises it
+      # above in summer; hold and stage 0 keep the comfort target unchanged.
+      room_vacancy_action: >-
+        {% set s = room_vacancy_stage | int(0) %}
+        {% if s == 2 %}
+          {{ winter_room_vacancy_stage2_action if season_is_winter | bool else summer_room_vacancy_stage2_action }}
+        {% elif s == 1 %}
+          {{ winter_room_vacancy_stage1_action if season_is_winter | bool else summer_room_vacancy_stage1_action }}
+        {% else %}
+          hold
+        {% endif %}
+      room_vacancy_off: "{{ (room_vacancy_action | trim) == 'off' }}"
+      room_vacancy_target: >-
+        {% set s = room_vacancy_stage | int(0) %}
+        {% set base = comfort_target | float %}
+        {% if (room_vacancy_action | trim) == 'adjust' %}
+          {% if s == 2 %}
+            {% set off = (winter_room_vacancy_stage2_offset if season_is_winter | bool else summer_room_vacancy_stage2_offset) | float %}
+          {% else %}
+            {% set off = (winter_room_vacancy_stage1_offset if season_is_winter | bool else summer_room_vacancy_stage1_offset) | float %}
+          {% endif %}
+          {{ (base - off) if season_is_winter | bool else (base + off) }}
+        {% else %}
+          {{ base }}
+        {% endif %}
+      # ── BOOST TARGETS ─────────────────────────────────────────────────────────
+      # Boost is a deviation from the current scheduled target; with no period
+      # active it deviates from the season setback temperature instead.
+      boost_base: >-
+        {% if comfort_period_active | bool %}
+          {{ comfort_target | float }}
+        {% elif season_is_winter | bool %}
+          {{ away_winter_setback_temperature | float }}
+        {% else %}
+          {{ away_summer_setback_temperature | float }}
+        {% endif %}
+      winter_boost_target: "{{ (boost_base | float) + (winter_boost_adjustment | float) }}"
+      summer_boost_target: "{{ (boost_base | float) + (summer_boost_adjustment | float) }}"
+      # ── SENSOR READINGS ───────────────────────────────────────────────────────
+      # Read once here, before the target logic, so frost protection and thermal
+      # demand can use them. room_temp prefers the optional room sensor, else the
+      # climate entity's own current_temperature. outdoor_temp supports weather.*
+      # (temperature attribute) and sensor.* (state). -99 means "no reading".
+      room_temp: >-
+        {% if room_temperature_sensor != ''
+              and states(room_temperature_sensor) not in ['unknown', 'unavailable', 'none', ''] %}
+          {{ states(room_temperature_sensor) | float(-99) }}
+        {% else %}
+          {{ state_attr(climate_entity, 'current_temperature') | float(-99) }}
+        {% endif %}
+      current_hvac_mode: "{{ states(climate_entity) }}"
+      current_temperature: "{{ state_attr(climate_entity, 'temperature') | float(-99) }}"
+      outdoor_temp: >-
+        {% set src = outdoor_temp_source %}
+        {% if src.split('.')[0] == 'weather' %}
+          {{ state_attr(src, 'temperature') | float(-99) }}
+        {% else %}
+          {{ states(src) | float(-99) }}
+        {% endif %}
+      thermal_sensors_available: >-
+        {{ (room_temp | float(-99)) != -99
+           and (outdoor_temp | float(-99)) != -99 }}
+      # ── FROST PROTECTION ──────────────────────────────────────────────────────
+      # Safety floor: whenever the room is below the minimum (on a valid reading),
+      # force heat to the minimum — overriding boost, window/door, comfort,
+      # vacancy, setback, a manual hold, and even summer mode. Heat-only. A small
+      # 1° margin (plus the minimum-run timer) prevents tight cycling. A dead
+      # reading leaves it off; the unavailable-device guard covers a fully offline
+      # unit. Anti-cycle timers (minimum off) still apply to the start command.
+      frost_protection_active: >-
+        {% if not (frost_protection_enabled | bool) or not (supports_heat | bool)
+              or (room_temp | float(-99)) <= -50 %}
+          false
+        {% elif current_hvac_mode == 'heat' %}
+          {{ (room_temp | float) < ((frost_minimum_temperature | float) + 1) }}
+        {% else %}
+          {{ (room_temp | float) < (frost_minimum_temperature | float) }}
+        {% endif %}
+      # ── DESIRED STATE ─────────────────────────────────────────────────────────
+      # Computed in two layers. base_* is the target ignoring open windows:
+      #   boost → comfort (period + house + room) → room-vacancy stage
+      #   (period + house, room empty) → house setback (no period / away) → off.
+      # Then the Window/Door layer overrides on top (unless a boost is active): an
+      # open window turns the unit off, reduces the base target by the offset, or
+      # holds (no change). Final values are clamped to the device's range. Every
+      # heat/cool branch is gated on the device capability flags so the automation
+      # never sends an unsupported mode command.
+      base_hvac_mode: >-
+        {% if boost_is_active | bool and season_is_winter | bool and supports_heat | bool %}
+          heat
+        {% elif boost_is_active | bool and season_is_summer | bool and supports_cool | bool %}
+          cool
+        {% elif comfort_active | bool and season_is_winter | bool and supports_heat | bool %}
+          heat
+        {% elif comfort_active | bool and season_is_summer | bool and supports_cool | bool %}
+          cool
+        {% elif room_vacant_active | bool and not (room_vacancy_off | bool)
+                and season_is_winter | bool and supports_heat | bool %}
+          heat
+        {% elif room_vacant_active | bool and not (room_vacancy_off | bool)
+                and season_is_summer | bool and supports_cool | bool %}
+          cool
+        {% elif winter_setback_is_active | bool and supports_heat | bool %}
+          heat
+        {% elif summer_setback_is_active | bool and supports_cool | bool %}
+          cool
+        {% else %}
+          off
+        {% endif %}
+      base_temperature: >-
+        {% set raw = namespace(v=0) %}
+        {% if boost_is_active | bool and season_is_winter | bool %}
+          {% set raw.v = winter_boost_target | float %}
+        {% elif boost_is_active | bool and season_is_summer | bool %}
+          {% set raw.v = summer_boost_target | float %}
+        {% elif comfort_active | bool %}
+          {% set raw.v = comfort_target | float %}
+        {% elif room_vacant_active | bool and not (room_vacancy_off | bool) %}
+          {% set raw.v = room_vacancy_target | float %}
+        {% elif winter_setback_is_active | bool %}
+          {% set raw.v = away_winter_setback_temperature | float %}
+        {% elif summer_setback_is_active | bool %}
+          {% set raw.v = away_summer_setback_temperature | float %}
+        {% endif %}
+        {% if base_hvac_mode | trim in ['heat', 'cool'] %}
+          {{ raw.v }}
+        {% else %}
+          0
+        {% endif %}
+      # Device setpoint limits — used to clamp every target so the automation
+      # never sends a value the unit will silently reject or clamp to its own
+      # range. Sensible fallbacks if the device doesn't report the attributes.
+      device_min_temp: "{{ state_attr(climate_entity, 'min_temp') | float(45) }}"
+      device_max_temp: "{{ state_attr(climate_entity, 'max_temp') | float(95) }}"
+      # ── WINDOW / DOOR OVERRIDE ────────────────────────────────────────────────
+      # any_window_open: any configured sensor reads open. window_door_open_seconds:
+      # how long at least one has been continuously open (time since the earliest
+      # still-open sensor changed) — used to ignore brief openings and to drive
+      # the two stages. window_door_stage is 0/1/2; the active stage's per-season
+      # action applies unless it is 'hold' (or a boost is overriding).
+      any_window_open: >-
+        {% if window_door_entities | count > 0 %}
+          {% set ns = namespace(open=false) %}
+          {% for e in window_door_entities %}
+            {% if states(e) in ['on', 'open', 'true'] %}{% set ns.open = true %}{% endif %}
+          {% endfor %}
+          {{ ns.open }}
+        {% else %}
+          false
+        {% endif %}
+      window_door_open_seconds: >-
+        {% if any_window_open | bool %}
+          {% set ns = namespace(earliest=0) %}
+          {% for e in window_door_entities %}
+            {% set s = states[e] %}
+            {% if s is not none and s.state in ['on', 'open', 'true'] %}
+              {% set ts = as_timestamp(s.last_changed) | float(0) %}
+              {% if ts > 0 and (ns.earliest == 0 or ts < ns.earliest) %}{% set ns.earliest = ts %}{% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ (as_timestamp(now()) - ns.earliest) | int(0) if ns.earliest > 0 else 0 }}
+        {% else %}
+          0
+        {% endif %}
+      # Open duration vs the two stage delays. Stage 2 (delay 0 = disabled) is
+      # tested first so the longer threshold wins once both are exceeded.
+      window_door_stage: >-
+        {% if not (window_door_entities | count > 0 and any_window_open | bool) %}
+          0
+        {% elif (window_door_stage2_minutes | int(0)) > 0
+                and (window_door_open_seconds | int(0)) >= (window_door_stage2_minutes | int(0)) * 60 %}
+          2
+        {% elif (window_door_open_seconds | int(0)) >= (window_door_stage1_minutes | int(0)) * 60 %}
+          1
+        {% else %}
+          0
+        {% endif %}
+      window_door_action: >-
+        {% set s = window_door_stage | int(0) %}
+        {% if s == 2 %}
+          {{ winter_window_door_stage2_action if season_is_winter | bool else summer_window_door_stage2_action }}
+        {% elif s == 1 %}
+          {{ winter_window_door_stage1_action if season_is_winter | bool else summer_window_door_stage1_action }}
+        {% else %}
+          hold
+        {% endif %}
+      window_door_offset: >-
+        {% set s = window_door_stage | int(0) %}
+        {% if s == 2 %}
+          {{ winter_window_door_stage2_offset if season_is_winter | bool else summer_window_door_stage2_offset }}
+        {% elif s == 1 %}
+          {{ winter_window_door_stage1_offset if season_is_winter | bool else summer_window_door_stage1_offset }}
+        {% else %}
+          0
+        {% endif %}
+      window_door_inhibit: "{{ (window_door_action | trim) != 'hold' }}"
+      window_door_off: "{{ (window_door_action | trim) == 'off' }}"
+      # Window/door layer applied to the base target (boost-exempt). The frost and
+      # mould floors are layered on top of this in desired_* below.
+      windowed_hvac_mode: >-
+        {% set m = base_hvac_mode | trim %}
+        {% if window_door_inhibit | bool and not (boost_is_active | bool) and window_door_off | bool %}
+          off
+        {% else %}
+          {{ m }}
+        {% endif %}
+      windowed_temperature: >-
+        {% set base = base_temperature | float %}
+        {% set t = namespace(v=base) %}
+        {% if window_door_inhibit | bool and not (boost_is_active | bool)
+              and (window_door_action | trim) == 'adjust' and base > 0 %}
+          {% set t.v = (base - (window_door_offset | float)) if season_is_winter | bool
+                       else (base + (window_door_offset | float)) %}
+        {% endif %}
+        {% if windowed_hvac_mode | trim in ['heat', 'cool'] %}
+          {{ t.v }}
+        {% else %}
+          0
+        {% endif %}
+      # ── MOULD PROTECTION (warmth floor) ───────────────────────────────────────
+      # A humidity-driven heat FLOOR (distinct from dry mode, which dehumidifies
+      # for condensation). When relative humidity stays high, hold at least the
+      # mould minimum so the room doesn't sit cold and damp. RH comes from the
+      # optional mould humidity sensor (point it at a mean-RH helper for sustained
+      # tracking) or, if unset, the condensation section's instantaneous sensor.
+      # It composes with the other targets as a max (a higher comfort/boost target
+      # wins), yields to an open window and to active cooling, and sits below
+      # frost. A 3% RH hysteresis (while already heating) avoids flapping.
+      mould_effective_humidity: >-
+        {% set s = mould_humidity_sensor if mould_humidity_sensor != '' else indoor_humidity_sensor %}
+        {% if s != '' and states(s) not in ['unknown', 'unavailable', 'none', ''] %}
+          {{ states(s) | float(-1) }}
+        {% else %}
+          -1
+        {% endif %}
+      mould_risk_active: >-
+        {% if not (mould_protection_enabled | bool) or not (supports_heat | bool)
+              or (mould_effective_humidity | float(-1)) < 0 %}
+          false
+        {% elif current_hvac_mode == 'heat' %}
+          {{ (mould_effective_humidity | float) >= ((mould_humidity_threshold | float) - 3) }}
+        {% else %}
+          {{ (mould_effective_humidity | float) >= (mould_humidity_threshold | float) }}
+        {% endif %}
+      mould_floor_applies: >-
+        {{ mould_risk_active | bool
+           and not (window_door_inhibit | bool)
+           and (windowed_hvac_mode | trim) != 'cool' }}
+      # ── DESIRED (frost + mould floors over the windowed target) ───────────────
+      desired_hvac_mode: >-
+        {% if frost_protection_active | bool %}
+          heat
+        {% elif mould_floor_applies | bool %}
+          heat
+        {% else %}
+          {{ windowed_hvac_mode | trim }}
+        {% endif %}
+      desired_temperature: >-
+        {% if desired_hvac_mode | trim == 'heat' %}
+          {% set t = namespace(v=0) %}
+          {% if windowed_hvac_mode | trim == 'heat' %}
+            {% set t.v = windowed_temperature | float %}
+          {% endif %}
+          {% if frost_protection_active | bool %}
+            {% set t.v = [t.v, frost_minimum_temperature | float] | max %}
+          {% endif %}
+          {% if mould_floor_applies | bool %}
+            {% set t.v = [t.v, mould_minimum_temperature | float] | max %}
+          {% endif %}
+          {{ [[t.v, device_max_temp | float] | min, device_min_temp | float] | max }}
+        {% elif desired_hvac_mode | trim == 'cool' %}
+          {{ [[windowed_temperature | float, device_max_temp | float] | min, device_min_temp | float] | max }}
+        {% else %}
+          0
+        {% endif %}
+      # ── FORECAST TREND (keep-running only) ────────────────────────────────────
+      # Optional. While the unit is already running, the forecast can hold it on
+      # if outdoor is heading the wrong way. We scan the next forecast_lookahead
+      # hours for the lowest (winter) / highest (summer) outdoor temperature.
+      # Sentinels keep the trend false when the feature is off or no data is
+      # available: min defaults high (999), max defaults low (-999).
+      forecast_outdoor_min: >-
+        {% if not (forecast_feature_enabled | bool) or weather_forecast_entity == '' %}
+          999
+        {% else %}
+          {% set fc = forecast_response.get(weather_forecast_entity, {}).get('forecast', [])
+                      if forecast_response is defined else [] %}
+          {% set hours = forecast_lookahead_hours | int(4) %}
+          {% set ns = namespace(lo=999, n=0) %}
+          {% for item in fc %}
+            {% if ns.n < hours %}
+              {% set t = item.temperature | float(999) %}
+              {% if t < ns.lo %}{% set ns.lo = t %}{% endif %}
+              {% set ns.n = ns.n + 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.lo }}
+        {% endif %}
+      forecast_outdoor_max: >-
+        {% if not (forecast_feature_enabled | bool) or weather_forecast_entity == '' %}
+          -999
+        {% else %}
+          {% set fc = forecast_response.get(weather_forecast_entity, {}).get('forecast', [])
+                      if forecast_response is defined else [] %}
+          {% set hours = forecast_lookahead_hours | int(4) %}
+          {% set ns = namespace(hi=-999, n=0) %}
+          {% for item in fc %}
+            {% if ns.n < hours %}
+              {% set t = item.temperature | float(-999) %}
+              {% if t > ns.hi %}{% set ns.hi = t %}{% endif %}
+              {% set ns.n = ns.n + 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.hi }}
+        {% endif %}
+      # Falling/rising require a meaningful move (1 °F) past the current reading.
+      forecast_falling: >-
+        {{ (forecast_outdoor_min | float(999)) < ((outdoor_temp | float) - 1) }}
+      forecast_rising: >-
+        {{ (forecast_outdoor_max | float(-999)) > ((outdoor_temp | float) + 1) }}
+      # ── INDOOR TEMPERATURE TREND (start-side only) ────────────────────────────
+      # Optional. With a rate-of-change sensor (°F/hour) on the room, start
+      # without waiting for the full comfort band when the room itself is moving
+      # fast: heat as soon as it is below target while falling faster than the
+      # threshold; cool as soon as it is above target while rising that fast.
+      # Disabled / no sensor / unavailable → value 0 → no effect. Keep-running
+      # and switch-off behaviour are untouched.
+      indoor_trend_value: >-
+        {% if indoor_trend_enabled | bool and indoor_trend_sensor != ''
+              and states(indoor_trend_sensor) not in ['unknown', 'unavailable', 'none', ''] %}
+          {{ states(indoor_trend_sensor) | float(0) }}
+        {% else %}
+          0
+        {% endif %}
+      indoor_falling_fast: "{{ (indoor_trend_value | float) < -(indoor_trend_rate | float(1)) }}"
+      indoor_rising_fast: "{{ (indoor_trend_value | float) > (indoor_trend_rate | float(1)) }}"
+      # ── THERMAL DEMAND ────────────────────────────────────────────────────────
+      # Two-state hysteresis keyed on the desired mode and target:
+      #
+      #   START (unit currently off) — ROOM only: heat when the room is more than
+      #     the comfort band below the target; cool when more than the band above.
+      #
+      #   KEEP RUNNING (already on) — room OR outdoor OR forecast: keep heating
+      #     while room < target, OR outdoor still below the cold threshold, OR the
+      #     forecast is falling. Summer mirrors with the hot threshold and a
+      #     rising forecast. Switch off only once room is satisfied AND outdoor
+      #     has crossed the threshold AND the forecast isn't turning.
+      #
+      # The band follows the active target (period, setback, or boost). The
+      # outdoor threshold and forecast sit only on the keep-running side, which
+      # prevents short-cycling and stops the unit cutting out before a cold snap.
+      # If sensors are unavailable demand defaults TRUE so the unit is never
+      # blindly shut off on a missing reading.
+      thermal_demand: >-
+        {% if frost_protection_active | bool %}
+          true
+        {% elif not (thermal_sensors_available | bool) %}
+          true
+        {% elif desired_hvac_mode | trim == 'heat' %}
+          {% if current_hvac_mode == 'heat' %}
+            {{ (room_temp | float) < (desired_temperature | float)
+               or (outdoor_temp | float) < (winter_outdoor_cold_threshold | float)
+               or forecast_falling | bool }}
+          {% else %}
+            {{ (room_temp | float) < ((desired_temperature | float)
+                 - (0 if indoor_falling_fast | bool else (winter_comfort_band | float)))
+               or (mould_floor_applies | bool and (room_temp | float) < (mould_minimum_temperature | float)) }}
+          {% endif %}
+        {% elif desired_hvac_mode | trim == 'cool' %}
+          {% if current_hvac_mode == 'cool' %}
+            {{ (room_temp | float) > (desired_temperature | float)
+               or (outdoor_temp | float) > (summer_outdoor_hot_threshold | float)
+               or forecast_rising | bool }}
+          {% else %}
+            {{ (room_temp | float) > ((desired_temperature | float)
+                 + (0 if indoor_rising_fast | bool else (summer_comfort_band | float))) }}
+          {% endif %}
+        {% else %}
+          false
+        {% endif %}
+      # ── MINIMUM RUN PROTECTION ────────────────────────────────────────────────
+      minimum_run_seconds: "{{ (minimum_run_minutes | int(0)) * 60 }}"
+      climate_runtime_seconds: >-
+        {% set climate_state = states[climate_entity] %}
+        {% if climate_state is not none %}
+          {{ (as_timestamp(now()) - as_timestamp(climate_state.last_changed)) | int(0) }}
+        {% else %}
+          999999
+        {% endif %}
+      remaining_minimum_run_seconds: >-
+        {% set remaining = (minimum_run_seconds | int(0)) - (climate_runtime_seconds | int(0)) %}
+        {{ [remaining, 0] | max }}
+      minimum_run_delay_needed: >-
+        {{ current_hvac_mode in ['heat', 'cool', 'heat_cool']
+           and (remaining_minimum_run_seconds | int(0)) > 0
+           and (desired_hvac_mode | trim == 'off' or not (thermal_demand | bool)) }}
+      # ── MINIMUM OFF PROTECTION ────────────────────────────────────────────────
+      # After the unit turns off it must stay off for at least minimum_off_minutes
+      # before it can restart. climate_runtime_seconds doubles as time-since-off
+      # when the current state is off. This gates only the start branches.
+      minimum_off_seconds: "{{ (minimum_off_minutes | int(0)) * 60 }}"
+      minimum_off_delay_needed: >-
+        {{ current_hvac_mode in ['off', 'unavailable', 'unknown']
+           and ((minimum_off_seconds | int(0)) - (climate_runtime_seconds | int(0))) > 0 }}
+      # ── CONDENSATION & DRY MODE ───────────────────────────────────────────────
+      # SIGNAL 1 — Dew point (moisture content of indoor air)
+      #   estimated_dew_point = indoor_temp − ((100 − indoor_humidity) × 0.36)
+      # SIGNAL 2 — Surface temperature proxy
+      #   outdoor_temp ≈ window glass temperature (thermal bridging / no insulation)
+      # RISK RULE — condensation forms when dew point ≥ surface temp + margin
+      estimated_dew_point: >-
+        {% if indoor_temperature_sensor == '' or indoor_humidity_sensor == '' %}
+          -99
+        {% else %}
+          {% set temp = states(indoor_temperature_sensor) | float(0) %}
+          {% set humidity = states(indoor_humidity_sensor) | float(0) %}
+          {{ (temp - ((100 - humidity) * 9 / 25)) | round(2) }}
+        {% endif %}
+      condensation_risk: >-
+        {% if indoor_temperature_sensor == '' or indoor_humidity_sensor == '' %}
+          false
+        {% else %}
+          {% set temp = states(indoor_temperature_sensor) %}
+          {% set humidity = states(indoor_humidity_sensor) %}
+          {% if (outdoor_temp | float(-99)) == -99
+                or temp in ['unknown', 'unavailable', 'none', '']
+                or humidity in ['unknown', 'unavailable', 'none', ''] %}
+            false
+          {% else %}
+            {% set dew_point = (temp | float) - ((100 - (humidity | float)) * 9 / 25) %}
+            {{ dew_point >= ((outdoor_temp | float) + (condensation_margin | float(0))) }}
+          {% endif %}
+        {% endif %}
+      # ALLOWED-TO-RUN — two independent permissions, OR'd together:
+      #   • when empty   : house unoccupied AND "run when empty" toggle on
+      #   • during window: inside the time window AND "run in window" toggle on
+      # within_dry_window is the raw time-of-day test used by the window branch.
+      within_dry_window: >-
+        {% if dry_mode_window_start <= dry_mode_window_end %}
+          {{ now_time >= dry_mode_window_start and now_time < dry_mode_window_end }}
+        {% else %}
+          {{ now_time >= dry_mode_window_start or now_time < dry_mode_window_end }}
+        {% endif %}
+      dry_window_eligible: >-
+        {{ (dry_allow_when_empty | bool and not (house_is_occupied | bool))
+           or (dry_allow_in_window | bool and within_dry_window | bool) }}
+      # COMFORT PROTECTION — room must not drop too far during a dry sweep.
+      # Inside an active comfort period the floor is the scheduled target minus
+      # the cooling tolerance. Outside any period (e.g. overnight) it is the
+      # absolute dry-mode minimum temperature, so dry mode still has a hard floor.
+      dry_comfort_safe: >-
+        {% if comfort_period_active | bool %}
+          {{ (room_temp | float) >= ((comfort_target | float) - (max_dry_cool_delta | float(3))) }}
+        {% else %}
+          {{ (room_temp | float) >= (dry_minimum_temperature | float) }}
+        {% endif %}
+      # RUNTIME TRACKING — derived from how long the climate entity has been in
+      # dry mode. No timer helper required.
+      dry_is_active: "{{ states(climate_entity) == 'dry' }}"
+      dry_mode_runtime_seconds: >-
+        {% if states(climate_entity) == 'dry' %}
+          {{ (as_timestamp(now()) - as_timestamp(states[climate_entity].last_changed)) | int(0) }}
+        {% else %}
+          0
+        {% endif %}
+      dry_minimum_elapsed: >-
+        {{ (dry_mode_runtime_seconds | int) >= ((dry_minimum_run_minutes | int(10)) * 60) }}
+      dry_maximum_exceeded: >-
+        {{ (dry_mode_runtime_seconds | int) >= ((dry_sweep_minutes | int(30)) * 60) }}
+      # MINIMUM OFF — time since the unit left dry mode (measured from the last
+      # mode change while not in dry). Gates re-starting a sweep too soon.
+      dry_off_seconds: >-
+        {% if dry_is_active | bool %}
+          0
+        {% else %}
+          {{ (as_timestamp(now()) - as_timestamp(states[climate_entity].last_changed)) | int(0) }}
+        {% endif %}
+      dry_minimum_off_elapsed: >-
+        {{ (dry_off_seconds | int) >= ((dry_minimum_off_minutes | int(15)) * 60) }}
+      # EXIT — conditions that should end dry mode (checked after minimum run)
+      dry_should_exit: >-
+        {{ not (condensation_risk | bool)
+           or not (season_is_winter | bool)
+           or not (dry_window_eligible | bool)
+           or dry_maximum_exceeded | bool }}
+      # FEATURE GATE — blueprint toggle + optional runtime switch
+      # If dry_mode_switch is not configured (empty string), only the feature
+      # toggle matters. If it is configured, both must be on.
+      dry_feature_gate: >-
+        {{ dry_mode_feature_enabled | bool
+           and supports_dry | bool
+           and (dry_mode_switch == ''
+                or is_state(dry_mode_switch, 'on')) }}
+      # START ELIGIBILITY — all conditions required before dry mode may begin
+      dry_eligible_to_start: >-
+        {{ dry_feature_gate | bool
+           and season_is_winter | bool
+           and condensation_risk | bool
+           and dry_window_eligible | bool
+           and dry_comfort_safe | bool
+           and dry_minimum_off_elapsed | bool
+           and not (window_door_inhibit | bool)
+           and not (desired_hvac_mode | trim == 'heat' and thermal_demand | bool) }}
+      # ── MANUAL TAKEOVER STATE ─────────────────────────────────────────────────
+      # Two detection paths:
+      #
+      # 1. HELPER PATH (recommended) — when a helper is configured, the recording
+      #    step (which runs just after this variables block) compares any change
+      #    to what the automation intended and raises the helper when they differ.
+      #    The flag persists across restarts and clears after manual_takeover_minutes.
+      #    Works even on integrations (e.g. IR) that don't preserve change context.
+      #
+      # 2. FALLBACK PATH (no helper) — inspects the context of the climate
+      #    entity's current state: automation commands carry a parent_id, manual
+      #    changes generally don't. Less robust (it can briefly false-positive
+      #    right after a restart, which the homeassistant_start guard suppresses),
+      #    but it still catches a manual change without any helper configured.
+      # effective_hvac_mode — what the automation would actually command right
+      # now, accounting for dry mode and thermal demand. Used to decide whether
+      # the device's current state genuinely disagrees with the automation.
+      effective_hvac_mode: >-
+        {% if dry_is_active | bool %}
+          dry
+        {% elif desired_hvac_mode | trim in ['heat', 'cool'] and thermal_demand | bool %}
+          {{ desired_hvac_mode | trim }}
+        {% else %}
+          off
+        {% endif %}
+      # automation_target_mode — the mode the automation would CHOOSE on its own,
+      # independent of the current state. Unlike effective_hvac_mode it treats dry
+      # as intended only when the automation would actually START a sweep
+      # (dry_eligible_to_start = real condensation risk etc.), not merely because
+      # the device happens to be in dry. This lets the takeover detector tell
+      # "the automation put it in dry" from "a human put it in dry": a manual
+      # switch to dry with no condensation reason no longer matches intent and is
+      # flagged as a takeover, while a sweep the automation itself wanted is not.
+      automation_target_mode: >-
+        {% if dry_eligible_to_start | bool %}
+          dry
+        {% elif desired_hvac_mode | trim in ['heat', 'cool'] and thermal_demand | bool %}
+          {{ desired_hvac_mode | trim }}
+        {% else %}
+          off
+        {% endif %}
+      climate_seconds_since_change: >-
+        {% set s = states[climate_entity] %}
+        {{ (as_timestamp(now()) - as_timestamp(s.last_changed)) | int(0) if s is not none else 999999 }}
+      climate_change_was_external: >-
+        {% set s = states[climate_entity] %}
+        {% if s is none or s.context is none %}
+          false
+        {% else %}
+          {{ s.context.parent_id is none }}
+        {% endif %}
+      manual_takeover_seconds: >-
+        {% if manual_takeover_helper != '' and is_state(manual_takeover_helper, 'on') %}
+          {{ (as_timestamp(now()) - as_timestamp(states[manual_takeover_helper].last_changed)) | int(0) }}
+        {% else %}
+          999999
+        {% endif %}
+      # OCCUPANCY OVERRIDE: a manual switch-on means "we want heat while we're
+      # here". The moment the house is unoccupied the manual session stands down
+      # so the normal away logic (turn off / setback) takes over immediately,
+      # rather than the takeover keeping the unit running in an empty house until
+      # the timer lapses. Applies to both the helper and no-helper paths.
+      manual_takeover_active: >-
+        {% if (manual_takeover_minutes | int(0)) == 0
+              or not (house_is_occupied | bool)
+              or (frost_protection_active | bool) %}
+          false
+        {% elif manual_takeover_helper != '' %}
+          {{ is_state(manual_takeover_helper, 'on')
+             and (manual_takeover_seconds | int(999999)) < ((manual_takeover_minutes | int(0)) * 60) }}
+        {% else %}
+          {{ trigger_id != 'homeassistant_start'
+             and current_hvac_mode != (effective_hvac_mode | trim)
+             and climate_change_was_external | bool
+             and current_hvac_mode not in ['unavailable', 'unknown']
+             and (climate_seconds_since_change | int(999999)) < ((manual_takeover_minutes | int(0)) * 60) }}
+        {% endif %}
+      # ── STATUS LINE (optional dashboard output) ───────────────────────────────
+      # One-line summary of the current decision, written to status_helper (if
+      # set) by the status output step below. Comparisons trim/float the helper
+      # vars because their multi-line templates carry surrounding whitespace.
+      status_text: >-
+        {% set occ = 'room occupied' if room_is_occupied | bool else 'room empty' %}
+        {% set src = ('boost' if boost_is_active | bool
+                      else (active_period_name if (comfort_period_active | bool and (active_period_name | trim) != '')
+                            else ('comfort period' if comfort_period_active | bool
+                                  else ('setback' if (winter_setback_is_active | bool or summer_setback_is_active | bool)
+                                        else 'no period')))) %}
+        {% set mode = effective_hvac_mode | trim %}
+        {% set vac_min = (room_vacant_seconds | int(0)) // 60 %}
+        {% if frost_protection_active | bool %}
+          Frost protect → {{ desired_temperature | float | round(1) }}°
+        {% elif manual_takeover_active | bool %}
+          {% set left = (((manual_takeover_minutes | int(0)) * 60 - (manual_takeover_seconds | int(0))) // 60) %}
+          Manual hold · {{ [left, 0] | max }}m left
+        {% elif dry_is_active | bool %}
+          Dry sweep running
+        {% elif window_door_inhibit | bool and not (boost_is_active | bool) %}
+          {% if mode in ['heat', 'cool'] %}
+            Window open → {{ desired_temperature | float | round(1) }}° (stage {{ window_door_stage | int(0) }})
+          {% else %}
+            Window open → off (stage {{ window_door_stage | int(0) }})
+          {% endif %}
+        {% elif mould_floor_applies | bool and (windowed_hvac_mode | trim) != 'heat' %}
+          Mould guard → {{ desired_temperature | float | round(1) }}°
+        {% elif room_vacant_active | bool and (room_vacancy_stage | int(0)) >= 1 %}
+          {% if mode in ['heat', 'cool'] %}
+            Room empty {{ vac_min }}m → {{ desired_temperature | float | round(1) }}° (stage {{ room_vacancy_stage | int(0) }})
+          {% else %}
+            Room empty {{ vac_min }}m → off (stage {{ room_vacancy_stage | int(0) }})
+          {% endif %}
+        {% elif room_vacant_active | bool %}
+          Room empty {{ vac_min }}m · holding {{ desired_temperature | float | round(1) }}°
+        {% elif mode == 'heat' %}
+          Heating to {{ desired_temperature | float | round(1) }}° · {{ src }} · {{ occ }}
+        {% elif mode == 'cool' %}
+          Cooling to {{ desired_temperature | float | round(1) }}° · {{ src }} · {{ occ }}
+        {% else %}
+          Idle · {{ src }} · {{ occ }}
+        {% endif %}
+
+  # ── STATUS OUTPUT ─────────────────────────────────────────────────────────────
+  # Write the one-line status to the helper if one is configured. Runs every
+  # evaluation, before the takeover recording's possible stop, so it always
+  # reflects the latest decision.
+  - if:
+      - condition: template
+        value_template: "{{ status_helper != '' }}"
+    then:
+      - action: input_text.set_value
+        target:
+          entity_id: "{{ status_helper }}"
+        data:
+          value: "{{ status_text | trim }}"
+
+  # ── MANUAL TAKEOVER RECORDING ─────────────────────────────────────────────────
+  # Fires only on a climate state-change trigger. Detects a genuine external
+  # change WITHOUT relying on the change's context — some integrations (notably
+  # IR / SmartIR) don't preserve it, which would make the automation flag its own
+  # commands. Instead it compares the new state against what the automation itself
+  # intends right now: if the mode (and, for heat/cool, the setpoint) match the
+  # automation's own target, it was our command and is ignored; if they differ, a
+  # human changed it — in HA, or on the unit's own app/remote for two-way devices
+  # — so raise the helper flag. Duration is tracked from the helper's last_changed.
+  # Runs after the variables block so effective_hvac_mode / desired_temperature
+  # (the automation's intent) are available.
+  - choose:
+      - alias: Flag manual takeover when the device no longer matches intent
+        conditions:
+          - condition: trigger
+            id: climate_changed
+          - condition: template
+            value_template: >-
+              {{ manual_takeover_helper != ''
+                 and (manual_takeover_minutes | int(0)) > 0
+                 and trigger.from_state is not none
+                 and trigger.to_state is not none
+                 and (
+                   trigger.from_state.state != trigger.to_state.state
+                   or trigger.from_state.attributes.get('temperature')
+                      != trigger.to_state.attributes.get('temperature')
+                 )
+                 and not (
+                   trigger.to_state.state == automation_target_mode
+                   and (
+                     automation_target_mode not in ['heat', 'cool']
+                     or (((trigger.to_state.attributes.get('temperature') | float(-99))
+                          - (desired_temperature | float)) | abs) < 1
+                   )
+                 ) }}
+        sequence:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: "{{ manual_takeover_helper }}"
+          - stop: Manual takeover flagged — external change detected.
+
+  # ── MANUAL TAKEOVER CLEANUP ───────────────────────────────────────────────────
+  # Clear the helper once the takeover duration has elapsed OR the house has been
+  # vacated. Clearing it on vacate ends the manual session cleanly, so returning
+  # home within the original window resumes normal automatic control instead of
+  # the (now stale) manual flag re-suppressing the automation.
+  - choose:
+      - alias: Clear manual takeover flag when expired or house vacated
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ manual_takeover_helper != ''
+                 and is_state(manual_takeover_helper, 'on')
+                 and ( (manual_takeover_seconds | int(0)) >= ((manual_takeover_minutes | int(0)) * 60)
+                       or not (house_is_occupied | bool) ) }}
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ manual_takeover_helper }}"
+
+  # ── DRY MODE MANAGEMENT ──────────────────────────────────────────────────────
+  # No timer helper required — runtime is tracked from the climate entity's
+  # own last_changed timestamp while it is in dry mode.
+  #
+  # Two-branch choose block:
+  #   Branch A — Start: eligible + not already running → set dry mode + stop
+  #   Branch B — Maintain: already in dry mode + comfort safe + not (exit AND min elapsed)
+  #              The stop prevents the main HVAC blocks below from interfering.
+  #
+  # Exit paths (neither branch fires → main HVAC logic runs + overrides dry mode):
+  #   • Comfort protection: dry_comfort_safe = false
+  #     → Branch B condition fails → main HVAC sends heat → exits dry naturally
+  #   • Normal exit: dry_should_exit = true AND dry_minimum_elapsed = true
+  #     → Branch B condition fails → main HVAC takes over
+  #   • Minimum run lock: dry_should_exit = true AND dry_minimum_elapsed = false
+  #     → Branch B still fires (lock respected) → dry mode maintained
+
+  - choose:
+      - alias: Start dry mode
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ dry_eligible_to_start | bool
+                 and not (dry_is_active | bool)
+                 and not (manual_takeover_active | bool) }}
+        sequence:
+          - action: climate.set_hvac_mode
+            target:
+              entity_id: !input climate_entity
+            data:
+              hvac_mode: dry
+          - stop: Dry mode started.
+
+      - alias: Maintain dry mode (comfort safe; exit gate not yet cleared)
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ dry_is_active | bool
+                 and not (manual_takeover_active | bool)
+                 and not (window_door_inhibit | bool)
+                 and dry_comfort_safe | bool
+                 and not (dry_should_exit | bool and dry_minimum_elapsed | bool) }}
+        sequence:
+          - stop: Dry mode running — suppressing main HVAC logic.
+
+  # ── CLIMATE COMMANDS ────────────────────────────────────────────────────────
+  # All branches are gated by three cross-cutting concerns:
+  #   thermal_demand   — is HVAC action genuinely required?
+  #   manual_takeover_active — has a human recently overridden the device?
+  # Commands are split by whether the mode needs to change (sends hvac_mode +
+  # temperature in one call) or only the setpoint shifted (temperature only,
+  # avoids a redundant mode IR packet on devices that beep per command).
+
+  - choose:
+      - alias: Switch to heat mode (demand active, mode change needed)
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ desired_hvac_mode | trim == 'heat'
+                 and thermal_demand | bool
+                 and not (manual_takeover_active | bool)
+                 and not (minimum_off_delay_needed | bool)
+                 and current_hvac_mode != 'heat' }}
+        sequence:
+          - action: climate.set_temperature
+            target:
+              entity_id: !input climate_entity
+            data:
+              hvac_mode: heat
+              temperature: "{{ desired_temperature | float }}"
+
+      - alias: Adjust heat setpoint (already in heat mode, demand active, target shifted)
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ desired_hvac_mode | trim == 'heat'
+                 and thermal_demand | bool
+                 and not (manual_takeover_active | bool)
+                 and current_hvac_mode == 'heat'
+                 and (current_temperature | float) != (desired_temperature | float) }}
+        sequence:
+          - action: climate.set_temperature
+            target:
+              entity_id: !input climate_entity
+            data:
+              temperature: "{{ desired_temperature | float }}"
+
+      - alias: Switch to cool mode (demand active, mode change needed)
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ desired_hvac_mode | trim == 'cool'
+                 and thermal_demand | bool
+                 and not (manual_takeover_active | bool)
+                 and not (minimum_off_delay_needed | bool)
+                 and current_hvac_mode != 'cool' }}
+        sequence:
+          - action: climate.set_temperature
+            target:
+              entity_id: !input climate_entity
+            data:
+              hvac_mode: cool
+              temperature: "{{ desired_temperature | float }}"
+
+      - alias: Adjust cool setpoint (already in cool mode, demand active, target shifted)
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ desired_hvac_mode | trim == 'cool'
+                 and thermal_demand | bool
+                 and not (manual_takeover_active | bool)
+                 and current_hvac_mode == 'cool'
+                 and (current_temperature | float) != (desired_temperature | float) }}
+        sequence:
+          - action: climate.set_temperature
+            target:
+              entity_id: !input climate_entity
+            data:
+              temperature: "{{ desired_temperature | float }}"
+
+      - alias: Hard off — schedule or occupancy explicitly demands it
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ desired_hvac_mode | trim == 'off'
+                 and not (manual_takeover_active | bool)
+                 and current_hvac_mode not in ['off', 'unavailable', 'unknown']
+                 and not (minimum_run_delay_needed | bool) }}
+        sequence:
+          - action: climate.turn_off
+            target:
+              entity_id: !input climate_entity
+
+      - alias: Soft off — thermal demand satisfied (indoor comfortable, outdoor stable)
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ desired_hvac_mode | trim in ['heat', 'cool']
+                 and not (thermal_demand | bool)
+                 and not (manual_takeover_active | bool)
+                 and current_hvac_mode not in ['off', 'unavailable', 'unknown']
+                 and not (minimum_run_delay_needed | bool) }}
+        sequence:
+          - action: climate.turn_off
+            target:
+              entity_id: !input climate_entity
+
+mode: restart
+max_exceeded: silent

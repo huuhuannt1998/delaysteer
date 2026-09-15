@@ -1,0 +1,2359 @@
+blueprint:
+  name: Manual Light
+  description: >
+    # 🪄 Manual Light
+    
+    **Version: 1.3**
+
+
+    👋 Say goodbye to lights left on! Step into automated lighting with an auto shut-off and a motion sensor reset. 🪄💡
+    
+    
+    **If you like my blueprints, and would like to show your support or just say thank you?** [Click Here](https://www.paypal.com/donate/?hosted_button_id=WAZS3QSDTPGA8) 🙂
+
+
+    <details>
+    <summary><b>The Automation Process:</b> 👈</summary>
+
+
+      - **Trigger:**
+        - When the entity is turned ON manually, it will automatically turn OFF after the pre-set time delay.
+
+      - **Trigger Synchronize Option:**
+        - When using multiple entities, if one entity changes state (manually turned ON or OFF), all entities will automatically synchronize their state.
+
+      - **Motion Sensor Option:**
+        - When the light is turned ON manually and motion is detected by the sensor, the timer will be paused.
+        - Once motion is cleared, the timer will reset back to the start.
+        - If you are not using a timer, it will restart the timed delay once motion is cleared.
+
+      - **Grace Period:**
+        - When using a motion sensor, if the lights are turned OFF automatically, a short grace period allows them to turn back ON automatically if motion is detected again.
+        - Once the grace period ends, lights must be turned ON manually.
+        - **Note:** This does not apply if the lights are turned OFF manually - manual OFF always takes precedence.
+
+      - **Bypass:**
+        - Use the Bypass option to manually disable the automation, giving you full control.
+
+      - **HA Restart Behaviour:**
+        - With a timer helper:
+          - It will resume after a Home Assistant restart, maintaining the timer's state.
+        - Without a timer helper:
+          - After a Home Assistant restart, the automation will attempt to reset, restarting the time delay from the beginning.
+    </details>
+
+
+    Need help?
+    
+    FAQ: [Click Here](https://community.home-assistant.io/t/688273/2)
+    
+    Community Support Including Updates: [Click Here](https://community.home-assistant.io/t/688273/1)
+
+
+    Required = *
+  domain: automation
+  input:
+    trigger:
+      name: "Trigger *"
+      icon: mdi:cog-outline
+      collapsed: true
+      input:
+        trigger_input:
+          name: Trigger - Lights & Switches *
+          description: >
+            Select the entities that will automatically switch OFF after the configured time delay.
+
+
+            **Note** — All selected entities must support ON and OFF states.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain:
+                  - light
+                  - switch
+              multiple: true
+        time_delay:
+          name: Time Delay
+          description: >
+            Set how long lights and switches stay ON before automatically turning OFF.
+
+
+            If a motion sensor is used, the timer resets whenever motion is detected.
+            When no motion is detected and the delay expires, the lights and switches turn OFF.
+          default:
+            days: 0
+            hours: 0
+            minutes: 5
+            seconds: 0
+          selector:
+            duration:
+        include_timer_helper:
+          name: Use The Timer Helper Option (Optional)
+          description: >
+            Enable this option if you want to use a timer helper.
+
+
+            **Note** — When creating your timer helper, tick the `Restore` box so it will survive a Home Assistant restart.
+            Do not set a duration in the timer helper itself; the time is controlled by the settings below.
+
+
+            For more information on creating a timer helper, [click here](https://community.home-assistant.io/t/688273/4).
+          default: disable_timer_helper
+          selector:
+            select:
+              options:
+                - label: Enable the timer helper option
+                  value: "enable_timer_helper"
+                - label: Disable timer helper option
+                  value: "disable_timer_helper"
+        timer_helper:
+          name: Timer Helper
+          description: >
+            Select the timer helper to use when the timer helper option is enabled above.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain:
+                  - timer
+        include_trigger_sync:
+          name: Use The Synchronized Option (Optional)
+          description: >
+            Enable this option to synchronize the ON/OFF states of all selected entities.
+            If more than one entity is chosen, they will automatically turn ON and OFF together in sync.
+          default: disable_trigger_sync
+          selector:
+            select:
+              options:
+                - label: Enable the synchronize option
+                  value: "enable_trigger_sync"
+                - label: Disable the synchronize option
+                  value: "disable_trigger_sync"
+    motion:
+      name: "Motion Sensor"
+      icon: mdi:motion-sensor
+      collapsed: true
+      input:
+
+        include_motion_trigger:
+          name: Use The Motion Sensor Option (Optional)
+          description: >
+            Enable this option to use a motion sensor.
+            Whether using a timer helper or the built-in time delay in Home Assistant, the timer or delay will pause while motion is detected and reset once motion is cleared.
+          default: disable_motion_trigger
+          selector:
+            select:
+              options:
+                - label: Enable the motion sensor option
+                  value: "enable_motion_trigger"
+                - label: Disable the motion sensor option
+                  value: "disable_motion_trigger"
+        motion_trigger:
+          name: Motion Sensor - Binary Sensors
+          description: >
+            Select a single motion sensor or binary sensor to use.
+            If you need to use multiple sensors, group them together using a group helper first.
+            This ensures smoother automation execution and helps prevent conflicts.
+
+
+            For more information on grouping trigger sensors, [click here](https://community.home-assistant.io/t/688273/3).
+          default: []
+          selector:
+            entity:
+              filter:
+                domain:
+                  - binary_sensor
+    grace_period:
+      name: "Grace Period"
+      icon: mdi:timer-outline
+      collapsed: true
+      input:
+        include_grace_period:
+          name: Use The Grace Period Option (Optional)
+          description: >
+            Enable a short grace period after the lights turn OFF due to no motion.
+            If motion is detected during this period, the lights will turn back ON automatically.
+            Once the grace period ends, the lights must be switched ON manually.
+
+
+            **Note** - This option only works when the motion sensor option is enabled.
+          default: disable_grace_period
+          selector:
+            select:
+              options:
+                - label: Enable the grace period option
+                  value: "enable_grace_period"
+                - label: Disable grace period option
+                  value: "disable_grace_period"
+        grace_period_timer_helper:
+          name: Grace Period Timer Helper
+          description: >
+            Select the timer helper to be used if you have chosen to use a grace period above.
+
+
+            **Note** — When creating your timer helper, tick the `Restore` box so it will survive a Home Assistant restart.
+            Do not set a duration in the timer helper itself; the time is controlled by the settings below.
+
+
+            If using a timer in the **Timer Helper Option** above, you must use a separate, independent timer here.
+
+
+            For more information on a timer helper [Click Here](https://community.home-assistant.io/t/688273/4)
+          default: []
+          selector:
+            entity:
+              filter:
+                domain:
+                  - timer
+        grace_period_time_delay:
+          name: Grace Period Time Delay
+          description: >
+            Set how long the grace period lasts after the lights turn OFF due to no motion. 
+            During this time, if motion is detected, the lights will turn back ON automatically. 
+            After the grace period ends, the lights must be switched ON manually.
+          default:
+            days: 0
+            hours: 0
+            minutes: 5
+            seconds: 0
+          selector:
+            duration:
+        saved_lights_input:
+          name: Text Helper to Save ON Lights
+          description: >
+            When using more than one trigger entity without the **Synchronized Option**,
+            select a `text helper` entity to store the list of lights that are currently ON.
+
+
+            If you are using only one trigger entity or the **Synchronized Option**, you can leave this input blank.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_text
+    bypass_settings:
+      name: "Bypass"
+      icon: mdi:cog-pause-outline
+      collapsed: true
+      input:
+        include_bypass:
+          name: Use The Bypass Options (Optional)
+          description: >
+            Select if you would like to enable an option.
+            Each option determines how your lights will behave when the bypass switch is turned ON:
+
+              1 - Turns the lights ON
+              2 - Turns the lights OFF
+              3 - Keeps the lights current state
+
+            If you enable an option, make sure to enter the corresponding bypass switch in the input below.
+
+
+            For more information on how to use the bypass [Click Here](https://community.home-assistant.io/t/688273/89)
+          default: []
+          selector:
+            select:
+              options:
+                - label: 1 - Enable the Bypass - Turn the Lights ON
+                  value: "bypass_enabled_turn_on"
+                - label: 2 - Enable the Bypass - Turn the Lights OFF
+                  value: "bypass_enabled_turn_off"
+                - label: 3 - Enable the Bypass - Keep the Lights Current State
+                  value: "bypass_enabled_stop"
+              multiple: true
+        bypass_lights_on:
+          name: Bypass Switch - Turn the Lights ON
+          description: >
+            Select the switches that will turn your lights ON, bypass the trigger sensor, and allow your lights to function as normal.
+            Please note that the entity cannot be included in the "Trigger - Lights & Switches" selections.
+          default: []
+          selector:
+            entity:
+              multiple: true
+        bypass_lights_off:
+          name: Bypass Switch - Turn the Lights OFF
+          description: >
+            Select the switches that will turn your lights OFF, bypass the trigger sensor, and allow your lights to function as normal.
+            Please note that the entity cannot be included in the "Trigger - Lights & Switches" selections.
+          default: []
+          selector:
+            entity:
+              multiple: true
+        bypass_lights_stop:
+          name: Bypass Switch - Keep the Lights Current State
+          description: >
+            Select the switches that will keep your lights current state, bypass the trigger sensor, and allow your lights to function as normal.
+            Please note that the entity cannot be included in the "Trigger - Lights & Switches" selections.
+          default: []
+          selector:
+            entity:
+              multiple: true
+        bypass_time_delay:
+          name: Bypass - Time Delay
+          description: >
+            This is only used in two specific bypass scenarios when your lights are ON.
+
+              1. When option 2 above is selected to "Enable the Bypass - Turn the Lights OFF" and the bypass is turned ON.
+              2. When all bypasses are OFF and the lights remain ON.
+
+            In both cases, the automation will turn the lights OFF after the configured time delay.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 10
+              step: 0.25
+              unit_of_measurement: minutes
+        include_bypass_auto_off:
+          name: Use The Bypass Auto OFF Option (Optional)
+          description: >
+            Enable this option if you want the bypass to automatically turn OFF after a set time delay.
+            You can choose which bypass option the auto OFF will apply to:
+
+              1 - Turns the lights ON
+              2 - Turns the lights OFF
+              3 - Keeps the lights current state
+
+            Each option corresponds to one of the bypass options above.
+          default: []
+          selector:
+            select:
+              options:
+                - label: A - Enable Auto OFF for Bypass Option 1 - Turn the Lights ON
+                  value: "bypass_auto_off_enabled_on"
+                - label: B - Enable Auto OFF for Bypass Option 2 - Turn the Lights OFF
+                  value: "bypass_auto_off_enabled_off"
+                - label: C - Enable Auto OFF for Bypass Option 3 - Keep the Lights Current State
+                  value: "bypass_auto_off_enabled_stop"
+              multiple: true
+        bypass_auto_off_delay:
+          name: Bypass Auto OFF - Time Delay
+          description: >
+            Set the bypass auto OFF time delay.
+            The time delay starts from the last bypass that was turned ON.
+            If multiple bypasses are ON, turning one OFF while another remains ON will also reset the time delay.
+          default: 60
+          selector:
+            number:
+              min: 1
+              max: 240
+              step: 1
+              unit_of_measurement: minutes
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  trigger_input: !input trigger_input
+  time_delay: !input time_delay
+  include_timer_helper: !input include_timer_helper
+  timer_helper: !input timer_helper
+  include_trigger_sync: !input include_trigger_sync
+  include_motion_trigger: !input include_motion_trigger
+  motion_trigger: !input motion_trigger
+  include_grace_period: !input include_grace_period
+  grace_period_timer_helper: !input grace_period_timer_helper
+  grace_period_time_delay: !input grace_period_time_delay
+  saved_lights_input: !input saved_lights_input
+  include_bypass: !input include_bypass
+  bypass_lights_on: !input bypass_lights_on
+  bypass_lights_off: !input bypass_lights_off
+  bypass_lights_stop: !input bypass_lights_stop
+  bypass_time_delay: !input bypass_time_delay
+  include_bypass_auto_off: !input include_bypass_auto_off
+  bypass_auto_off_delay: !input bypass_auto_off_delay
+
+  trigger_entities_on: >
+    {{ expand(trigger_input)
+        | selectattr('state', 'eq', 'on')
+        | map(attribute='entity_id')
+        | list }}
+
+  trigger_entities_off: >
+    {{ expand(trigger_input)
+        | selectattr('state', 'eq', 'off')
+        | map(attribute='entity_id')
+        | list }}
+
+triggers:
+  - trigger: state
+    id: "t1"
+    entity_id: !input trigger_input
+    from: 'off'
+    to: 'on'
+  - trigger: state
+    id: "t2"
+    entity_id: !input trigger_input
+    from: 'on'
+    to: 'off'
+  - trigger: state
+    entity_id: !input timer_helper
+    to: "idle"
+    id: 't3'
+  - trigger: state
+    id: "t4"
+    entity_id: !input motion_trigger
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t5_on"
+    entity_id: !input bypass_lights_on
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t5_off"
+    entity_id: !input bypass_lights_off
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t5_stop"
+    entity_id: !input bypass_lights_stop
+    from: "off"
+    to: "on"
+  - trigger: state
+    id: "t6_on"
+    entity_id: !input bypass_lights_on
+    from: "on"
+    to: "off"
+  - trigger: state
+    id: "t6_off"
+    entity_id: !input bypass_lights_off
+    from: "on"
+    to: "off"
+  - trigger: state
+    id: "t6_stop"
+    entity_id: !input bypass_lights_stop
+    from: "on"
+    to: "off"
+  - trigger: homeassistant
+    id: "t7"
+    event: start
+
+# All Conditions
+condition:
+#Trigger conditions
+  - condition: or
+    conditions:
+      - condition: and # Start trigger
+        conditions:
+          - condition: trigger
+            id: 't1'
+          - condition: state
+            entity_id: !input trigger_input
+            match: any
+            state: 'on'
+          - alias: "Check if night lights entity state is enabled"
+            condition: or
+            conditions:
+              - condition: and
+                conditions:
+                  - "{{ include_grace_period == 'enable_grace_period' }}"
+                  - condition: state
+                    entity_id: !input grace_period_timer_helper
+                    state: 'idle'
+              - condition: template
+                value_template: "{{ include_grace_period == 'disable_grace_period' }}"
+              - condition: template
+                value_template: "{{ trigger.to_state.context.parent_id is none }}"
+      - condition: and # End trigger
+        conditions:
+          - condition: trigger
+            id: 't2'
+          - condition: state
+            entity_id: !input trigger_input
+            match: all
+            state: 'off'
+      - condition: and # Sync trigger
+        conditions:
+          - condition: trigger
+            id: 't2'
+          - condition: template
+            value_template: "{{include_trigger_sync == 'enable_trigger_sync'}}"
+      - condition: and # End of timer helper trigger
+        conditions:
+          - condition: trigger
+            id: 't3'
+          - condition: template
+            value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+          - condition: template
+            value_template: "{{ expand(trigger_input) | selectattr('state', '==', 'on') | list | count > 0 }}"
+      - condition: and # Motion sensor trigger
+        conditions:
+          - condition: trigger
+            id: 't4'
+          - "{{include_motion_trigger == 'enable_motion_trigger'}}"
+          - alias: "Check if grace period is enabled"
+            condition: or
+            conditions:
+              - condition: and
+                conditions:
+                  - "{{ expand(trigger_input) | selectattr('state', '==', 'on') | list | count > 0 }}"
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ include_grace_period == 'enable_grace_period' }}"
+                  - condition: state
+                    entity_id: !input grace_period_timer_helper
+                    state: 'active'
+      - condition: and # trigger by by-pass turning on
+        conditions:
+          - condition: trigger
+            id: 't5_on'
+          - "{{ 'bypass_enabled_turn_on' in include_bypass }}"
+      - condition: and # trigger by by-pass turning off
+        conditions:
+          - condition: trigger
+            id: 't5_off'
+          - "{{ 'bypass_enabled_turn_off' in include_bypass }}"
+      - condition: and # trigger by by-pass stop
+        conditions:
+          - condition: trigger
+            id: 't5_stop'
+          - "{{ 'bypass_enabled_stop' in include_bypass }}"
+      - condition: and # trigger by by-pass turning on
+        conditions:
+          - condition: trigger
+            id: 't6_on'
+          - "{{ 'bypass_enabled_turn_on' in include_bypass }}"
+      - condition: and # trigger by by-pass turning off
+        conditions:
+          - condition: trigger
+            id: 't6_off'
+          - "{{ 'bypass_enabled_turn_off' in  include_bypass }}"
+      - condition: and # trigger by by-pass stop
+        conditions:
+          - condition: trigger
+            id: 't6_stop'
+          - "{{ 'bypass_enabled_stop' in include_bypass }}"
+      - condition: and # trigger by HA Restart, check if lights are ON
+        conditions:
+          - condition: trigger
+            id: 't7'
+          - condition: template
+            value_template: "{{ expand(trigger_input) | selectattr('state', '==', 'on') | list | count > 0 }}"
+      - condition: and # trigger by HA Restart & check if by-pass auto off is enabled and any by-passes are on
+        conditions:
+          - condition: trigger
+            id: 't7'
+          - "{{ ('bypass_enabled_turn_on' in include_bypass) or ('bypass_enabled_turn_off' in include_bypass) or ('bypass_enabled_stop' in include_bypass) }}"
+          - "{{ ('bypass_auto_off_enabled_on' in include_bypass_auto_off) or ('bypass_auto_off_enabled_off' in include_bypass_auto_off) or ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input bypass_lights_on
+                match: any
+                state: 'on'
+              - condition: state
+                entity_id: !input bypass_lights_off
+                match: any
+                state: 'on'
+              - condition: state
+                entity_id: !input bypass_lights_stop
+                match: any
+                state: 'on'
+
+# Check Motion Sensor Manual By-pass
+  - condition: or
+    conditions:
+      - "{{ include_bypass == [] }}"
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_on
+            state: 'off'
+          - condition: state
+            entity_id: !input bypass_lights_off
+            state: 'off'
+          - condition: state
+            entity_id: !input bypass_lights_stop
+            state: 'off'
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_on
+            state: 'off'
+          - condition: state
+            entity_id: !input bypass_lights_off
+            state: 'off'
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_on
+            state: 'off'
+          - condition: state
+            entity_id: !input bypass_lights_stop
+            state: 'off'
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_off
+            state: 'off'
+          - condition: state
+            entity_id: !input bypass_lights_stop
+            state: 'off'
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_on
+            state: 'off'
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_off
+            state: 'off'
+      - condition: and
+        conditions:
+          - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+          - condition: state
+            entity_id: !input bypass_lights_stop
+            state: 'off'
+      - condition: trigger
+        id: 
+          - 't5_on'
+          - 't5_off'
+          - 't5_stop'
+          - 't6_on'
+          - 't6_off'
+          - 't6_stop'
+          - 't7'
+
+action:
+  - choose:
+    - alias: "By-pass is turned on & check by-pass option - Turn lights on"
+      conditions:
+        - condition: trigger
+          id: 't5_on'
+      sequence:
+        - choose:
+          - alias: "If grace period is selected"
+            conditions:
+              - condition: template
+                value_template: "{{include_grace_period == 'enable_grace_period'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              - condition: state
+                entity_id: !input grace_period_timer_helper
+                state: 'active'
+            sequence:
+              - alias: "Cancel the timer helper"
+                action: timer.cancel
+                entity_id: !input grace_period_timer_helper
+        - alias: "Turn ON the entities"
+          action: homeassistant.turn_on
+          entity_id: !input trigger_input
+        - alias: "Check by-pass settings and preform the correct action"
+          if:
+            - condition: or
+              conditions:
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_on' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_on
+                      match: any
+                      state: 'on'
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_off' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_off
+                      match: any
+                      state: 'on'
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_stop' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_stop
+                      match: any
+                      state: 'on'
+          then:
+            - choose:
+              - alias: "Check if the time helper is enabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                sequence:
+                  - alias: "Turn ON the timer helper"
+                    action: timer.start
+                    entity_id: !input timer_helper
+                    data:
+                      duration:
+                        minutes: !input bypass_auto_off_delay
+                  - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                    wait_for_trigger:
+                      - trigger: event
+                        event_type: timer.finished
+                        event_data:
+                          entity_id: !input timer_helper
+              - alias: "Check if the time helper is disabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                sequence:
+                  - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                    delay:
+                      minutes: !input bypass_auto_off_delay
+            - alias: "Parallel Actions for the by-pass auto off"
+              parallel:
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_auto_off_enabled_on' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_on
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_turn_off' in include_bypass) and ('bypass_auto_off_enabled_off' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_off
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_stop' in include_bypass) and ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_stop
+            - stop: "Stop the automation"
+          else:
+            - choose:
+              - alias: "Check if the time helper is enabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                sequence:
+                  - alias: "Cancel the timer helper"
+                    action: timer.cancel
+                    entity_id: !input timer_helper
+            - stop: "Stop the automation"
+    - alias: "By-pass is turned on & check by-pass option - Turn lights off"
+      conditions:
+        - condition: trigger
+          id: 't5_off'
+      sequence:
+        - choose:
+          - alias: "If grace period is selected"
+            conditions:
+              - condition: template
+                value_template: "{{include_grace_period == 'enable_grace_period'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              - condition: state
+                entity_id: !input grace_period_timer_helper
+                state: 'active'
+            sequence:
+              - alias: "Cancel the timer helper"
+                action: timer.cancel
+                entity_id: !input grace_period_timer_helper
+        - choose:
+          - alias: "Check if any lights are on"
+            conditions:
+              - condition: state
+                entity_id: !input trigger_input
+                match: any
+                state: 'on'
+            sequence:
+              - choose:
+                - alias: "Check if the time helper is enabled"
+                  conditions:
+                    - condition: template
+                      value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                  sequence:
+                    - alias: "Handle timer helper when set to 0"
+                      choose:
+                        - conditions: "{{ bypass_time_delay | float == 0 }}"
+                          sequence:
+                            - alias: "Cancel the timer if set to 0"
+                              action: timer.cancel
+                              entity_id: !input timer_helper
+                      default:
+                        - alias: "Start the timer with set minutes"
+                          action: timer.start
+                          entity_id: !input timer_helper
+                          data:
+                            duration:
+                              minutes: !input bypass_time_delay
+                    - alias: "Wait the number of minutes set in the by-pass time delay"
+                      wait_for_trigger:
+                        - trigger: event
+                          event_type: timer.finished
+                          event_data:
+                            entity_id: !input timer_helper
+                - alias: "Check if the time helper is disabled"
+                  conditions:
+                    - condition: template
+                      value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                  sequence:
+                    - alias: "Wait the number of minutes set in the by-pass time delay"
+                      delay:
+                        minutes: !input bypass_time_delay
+              - alias: "Turn OFF the entities"
+                action: homeassistant.turn_off
+                entity_id: !input trigger_input
+        - alias: "Check by-pass settings and preform the correct action"
+          if:
+            - condition: or
+              conditions:
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_on' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_on
+                      match: any
+                      state: 'on'
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_off' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_off
+                      match: any
+                      state: 'on'
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_stop' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_stop
+                      match: any
+                      state: 'on'
+          then:
+            - choose:
+              - alias: "Check if the time helper is enabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                sequence:
+                  - alias: "Turn ON the timer helper"
+                    action: timer.start
+                    entity_id: !input timer_helper
+                    data:
+                      duration:
+                        minutes: !input bypass_auto_off_delay
+                  - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                    wait_for_trigger:
+                      - trigger: event
+                        event_type: timer.finished
+                        event_data:
+                          entity_id: !input timer_helper
+              - alias: "Check if the time helper is disabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                sequence:
+                  - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                    delay:
+                      minutes: !input bypass_auto_off_delay
+            - alias: "Parallel Actions for the by-pass auto off"
+              parallel:
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_auto_off_enabled_on' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_on
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_turn_off' in include_bypass) and ('bypass_auto_off_enabled_off' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_off
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_stop' in include_bypass) and ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_stop
+            - stop: "Stop the automation"
+          else:
+            - choose:
+              - alias: "Check if the time helper is enabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                sequence:
+                  - alias: "Cancel the timer helper"
+                    action: timer.cancel
+                    entity_id: !input timer_helper
+            - stop: "Stop the automation"
+    - alias: "By-pass is turned on & check by-pass option - Keep the current lights state"
+      conditions:
+        - condition: trigger
+          id: 't5_stop'
+      sequence:
+        - choose:
+          - alias: "Check if the time helper is enabled"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+            sequence:
+              - choose:
+                - alias: "If grace period is selected"
+                  conditions:
+                    - condition: template
+                      value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                    - condition: template
+                      value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                    - condition: state
+                      entity_id: !input grace_period_timer_helper
+                      state: 'active'
+                  sequence:
+                    - alias: "Cancel the timer helper"
+                      action: timer.cancel
+                      entity_id: !input grace_period_timer_helper
+          - alias: "Check if the time helper is disabled"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+            sequence:
+              - choose:
+                - alias: "If grace period is selected"
+                  conditions:
+                    - condition: template
+                      value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                    - condition: template
+                      value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                    - condition: state
+                      entity_id: !input grace_period_timer_helper
+                      state: 'active'
+                  sequence:
+                    - alias: "Cancel the timer helper"
+                      action: timer.cancel
+                      entity_id: !input grace_period_timer_helper
+        - alias: "Check by-pass settings and preform the correct action"
+          if:
+            - condition: or
+              conditions:
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_on' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_on
+                      match: any
+                      state: 'on'
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_off' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_off
+                      match: any
+                      state: 'on'
+                - condition: and
+                  conditions:
+                    - alias: "Check if the by-pass auto off is enabled"
+                      condition: template
+                      value_template: "{{ 'bypass_auto_off_enabled_stop' in include_bypass_auto_off }}"
+                    - condition: state
+                      entity_id: !input bypass_lights_stop
+                      match: any
+                      state: 'on'
+          then:
+            - choose:
+              - alias: "Check if the time helper is enabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                sequence:
+                  - alias: "Turn ON the timer helper"
+                    action: timer.start
+                    entity_id: !input timer_helper
+                    data:
+                      duration:
+                        minutes: !input bypass_auto_off_delay
+                  - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                    wait_for_trigger:
+                      - trigger: event
+                        event_type: timer.finished
+                        event_data:
+                          entity_id: !input timer_helper
+              - alias: "Check if the time helper is disabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                sequence:
+                  - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                    delay:
+                      minutes: !input bypass_auto_off_delay
+            - alias: "Parallel Actions for the by-pass auto off"
+              parallel:
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_auto_off_enabled_on' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_on
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_turn_off' in include_bypass) and ('bypass_auto_off_enabled_off' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_off
+                - sequence:
+                    - choose:
+                        - conditions:
+                            - condition: template
+                              value_template: "{{ ('bypass_enabled_stop' in include_bypass) and ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+                          sequence:
+                            - alias: "Turn off the by-pass"
+                              action: homeassistant.turn_off
+                              entity_id: !input bypass_lights_stop
+            - stop: "Stop the automation"
+          else:
+            - choose:
+              - alias: "Check if the time helper is enabled"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                sequence:
+                  - alias: "Cancel the timer helper"
+                    action: timer.cancel
+                    entity_id: !input timer_helper
+            - stop: "Stop the automation"
+  - choose:
+    - alias: "By-pass is turned off & check if any lights are on"
+      conditions:
+        - condition: trigger
+          id:
+            - 't6_on'
+            - 't6_off'
+            - 't6_stop'
+        - condition: state
+          entity_id: !input trigger_input
+          match: any
+          state: 'on'
+      sequence:
+        - choose:
+          - alias: "Check all by-pass are off and check conditions if enabled"
+            conditions:
+              - condition: or
+                conditions:
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        state: 'off'
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        state: 'off'
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        state: 'off'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        state: 'off'
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        state: 'off'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        state: 'off'
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        state: 'off'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        state: 'off'
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        state: 'off'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        state: 'off'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        state: 'off'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        state: 'off'
+            sequence:
+              - choose:
+                - alias: "Check if the time helper is enabled"
+                  conditions:
+                    - condition: template
+                      value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                  sequence:
+                    - choose:
+                      - alias: "If grace period is selected"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                          - condition: template
+                            value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                        sequence:
+                          - choose:
+                            - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                              conditions:
+                                - condition: template
+                                  value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                                - condition: template
+                                  value_template: "{{ trigger_input | length > 1 }}"
+                              sequence:
+                                - action: input_text.set_value
+                                  target:
+                                    entity_id: "{{ saved_lights_input }}"
+                                  data:
+                                    value: "{{ trigger_entities_on | join(', ') }}"
+                          - choose:
+                            - alias: "If timer is running"
+                              conditions:
+                                - condition: state
+                                  entity_id: !input grace_period_timer_helper
+                                  state: ['active', 'paused']
+                              sequence:
+                                - alias: "Cancel the timer helper"
+                                  action: timer.cancel
+                                  entity_id: !input grace_period_timer_helper
+                    - choose:
+                      - alias: "If trigger sync is selected"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_trigger_sync == 'enable_trigger_sync'}}"
+                        sequence:
+                          - alias: "Turn ON the entities"
+                            action: homeassistant.turn_on
+                            target:
+                              entity_id: "{{ trigger_entities_off }}"
+                    - alias: "Handle timer helper when set to 0"
+                      choose:
+                        - conditions: "{{ bypass_time_delay | float == 0 }}"
+                          sequence:
+                            - alias: "Cancel the timer if set to 0"
+                              action: timer.cancel
+                              entity_id: !input timer_helper
+                      default:
+                        - alias: "Start the timer with set minutes"
+                          action: timer.start
+                          entity_id: !input timer_helper
+                          data:
+                            duration: 
+                              minutes: !input bypass_time_delay
+                    - choose:
+                      - alias: "Check if motion trigger is enabled and on"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                          - condition: state
+                            entity_id: !input motion_trigger
+                            state: 'on'
+                        sequence:
+                          - alias: "Pause the timer helper"
+                            action: timer.pause
+                            entity_id: !input timer_helper
+                          - alias: "Wait until motion sensor is off"
+                            wait_for_trigger:
+                              trigger: state
+                              entity_id: !input motion_trigger
+                              from: "on"
+                              to: "off"
+                          - alias: "Turn ON the timer helper"
+                            action: timer.start
+                            entity_id: !input timer_helper
+                            data:
+                              duration: !input time_delay
+                - alias: "Check if the time helper is disabled"
+                  conditions:
+                    - condition: template
+                      value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                  sequence:
+                    - choose:
+                      - alias: "If grace period is selected"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                          - condition: template
+                            value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                        sequence:
+                          - choose:
+                            - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                              conditions:
+                                - condition: template
+                                  value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                                - condition: template
+                                  value_template: "{{ trigger_input | length > 1 }}"
+                              sequence:
+                                - action: input_text.set_value
+                                  target:
+                                    entity_id: "{{ saved_lights_input }}"
+                                  data:
+                                    value: "{{ trigger_entities_on | join(', ') }}"
+                          - choose:
+                            - alias: "If timer is running"
+                              conditions:
+                                - condition: state
+                                  entity_id: !input grace_period_timer_helper
+                                  state: ['active', 'paused']
+                              sequence:
+                                - alias: "Cancel the timer helper"
+                                  action: timer.cancel
+                                  entity_id: !input grace_period_timer_helper
+                    - choose:
+                      - alias: "If trigger sync is selected"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_trigger_sync == 'enable_trigger_sync'}}"
+                        sequence:
+                          - alias: "Turn ON the entities"
+                            action: homeassistant.turn_on
+                            target:
+                              entity_id: "{{ trigger_entities_off }}"
+                    - choose:
+                      - alias: "Check if motion trigger is enabled and on"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                          - condition: state
+                            entity_id: !input motion_trigger
+                            state: 'on'
+                        sequence:
+                          - alias: "Wait until motion sensor is off"
+                            wait_for_trigger:
+                              trigger: state
+                              entity_id: !input motion_trigger
+                              from: "on"
+                              to: "off"
+                    - alias: "Wait for the time that has been set in the time delay"
+                      delay:
+                        minutes: !input bypass_time_delay
+                    - choose:
+                      - alias: "If grace period is selected"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                          - condition: template
+                            value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                        sequence:
+                          - alias: "Turn ON the timer helper"
+                            action: timer.start
+                            entity_id: !input grace_period_timer_helper
+                            data:
+                              duration: !input grace_period_time_delay
+                    - alias: "Turn OFF the entities"
+                      action: homeassistant.turn_off
+                      target:
+                        entity_id: "{{ trigger_entities_on }}"
+              - stop: "Stop the automation"
+          - alias: "Check if any by-passes are on"
+            conditions:
+              - condition: or
+                conditions:
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        match: any
+                        state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        match: any
+                        state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        match: any
+                        state: 'on'
+            sequence:
+              - alias: "Check by-pass settings and preform the correct action"
+                if:
+                  - condition: or
+                    conditions:
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_on' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_off' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_stop' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                then:
+                  - choose:
+                    - alias: "Check if the time helper is enabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                      sequence:
+                        - alias: "Turn ON the timer helper"
+                          action: timer.start
+                          entity_id: !input timer_helper
+                          data:
+                            duration:
+                              minutes: !input bypass_auto_off_delay
+                        - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                          wait_for_trigger:
+                            - trigger: event
+                              event_type: timer.finished
+                              event_data:
+                                entity_id: !input timer_helper
+                    - alias: "Check if the time helper is disabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                      sequence:
+                        - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                          delay:
+                            minutes: !input bypass_auto_off_delay
+                  - alias: "Parallel Actions for the by-pass auto off"
+                    parallel:
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_auto_off_enabled_on' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_on
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_turn_off' in include_bypass) and ('bypass_auto_off_enabled_off' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_off
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_stop' in include_bypass) and ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_stop
+                  - stop: "Stop the automation"
+                else:
+                  - choose:
+                    - alias: "Check if the time helper is enabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                      sequence:
+                        - alias: "Cancel the timer helper"
+                          action: timer.cancel
+                          entity_id: !input timer_helper
+                  - stop: "Stop the automation"
+    - alias: "By-pass is turned off & check if all lights are off"
+      conditions:
+        - condition: trigger
+          id:
+            - 't6_on'
+            - 't6_off'
+            - 't6_stop'
+        - condition: state
+          entity_id: !input trigger_input
+          match: all
+          state: 'off'
+      sequence:
+        - choose:
+          - alias: "Check if any by-passes are on"
+            conditions:
+              - condition: or
+                conditions:
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        match: any
+                        state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        match: any
+                        state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        match: any
+                        state: 'on'
+            sequence:
+              - alias: "Check by-pass settings and preform the correct action"
+                if:
+                  - condition: or
+                    conditions:
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_on' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_off' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_stop' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                then:
+                  - choose:
+                    - alias: "Check if the time helper is enabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                      sequence:
+                        - alias: "Turn ON the timer helper"
+                          action: timer.start
+                          entity_id: !input timer_helper
+                          data:
+                            duration:
+                              minutes: !input bypass_auto_off_delay
+                        - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                          wait_for_trigger:
+                            - trigger: event
+                              event_type: timer.finished
+                              event_data:
+                                entity_id: !input timer_helper
+                    - alias: "Check if the time helper is disabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                      sequence:
+                        - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                          delay:
+                            minutes: !input bypass_auto_off_delay
+                  - alias: "Parallel Actions for the by-pass auto off"
+                    parallel:
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_auto_off_enabled_on' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_on
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_turn_off' in include_bypass) and ('bypass_auto_off_enabled_off' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_off
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_stop' in include_bypass) and ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_stop
+                  - stop: "Stop the automation"
+                else:
+                  - choose:
+                    - alias: "Check if the time helper is enabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                      sequence:
+                        - alias: "Cancel the timer helper"
+                          action: timer.cancel
+                          entity_id: !input timer_helper
+                  - stop: "Stop the automation"
+          - alias: "Check if the time helper is enabled"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+            sequence:
+              - alias: "Cancel the timer helper"
+                action: timer.cancel
+                entity_id: !input timer_helper
+    - alias: "Home Assistant Restart"
+      conditions:
+        - condition: trigger
+          id: 't7'
+      sequence:
+        - choose:
+          - alias: "Check if any by-passes are on"
+            conditions:
+              - condition: or
+                conditions:
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_on
+                        match: any
+                        state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' in include_bypass) and ('bypass_enabled_stop' not in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_off
+                        match: any
+                        state: 'on'
+                  - condition: and
+                    conditions:
+                      - "{{ ('bypass_enabled_turn_on' not in include_bypass) and ('bypass_enabled_turn_off' not in include_bypass) and ('bypass_enabled_stop' in include_bypass) }}"
+                      - condition: state
+                        entity_id: !input bypass_lights_stop
+                        match: any
+                        state: 'on'
+            sequence:
+              - alias: "Check by-pass settings and preform the correct action"
+                if:
+                  - condition: or
+                    conditions:
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_on' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_on
+                            match: any
+                            state: 'on'
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_off' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_off
+                            match: any
+                            state: 'on'
+                      - condition: and
+                        conditions:
+                          - alias: "Check if the by-pass auto off is enabled"
+                            condition: template
+                            value_template: "{{ 'bypass_auto_off_enabled_stop' in include_bypass_auto_off }}"
+                          - condition: state
+                            entity_id: !input bypass_lights_stop
+                            match: any
+                            state: 'on'
+                then:
+                  - choose:
+                    - alias: "Check if the time helper is enabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                      sequence:
+                        - alias: "Turn ON the timer helper"
+                          action: timer.start
+                          entity_id: !input timer_helper
+                          data:
+                            duration:
+                              minutes: !input bypass_auto_off_delay
+                        - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                          wait_for_trigger:
+                            - trigger: event
+                              event_type: timer.finished
+                              event_data:
+                                entity_id: !input timer_helper
+                    - alias: "Check if the time helper is disabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+                      sequence:
+                        - alias: "Wait the number of minutes set in the by-pass auto off time delay"
+                          delay:
+                            minutes: !input bypass_auto_off_delay
+                  - alias: "Parallel Actions for the by-pass auto off"
+                    parallel:
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_turn_on' in include_bypass) and ('bypass_auto_off_enabled_on' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_on
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_turn_off' in include_bypass) and ('bypass_auto_off_enabled_off' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_off
+                      - sequence:
+                          - choose:
+                              - conditions:
+                                  - condition: template
+                                    value_template: "{{ ('bypass_enabled_stop' in include_bypass) and ('bypass_auto_off_enabled_stop' in include_bypass_auto_off) }}"
+                                sequence:
+                                  - alias: "Turn off the by-pass"
+                                    action: homeassistant.turn_off
+                                    entity_id: !input bypass_lights_stop
+                  - stop: "Stop the automation"
+                else:
+                  - choose:
+                    - alias: "Check if the time helper is enabled"
+                      conditions:
+                        - condition: template
+                          value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                      sequence:
+                        - alias: "Cancel the timer helper"
+                          action: timer.cancel
+                          entity_id: !input timer_helper
+                  - stop: "Stop the automation"
+        - choose:
+          - alias: "HA Restart timer enabled and motion is on"
+            conditions:
+              - "{{include_timer_helper == 'enable_timer_helper'}}"
+              - "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              - condition: state
+                entity_id: !input motion_trigger
+                state: 'on'
+            sequence:
+              - choose:
+                  - alias: "Check if the timer is paused"
+                    conditions:
+                      - condition: state
+                        entity_id: !input timer_helper
+                        state: 'paused'
+                    sequence:
+                      - alias: "Pause the timer helper"
+                        action: timer.pause
+                        entity_id: !input timer_helper
+                      - alias: "Wait until motion sensor is off"
+                        wait_for_trigger:
+                          trigger: state
+                          entity_id: !input motion_trigger
+                          from: "on"
+                          to: "off"
+                      - alias: "Turn ON the timer helper"
+                        action: timer.start
+                        entity_id: !input timer_helper
+                        data:
+                          duration: !input time_delay
+                  - alias: "Ceck if the timer is idle"
+                    conditions:
+                      - condition: state
+                        entity_id: !input timer_helper
+                        state: 'idle'
+                    sequence:
+                      - alias: "Turn OFF the entities"
+                        action: homeassistant.turn_off
+                        entity_id: !input trigger_input
+          - alias: "HA Restart timer enabled and motion is off"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              - condition: state
+                entity_id: !input motion_trigger
+                state: 'off'
+            sequence:
+              - choose:
+                  - alias: "Check if the timer is paused"
+                    conditions:
+                      - condition: state
+                        entity_id: !input timer_helper
+                        state: 'paused'
+                    sequence:
+                      - alias: "Turn ON the timer helper"
+                        action: timer.start
+                        entity_id: !input timer_helper
+                        data:
+                          duration: !input time_delay
+                  - alias: "Ceck if the timer is idle"
+                    conditions:
+                      - condition: state
+                        entity_id: !input timer_helper
+                        state: 'idle'
+                    sequence:
+                      - alias: "Turn OFF the entities"
+                        action: homeassistant.turn_off
+                        entity_id: !input trigger_input
+          - alias: "HA Restart timer enabled and motion is off"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'disable_motion_trigger'}}"
+            sequence:
+              - choose:
+                  - alias: "Check if the timer is paused"
+                    conditions:
+                      - condition: state
+                        entity_id: !input timer_helper
+                        state: 'paused'
+                    sequence:
+                      - alias: "Turn ON the timer helper"
+                        action: timer.start
+                        entity_id: !input timer_helper
+                        data:
+                          duration: !input time_delay
+                  - alias: "Ceck if the timer is idle"
+                    conditions:
+                      - condition: state
+                        entity_id: !input timer_helper
+                        state: 'idle'
+                    sequence:
+                      - alias: "Turn OFF the entities"
+                        action: homeassistant.turn_off
+                        entity_id: !input trigger_input
+          - alias: "HA Restart timer disabled and motion is on"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              - condition: state
+                entity_id: !input motion_trigger
+                state: 'on'
+            sequence:
+              - alias: "Wait until motion sensor is off"
+                wait_for_trigger:
+                  trigger: state
+                  entity_id: !input motion_trigger
+                  from: "on"
+                  to: "off"
+              - alias: "Apply the time delay"
+                delay: !input time_delay
+              - alias: "Turn OFF the entities"
+                action: homeassistant.turn_off
+                entity_id: !input trigger_input
+          - alias: "HA Restart timer disabled and motion is off"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              - condition: state
+                entity_id: !input motion_trigger
+                state: 'off'
+            sequence:
+              - alias: "Apply the time delay"
+                delay: !input time_delay
+              - alias: "Turn OFF the entities"
+                action: homeassistant.turn_off
+                entity_id: !input trigger_input
+          - alias: "HA Restart timer disabled and motion is disabled"
+            conditions:
+              - condition: template
+                value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+              - condition: template
+                value_template: "{{include_motion_trigger == 'disable_motion_trigger'}}"
+            sequence:
+              - alias: "Apply the time delay"
+                delay: !input time_delay
+              - alias: "Turn OFF the entities"
+                action: homeassistant.turn_off
+                entity_id: !input trigger_input
+        - stop: "Stop the automation"
+  - choose:
+      - alias: "Trigger turned ON"
+        conditions:
+          - condition: trigger
+            id: 
+              - 't1'
+        sequence:
+          - choose:
+            - alias: "Check if the time helper is enabled"
+              conditions:
+                - condition: template
+                  value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+              sequence:
+                - choose:
+                  - alias: "If grace period is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                    sequence:
+                      - choose:
+                        - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                          conditions:
+                            - condition: template
+                              value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                            - condition: template
+                              value_template: "{{ trigger_input | length > 1 }}"
+                          sequence:
+                            - action: input_text.set_value
+                              target:
+                                entity_id: "{{ saved_lights_input }}"
+                              data:
+                                value: "{{ trigger_entities_on | join(', ') }}"
+                      - choose:
+                        - alias: "If timer is running"
+                          conditions:
+                            - condition: state
+                              entity_id: !input grace_period_timer_helper
+                              state: ['active', 'paused']
+                          sequence:
+                            - alias: "Cancel the timer helper"
+                              action: timer.cancel
+                              entity_id: !input grace_period_timer_helper
+                - choose:
+                  - alias: "If trigger sync is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_trigger_sync == 'enable_trigger_sync'}}"
+                    sequence:
+                      - alias: "Turn ON the entities"
+                        action: homeassistant.turn_on
+                        target:
+                          entity_id: "{{ trigger_entities_off }}"
+                - alias: "Turn ON the timer helper"
+                  action: timer.start
+                  entity_id: !input timer_helper
+                  data:
+                    duration: !input time_delay
+                - choose:
+                  - alias: "Check if motion trigger is enabled and on"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                      - condition: state
+                        entity_id: !input motion_trigger
+                        state: 'on'
+                    sequence:
+                      - alias: "Pause the timer helper"
+                        action: timer.pause
+                        entity_id: !input timer_helper
+                      - alias: "Wait until motion sensor is off"
+                        wait_for_trigger:
+                          trigger: state
+                          entity_id: !input motion_trigger
+                          from: "on"
+                          to: "off"
+                      - alias: "Turn ON the timer helper"
+                        action: timer.start
+                        entity_id: !input timer_helper
+                        data:
+                          duration: !input time_delay
+            - alias: "Check if the time helper is disabled"
+              conditions:
+                - condition: template
+                  value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+              sequence:
+                - choose:
+                  - alias: "If grace period is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                    sequence:
+                      - choose:
+                        - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                          conditions:
+                            - condition: template
+                              value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                            - condition: template
+                              value_template: "{{ trigger_input | length > 1 }}"
+                          sequence:
+                            - action: input_text.set_value
+                              target:
+                                entity_id: "{{ saved_lights_input }}"
+                              data:
+                                value: "{{ trigger_entities_on | join(', ') }}"
+                      - choose:
+                        - alias: "If timer is running"
+                          conditions:
+                            - condition: state
+                              entity_id: !input grace_period_timer_helper
+                              state: ['active', 'paused']
+                          sequence:
+                            - alias: "Cancel the timer helper"
+                              action: timer.cancel
+                              entity_id: !input grace_period_timer_helper
+                - choose:
+                  - alias: "If trigger sync is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_trigger_sync == 'enable_trigger_sync'}}"
+                    sequence:
+                      - alias: "Turn ON the entities"
+                        action: homeassistant.turn_on
+                        target:
+                          entity_id: "{{ trigger_entities_off }}"
+                - choose:
+                  - alias: "Check if motion trigger is enabled and on"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                      - condition: state
+                        entity_id: !input motion_trigger
+                        state: 'on'
+                    sequence:
+                      - alias: "Wait until motion sensor is off"
+                        wait_for_trigger:
+                          trigger: state
+                          entity_id: !input motion_trigger
+                          from: "on"
+                          to: "off"
+                - alias: "Wait for the time that has been set in the time delay"
+                  delay: !input time_delay
+                - choose:
+                  - alias: "If grace period is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                    sequence:
+                      - alias: "Turn ON the timer helper"
+                        action: timer.start
+                        entity_id: !input grace_period_timer_helper
+                        data:
+                          duration: !input grace_period_time_delay
+                - alias: "Turn OFF the entities"
+                  action: homeassistant.turn_off
+                  target:
+                    entity_id: "{{ trigger_entities_on }}"
+      - alias: "Trigger turned OFF"
+        conditions:
+          - condition: trigger
+            id: 't2'
+        sequence:
+          - choose:
+              - alias: "Check if the time helper is enabled and cancel it"
+                conditions:
+                  - condition: state
+                    entity_id: !input trigger_input
+                    match: all
+                    state: 'off'
+                sequence:
+                  - choose:
+                      - alias: "Check if the time helper is enabled and cancel it"
+                        conditions:
+                          - condition: template
+                            value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+                        sequence:
+                          - alias: "Cancel the timer helper"
+                            action: timer.cancel
+                            entity_id: !input timer_helper
+              - alias: "Check if the trigger entity sync is enabled and manual turn OFF"
+                conditions:
+                  - condition: template
+                    value_template: "{{include_trigger_sync == 'enable_trigger_sync'}}"
+                sequence:
+                  - alias: "Turn OFF the entities"
+                    action: homeassistant.turn_off
+                    target:
+                      entity_id: "{{ trigger_entities_on }}"
+                  - stop: "Stop the automation"
+      - alias: "Turn OFF entities when the timer helper is finished"
+        conditions:
+          - condition: trigger
+            id: 't3'
+        sequence:
+          - choose:
+            - alias: "If grace period is selected"
+              conditions:
+                - condition: template
+                  value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                - condition: template
+                  value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+              sequence:
+                - alias: "Turn ON the timer helper"
+                  action: timer.start
+                  entity_id: !input grace_period_timer_helper
+                  data:
+                    duration: !input grace_period_time_delay
+                - choose:
+                  - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                      - condition: template
+                        value_template: "{{ trigger_input | length > 1 }}"
+                    sequence:
+                      - action: input_text.set_value
+                        data:
+                          entity_id: "{{ saved_lights_input }}"
+                          value: "{{ trigger_entities_on | join(', ') }}"
+          - alias: "Turn OFF the entities"
+            action: homeassistant.turn_off
+            target:
+              entity_id: "{{ trigger_entities_on }}"
+      - alias: "Motion detected"
+        conditions:
+          - condition: trigger
+            id: 't4'
+        sequence:
+          - choose:
+            - alias: "Check if the time helper is enabled"
+              conditions:
+                - condition: template
+                  value_template: "{{include_timer_helper == 'enable_timer_helper'}}"
+              sequence:
+                - choose:
+                  - alias: "If grace period is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                      - condition: state
+                        entity_id: !input grace_period_timer_helper
+                        state: 'active'
+                    sequence:
+                      - choose:
+                        - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                          conditions:
+                            - condition: template
+                              value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                            - condition: template
+                              value_template: "{{ trigger_input | length > 1 }}"
+                          sequence:
+                            - action: homeassistant.turn_on
+                              target:
+                                entity_id: >
+                                  {% set entities = states(saved_lights_input) %}
+                                  {% set cleaned_entities = entities.split(', ') %}
+                                  {% set cleaned_entities = cleaned_entities | map('trim') | selectattr('strip', 'ne', '') | list %}
+                                  {{ cleaned_entities }}
+                        - alias: "Check if the trigger entity sync is enabled or if there is only one entity in the trigger"
+                          conditions:
+                            - condition: template
+                              value_template: "{{ (include_trigger_sync == 'enable_trigger_sync') or (trigger_input | length == 1) }}"
+                          sequence:
+                            - alias: "Turn ON the entities"
+                              action: homeassistant.turn_on
+                              target:
+                                entity_id: "{{ trigger_entities_off }}"
+                      - alias: "Cancel the timer helper"
+                        action: timer.cancel
+                        entity_id: !input grace_period_timer_helper
+                - alias: "Pause the timer helper"
+                  action: timer.pause
+                  entity_id: !input timer_helper
+                - alias: "Wait until motion sensor is off"
+                  wait_for_trigger:
+                    trigger: state
+                    entity_id: !input motion_trigger
+                    from: "on"
+                    to: "off"
+                - alias: "Turn ON the timer helper"
+                  action: timer.start
+                  entity_id: !input timer_helper
+                  data:
+                    duration: !input time_delay
+            - alias: "Check if the time helper is disabled"
+              conditions:
+                - condition: template
+                  value_template: "{{include_timer_helper == 'disable_timer_helper'}}"
+              sequence:
+                - choose:
+                  - alias: "If grace period is selected"
+                    conditions:
+                      - condition: template
+                        value_template: "{{include_grace_period == 'enable_grace_period'}}"
+                      - condition: template
+                        value_template: "{{include_motion_trigger == 'enable_motion_trigger'}}"
+                      - condition: state
+                        entity_id: !input grace_period_timer_helper
+                        state: 'active'
+                    sequence:
+                      - choose:
+                        - alias: "Check if the trigger entity sync is disabled and more than one entity is in the trigger"
+                          conditions:
+                            - condition: template
+                              value_template: "{{include_trigger_sync == 'disable_trigger_sync'}}"
+                            - condition: template
+                              value_template: "{{ trigger_input | length > 1 }}"
+                          sequence:
+                            - action: homeassistant.turn_on
+                              target:
+                                entity_id: >
+                                  {% set entities = states(saved_lights_input) %}
+                                  {% set cleaned_entities = entities.split(', ') %}
+                                  {% set cleaned_entities = cleaned_entities | map('trim') | selectattr('strip', 'ne', '') | list %}
+                                  {{ cleaned_entities }}
+                        - alias: "Check if the trigger entity sync is enabled or if there is only one entity in the trigger"
+                          conditions:
+                            - condition: template
+                              value_template: "{{ (include_trigger_sync == 'enable_trigger_sync') or (trigger_input | length == 1) }}"
+                          sequence:
+                            - alias: "Turn ON the entities"
+                              action: homeassistant.turn_on
+                              target:
+                                entity_id: "{{ trigger_entities_off }}"
+                      - alias: "Cancel the timer helper"
+                        action: timer.cancel
+                        entity_id: !input grace_period_timer_helper
+                - alias: "Wait until motion sensor is off"
+                  wait_for_trigger:
+                    trigger: state
+                    entity_id: !input motion_trigger
+                    from: "on"
+                    to: "off"
+                - alias: "Wait for the time that has been set"
+                  delay: !input time_delay
+                - alias: "Turn OFF the entities"
+                  action: homeassistant.turn_off
+                  entity_id: !input trigger_input

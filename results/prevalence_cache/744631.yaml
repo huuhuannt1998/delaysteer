@@ -1,0 +1,240 @@
+blueprint:
+  name: Garden Sprinkler Control
+  description: >-
+    Control sprinklers based on soil moisture with limits based on the day of the
+    week. The idea is to lightly water every other day and water heavier once
+    every two weeks.
+  domain: automation
+  input:
+    garden_name:
+      name: Garden Name
+      description: >-
+        The name of this garden that will be used in notifications.
+        The notification will make the most sense if this name is all lower case.
+      default: flower bed
+      selector:
+        text:
+    soil_moisture_sensor:
+      name: Soil Moisture Sensor
+      description: >-
+        The sensor that tracks the moisture of the area to be watered by the sprinklers.
+        This sensor should be in range of the water spare of at least one sprinkler so that
+        accurately records the change in moisture resulting from the sprinklers running.
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: humidity
+    water_valve:
+      name: Water Valve
+      description: The water valve that sends water to the sprinklers
+      selector:
+        entity:
+          filter:
+            - domain: valve
+    last_watered_helper:
+      name: Last Watered Helper
+      description: input_datetime helper to track when the sprinkler was last turned on
+      selector:
+        entity:
+          filter:
+            - domain: input_datetime
+    hourly_forecast_sensor:
+      name: Hourly Forecast Sensor
+      description: >-
+        The name of the sensor containing hourly forecast data under the "forecast" attribute.
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+    pre_actions:
+      name: Pre-actions
+      description: >-
+        Actions to put at the before all other actions. The default 1ms delay is here as a place 
+        holder since something must be specified. It can be removed in favor of other actions, if desired.
+        The use case for this is to allow adding in a delay and/or wait based on another valve being open.
+      default:
+        - delay:
+            hours: 0
+            minutes: 0
+            seconds: 0
+            milliseconds: 1
+      selector:
+        action:
+    notification_service:
+      name: Notification Service
+      description: >-
+        The service to send notifications to. Note that only message is set in the service call
+        as that is all that is needed by the Telegram Bot notification service.
+      default: telegram_bot.send_message
+      selector:
+        text:
+    first_window_start:
+      name: First Watering Window Start Time
+      description: >-
+        The earliest time in the day that watering can occur. Generally, this will
+        be some time in the morning.
+      default: "08:00:00"
+      selector:
+        time:
+    first_window_end:
+      name: First Watering Window End Time
+      description: The latest time that watering can occur before the heat of the day
+      default: "13:00:00"
+      selector:
+        time:
+    second_window_start:
+      name: Second Watering Window Start Time
+      description: >-
+        The earliest time in the evening that watering can occur. Generally, this will
+        be some time after the heat of the day.
+      default: "17:30:00"
+      selector:
+        time:
+    second_window_end:
+      name: Second Watering Window End Time
+      description: The latest time in the evening that watering can occur.
+      default: "19:30:00"
+      selector:
+        time:
+    minimum_soil_moisture:
+      name: Minimum Soil Moisture
+      description: Below what percentage moisture should the sprinklers come on?
+      default: 41
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: box
+    minutes_to_water_lite:
+      name: Minutes To Water Lite
+      description: >-
+        Most days are a lite watering. During these, how many minutes should
+        the sprinklers run for?
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 5
+          unit_of_measurement: minutes
+          mode: box
+    minutes_to_water_heavy:
+      name: Minutes To Water Heavy
+      description: >-
+        Roughly every other Sunday a longer watering is done. During this one,
+        how many minutes should the sprinklers run for?
+      default: 8
+      selector:
+        number:
+          min: 5
+          max: 20
+          unit_of_measurement: minutes
+          mode: box
+
+mode: single
+variables:
+  second_window_start: !input second_window_start
+  soil_sensor: !input soil_moisture_sensor
+  hourly_forecast_entity: !input hourly_forecast_sensor
+  sprinkler_valve: !input water_valve
+  garden_bed_name: !input garden_name
+  last_watered_helper_entity: !input last_watered_helper
+
+trigger:
+  - platform: numeric_state
+    entity_id:
+      - !input soil_moisture_sensor
+    below: !input minimum_soil_moisture
+condition:
+  - condition: and
+    conditions:
+      - condition: template
+        value_template: "{{ (now().day % 2) == 0 }}"
+        alias: Test if even number date
+      - alias: Test time & precipitation odds
+        condition: or
+        conditions:
+          - alias: Within first watering window and precipitation unlikely?
+            condition: and
+            conditions:
+              - condition: time
+                after: !input first_window_start
+                before: !input first_window_end
+              - condition: template
+                value_template: >-
+                  {% set evening_start_hour = int(second_window_start.split(':')[0]) %}
+                  {% set hours_til_evening_window = (evening_start_hour - now().hour) %}
+                  {% if hours_til_evening_window > 0 %}
+                  {{ (state_attr(hourly_forecast_entity,
+                  'forecast')[:hours_til_evening_window] |
+                  map(attribute='precipitation_probability') | list | max) < 50
+                  }}
+                  {% else %}
+                  {{ false }}
+                  {% endif %}
+                alias: Rain likely before evening window
+          - condition: time
+            after: !input second_window_start
+            before: !input second_window_end
+            alias: Within second watering window?
+      - alias: Not watered yet today
+        condition: template
+        value_template: >-
+          {{ as_datetime(states[last_watered_helper_entity].state).day !=
+          now().day }}
+
+action:
+  - alias: "Run the pre-action(s)"
+    choose: []
+    default: !input pre_actions
+  - service: !input notification_service
+    metadata: {}
+    data:
+      message: >
+        Started watering the {{ garden_bed_name }}. Its current soil moisture is
+        {{ states(soil_sensor) }}%.
+    alias: Send started watering
+  - service: valve.open_valve
+    metadata: {}
+    data: {}
+    target:
+      entity_id: !input water_valve
+    enabled: true
+  - service: input_datetime.set_datetime
+    metadata: {}
+    data:
+      datetime: "{{ now() }}"
+    target:
+      entity_id: !input last_watered_helper
+  - if:
+      - condition: template
+        value_template: "{{ (now().weekday()) == 6 }}"
+        alias: If Sunday
+    then:
+      - delay:
+          hours: 0
+          minutes: !input minutes_to_water_heavy
+          seconds: 0
+          milliseconds: 0
+        enabled: true
+    else:
+      - delay:
+          hours: 0
+          minutes: !input minutes_to_water_lite
+          seconds: 0
+          milliseconds: 0
+        enabled: true
+    alias: If Sunday water for longer
+  - service: valve.close_valve
+    metadata: {}
+    data: {}
+    target:
+      entity_id: !input water_valve
+    enabled: true
+  - service: !input notification_service
+    metadata: {}
+    data:
+      message: >-
+        Finished watering the {{ garden_bed_name }}
+    alias: Send finished watering

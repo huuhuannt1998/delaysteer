@@ -1,0 +1,28 @@
+{
+  "algorithm": "EnumerateReachable + NecessityTest",
+  "scenario": "S4_ventilation",
+  "tier": "tier0_synthetic",
+  "planner": "deterministic_reference",
+  "nodes": 93,
+  "truncated": false,
+  "schedules": 93,
+  "successes": 19,
+  "single_flow_successes": 0,
+  "min_witness_k_flows": 2,
+  "I_k": 1,
+  "G_k": {
+    "gain": true,
+    "composed_total_hold": 8820.0,
+    "composed_k_flows": 2,
+    "single_flow_schedules_at_or_above_that_budget": 11,
+    "of_which_reached_target": 0
+  },
+  "necessity": {
+    "full": true,
+    "minus_one": {
+      "delay1 (fresh temperature)": false,
+      "delay2 (window confirmation)": false
+    },
+    "all_necessary": true
+  }
+}

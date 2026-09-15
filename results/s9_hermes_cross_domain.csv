@@ -1,0 +1,13 @@
+run_id,scenario,arm,delayed_domain,delay_s,domain,evidence_observed_at_s,evidence_age_at_commit_s,aged_by_another_domain,commit_at_s,max_cross_domain_skew_s,shared_event_loop,same_loop_id,invariant_violated,notes
+20260813T021048,S9_cross_domain_delay_correlation,control_no_delay,,0.0,calendar,704307.8454,0.1027,False,704307.9481,0.1027,True,4348347024,False,no injection
+20260813T021048,S9_cross_domain_delay_correlation,control_no_delay,,0.0,email,704307.8967,0.0514,False,704307.9481,0.1027,True,4348347024,False,no injection
+20260813T021048,S9_cross_domain_delay_correlation,control_no_delay,,0.0,browser,704307.948,0.0001,False,704307.9481,0.1027,True,4348347024,False,no injection
+20260813T021048,S9_cross_domain_delay_correlation,delay_calendar,calendar,5.0,calendar,704312.9989,0.1022,False,704313.1011,0.1021,True,4348347024,False,5.0s injected into calendar only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_calendar,calendar,5.0,email,704313.0494,0.0517,False,704313.1011,0.1021,True,4348347024,False,5.0s injected into calendar only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_calendar,calendar,5.0,browser,704313.101,0.0001,False,704313.1011,0.1021,True,4348347024,False,5.0s injected into calendar only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_email,email,5.0,calendar,704313.1522,5.103,True,704318.2552,5.1029,True,4348347024,True,5.0s injected into email only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_email,email,5.0,email,704318.2037,0.0515,False,704318.2552,5.1029,True,4348347024,False,5.0s injected into email only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_email,email,5.0,browser,704318.2551,0.0001,False,704318.2552,5.1029,True,4348347024,False,5.0s injected into email only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_browser,browser,5.0,calendar,704318.3065,5.1021,True,704323.4086,5.102,True,4348347024,True,5.0s injected into browser only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_browser,browser,5.0,email,704318.3573,5.0513,True,704323.4086,5.102,True,4348347024,True,5.0s injected into browser only; other domains untouched
+20260813T021048,S9_cross_domain_delay_correlation,delay_browser,browser,5.0,browser,704323.4085,0.0001,False,704323.4086,5.102,True,4348347024,False,5.0s injected into browser only; other domains untouched

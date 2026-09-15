@@ -1,0 +1,166 @@
+blueprint:
+  name: Bee In The Hive Sensor
+  description: >
+    # 🐝 Bee In The Hive Sensor
+    
+    **Version: 1.1**
+    
+    
+    Get smart about occupancy with a Bee In The Hive Sensor! 🛰
+
+
+    **If you like my blueprints, and would like to show your support or just say thank you?** [Click Here](https://www.paypal.com/donate/?hosted_button_id=WAZS3QSDTPGA8) 🙂
+
+    
+    <details>
+    <summary><b>Information & The Automation Process:</b> 👈</summary>
+
+      The Bee In The Hive Sensor is designed for enclosed spaces like bathrooms or toilets. It functions as a virtual occupancy sensor by combining a door contact sensor and a motion sensor. This blueprint sets up a toggle helper that acts like a sensor, allowing you to use it in your automations.
+
+      - **Why use it?**
+        PIR motion sensors alone can struggle to detect occupancy when someone is sitting still, leading to lights, switches, or other entities turning OFF too soon. This often occurs when reading in the bath, using the toilet, showering behind a screen, or in areas where the motion sensor doesn’t cover every corner of the room. The Bee In The Hive Sensor works in conjunction with a door contact sensor to provide more reliable occupancy detection, ensuring the room remains occupied until the door is opened. While it still has limitations, it might just be the sensor you've been looking for.
+      
+      - **How does it work?**
+        1. **Door closes + motion changes from clear to detected** = The room is Occupied (Toggle Helper ON).
+        2. **Door closes + motion is clear** = The room is Unoccupied (Toggle Helper OFF).
+        3. **Door closes + motion remains detected after the set door time delay** = The room is Occupied (Toggle Helper ON).
+        4. **Door closes + motion is detected but clears before the set door time delay** = The room is Unoccupied (Toggle Helper OFF).
+        5. **If the room is Occupied + door opens** = The room is Unoccupied (Toggle Helper OFF).
+
+
+      - **Blueprint Integration:**
+          - 💡 Sensor Light: Control your lights using the Bee In The Hive sensor. [Click Here](https://community.home-assistant.io/t/843686/11?u=blacky) to learn more.
+    </details>
+
+
+    Need help? See our FAQ: [Click Here](https://community.home-assistant.io/t/bee-in-the-hive-sensor/843686/2)
+
+    Let us know what you think of this blueprint and for community support including updates: [Click Here](https://community.home-assistant.io/t/bee-in-the-hive-sensor/843686/)
+
+    
+    Required = *
+  domain: automation
+  input:
+    motion_sensor:
+      name: Motion Sensor *
+      description: >
+        Select the motion sensor that detects movement in the room and updates the occupancy status accordingly.
+      default: []
+      selector:
+        entity:
+          filter:
+            domain:
+              - binary_sensor
+    door_sensor:
+      name: Door Sensor *
+      description: >
+        Select the door contact sensor that detects when the door is opened (ON) or closed (OFF) to help determine room occupancy.
+      default: []
+      selector:
+        entity:
+          filter:
+            domain:
+              - binary_sensor
+    door_time_delay:
+      name: Door Time Delay
+      description: >
+        Set the time delay (in seconds) after the door is closed before determining if the room is occupied.
+        When the door first closes, the room remains unoccupied.
+        If motion is still detected when this delay expires, the toggle helper will turn ON, making the room occupied.
+        If no motion is detected when the delay expires, the room will remain unoccupied.
+        This delay helps ensure the sensor correctly detects occupancy instead of immediately assuming the room is occupied when the door closes.
+
+        
+        **Here's how to determine the right delay:** Trigger the motion sensor and close the door.
+        Then calculate how long it takes for your motion sensor to clear when no one is in the room and the door is closed.
+        Set the delay to a value slightly longer than that to avoid a false occupied state.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          mode: slider
+          step: 1
+          unit_of_measurement: seconds
+    toggle_helper:
+      name: Toggle Helper *
+      description: >
+        Select the toggle helper entity that will indicate whether the room is Occupied (ON) or Unoccupied (OFF).
+        You can then use this toggle helper’s ON/OFF state in your automations to trigger actions based on occupancy.
+      default: []
+      selector:
+        entity:
+          filter:
+            domain:
+              - input_boolean
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  motion_sensor: !input motion_sensor
+  door_sensor: !input door_sensor
+  door_time_delay: !input door_time_delay
+  toggle_helper: !input toggle_helper
+
+triggers:
+  - trigger: state
+    id: "t0"
+    entity_id: !input motion_sensor
+    to: "on"
+  - trigger: state
+    id: "t1"
+    entity_id: !input door_sensor
+    to: "on"
+  - trigger: state
+    id: "t2"
+    entity_id: !input door_sensor
+    to: "off"
+    for:
+      seconds: !input door_time_delay
+
+# All Conditions
+condition:
+#Trigger conditions
+  - condition: or
+    conditions:
+      - condition: and # triggered by motion detected and check if door is closed and toggle helper is off
+        conditions:
+          - condition: trigger
+            id: 't0'
+          - condition: state
+            entity_id: !input door_sensor
+            state: 'off'
+          - condition: state
+            entity_id: !input toggle_helper
+            state: 'off'
+      - condition: and # triggered by door open and check if toggle helper is on
+        conditions:
+          - condition: trigger
+            id: 't1'
+          - condition: state
+            entity_id: !input toggle_helper
+            state: 'on'
+      - condition: and # triggered by door closed for time delay and check if motion is on
+        conditions:
+          - condition: trigger
+            id: 't2'
+          - condition: state
+            entity_id: !input motion_sensor
+            state: 'on'
+
+action:
+  - choose:
+    - alias: "Check if the room is occupied"
+      conditions:
+        - "{{ is_state(door_sensor, 'off') and is_state(motion_sensor, 'on') }}"
+      sequence:
+        - alias: "Turn on the toggle helper"
+          action: input_boolean.turn_on
+          data:
+            entity_id: !input toggle_helper
+    default:
+      - alias: "Room is unoccupied"
+        action: input_boolean.turn_off
+        data:
+          entity_id: !input toggle_helper

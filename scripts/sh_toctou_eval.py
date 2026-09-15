@@ -35,9 +35,9 @@ Metrics (AgentDojo / TOCTOU-Bench style):
 Requires SimuHome on :8000 and scripts/sh_delay_proxy.py on :8099.
 Run from the SimuHome clone with its venv:
   cd ../SimuHome-ext && .venv/bin/python \
-    ../delaysteer/scripts/sh_toctou_eval.py \
+    /Users/anonymous/Desktop/DelaySteer/scripts/sh_toctou_eval.py \
     --model llama3.1:8b --pairs 8 \
-    --out ../delaysteer/results/toctou.csv
+    --out /Users/anonymous/Desktop/DelaySteer/results/toctou.csv
 """
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ import time
 import urllib.error
 import urllib.request
 
-SIMU_ROOT = os.environ.get("SIMUHOME_ROOT", os.path.expanduser("~/SimuHome-ext"))
+SIMU_ROOT = os.environ.get("SIMUHOME_ROOT", "/Users/anonymous/Desktop/SimuHome-ext")
 if SIMU_ROOT not in sys.path:
     sys.path.insert(0, SIMU_ROOT)
 from src.clients.smarthome_client import SmartHomeClient  # noqa: E402

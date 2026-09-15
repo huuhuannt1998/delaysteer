@@ -1,0 +1,198 @@
+blueprint:
+  name: Automatic door unlock
+  description: >
+    Automatically unlock the door, when the selected person first enters the specified zone and afterwards gets close to the bluetooth range of a bluetooth proxy.
+
+    Prerequisites:
+      - The automation uses the [Bermuda Triangulation](https://github.com/agittins/bermuda) integration to get the Area of your bluetooth device
+      - Your phone has to be set to transmit bluetooth beacons
+      - (Only if Telegram is enabled) Set up `person.xxx.telegram_id` using the `customize.yaml`
+  domain: automation
+  input:
+    person:
+      name: Person
+      description: The person, who has to enter the zone
+      selector:
+        entity:
+          domain: person
+    enable_telegram:
+      name: Enable Telegram?
+      default: false
+      description: >-
+        If enabled, will sent out the Telegram notifications. Make sure that you set up the
+        telegram_bot integration first: https://www.home-assistant.io/integrations/telegram_bot/
+
+
+        Afterwards, enter a new value in your "customize.yaml" file to add your telegram user_id
+        to your person entity in Home Assistant.
+
+
+        person.<<Your Person Name>>: { telegram_id: <<Your Telegram Id>> }
+      selector:
+        boolean:
+    zone:
+      name: Zone
+      default: zone.home
+      description: The zone that has to be entered by the person
+      selector:
+        entity:
+          domain: zone
+    coming_home:
+      name: Activate when person is marked as "home"?
+      default: false
+      description: >-
+        If set to true, the automation will also trigger, when the person is marked as "home".
+        This makes sense, when you want to use your wifi as device_tracker
+      selector:
+        boolean:
+    area:
+      name: Area
+      description: >-
+        The area the phone has to be considered as.
+        Use the area that the bluetooth proxy at your door is in.
+
+        Note: All areas with ESPHome devices are shown. You might need to double-check
+        that there actually is a bluetooth proxy in the area you selected, otherwise
+        it will not work.
+      selector:
+        area:
+          entity:
+            integration: esphome
+    beacon:
+      name: Bluetooth Beacon
+      description: >
+        The bluetooth beacons that have to be connected to the bluetooth proxy
+
+        Notes:  
+        - When using another integration than bermuda, change the "integration"
+        part of this selector to your integration name in the blueprint's .yaml file  
+        - The entity has to be in reach when creating this automation,
+        otherwise it will not show up
+      selector:
+        entity:
+          integration: bermuda
+          multiple: true
+          domain: sensor
+          device_class: bermuda__custom_device_class
+    timeout:
+      name: Zone-Entering Timeout
+      default:
+        hours: 0
+        minutes: 10
+        seconds: 0
+      description:
+        When you enter the zone and don't come close to the door in this timeframe,
+        the automation will cancel. This is so that the door does not open automatically,
+        when the zone you entered is triggered accidentally
+      selector:
+        duration:
+    minimum_beacon_time:
+      name: Minimal recognition time
+      default:
+        hours: 0
+        minutes: 0
+        seconds: 5
+      description: >-
+        The minimum time the bluetooth beacon has to be connected to
+        the proxy, to open the door.
+      selector:
+        duration:
+    lock:
+      name: Lock
+      selector:
+        entity:
+          domain: lock
+
+mode: single
+
+variables:
+  timeout: !input timeout
+  person: !input person
+  lock: !input lock
+
+trigger:
+  - trigger: zone
+    entity_id: !input person
+    zone: !input zone
+    event: enter
+  - trigger: state
+    entity_id:
+      - !input person
+    to: home
+    enabled: !input coming_home
+
+action:
+  - action: telegram_bot.send_message
+    metadata: {}
+    enabled: !input enable_telegram
+    response_variable: response
+    data:
+      target: '{{state_attr(person,"telegram_id")}}'
+      message: >-
+        You were recognized close to your home. If you are near your door in the
+        next {{ timeout.hours*60 + timeout.minutes }}{% if timeout.seconds != 0 %}:{{ timeout.seconds }}{% endif %} minutes,
+        the door will be opened.
+      one_time_keyboard: true
+      inline_keyboard:
+        - Cancel:/cancel,Open:/unlock
+  - variables:
+      telegram_edit_text: "Keine Angabe"
+  - wait_for_trigger:
+      - trigger: state
+        entity_id: !input beacon
+        id: unlock_by_bluetooth_beacon
+        attribute: area_id
+        to: !input area
+        for: !input minimum_beacon_time
+      - trigger: event
+        id: unlock_by_telegram
+        event_type: telegram_callback
+        event_data:
+          command: "/unlock"
+          message:
+            chat:
+              id: "{{ response.chats[0].chat_id | int(0) }}"
+            message_id: "{{ response.chats[0].message_id | int(0) }}"
+      - trigger: event
+        id: cancel_by_telegram
+        event_type: telegram_callback
+        event_data:
+          data: "/cancel"
+          message:
+            chat:
+              id: "{{ response.chats[0].chat_id | int(0) }}"
+            message_id: "{{ response.chats[0].message_id | int(0) }}"
+    continue_on_timeout: true
+    timeout: !input timeout
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: |
+              {{ wait.trigger.id == "unlock_by_bluetooth_beacon" or 
+                wait.trigger.id == "unlock_by_telegram" }}
+        sequence:
+          - variables:
+              telegram_edit_text: "The door has been opened for you"
+          - action: lock.unlock
+            target:
+              entity_id: !input lock
+      - conditions:
+          - condition: template
+            value_template: |
+              {{ wait.trigger.id == "cancel_by_telegram" }}
+        sequence:
+          - variables:
+              telegram_edit_text: "Opening the door was manually cancelled."
+    default:
+      - variables:
+          telegram_edit_text: >-
+            You weren't recognized near the door within
+            {{ timeout.hours*60 + timeout.minutes }}{% if timeout.seconds != 0 %}:{{ timeout.seconds }}{% endif %} minutes
+            and the opening was cancelled.
+  - action: telegram_bot.edit_message
+    metadata: {}
+    data:
+      chat_id: "{{ response.chats[0].chat_id }}"
+      message_id: "{{ response.chats[0].message_id }}"
+      message: "{{ telegram_edit_text }}"
+

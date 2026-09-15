@@ -1,0 +1,257 @@
+blueprint:
+  name: Scheduler
+  description: Turn on and off a device based on a calendar
+  homeassistant:
+    min_version: 2024.6.0
+  domain: automation
+  input:
+    calendar:
+      name: Calendar
+      description: The calendar to monitor
+      selector:
+        entity:
+          filter:
+            - domain: calendar
+    switch:
+      name: Switch
+      description: The switch to control
+      selector:
+        entity:
+          filter:
+            - domain: switch
+    mode:
+      name: Mode
+      description: >-
+        The input_select to control the mode (Modes: "Auto", "On", "Off")
+      selector:
+        entity:
+          filter:
+            - domain: input_select
+    on_turn_on:
+      name: On Turn On
+      description: The actions to take when the switch is turned on
+      default: []
+      selector:
+        action: {}
+    periodic_check:
+      name: Periodic Check
+      description: The actions to take when the periodic check triggers
+      default: []
+      selector:
+        action: {}
+    on_turn_off:
+      name: On Turn Off
+      description: The actions to take when the switch is turned off
+      default: []
+      selector:
+        action: {}
+    notify:
+      name: Notify
+      description: The notification entity to use
+      selector:
+        entity:
+          filter:
+            - domain: notify
+    notification_title:
+      name: Notification Title
+      description: The title to use for notifications
+      default: Scheduler
+      selector:
+        text:
+    notification_channel:
+      name: Notification Channel
+      description: The channel to use for notifications
+      default: Scheduler
+      selector:
+        text:
+    notification_tag_prefix:
+      name: Notification Tag Prefix
+      description: The prefix to use for notification tags
+      default: scheduler
+      selector:
+        text:
+    notification_action:
+      name: Notification Action
+      description: URL to open on click.
+      default: null
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - entity_id:
+      - !input calendar
+    id: State Change
+    alias: Calendar State
+    trigger: state
+  - event: start
+    id: Ensure State
+    trigger: homeassistant
+  - event_type: AUTOMATION_RELOADED
+    id: Ensure State
+    trigger: event
+  - id: Periodic Check
+    hours: /1
+    trigger: time_pattern
+  - event: start
+    offset: "0:5:0"
+    entity_id: !input calendar
+    id: Periodic Check
+    trigger: calendar
+  - event: start
+    offset: "-0:30:0"
+    entity_id: !input calendar
+    id: Before
+    trigger: calendar
+  - entity_id:
+      - !input mode
+    id: Ensure State
+    trigger: state
+
+variables:
+  calendar: !input calendar
+  tag_prefix: !input notification_tag_prefix
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - State Change
+          - condition: state
+            entity_id: !input calendar
+            state: "on"
+          - condition: state
+            entity_id: !input switch
+            state: "off"
+          - condition: state
+            entity_id: !input mode
+            state: Auto
+        sequence:
+          - metadata: {}
+            data: {}
+            target:
+              entity_id: !input switch
+            action: switch.turn_on
+          - data:
+              message: Turned on automatically
+              title: !input notification_title
+              data:
+                channel: !input notification_channel
+                tag: "{{ tag_prefix }}_turned_on"
+                chronometer: true
+                when: >-
+                  {{ state_attr(calendar, 'end_time') |
+                  as_timestamp }}
+                clickAction: !input notification_action
+                url: !input notification_action
+            action: !input notify
+          - sequence: !input on_turn_on
+        alias: When triggered by State Change to On
+      - conditions:
+          - condition: trigger
+            id:
+              - State Change
+          - condition: state
+            entity_id: !input calendar
+            state: "off"
+          - condition: state
+            entity_id: !input switch
+            state: "on"
+          - condition: state
+            entity_id: !input mode
+            state: Auto
+        sequence:
+          - target:
+              entity_id:
+                - !input switch
+            data: {}
+            action: switch.turn_off
+          - data:
+              message: Turned off automatically
+              title: !input notification_title
+              data:
+                channel: !input notification_channel
+                tag: "{{ tag_prefix }}_turned_off"
+                clickAction: !input notification_action
+                url: !input notification_action
+            action: !input notify
+          - sequence: !input on_turn_off
+        alias: When triggered by State Change to Off
+      - conditions:
+          - condition: trigger
+            id:
+              - Ensure State
+          - condition: state
+            entity_id: !input mode
+            state: Auto
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input calendar
+                state: "on"
+            then:
+              - target:
+                  entity_id: !input switch
+                data: {}
+                action: switch.turn_on
+            else:
+              - target:
+                  entity_id: !input switch
+                data: {}
+                action: switch.turn_off
+        alias: Ensure State
+      - conditions:
+          - condition: trigger
+            id:
+              - Periodic Check
+          - condition: state
+            entity_id: !input calendar
+            state: "on"
+        sequence: !input periodic_check
+      - conditions:
+          - condition: trigger
+            id:
+              - Before
+        sequence:
+          - data:
+              title: !input notification_title
+              data:
+                channel: !input notification_channel
+                tag: "{{ tag_prefix }}_will_turn_on"
+                chronometer: true
+                when: >-
+                  {{ state_attr(calendar, 'start_time') |
+                  as_timestamp }}
+                clickAction: !input notification_action
+                url: !input notification_action
+              message: Will turn on soon
+            action: !input notify
+      - conditions:
+          - condition: trigger
+            id:
+              - Ensure State
+          - condition: state
+            entity_id: !input mode
+            state: "On"
+        sequence:
+          - action: switch.turn_on
+            metadata: {}
+            data: {}
+            target:
+              entity_id: !input switch
+      - conditions:
+          - condition: trigger
+            id:
+              - Ensure State
+          - condition: state
+            entity_id: !input mode
+            state: "Off"
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id:
+                - !input switch
+            data: {}

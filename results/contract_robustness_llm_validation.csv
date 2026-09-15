@@ -1,0 +1,3 @@
+scenario,mutation_id,mutation,safe_to_deploy,n_errors,n_warnings,detected_at_startup,first_error,first_warning,description
+secure-house,0,baseline,True,0,0,False,,,"the correct, unmutated contract"
+secure-house,1,omit_required_fact,False,1,0,True,[report_status] MISSING required fact 'contact_state' (omitted from contract),,drop the attack-relevant required fact

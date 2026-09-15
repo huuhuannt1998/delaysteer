@@ -1,0 +1,998 @@
+# Version: 1.19.0
+blueprint:
+  domain: automation
+  name: "☀️ Sun-Aware Shutter Control"
+  author: r3mcos3
+  source_url: https://github.com/r3mcos3/blueprints/blob/main/sun_shutter_control/sun_shutter_control.yaml
+  homeassistant:
+    min_version: 2025.12.0
+  description: >
+    📦 [Version 1.19.0] Automatic shutter control based on sun position 🌞.
+
+
+    Automatically closes shutters when the sun shines on the front or back of your house,
+    and opens them again once the sun moves away. Uses the sun's azimuth (compass direction
+    0–360°) and compares it to your house orientation.
+
+
+    Features:
+
+    - ☀️ Automatically close shutters when the sun shines on the front or back facade
+
+    - 🔄 Automatically open shutters when the sun moves away (optional)
+
+    - 📐 Configurable sun window (degrees of margin per facade)
+
+    - 🌅 Minimum sun elevation setting (no action for low morning or evening sun)
+
+    - 🔽 Configurable close and open position
+
+    - 🖐️ Manual override — triggers when a shutter is manually **closed** (always),
+      or when manually **opened while someone is home** (presence-aware). When nobody
+      is home the automation always takes full control: manual opens are ignored and
+      the shutter closes when the sun shines on the facade.
+      Override resets automatically at sunset so the next day starts fresh,
+      or earlier when the shutter returns to the open position
+
+    - 🏠 Only when nobody is home — optional toggle to disable all shutter operations
+      when someone is home; the automation only acts when the house is empty
+
+    - 🚪 Door bypass — optional door or window contact sensors per facade; while a
+      linked door is open the automation will not close that facade's shutters
+      (useful when a shutter covers a door opening). Closing resumes automatically
+      as soon as the door is closed again. Does not affect automatic opening
+
+    - 👥 Presence-aware re-evaluation — immediately re-evaluates shutter positions
+      when the house becomes empty, so the automation takes full control without
+      waiting for the next sun position update
+
+    - 🌤️ Cloud detection — optional weather integration (supports two entities as
+      cross-check): when it's overcast the shutters stay open (or open automatically
+      if they were closed). When two entities are configured, both must agree before
+      shutters close — prevents false closes caused by a single unreliable source
+
+    - ⏱️ Anti-oscillation cooldown — minimum wait time between moves to prevent
+      rapid up/down on partly cloudy days
+
+    - 📍 Position awareness — skips the command if shutters are already at the target position
+
+    - 🧊 Stuck shutter protection — optional per-facade toggle helper; if a close or
+      open command fails to actually move the shutter (e.g. frozen or jammed), the
+      automation stops sending further commands to that facade so the motor isn't
+      repeatedly pulled against it, and sends a notification. Resets automatically at
+      sunset or as soon as the shutter reaches a target position again, or turn the
+      helper off manually to retry right away
+
+    - 🌙 Auto-open exceptions — optionally exclude specific shutters from automatic
+      reopening (e.g. a bedroom shutter you want to stay closed for the night). The
+      excluded shutters are still closed automatically when the sun hits that facade,
+      only the automatic reopen is skipped for them
+
+
+    🌐 Finding your house azimuth — Go to https://www.suncalc.org/, find your house and
+    determine which direction your front door faces. The orange line shows the sun direction
+    per time of day, but you need your facade direction (fixed compass bearing).
+    North = 0°, East = 90°, South = 180°, West = 270°.
+    The back of the house is calculated automatically (front + 180°).
+
+
+    🖐️ Setting up manual override — Create a Toggle helper per facade side via
+    Settings → Devices & Services → Create Helper → Toggle (input_boolean),
+    e.g. "Shutter front manual". Link it below. The automation turns it on when a shutter
+    on that side is manually **closed** (always), or manually **opened while someone is
+    home** (when a presence entity is configured). It turns off at sunset (so the
+    next day starts fresh), or earlier when the shutter returns to the open position.
+    When nobody is home the automation ignores any override and closes on sun position.
+
+
+    🚪 Setting up door bypass — Link a contact sensor (binary_sensor with device
+    class "door" or "window") per facade below if a shutter on that side covers
+    a door opening. Some integrations (e.g. Shelly) report door contacts with
+    device class "window" instead of "door" — both are accepted here. While the
+    door is open the automation will not close that facade's shutters. As soon
+    as the door closes, the automation re-evaluates and closes the shutters if
+    the sun is still on that facade.
+
+  input:
+    # ===== REQUIRED: HOUSE ORIENTATION =====
+    front_facing_azimuth:
+      name: "🏠 Front facade direction (azimuth)"
+      description: >
+        The compass direction (azimuth) your front facade faces.
+        North = 0°, East = 90°, South = 180°, West = 270°.
+        Stand at your front door and look straight outside — that direction is this value.
+        The back facade is calculated automatically as front + 180°.
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 359
+          step: 1
+          unit_of_measurement: "°"
+          mode: slider
+
+    # ===== REQUIRED: COVERS =====
+    front_covers:
+      name: "🏠 Front shutters"
+      description: >
+        Shutters on the front of the house. Closed when the sun shines on the front facade.
+      default: []
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: cover
+
+    back_covers:
+      name: "🏡 Back shutters"
+      description: >
+        Shutters on the back of the house. Closed when the sun shines on the back facade.
+      default: []
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: cover
+
+    # ===== SUN SETTINGS (COLLAPSED) =====
+    sun_settings:
+      name: "☀️ Sun Settings"
+      icon: mdi:weather-sunny
+      collapsed: true
+      input:
+        sun_window:
+          name: "📐 Sun window angle"
+          description: >
+            How many degrees to the left and right of the facade direction the sun is
+            considered to be "shining on that facade". Default 90° means the sun counts
+            from 90° left to 90° right of the facade direction (half the sky).
+            Smaller = stricter, sun must shine more directly on the facade.
+          default: 90
+          selector:
+            number:
+              min: 10
+              max: 120
+              step: 5
+              unit_of_measurement: "°"
+              mode: slider
+
+        min_elevation:
+          name: "🌅 Minimum sun elevation"
+          description: >
+            Minimum height of the sun above the horizon (degrees) before the shutters
+            are operated. Prevents action during low morning or evening sun.
+            Set to 0 to always activate when the sun is on that facade.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 45
+              step: 1
+              unit_of_measurement: "°"
+              mode: slider
+
+    # ===== SHUTTER SETTINGS (COLLAPSED) =====
+    cover_settings:
+      name: "⚙️ Shutter Settings"
+      icon: mdi:window-shutter
+      collapsed: true
+      input:
+        close_position:
+          name: "🔽 Close position (%)"
+          description: >
+            Position of the shutters when the sun shines on that facade.
+            0% = fully closed, 50% = half closed, 100% = fully open.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        auto_open:
+          name: "🔼 Automatically open"
+          description: >
+            Turn on to automatically open the shutters when the sun is no longer
+            shining on that facade. Turn off to only close automatically.
+          default: true
+          selector:
+            boolean:
+
+        open_position:
+          name: "🔼 Open position (%)"
+          description: >
+            Position the shutters move to when automatically opened (when
+            "Automatically open" is on). 100% = fully open.
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        cooldown_minutes:
+          name: "⏱️ Cooldown between moves (minutes)"
+          description: >
+            Minimum time to wait before moving shutters again after a previous movement.
+            Prevents rapid up-and-down movement on partly cloudy days.
+            Set to 0 to disable.
+          default: 20
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 5
+              unit_of_measurement: "min"
+              mode: slider
+
+    # ===== WEATHER SETTINGS (COLLAPSED) =====
+    weather_settings:
+      name: "🌤️ Weather Settings"
+      icon: mdi:weather-cloudy
+      collapsed: true
+      input:
+        weather_entity:
+          name: "🌤️ Weather entity (optional)"
+          description: >
+            Link your weather integration here to enable cloud detection.
+            When the weather condition is overcast or rainy, the shutters will
+            be treated as if the sun is not shining — they stay open or open
+            automatically (if "Automatically open" is enabled).
+            Leave empty to ignore weather and only use sun position.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: weather
+
+        weather_entity_2:
+          name: "🌥️ Second weather entity (optional)"
+          description: >
+            Optional second weather source as a cross-check.
+            When both weather entities are configured, shutters only close
+            when BOTH agree that the conditions allow it (AND-logic).
+            This prevents false closes when one integration occasionally
+            reports an incorrect weather state.
+            Leave empty to use only the first weather entity.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: weather
+
+        close_on_cloudy:
+          name: "☁️ When to close based on weather"
+          description: >
+            Controls which weather conditions allow shutters to close.
+            Only applies when a weather entity is configured above.
+          default: "sunny_and_partly"
+          selector:
+            select:
+              options:
+                - label: "Always close (ignore weather)"
+                  value: "always"
+                - label: "Only when sunny or partly cloudy"
+                  value: "sunny_and_partly"
+                - label: "Only when sunny"
+                  value: "sunny_only"
+
+    # ===== MANUAL OVERRIDE (COLLAPSED) =====
+    override_settings:
+      name: "🖐️ Manual Override"
+      icon: mdi:hand-back-right
+      collapsed: true
+      input:
+        front_override_helper:
+          name: "🖐️ Override helper front (optional)"
+          description: >
+            Link an input_boolean (toggle) helper for the front facade here.
+            The automation turns it on when a front shutter is manually **closed**, or
+            when manually **opened while someone is home** (requires presence entity below).
+            It turns off when the sun moves away from the front facade.
+            When nobody is home the automation ignores this override and closes on sun.
+            Create via: Settings → Helpers → Create Helper → Toggle.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        back_override_helper:
+          name: "🖐️ Override helper back (optional)"
+          description: >
+            Link an input_boolean (toggle) helper for the back facade here.
+            Works the same as the front override helper.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        presence_person_1:
+          name: "👤 Person 1 (optional)"
+          description: >
+            First household member. When this person is home, manual opens are
+            respected and the automation will not close the shutter.
+            When nobody is home the automation takes full control.
+            Leave both persons empty to disable presence detection.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: person
+                - domain: device_tracker
+
+        presence_person_2:
+          name: "👤 Person 2 (optional)"
+          description: >
+            Second household member (e.g. partner). Works the same as Person 1.
+            Leave empty if there is only one person to track.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: person
+                - domain: device_tracker
+
+        only_when_nobody_home:
+          name: "🏠 Only operate when nobody is home"
+          description: >
+            When enabled, the automation will only close and open shutters when
+            nobody is home. When someone is home the automation does nothing —
+            the occupants stay in control. Requires at least one person entity
+            configured above.
+          default: false
+          selector:
+            boolean:
+
+    # ===== DOOR BYPASS (COLLAPSED) =====
+    door_settings:
+      name: "🚪 Door Bypass"
+      icon: mdi:door-open
+      collapsed: true
+      input:
+        front_door_sensors:
+          name: "🚪 Front door sensors (optional)"
+          description: >
+            Door/window contact sensor(s) (binary_sensor, device class "door" or
+            "window" — some integrations like Shelly report door contacts as
+            "window") for shutters on the front facade that cover a door opening.
+            While any of these doors is open, the automation will not close the
+            front shutters. Leave empty if no front shutter covers a door.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+                  device_class:
+                    - door
+                    - window
+
+        back_door_sensors:
+          name: "🚪 Back door sensors (optional)"
+          description: >
+            Same as the front door sensors, but for shutters on the back facade.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+                  device_class:
+                    - door
+                    - window
+
+    # ===== STUCK SHUTTER PROTECTION (COLLAPSED) =====
+    stuck_settings:
+      name: "🧊 Stuck Shutter Protection"
+      icon: mdi:snowflake-alert
+      collapsed: true
+      input:
+        front_stuck_helper:
+          name: "🧊 Stuck helper front (optional)"
+          description: >
+            Link an input_boolean (toggle) helper for the front facade here to enable
+            stuck-shutter protection. If a close or open command doesn't actually move
+            the shutter (e.g. frozen shut or jammed), the automation stops sending
+            further commands to that facade — so the motor doesn't keep pulling
+            against a shutter that can't move. A notification is sent when this
+            happens. Resets automatically at sunset, or as soon as the shutter
+            reaches a target position again. Turn the helper off manually at any
+            time (e.g. after de-icing) to allow the automation to try again
+            immediately. Leave empty to disable this protection.
+            Create via: Settings → Helpers → Create Helper → Toggle.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        back_stuck_helper:
+          name: "🧊 Stuck helper back (optional)"
+          description: >
+            Link an input_boolean (toggle) helper for the back facade here.
+            Works the same as the front stuck helper.
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+    # ===== AUTO-OPEN EXCEPTIONS (COLLAPSED) =====
+    auto_open_settings:
+      name: "🌙 Auto-Open Exceptions"
+      icon: mdi:weather-night
+      collapsed: true
+      input:
+        front_auto_open_exclude:
+          name: "🌙 Front shutters to keep closed (optional)"
+          description: >
+            Shutters from the front shutters list above that should stay closed
+            even when the sun moves away and "Automatically open" would normally
+            reopen them — e.g. a bedroom shutter you want closed for the night.
+            They are still closed automatically when the sun shines on the front
+            facade; only the automatic reopening is skipped for these. Leave
+            empty to auto-open all front shutters normally.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: cover
+
+        back_auto_open_exclude:
+          name: "🌙 Back shutters to keep closed (optional)"
+          description: >
+            Same as above, but for shutters from the back shutters list.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: cover
+
+variables:
+  v_front_facing: !input front_facing_azimuth
+  v_sun_window: !input sun_window
+  v_min_elevation: !input min_elevation
+  v_auto_open: !input auto_open
+  v_front_covers: !input front_covers
+  v_back_covers: !input back_covers
+  v_front_override: !input front_override_helper
+  v_back_override: !input back_override_helper
+  v_presence_person_1: !input presence_person_1
+  v_presence_person_2: !input presence_person_2
+  v_weather_entity: !input weather_entity
+  v_weather_entity_2: !input weather_entity_2
+  v_cloud_mode: !input close_on_cloudy
+  v_cooldown: !input cooldown_minutes
+  v_close_pos: !input close_position
+  v_open_pos: !input open_position
+  v_front_auto_open_exclude: !input front_auto_open_exclude
+  v_back_auto_open_exclude: !input back_auto_open_exclude
+  # Front/back covers minus the ones excluded from auto-open — used as the target
+  # for the reopen command and for the "needs open" check, so an excluded shutter
+  # that stays closed doesn't keep the facade stuck in "still needs to open"
+  v_front_open_covers: >
+    {% set all = [v_front_covers] if v_front_covers is string else v_front_covers | list %}
+    {% set excl = [v_front_auto_open_exclude] if v_front_auto_open_exclude is string else v_front_auto_open_exclude | list %}
+    {{ all | reject('in', excl) | list }}
+  v_back_open_covers: >
+    {% set all = [v_back_covers] if v_back_covers is string else v_back_covers | list %}
+    {% set excl = [v_back_auto_open_exclude] if v_back_auto_open_exclude is string else v_back_auto_open_exclude | list %}
+    {{ all | reject('in', excl) | list }}
+  v_front_override_active: >
+    {{ v_front_override != {} and is_state(v_front_override, 'on') }}
+  v_back_override_active: >
+    {{ v_back_override != {} and is_state(v_back_override, 'on') }}
+  # True when at least one configured person is home; false when nobody configured
+  v_someone_home: >
+    {{ (v_presence_person_1 != {} and is_state(v_presence_person_1, 'home')) or
+       (v_presence_person_2 != {} and is_state(v_presence_person_2, 'home')) }}
+  v_only_nobody_home: !input only_when_nobody_home
+  # True when "only when nobody home" is on AND someone is currently home → block automation
+  v_home_blocks_automation: >
+    {{ v_only_nobody_home | bool and v_someone_home | bool }}
+  v_front_door_sensors: !input front_door_sensors
+  v_back_door_sensors: !input back_door_sensors
+  v_front_stuck_helper: !input front_stuck_helper
+  v_back_stuck_helper: !input back_stuck_helper
+  # True when a stuck helper is configured and currently on (a previous move attempt
+  # failed to reach its target) — blocks further close/open commands for that facade
+  v_front_stuck_active: >
+    {{ v_front_stuck_helper != {} and is_state(v_front_stuck_helper, 'on') }}
+  v_back_stuck_active: >
+    {{ v_back_stuck_helper != {} and is_state(v_back_stuck_helper, 'on') }}
+  # True when at least one linked door sensor for that facade is currently open
+  v_front_door_open: >
+    {% set doors = [v_front_door_sensors] if v_front_door_sensors is string else v_front_door_sensors | list %}
+    {% set ns = namespace(open=false) %}
+    {% for d in doors %}
+      {% if is_state(d, 'on') %}
+        {% set ns.open = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.open }}
+  v_back_door_open: >
+    {% set doors = [v_back_door_sensors] if v_back_door_sensors is string else v_back_door_sensors | list %}
+    {% set ns = namespace(open=false) %}
+    {% for d in doors %}
+      {% if is_state(d, 'on') %}
+        {% set ns.open = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.open }}
+  # True when the configured weather allows closing (or no weather entity set).
+  # When two entities are set, BOTH must allow closing (AND-logic).
+  v_weather_allows_close: >
+    {% macro allows(entity) %}
+      {% set w = states(entity) %}
+      {{ v_cloud_mode == 'always' or
+         (v_cloud_mode == 'sunny_and_partly' and w in ['sunny', 'partlycloudy']) or
+         (v_cloud_mode == 'sunny_only' and w == 'sunny') }}
+    {% endmacro %}
+    {% set c1 = allows(v_weather_entity) | trim | bool if v_weather_entity != {} else true %}
+    {% set c2 = allows(v_weather_entity_2) | trim | bool if v_weather_entity_2 != {} else true %}
+    {{ c1 and c2 }}
+  # Calculate whether the sun is on the front facade:
+  # Azimuth difference is normalized to -180..+180 via ((diff + 180) % 360) - 180
+  # Angle difference smaller than the sun window = sun is on that facade
+  v_sun_on_front: >
+    {% set front = v_front_facing | float(180) %}
+    {% set window = v_sun_window | float(90) %}
+    {% set az = state_attr('sun.sun', 'azimuth') | float(0) %}
+    {% set el = state_attr('sun.sun', 'elevation') | float(-90) %}
+    {% set min_el = v_min_elevation | float(10) %}
+    {% set diff = ((az - front + 180) % 360) - 180 %}
+    {{ el >= min_el and diff | abs <= window }}
+  v_sun_on_back: >
+    {% set back = (v_front_facing | float(180) + 180) % 360 %}
+    {% set window = v_sun_window | float(90) %}
+    {% set az = state_attr('sun.sun', 'azimuth') | float(0) %}
+    {% set el = state_attr('sun.sun', 'elevation') | float(-90) %}
+    {% set min_el = v_min_elevation | float(10) %}
+    {% set diff = ((az - back + 180) % 360) - 180 %}
+    {{ el >= min_el and diff | abs <= window }}
+  # Combines sun position and weather: true only when sun is on facade AND weather allows
+  v_should_close_front: >
+    {{ v_sun_on_front | bool and v_weather_allows_close | bool }}
+  v_should_close_back: >
+    {{ v_sun_on_back | bool and v_weather_allows_close | bool }}
+  # True when the sun is above the minimum elevation (daytime)
+  # Auto-open only fires when this is true — so shutters stay closed at night
+  v_sun_active: >
+    {{ state_attr('sun.sun', 'elevation') | float(-90) >= v_min_elevation | float(10) }}
+  # Cooldown: true if any cover in the group was moved within the cooldown period
+  v_front_on_cooldown: >
+    {% if v_cooldown | int(0) == 0 %}
+      false
+    {% else %}
+      {% set covers = [v_front_covers] if v_front_covers is string else v_front_covers | list %}
+      {% set secs = v_cooldown | int(20) * 60 %}
+      {% set ns = namespace(recent=false) %}
+      {% for c in covers %}
+        {% if (now() | as_timestamp) - (states[c].last_changed | as_timestamp) < secs %}
+          {% set ns.recent = true %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.recent }}
+    {% endif %}
+  v_back_on_cooldown: >
+    {% if v_cooldown | int(0) == 0 %}
+      false
+    {% else %}
+      {% set covers = [v_back_covers] if v_back_covers is string else v_back_covers | list %}
+      {% set secs = v_cooldown | int(20) * 60 %}
+      {% set ns = namespace(recent=false) %}
+      {% for c in covers %}
+        {% if (now() | as_timestamp) - (states[c].last_changed | as_timestamp) < secs %}
+          {% set ns.recent = true %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.recent }}
+    {% endif %}
+  # Position check: true if at least one cover is NOT already at the target position
+  v_front_needs_close: >
+    {% set covers = [v_front_covers] if v_front_covers is string else v_front_covers | list %}
+    {% set target = v_close_pos | int(0) %}
+    {% set ns = namespace(needs=false) %}
+    {% for c in covers %}
+      {% if state_attr(c, 'current_position') | int(-1) != target %}
+        {% set ns.needs = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.needs }}
+  v_front_needs_open: >
+    {% set covers = v_front_open_covers %}
+    {% set target = v_open_pos | int(100) %}
+    {% set ns = namespace(needs=false) %}
+    {% for c in covers %}
+      {% if state_attr(c, 'current_position') | int(-1) != target %}
+        {% set ns.needs = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.needs }}
+  v_back_needs_close: >
+    {% set covers = [v_back_covers] if v_back_covers is string else v_back_covers | list %}
+    {% set target = v_close_pos | int(0) %}
+    {% set ns = namespace(needs=false) %}
+    {% for c in covers %}
+      {% if state_attr(c, 'current_position') | int(-1) != target %}
+        {% set ns.needs = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.needs }}
+  v_back_needs_open: >
+    {% set covers = v_back_open_covers %}
+    {% set target = v_open_pos | int(100) %}
+    {% set ns = namespace(needs=false) %}
+    {% for c in covers %}
+      {% if state_attr(c, 'current_position') | int(-1) != target %}
+        {% set ns.needs = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.needs }}
+
+trigger:
+  # Fire whenever the sun moves (azimuth attribute update, typically every few minutes)
+  - platform: state
+    entity_id: sun.sun
+    attribute: azimuth
+    id: sun_position_changed
+  - platform: homeassistant
+    event: start
+    id: ha_start
+  # Detect manual operation on front covers (context.user_id is set for user-initiated actions)
+  - platform: state
+    entity_id: !input front_covers
+    id: front_cover_changed
+  # Detect manual operation on back covers
+  - platform: state
+    entity_id: !input back_covers
+    id: back_cover_changed
+  # Reset overrides at the end of the day (sun sets below horizon)
+  - platform: state
+    entity_id: sun.sun
+    to: "below_horizon"
+    id: sun_below_horizon
+  # Re-evaluate immediately when the house becomes empty
+  - platform: state
+    entity_id: !input presence_person_1
+    id: presence_changed
+  - platform: state
+    entity_id: !input presence_person_2
+    id: presence_changed
+  # Re-evaluate immediately when a linked door opens or closes
+  - platform: state
+    entity_id: !input front_door_sensors
+    id: door_changed
+  - platform: state
+    entity_id: !input back_door_sensors
+    id: door_changed
+
+action:
+  # --- Reset overrides at sunset so the next day starts fresh ---
+  - if:
+      - condition: trigger
+        id: sun_below_horizon
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ v_front_override != {} }}"
+        then:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input front_override_helper
+      - if:
+          - condition: template
+            value_template: "{{ v_back_override != {} }}"
+        then:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input back_override_helper
+      - if:
+          - condition: template
+            value_template: "{{ v_front_stuck_helper != {} }}"
+        then:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input front_stuck_helper
+      - if:
+          - condition: template
+            value_template: "{{ v_back_stuck_helper != {} }}"
+        then:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input back_stuck_helper
+
+  # --- Manual override detection front ---
+  # Only set override when the user CLOSES the cover (position decreases).
+  # A manual open does not set the override so the automation can still close
+  # the shutter when the sun starts shining on the facade later.
+  - if:
+      - condition: trigger
+        id: front_cover_changed
+      - condition: template
+        value_template: "{{ trigger.to_state.context.user_id is not none }}"
+      - condition: template
+        value_template: "{{ v_front_override != {} }}"
+      - condition: template
+        value_template: >
+          {% set pos_to = trigger.to_state.attributes.current_position | int(-1) %}
+          {% set pos_from = trigger.from_state.attributes.current_position | int(-1) %}
+          {% set is_closing = (pos_to < pos_from) if (pos_to >= 0 and pos_from >= 0) else (trigger.to_state.state == 'closed' and trigger.from_state.state != 'closed') %}
+          {{ is_closing or ((v_presence_person_1 != {} or v_presence_person_2 != {}) and v_someone_home | bool) }}
+    then:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: !input front_override_helper
+
+  # --- Manual override detection back ---
+  - if:
+      - condition: trigger
+        id: back_cover_changed
+      - condition: template
+        value_template: "{{ trigger.to_state.context.user_id is not none }}"
+      - condition: template
+        value_template: "{{ v_back_override != {} }}"
+      - condition: template
+        value_template: >
+          {% set pos_to = trigger.to_state.attributes.current_position | int(-1) %}
+          {% set pos_from = trigger.from_state.attributes.current_position | int(-1) %}
+          {% set is_closing = (pos_to < pos_from) if (pos_to >= 0 and pos_from >= 0) else (trigger.to_state.state == 'closed' and trigger.from_state.state != 'closed') %}
+          {{ is_closing or ((v_presence_person_1 != {} or v_presence_person_2 != {}) and v_someone_home | bool) }}
+    then:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: !input back_override_helper
+
+  # --- Sun logic (only on sun position change or HA start) ---
+  - if:
+      - condition: trigger
+        id:
+          - sun_position_changed
+          - ha_start
+          - presence_changed
+          - door_changed
+      - condition: template
+        value_template: "{{ not v_home_blocks_automation | bool }}"
+    then:
+      # Front shutters
+      - if:
+          - condition: template
+            value_template: "{{ v_front_covers | list | length > 0 }}"
+        then:
+          # Clear the stuck flag as soon as the shutter reaches either target
+          # position — proof the motor can move it again
+          - if:
+              - condition: template
+                value_template: >
+                  {{ v_front_stuck_helper != {} and v_front_stuck_active | bool
+                     and (not v_front_needs_close | bool
+                          or (v_front_open_covers | length > 0 and not v_front_needs_open | bool)) }}
+            then:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: !input front_stuck_helper
+          - choose:
+              # Sun on front AND weather allows AND no override (or nobody home) AND not on cooldown AND not already closed → close
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ v_should_close_front | bool
+                         and (not v_front_override_active | bool
+                              or ((v_presence_person_1 != {} or v_presence_person_2 != {}) and not v_someone_home | bool))
+                         and not v_front_on_cooldown | bool
+                         and not v_front_door_open | bool
+                         and v_front_needs_close | bool }}
+                sequence:
+                  # Skip if the previous attempt on this facade never reached its
+                  # target — protects a frozen/jammed motor from being pulled again
+                  - if:
+                      - condition: template
+                        value_template: "{{ not v_front_stuck_active | bool }}"
+                    then:
+                      - service: cover.set_cover_position
+                        target:
+                          entity_id: !input front_covers
+                        data:
+                          position: !input close_position
+                      - if:
+                          - condition: template
+                            value_template: "{{ v_front_stuck_helper != {} }}"
+                        then:
+                          - service: input_boolean.turn_on
+                            target:
+                              entity_id: !input front_stuck_helper
+                    else:
+                      - if:
+                          - condition: template
+                            value_template: "{{ v_front_stuck_helper != {} }}"
+                        then:
+                          - service: persistent_notification.create
+                            data:
+                              notification_id: "sun_shutter_stuck_front_{{ this.entity_id }}"
+                              title: "🧊 Front shutter may be stuck"
+                              message: >
+                                The front shutter(s) did not reach the close position after the
+                                last attempt. Automatic close/open is paused for this facade to
+                                protect the motor. Turn off the linked stuck helper once resolved.
+              # Sun NOT on front (or cloudy) AND sun above horizon AND auto-open enabled → open and reset override
+              - conditions:
+                  - condition: template
+                    value_template: "{{ not v_should_close_front | bool and v_auto_open | bool and v_sun_active | bool }}"
+                sequence:
+                  # Open when: no override OR nobody home (mirrors close-condition logic),
+                  # not on cooldown, and not already at open position
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ (not v_front_override_active | bool
+                              or ((v_presence_person_1 != {} or v_presence_person_2 != {}) and not v_someone_home | bool))
+                             and not v_front_on_cooldown | bool
+                             and v_front_needs_open | bool }}
+                    then:
+                      # Same stuck-protection guard as the close direction
+                      - if:
+                          - condition: template
+                            value_template: "{{ not v_front_stuck_active | bool }}"
+                        then:
+                          - service: cover.set_cover_position
+                            target:
+                              entity_id: "{{ v_front_open_covers }}"
+                            data:
+                              position: !input open_position
+                          - if:
+                              - condition: template
+                                value_template: "{{ v_front_stuck_helper != {} }}"
+                            then:
+                              - service: input_boolean.turn_on
+                                target:
+                                  entity_id: !input front_stuck_helper
+                        else:
+                          - if:
+                              - condition: template
+                                value_template: "{{ v_front_stuck_helper != {} }}"
+                            then:
+                              - service: persistent_notification.create
+                                data:
+                                  notification_id: "sun_shutter_stuck_front_{{ this.entity_id }}"
+                                  title: "🧊 Front shutter may be stuck"
+                                  message: >
+                                    The front shutter(s) did not reach the open position after the
+                                    last attempt. Automatic close/open is paused for this facade to
+                                    protect the motor. Turn off the linked stuck helper once resolved.
+                  # Reset override only when the shutter is already at the open position.
+                  # If the user manually closed the shutter (override ON, shutter still down),
+                  # we keep the override so the automation does NOT re-open it.
+                  - if:
+                      - condition: template
+                        value_template: "{{ v_front_override != {} and not v_front_needs_open | bool }}"
+                    then:
+                      - service: input_boolean.turn_off
+                        target:
+                          entity_id: !input front_override_helper
+
+      # Back shutters
+      - if:
+          - condition: template
+            value_template: "{{ v_back_covers | list | length > 0 }}"
+        then:
+          # Clear the stuck flag as soon as the shutter reaches either target
+          # position — proof the motor can move it again
+          - if:
+              - condition: template
+                value_template: >
+                  {{ v_back_stuck_helper != {} and v_back_stuck_active | bool
+                     and (not v_back_needs_close | bool
+                          or (v_back_open_covers | length > 0 and not v_back_needs_open | bool)) }}
+            then:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: !input back_stuck_helper
+          - choose:
+              # Sun on back AND weather allows AND no override (or nobody home) AND not on cooldown AND not already closed → close
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ v_should_close_back | bool
+                         and (not v_back_override_active | bool
+                              or ((v_presence_person_1 != {} or v_presence_person_2 != {}) and not v_someone_home | bool))
+                         and not v_back_on_cooldown | bool
+                         and not v_back_door_open | bool
+                         and v_back_needs_close | bool }}
+                sequence:
+                  # Skip if the previous attempt on this facade never reached its
+                  # target — protects a frozen/jammed motor from being pulled again
+                  - if:
+                      - condition: template
+                        value_template: "{{ not v_back_stuck_active | bool }}"
+                    then:
+                      - service: cover.set_cover_position
+                        target:
+                          entity_id: !input back_covers
+                        data:
+                          position: !input close_position
+                      - if:
+                          - condition: template
+                            value_template: "{{ v_back_stuck_helper != {} }}"
+                        then:
+                          - service: input_boolean.turn_on
+                            target:
+                              entity_id: !input back_stuck_helper
+                    else:
+                      - if:
+                          - condition: template
+                            value_template: "{{ v_back_stuck_helper != {} }}"
+                        then:
+                          - service: persistent_notification.create
+                            data:
+                              notification_id: "sun_shutter_stuck_back_{{ this.entity_id }}"
+                              title: "🧊 Back shutter may be stuck"
+                              message: >
+                                The back shutter(s) did not reach the close position after the
+                                last attempt. Automatic close/open is paused for this facade to
+                                protect the motor. Turn off the linked stuck helper once resolved.
+              # Sun NOT on back (or cloudy) AND sun above horizon AND auto-open enabled → open and reset override
+              - conditions:
+                  - condition: template
+                    value_template: "{{ not v_should_close_back | bool and v_auto_open | bool and v_sun_active | bool }}"
+                sequence:
+                  # Open when: no override OR nobody home (mirrors close-condition logic),
+                  # not on cooldown, and not already at open position
+                  - if:
+                      - condition: template
+                        value_template: >
+                          {{ (not v_back_override_active | bool
+                              or ((v_presence_person_1 != {} or v_presence_person_2 != {}) and not v_someone_home | bool))
+                             and not v_back_on_cooldown | bool
+                             and v_back_needs_open | bool }}
+                    then:
+                      # Same stuck-protection guard as the close direction
+                      - if:
+                          - condition: template
+                            value_template: "{{ not v_back_stuck_active | bool }}"
+                        then:
+                          - service: cover.set_cover_position
+                            target:
+                              entity_id: "{{ v_back_open_covers }}"
+                            data:
+                              position: !input open_position
+                          - if:
+                              - condition: template
+                                value_template: "{{ v_back_stuck_helper != {} }}"
+                            then:
+                              - service: input_boolean.turn_on
+                                target:
+                                  entity_id: !input back_stuck_helper
+                        else:
+                          - if:
+                              - condition: template
+                                value_template: "{{ v_back_stuck_helper != {} }}"
+                            then:
+                              - service: persistent_notification.create
+                                data:
+                                  notification_id: "sun_shutter_stuck_back_{{ this.entity_id }}"
+                                  title: "🧊 Back shutter may be stuck"
+                                  message: >
+                                    The back shutter(s) did not reach the open position after the
+                                    last attempt. Automatic close/open is paused for this facade to
+                                    protect the motor. Turn off the linked stuck helper once resolved.
+                  # Reset override only when the shutter is already at the open position.
+                  # If the user manually closed the shutter (override ON, shutter still down),
+                  # we keep the override so the automation does NOT re-open it.
+                  - if:
+                      - condition: template
+                        value_template: "{{ v_back_override != {} and not v_back_needs_open | bool }}"
+                    then:
+                      - service: input_boolean.turn_off
+                        target:
+                          entity_id: !input back_override_helper
+
+mode: single
+max_exceeded: silent

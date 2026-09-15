@@ -1,0 +1,4 @@
+path,quantity,n,median_s,p95_s,p99_s,max_s,mean_s
+home_assistant,read_rtt,3510,0.003287,0.016014,0.024564,0.091334,0.005125
+smartthings_cloud,read_rtt,2808,0.18461,0.259116,0.326571,0.68641,0.194186
+home_assistant,event_inter_arrival,104,72.647,407.742,19111.32,20788.832,689.929

@@ -52,10 +52,11 @@ def _inner_for(home_kind, cfg):
 
 
 def run_cell(model, scenario, ablation, hold, label, home_kind="virtual",
-             seed=0, temperature=None):
+             seed=0, temperature=None, surface_staleness=False):
     cfg = Config(backbone="ollama", fail_open=False)
     cfg.ollama_model = model
     cfg.seed = seed
+    cfg.surface_staleness = surface_staleness  # reviewer R2 ablation
     if temperature is not None:
         cfg.temperature = temperature  # >0 for repeated-sampling rate studies
     apply_ablation(cfg, ablation)

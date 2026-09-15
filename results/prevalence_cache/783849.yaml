@@ -1,0 +1,877 @@
+blueprint:
+  name: Daily automatic light color adjustment
+  description: >
+    Holds a desired colour and brightness on a set of lights, reasserting it on a
+    schedule. Reconciles only the lights that are actually out of place, so in the
+    steady state it sends nothing.
+
+    It never switches lights on or off by itself: it adjusts lights that are
+    already on. Switching stays with whatever handles it in your setup.
+
+    v2.0.0 — see CHANGELOG.md. If your lights are behind a relay, turn on the
+    relay setting under Reconciliation: the default changed in this version.
+  domain: automation
+  author: driin0
+  homeassistant:
+    # Sections in the configuration UI were introduced in 2024.6.
+    min_version: 2024.6.0
+  input:
+    entity_lights:
+      name: Lights to adjust
+      description: Lights or light groups to keep in sync. Groups are expanded to their members.
+      selector:
+        entity:
+          domain: light
+          multiple: true
+
+    boolean_entity:
+      name: Optional boolean entity
+      description: Select the boolean entity that will activate the automation (optional)
+      selector:
+        entity:
+          domain: input_boolean
+      default: ""
+
+    # ---------------------------------------------------------------- behaviour
+
+    colour:
+      name: Colour
+      icon: mdi:palette
+      input:
+        colour_mode:
+          name: Colour mode
+          description: >
+            "Per weekday" uses the colours configured below — the classic behaviour.
+
+            "Rainbow" ignores them and puts the seven rainbow colours on the seven
+            days — red on Monday, unless you move it with the offset below.
+
+            "Rotate configured colours" cycles through the distinct colours you
+            configured, never repeating the previous day's.
+
+            "Rotate full spectrum" needs no configuration at all: it cycles through
+            twelve vivid hues spread around the colour wheel.
+
+            The two rotating modes are deterministic, not random: this automation
+            re-evaluates every minute, so an actual draw would repaint the lights
+            continuously. The colour depends only on the date — identical all day,
+            and different from yesterday's by construction.
+          default: Per weekday
+          selector:
+            select:
+              options:
+                - Per weekday
+                - Rainbow
+                - Rotate configured colours
+                - Rotate full spectrum
+
+        rotation_offset:
+          name: Colour offset
+          description: >
+            Shifts the colours along. Zero means no shift.
+
+            In "Rainbow" it chooses which colour lands on which day — by default
+            Monday is red, and an offset moves that along. In the rotating modes
+            it sets where this automation starts in the sequence, so several
+            zones can run together without ever showing the same colour as one
+            another: with the twelve-colour spectrum, values such as 0, 3, 6 and
+            9 keep four zones far apart on the colour wheel.
+
+            The value wraps around however many colours the chosen mode has, so
+            nothing can break — but it also means anything above that limit
+            repeats. Rainbow has seven colours, so 0-6 covers every possibility
+            and 7 is the same as 0. The full spectrum has twelve, so all values
+            are distinct there.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 11
+              mode: slider
+
+    weekday_colours:
+      name: Colours per weekday
+      icon: mdi:calendar-week
+      collapsed: true
+      description: >
+        Used by "Per weekday", and used as the palette by "Rotate configured
+        colours" (duplicates count once). IGNORED by "Rainbow" and "Rotate full
+        spectrum", which bring their own colours — in those modes the pickers
+        below have no effect and do not reflect what the lights are doing.
+
+        Brightness always follows the weekday, in every mode.
+      input:
+        enable_monday:
+          name: Enable Monday
+          description: Enable or disable adjustment for Monday
+          default: true
+          selector:
+            boolean: {}
+        monday_rgb_color:
+          name: Monday RGB Color
+          description: Select the RGB color for Monday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        monday_colour_name:
+          name: Monday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        monday_brightness_pct:
+          name: Monday Brightness (percent)
+          description: Select the brightness for Monday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+        # ----------------------------------------------------------------- tuesday
+        enable_tuesday:
+          name: Enable Tuesday
+          description: Enable or disable adjustment for Tuesday
+          default: true
+          selector:
+            boolean: {}
+        tuesday_rgb_color:
+          name: Tuesday RGB Color
+          description: Select the RGB color for Tuesday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        tuesday_colour_name:
+          name: Tuesday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        tuesday_brightness_pct:
+          name: Tuesday Brightness (percent)
+          description: Select the brightness for Tuesday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+        # --------------------------------------------------------------- wednesday
+        enable_wednesday:
+          name: Enable Wednesday
+          description: Enable or disable adjustment for Wednesday
+          default: true
+          selector:
+            boolean: {}
+        wednesday_rgb_color:
+          name: Wednesday RGB Color
+          description: Select the RGB color for Wednesday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        wednesday_colour_name:
+          name: Wednesday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        wednesday_brightness_pct:
+          name: Wednesday Brightness (percent)
+          description: Select the brightness for Wednesday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+        # ---------------------------------------------------------------- thursday
+        enable_thursday:
+          name: Enable Thursday
+          description: Enable or disable adjustment for Thursday
+          default: true
+          selector:
+            boolean: {}
+        thursday_rgb_color:
+          name: Thursday RGB Color
+          description: Select the RGB color for Thursday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        thursday_colour_name:
+          name: Thursday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        thursday_brightness_pct:
+          name: Thursday Brightness (percent)
+          description: Select the brightness for Thursday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+        # ------------------------------------------------------------------ friday
+        enable_friday:
+          name: Enable Friday
+          description: Enable or disable adjustment for Friday
+          default: true
+          selector:
+            boolean: {}
+        friday_rgb_color:
+          name: Friday RGB Color
+          description: Select the RGB color for Friday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        friday_colour_name:
+          name: Friday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        friday_brightness_pct:
+          name: Friday Brightness (percent)
+          description: Select the brightness for Friday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+        # ---------------------------------------------------------------- saturday
+        enable_saturday:
+          name: Enable Saturday
+          description: Enable or disable adjustment for Saturday
+          default: true
+          selector:
+            boolean: {}
+        saturday_rgb_color:
+          name: Saturday RGB Color
+          description: Select the RGB color for Saturday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        saturday_colour_name:
+          name: Saturday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        saturday_brightness_pct:
+          name: Saturday Brightness (percent)
+          description: Select the brightness for Saturday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+        # ------------------------------------------------------------------ sunday
+        enable_sunday:
+          name: Enable Sunday
+          description: Enable or disable adjustment for Sunday
+          default: true
+          selector:
+            boolean: {}
+        sunday_rgb_color:
+          name: Sunday RGB Color
+          description: Select the RGB color for Sunday
+          default: [0, 70, 120]
+          selector:
+            color_rgb: {}
+        sunday_colour_name:
+          name: Sunday colour by name
+          description: >
+            Optional. Pick a colour name instead of using the picker above — the
+            name wins when set. Leave blank to use the picker.
+          default: ""
+          selector:
+            select:
+              custom_value: true
+              options:
+                - ""
+                - red
+                - orange
+                - amber
+                - gold
+                - yellow
+                - lime
+                - green
+                - teal
+                - turquoise
+                - cyan
+                - skyblue
+                - blue
+                - indigo
+                - violet
+                - purple
+                - magenta
+                - pink
+                - coral
+                - white
+                - warmwhite
+        sunday_brightness_pct:
+          name: Sunday Brightness (percent)
+          description: Select the brightness for Sunday in percent
+          default: 100
+          selector:
+            number: { min: 0, max: 100, unit_of_measurement: "%" }
+
+    reconciliation:
+      name: Reconciliation
+      icon: mdi:sync
+      collapsed: true
+      description: How the lights are kept in sync. The defaults suit most setups.
+      input:
+        upstream_relay:
+          name: Lights are powered through an upstream relay
+          description: >
+            Turn ON only if a relay or breaker upstream cuts power to these lights.
+            When ON, a light found switched off (but reachable) is switched back on,
+            because the desired state is "lit". When OFF, only lights that are
+            already on are adjusted, so they can still be switched off normally.
+          default: false
+          selector:
+            boolean: {}
+
+        distrust_window:
+          name: Distrust window (seconds)
+          description: >
+            Right after a light reconnects it may still report its previous values.
+            Within this many seconds of its last state change, write without
+            comparing rather than trusting what it reports. Lower it if your lights
+            come back quickly, raise it if they are slow to settle.
+          default: 120
+          selector:
+            number:
+              min: 0
+              max: 900
+              unit_of_measurement: "s"
+
+        reassert_every:
+          name: Full reassert every (minutes)
+          description: >
+            Safety net: every N minutes write to all matching lights regardless of
+            what they report, in case a light is wrong in a way we cannot observe.
+            Set to 0 to disable.
+          default: 15
+          selector:
+            number:
+              min: 0
+              max: 120
+              unit_of_measurement: "min"
+
+    timing:
+      name: Active period
+      icon: mdi:clock-outline
+      collapsed: true
+      description: >
+        When this automation does its work, and when a new day begins.
+
+        It does NOT switch anything on or off. It holds colour and brightness on
+        lights that are already on — switching stays with whatever already does
+        it in your setup: a schedule, a relay, a scene. Outside the period below
+        the lights are simply left alone, at whatever they were last set to.
+      input:
+        threshold_time:
+          name: Threshold Time
+          description: >
+            The time at which a new day begins. Changes take effect from this
+            time until the same time the next day. Pick a moment when the lights
+            are normally off, so the colour never changes in front of you.
+
+            It also decides which day the rotating modes are on, so two
+            automations with different thresholds can sit on different colours
+            even in the same mode. To give zones different colours on purpose,
+            use the rotation offset instead — that is what it is for.
+          selector:
+            time: {}
+          default: "12:00:00"
+
+        start_time_type:
+          name: Start of the working period
+          description: >
+            When this automation starts doing its work — a fixed time, or
+            sunrise/sunset. This does not switch the lights on.
+          selector:
+            select:
+              options: [Fixed Time, Sunrise, Sunset]
+          default: "Fixed Time"
+
+        start_time_fixed:
+          name: Fixed start time
+          description: Used when the start above is set to "Fixed Time".
+          selector:
+            time: {}
+          default: "00:00:00"
+
+        end_time_type:
+          name: End of the working period
+          description: >
+            When this automation stops doing its work. This does not switch the
+            lights off — they stay as they are.
+          selector:
+            select:
+              options: [Fixed Time, Sunrise, Sunset]
+          default: "Fixed Time"
+
+        end_time_fixed:
+          name: Fixed end time
+          description: Used when the end above is set to "Fixed Time".
+          selector:
+            time: {}
+          default: "23:59:59"
+
+        sunrise_offset:
+          name: Sunrise Offset
+          description: Offset time for sunrise (in minutes).
+          selector:
+            number: { min: -720, max: 720, unit_of_measurement: "minutes" }
+          default: 0
+
+        sunset_offset:
+          name: Sunset Offset
+          description: Offset time for sunset (in minutes).
+          selector:
+            number: { min: -720, max: 720, unit_of_measurement: "minutes" }
+          default: 0
+
+        # ------------------------------------------------------------------ monday
+
+
+# =============================================================================
+
+trigger_variables:
+  boolean_entity: !input boolean_entity
+
+trigger:
+  - platform: time_pattern
+    seconds: "0"
+
+condition:
+  - condition: template
+    value_template: "{{ boolean_entity == '' or is_state(boolean_entity, 'on') }}"
+  - condition: template
+    value_template: >
+      {% set current = now().strftime('%H:%M:%S') %}
+      {% if actual_start_time < actual_end_time %}
+        {{ actual_start_time <= current <= actual_end_time }}
+      {% else %}
+        {{ current >= actual_start_time or current <= actual_end_time }}
+      {% endif %}
+
+variables:
+  entity_lights: !input entity_lights
+  threshold_time: !input threshold_time
+  upstream_relay: !input upstream_relay
+  distrust_window: !input distrust_window
+  reassert_every: !input reassert_every
+  colour_mode: !input colour_mode
+  rotation_offset: !input rotation_offset
+
+  start_time_type: !input start_time_type
+  end_time_type: !input end_time_type
+  start_time_fixed: !input start_time_fixed
+  end_time_fixed: !input end_time_fixed
+  sunrise_offset: !input sunrise_offset
+  sunset_offset: !input sunset_offset
+
+  actual_start_time: >
+    {% if start_time_type == "Fixed Time" %}
+      {{ start_time_fixed }}
+    {% elif start_time_type == "Sunrise" %}
+      {{ (as_timestamp(state_attr('sun.sun', 'next_rising')) + sunrise_offset * 60) | timestamp_custom('%H:%M:%S') }}
+    {% else %}
+      {{ (as_timestamp(state_attr('sun.sun', 'next_setting')) + sunset_offset * 60) | timestamp_custom('%H:%M:%S') }}
+    {% endif %}
+
+  actual_end_time: >
+    {% if end_time_type == "Fixed Time" %}
+      {{ end_time_fixed }}
+    {% elif end_time_type == "Sunrise" %}
+      {{ (as_timestamp(state_attr('sun.sun', 'next_rising')) + sunrise_offset * 60) | timestamp_custom('%H:%M:%S') }}
+    {% else %}
+      {{ (as_timestamp(state_attr('sun.sun', 'next_setting')) + sunset_offset * 60) | timestamp_custom('%H:%M:%S') }}
+    {% endif %}
+
+  # --- the weekday tables, replacing seven duplicated choose branches --------
+  # Index 0..6 is %w: 0 = Sunday. Never derive it from a locale-dependent name.
+  day_enabled:
+    - !input enable_sunday
+    - !input enable_monday
+    - !input enable_tuesday
+    - !input enable_wednesday
+    - !input enable_thursday
+    - !input enable_friday
+    - !input enable_saturday
+
+  day_picker:
+    - !input sunday_rgb_color
+    - !input monday_rgb_color
+    - !input tuesday_rgb_color
+    - !input wednesday_rgb_color
+    - !input thursday_rgb_color
+    - !input friday_rgb_color
+    - !input saturday_rgb_color
+
+  day_name:
+    - !input sunday_colour_name
+    - !input monday_colour_name
+    - !input tuesday_colour_name
+    - !input wednesday_colour_name
+    - !input thursday_colour_name
+    - !input friday_colour_name
+    - !input saturday_colour_name
+
+  day_brightness:
+    - !input sunday_brightness_pct
+    - !input monday_brightness_pct
+    - !input tuesday_brightness_pct
+    - !input wednesday_brightness_pct
+    - !input thursday_brightness_pct
+    - !input friday_brightness_pct
+    - !input saturday_brightness_pct
+
+  # Home Assistant's template engine has no colour conversion functions — no
+  # color_name_to_rgb, nothing (checked on 2026.x). A name therefore has to be
+  # resolved here, or the desired colour could never be compared against what a
+  # bulb reports, and every cycle would rewrite.
+  colour_names:
+    red: [255, 0, 0]
+    orange: [255, 165, 0]
+    yellow: [255, 255, 0]
+    green: [0, 128, 0]
+    lime: [0, 255, 0]
+    blue: [0, 0, 255]
+    skyblue: [135, 206, 235]
+    cyan: [0, 255, 255]
+    teal: [0, 128, 128]
+    turquoise: [64, 224, 208]
+    indigo: [75, 0, 130]
+    violet: [148, 0, 211]
+    purple: [128, 0, 128]
+    magenta: [255, 0, 255]
+    pink: [255, 105, 180]
+    coral: [255, 127, 80]
+    amber: [255, 191, 0]
+    gold: [255, 215, 0]
+    white: [255, 255, 255]
+    warmwhite: [255, 214, 170]
+
+  rainbow:
+    - [148, 0, 211]
+    - [255, 0, 0]
+    - [255, 127, 0]
+    - [255, 255, 0]
+    - [0, 255, 0]
+    - [0, 0, 255]
+    - [75, 0, 130]
+
+  # Twelve vivid hues around the wheel, fully saturated: a uniform draw over RGB
+  # would mostly produce washed-out and muddy colours, which is not what anyone
+  # wants on decorative lighting.
+  spectrum:
+    - [255, 0, 0]
+    - [255, 128, 0]
+    - [255, 255, 0]
+    - [128, 255, 0]
+    - [0, 255, 0]
+    - [0, 255, 128]
+    - [0, 255, 255]
+    - [0, 128, 255]
+    - [0, 0, 255]
+    - [128, 0, 255]
+    - [255, 0, 255]
+    - [255, 0, 128]
+
+  # A name, when given and known, wins over the picker for that day.
+  # An unknown name falls back to the picker rather than failing the run.
+  day_colour: >
+    {% set ns = namespace(out=[]) %}
+    {% for i in range(7) %}
+      {% set nm = (day_name[i] | default('', true) | string | trim | lower) %}
+      {% if nm != '' and nm in colour_names %}
+        {% set ns.out = ns.out + [colour_names[nm] | list] %}
+      {% else %}
+        {% set ns.out = ns.out + [day_picker[i] | list] %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.out }}
+
+  # --- the logical day ------------------------------------------------------
+  # Count days on the LOCAL calendar date, not on the UTC timestamp: the
+  # threshold is compared in local time, so a UTC-based counter would disagree
+  # with it for as many hours as the offset — and the rotating colour would
+  # change in the middle of the night, the one thing it must never do.
+  logical_epoch_day: >
+    {% set shift = 0 if now().strftime('%H:%M:%S') >= threshold_time else 86400 %}
+    {% set local_date = (as_timestamp(now()) - shift) | timestamp_custom('%Y-%m-%d') %}
+    {{ (local_date | as_datetime).toordinal() }}
+
+  logical_weekday: >
+    {% set shift = 0 if now().strftime('%H:%M:%S') >= threshold_time else 86400 %}
+    {{ (as_timestamp(now()) - shift) | timestamp_custom('%w') | int }}
+
+  # --- colour selection -----------------------------------------------------
+  palette: >
+    {% if colour_mode == 'Rotate full spectrum' %}
+      {{ spectrum }}
+    {% else %}
+      {% set ns = namespace(seen=[]) %}
+      {% for c in day_colour %}
+        {% if (c | list) not in ns.seen %}
+          {% set ns.seen = ns.seen + [c | list] %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.seen }}
+    {% endif %}
+
+  target_colour: >
+    {% if colour_mode == 'Rainbow' %}
+      {#- The offset decides which rainbow colour lands on which weekday,
+          and lets two zones run Rainbow without matching each other. -#}
+      {#- Subtracted, not added: the offset must read as "move the colours
+          forward by N days", so offset 1 puts red on Tuesday instead of
+          Monday. Adding would shift them backwards and force the user to
+          count in reverse. -#}
+      {{ rainbow[((logical_weekday | int) - (rotation_offset | int)) % 7] }}
+    {% elif colour_mode in ['Rotate configured colours', 'Rotate full spectrum'] and (palette | count) > 1 %}
+      {%- set k = palette | count %}
+      {#- Each block of k days is a full permutation of the palette, so every
+          colour appears exactly once per block: the distribution is uniform by
+          construction rather than by luck.
+
+          Block b uses index(p) = (s*p + o) mod k. Choosing s coprime with k
+          makes that a permutation. Consecutive days inside a block differ
+          because a permutation has no repeats; the only place two days could
+          collide is the seam between blocks, and the offset step c is picked so
+          that c + s is never 0 mod k, which is exactly the condition for
+          last(b) != first(b+1).
+
+          Two earlier attempts were wrong and were caught by testing over 60
+          days: a windowed walk whose origin moved with the day (10 consecutive
+          repeats), then a closed-form cumulative sum that held the no-repeat
+          rule but visited two colours twice as often as the others. -#}
+      {%- set T = logical_epoch_day | int %}
+      {%- set b = (T / k) | int %}
+      {%- set p = T % k %}
+      {%- set cns = namespace(cop=[]) %}
+      {%- for s in range(1, k) %}
+        {%- set g = namespace(v=1) %}
+        {%- for d in range(2, k + 1) %}
+          {%- if k % d == 0 and s % d == 0 %}{% set g.v = d %}{% endif %}
+        {%- endfor %}
+        {%- if g.v == 1 %}{% set cns.cop = cns.cop + [s] %}{% endif %}
+      {%- endfor %}
+      {%- set dns = namespace(c=0) %}
+      {%- for d in range(2, k) %}
+        {%- if k % d == 0 %}{% set dns.c = d %}{% endif %}
+      {%- endfor %}
+      {%- set s = cns.cop[b % (cns.cop | count)] %}
+      {%- set o = (b * dns.c) % k %}
+      {#- The offset lets several automations share one sequence while never
+          landing on the same colour as each other: the permutation is a
+          bijection, so a constant shift can never cancel out. -#}
+      {{ palette[(s * p + o + (rotation_offset | int)) % k] }}
+    {% else %}
+      {{ (day_colour[logical_weekday | int]) | list }}
+    {% endif %}
+
+  target_pct: "{{ day_brightness[logical_weekday | int] | int }}"
+  today_enabled: "{{ day_enabled[logical_weekday | int] }}"
+
+  # --- reconciliation -------------------------------------------------------
+  # Whole-group attributes are useless here: Home Assistant averages them across
+  # members, so a group whose members disagree reports something that matches no
+  # bulb. Always compare the members.
+  #
+  # rgb_color arrives as a tuple and the configured colour is a list, and in
+  # Python those are never equal — both sides are normalised with |list.
+  reassert_now: >
+    {{ (reassert_every | int) > 0 and (now().minute % (reassert_every | int)) == 0 }}
+
+  targets: >
+    {% set want_rgb = target_colour | list %}
+    {% set want_bri = ((target_pct | int) * 255 / 100) | round | int %}
+    {% set ns = namespace(out=[]) %}
+    {% for l in expand(entity_lights) %}
+      {#- A light that cannot do colour would never match the wanted rgb_color
+          and would be rewritten every single minute. Worse, a colour-temperature
+          bulb reports an rgb_color *derived* from its temperature, so it passes
+          a null check and still never matches. Skip anything without a real
+          colour mode. -#}
+      {% set modes = l.attributes.get('supported_color_modes') or [] %}
+      {% set can_colour = (modes | select('in', ['rgb','rgbw','rgbww','hs','xy']) | list | count) > 0 %}
+      {% if not can_colour %}
+      {% elif l.state == 'on' %}
+        {% set age = (as_timestamp(now()) - as_timestamp(l.last_changed)) %}
+        {% set rgb = l.attributes.get('rgb_color') %}
+        {% set bri = l.attributes.get('brightness') %}
+        {% set rgb_ok = rgb is not none and (rgb | list) == want_rgb %}
+        {% set bri_ok = bri is not none and ((bri | int) - want_bri) | abs <= 2 %}
+        {% if reassert_now or age < (distrust_window | int) or not (rgb_ok and bri_ok) %}
+          {% set ns.out = ns.out + [l.entity_id] %}
+        {% endif %}
+      {% elif l.state == 'off' and upstream_relay %}
+        {# Reachable but switched off, and the desired state is "lit". #}
+        {% set ns.out = ns.out + [l.entity_id] %}
+      {% endif %}
+      {# 'unavailable' falls through: unreachable lights are skipped and retried
+         on a later cycle, which is what makes the loop self-healing. #}
+    {% endfor %}
+    {{ ns.out }}
+
+action:
+  - condition: template
+    value_template: "{{ today_enabled }}"
+  - condition: template
+    value_template: "{{ targets | count > 0 }}"
+  - service: light.turn_on
+    target:
+      entity_id: "{{ targets }}"
+    data:
+      rgb_color: "{{ target_colour }}"
+      brightness_pct: "{{ target_pct | int }}"
+
+mode: single
+max_exceeded: silent

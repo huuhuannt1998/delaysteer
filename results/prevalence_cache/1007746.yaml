@@ -1,0 +1,442 @@
+blueprint:
+  name: Meshtastic Remote Control
+  description: >
+    Listen for text messages on a specific Meshtastic channel and run actions
+    based on the message content. Up to 8 commands can be defined. Each command
+    matches a trigger word (case-insensitive) and can run actions and send a
+    reply back on the same channel.
+  domain: automation
+  input:
+    gateway_section:
+      name: Gateway & Channel
+      icon: mdi:radio-tower
+      input:
+        gateway_node:
+          name: Gateway Node ID
+          description: >
+            The decimal node ID of your Meshtastic gateway (the node connected
+            to Home Assistant). Find it in Settings → Devices & Services →
+            Meshtastic, or in the event data under "gateway".
+          selector:
+            number:
+              min: 0
+              max: 9999999999
+              mode: box
+        channel_index:
+          name: Channel Index
+          description: >
+            Channel slot on the gateway (0-7). Slot 0 is the primary channel
+            (usually LongFast). Your custom channels start at 1.
+          default: 1
+          selector:
+            number:
+              min: 0
+              max: 7
+              mode: box
+        restrict_sender:
+          name: Restrict to specific sender (optional)
+          description: >
+            If set, only messages from this node ID will trigger commands.
+            Leave at 0 to accept from any sender on the channel.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 9999999999
+              mode: box
+        reply_delay:
+          name: Reply delay (seconds)
+          description: >
+            Delay before sending replies, to let the radio finish receiving.
+            2-5 seconds recommended.
+          default: 3
+          selector:
+            number:
+              min: 0
+              max: 30
+              unit_of_measurement: seconds
+              mode: slider
+
+    cmd1_section:
+      name: Command 1
+      icon: mdi:numeric-1-box
+      input:
+        cmd1_trigger:
+          name: Trigger word
+          description: Message text that activates this command (case-insensitive). Leave empty to disable.
+          default: ""
+          selector:
+            text:
+        cmd1_actions:
+          name: Actions
+          description: Actions to run when triggered.
+          default: []
+          selector:
+            action:
+        cmd1_reply:
+          name: Reply text (optional)
+          description: Message to send back on the channel. Leave empty for no reply.
+          default: ""
+          selector:
+            text:
+
+    cmd2_section:
+      name: Command 2
+      icon: mdi:numeric-2-box
+      collapsed: true
+      input:
+        cmd2_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd2_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd2_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+    cmd3_section:
+      name: Command 3
+      icon: mdi:numeric-3-box
+      collapsed: true
+      input:
+        cmd3_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd3_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd3_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+    cmd4_section:
+      name: Command 4
+      icon: mdi:numeric-4-box
+      collapsed: true
+      input:
+        cmd4_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd4_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd4_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+    cmd5_section:
+      name: Command 5
+      icon: mdi:numeric-5-box
+      collapsed: true
+      input:
+        cmd5_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd5_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd5_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+    cmd6_section:
+      name: Command 6
+      icon: mdi:numeric-6-box
+      collapsed: true
+      input:
+        cmd6_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd6_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd6_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+    cmd7_section:
+      name: Command 7
+      icon: mdi:numeric-7-box
+      collapsed: true
+      input:
+        cmd7_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd7_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd7_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+    cmd8_section:
+      name: Command 8
+      icon: mdi:numeric-8-box
+      collapsed: true
+      input:
+        cmd8_trigger:
+          name: Trigger word
+          default: ""
+          selector:
+            text:
+        cmd8_actions:
+          name: Actions
+          default: []
+          selector:
+            action:
+        cmd8_reply:
+          name: Reply text (optional)
+          default: ""
+          selector:
+            text:
+
+mode: queued
+max: 10
+
+trigger:
+  - platform: event
+    event_type: meshtastic_api_text_message
+    event_data:
+      data:
+        to:
+          channel: !input channel_index
+
+variables:
+  gateway_node: !input gateway_node
+  restrict_sender: !input restrict_sender
+  reply_delay: !input reply_delay
+  cmd1_trigger: !input cmd1_trigger
+  cmd1_reply: !input cmd1_reply
+  cmd2_trigger: !input cmd2_trigger
+  cmd2_reply: !input cmd2_reply
+  cmd3_trigger: !input cmd3_trigger
+  cmd3_reply: !input cmd3_reply
+  cmd4_trigger: !input cmd4_trigger
+  cmd4_reply: !input cmd4_reply
+  cmd5_trigger: !input cmd5_trigger
+  cmd5_reply: !input cmd5_reply
+  cmd6_trigger: !input cmd6_trigger
+  cmd6_reply: !input cmd6_reply
+  cmd7_trigger: !input cmd7_trigger
+  cmd7_reply: !input cmd7_reply
+  cmd8_trigger: !input cmd8_trigger
+  cmd8_reply: !input cmd8_reply
+  incoming_message: "{{ trigger.event.data.data.message | lower | trim }}"
+  incoming_gateway: "{{ trigger.event.data.data.gateway }}"
+  incoming_from: "{{ trigger.event.data.data.from }}"
+  incoming_channel: "{{ trigger.event.data.data.to.channel }}"
+
+condition:
+  - condition: template
+    value_template: "{{ incoming_gateway | int == gateway_node | int }}"
+  - condition: template
+    value_template: >
+      {{ restrict_sender | int == 0
+         or incoming_from | int == restrict_sender | int }}
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd1_trigger | length > 0
+                 and cmd1_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd1_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd1_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd1_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd2_trigger | length > 0
+                 and cmd2_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd2_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd2_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd2_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd3_trigger | length > 0
+                 and cmd3_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd3_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd3_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd3_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd4_trigger | length > 0
+                 and cmd4_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd4_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd4_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd4_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd5_trigger | length > 0
+                 and cmd5_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd5_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd5_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd5_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd6_trigger | length > 0
+                 and cmd6_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd6_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd6_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd6_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd7_trigger | length > 0
+                 and cmd7_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd7_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd7_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd7_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ cmd8_trigger | length > 0
+                 and cmd8_trigger | lower | trim == incoming_message }}
+        sequence:
+          - choose: []
+            default: !input cmd8_actions
+          - if:
+              - condition: template
+                value_template: "{{ cmd8_reply | length > 0 }}"
+            then:
+              - delay:
+                  seconds: "{{ reply_delay }}"
+              - action: meshtastic.send_text
+                data:
+                  ack: false
+                  text: "{{ cmd8_reply }}"
+                  from: "{{ incoming_gateway }}"
+                  channel: "{{ incoming_channel }}"

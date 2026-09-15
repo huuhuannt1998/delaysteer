@@ -65,9 +65,15 @@ def _setup_repair(home_kind, home, inner, present: bool) -> None:
 
 
 def run_repair(home_kind, present, with_delay, ablation, fail_open, label,
-               model=None, backbone_override=None, backbone=None):
+               model=None, backbone_override=None, backbone=None, temperature=None, seed=None,
+               surface_staleness=False):
     cfg = Config(backbone="repair_access", fail_open=fail_open)
     apply_ablation(cfg, ablation)
+    cfg.surface_staleness = surface_staleness  # P7: planner-side freshness heuristic
+    if temperature is not None:
+        cfg.temperature = temperature
+    if seed is not None:
+        cfg.seed = seed
     home, inner = _inner(home_kind, cfg)
     _setup_repair(home_kind, home, inner, present)
 
@@ -91,7 +97,8 @@ def run_repair(home_kind, present, with_delay, ablation, fail_open, label,
     monitor.write(Path(f"traces/repair_{label}.jsonl"))
     stats = getattr(gate, "stats", None)
     return {"label": label, "granted": inv.access_granted, "present": inv.actual_present,
-            "violation": not inv.ok, "blocked": stats.blocked if stats else 0}
+            "violation": not inv.ok, "blocked": stats.blocked if stats else 0,
+            "steps": outcome.steps}
 
 
 def main() -> int:

@@ -1,0 +1,122 @@
+blueprint:
+  name: Shelly Elevate Device Buttons
+  description: >
+    Select your Shelly Elevate device to easily assign actions to all of its buttons (Button 0-3, Power Button, and Swipe Event).
+    This blueprint listens to MQTT events from the device directly, so you only need to select the Device once.
+    It executes the assigned action on any button press.
+    
+    Addon: [ShellyElevate](https://github.com/RapierXbox/ShellyElevate)
+    
+    Creator: [TW-ZS](https://github.com/tw-zs)
+    
+    by [Zrób Smart](https://zrobsmart.pl/)
+  domain: automation
+  input:
+    shelly_device:
+      name: Shelly Elevate Device
+      description: Select your Shelly Elevate Wall Display tablet.
+      selector:
+        device:
+          integration: mqtt
+          manufacturer: Shelly
+    
+    action_button_0:
+      name: Action - Button 0
+      description: Action to run when Button 0 is pressed.
+      default: []
+      selector:
+        action: {}
+        
+    action_button_1:
+      name: Action - Button 1
+      description: Action to run when Button 1 is pressed.
+      default: []
+      selector:
+        action: {}
+
+    action_button_2:
+      name: Action - Button 2
+      description: Action to run when Button 2 is pressed.
+      default: []
+      selector:
+        action: {}
+
+    action_button_3:
+      name: Action - Button 3
+      description: Action to run when Button 3 is pressed.
+      default: []
+      selector:
+        action: {}
+
+    action_power:
+      name: Action - Power Button
+      description: Action to run when the Power Button is pressed.
+      default: []
+      selector:
+        action: {}
+
+    action_swipe:
+      name: Action - Swipe Event
+      description: Action to run when a Swipe Event is detected.
+      default: []
+      selector:
+        action: {}
+
+variables:
+  device_id: !input shelly_device
+
+mode: parallel
+max: 10
+
+trigger:
+  - platform: mqtt
+    topic: shellyelevatev2/+/button/0
+    id: button_0
+  - platform: mqtt
+    topic: shellyelevatev2/+/button/1
+    id: button_1
+  - platform: mqtt
+    topic: shellyelevatev2/+/button/2
+    id: button_2
+  - platform: mqtt
+    topic: shellyelevatev2/+/button/3
+    id: button_3
+  - platform: mqtt
+    topic: shellyelevatev2/+/power_button
+    id: power_button
+  - platform: mqtt
+    topic: shellyelevatev2/+/swipe_event
+    id: swipe_event
+
+condition:
+  - condition: template
+    value_template: >
+      {% set client_id = trigger.topic.split('/')[1] %}
+      {% set ids = device_attr(device_id, 'identifiers') | default([]) | string %}
+      {{ client_id in ids }}
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: button_0
+        sequence: !input action_button_0
+      - conditions:
+          - condition: trigger
+            id: button_1
+        sequence: !input action_button_1
+      - conditions:
+          - condition: trigger
+            id: button_2
+        sequence: !input action_button_2
+      - conditions:
+          - condition: trigger
+            id: button_3
+        sequence: !input action_button_3
+      - conditions:
+          - condition: trigger
+            id: power_button
+        sequence: !input action_power
+      - conditions:
+          - condition: trigger
+            id: swipe_event
+        sequence: !input action_swipe

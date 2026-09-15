@@ -1,0 +1,211 @@
+blueprint:
+  name: Hydroponic Tower - Dynamic Watering (Day/Night + Sun Intensity)
+  description: >
+    Automates a hydroponic tower with different watering frequencies:
+    - Exactly 1 watering at night at a fixed time
+    - Multiple waterings during daytime based on weather-derived sun intensity
+
+    All timing values are derived from a normal watering profile:
+    - normal watering duration (seconds)
+    - normal watering interval (minutes)
+
+    Weather condition controls the sun intensity class and therefore the interval:
+    - low: long interval
+    - medium: medium interval
+    - high: short interval
+
+    Note:
+    - Uses a weather entity state (e.g. sunny, cloudy, rainy).
+    - Start and stop actions can be freely selected (e.g. switch, script, scenes).
+  domain: automation
+  source_url: https://example.local/blueprints/hydroponic_tower_solar_watering.yaml
+  input:
+    weather_entity:
+      name: Weather entity
+      description: Weather entity used to estimate sun intensity (state based).
+      selector:
+        entity:
+          domain: weather
+
+    last_watering_helper:
+      name: Last watering helper (input_datetime)
+      description: Input datetime helper used to store the timestamp of the last completed watering.
+      selector:
+        entity:
+          domain: input_datetime
+
+    night_watering_time:
+      name: Night watering time
+      description: Time for the single nightly watering.
+      default: "02:30:00"
+      selector:
+        time: {}
+
+    normal_watering_duration_seconds:
+      name: Normal watering duration (seconds)
+      description: Base runtime for watering. Other runtimes are derived from this.
+      default: 300
+      selector:
+        number:
+          min: 5
+          max: 600
+          unit_of_measurement: s
+          mode: box
+
+    normal_interval_minutes:
+      name: Normal interval (minutes)
+      description: Base interval used for medium sun intensity.
+      default: 120
+      selector:
+        number:
+          min: 5
+          max: 720
+          unit_of_measurement: min
+          mode: box
+
+    low_sun_interval_multiplier:
+      name: Low sun interval multiplier
+      description: Multiplies the normal interval when sun intensity is low.
+      default: 1.5
+      selector:
+        number:
+          min: 1
+          max: 4
+          step: 0.1
+          mode: slider
+
+    high_sun_interval_multiplier:
+      name: High sun interval multiplier
+      description: Multiplies the normal interval when sun intensity is high.
+      default: 0.4
+      selector:
+        number:
+          min: 0.2
+          max: 1
+          step: 0.05
+          mode: slider
+
+    night_duration_multiplier:
+      name: Night duration multiplier
+      description: Multiplies the normal duration for the nightly watering.
+      default: 0.5
+      selector:
+        number:
+          min: 0.1
+          max: 1
+          step: 0.1
+          mode: slider
+
+    safety_gap_multiplier:
+      name: Safety gap multiplier
+      description: Multiplies the normal interval to calculate minimum spacing.
+      default: 0.17
+      selector:
+        number:
+          min: 0.05
+          max: 1
+          step: 0.01
+          mode: box
+
+    irrigation_start_action:
+      name: Start watering action
+      description: Action to turn on the pump / irrigation.
+      selector:
+        action: {}
+
+    irrigation_stop_action:
+      name: Stop watering action
+      description: Action to turn off the pump / irrigation.
+      selector:
+        action: {}
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - id: day_check
+    platform: time_pattern
+    minutes: "/5"
+  - id: night_once
+    platform: time
+    at: !input night_watering_time
+
+variables:
+  weather_entity: !input weather_entity
+  last_watering_helper: !input last_watering_helper
+  normal_duration: !input normal_watering_duration_seconds
+  normal_interval: !input normal_interval_minutes
+  low_multiplier: !input low_sun_interval_multiplier
+  high_multiplier: !input high_sun_interval_multiplier
+  night_multiplier: !input night_duration_multiplier
+  gap_multiplier: !input safety_gap_multiplier
+
+  weather_state: "{{ states(weather_entity) | lower }}"
+  high_sun_states: ["sunny", "clear", "clear-night"]
+  low_sun_states: ["cloudy", "fog", "hail", "lightning", "lightning-rainy", "pouring", "rainy", "snowy", "snowy-rainy", "windy", "windy-variant", "exceptional"]
+
+  day_duration: "{{ [normal_duration | float(0), 1] | max | round(0) }}"
+  night_duration: "{{ [((normal_duration | float(0)) * (night_multiplier | float(0))), 1] | max | round(0) }}"
+  interval_medium: "{{ [normal_interval | float(0), 1] | max | round(0) }}"
+  interval_low: "{{ [((normal_interval | float(0)) * (low_multiplier | float(0))), 1] | max | round(0) }}"
+  interval_high: "{{ [((normal_interval | float(0)) * (high_multiplier | float(0))), 1] | max | round(0) }}"
+  min_gap: "{{ [((normal_interval | float(0)) * (gap_multiplier | float(0))), 1] | max | round(0) }}"
+
+  required_day_interval: >-
+    {% if weather_state in high_sun_states %}
+      {{ interval_high }}
+    {% elif weather_state in low_sun_states %}
+      {{ interval_low }}
+    {% else %}
+      {{ interval_medium }}
+    {% endif %}
+
+  last_watering_ts: "{{ as_timestamp(states(last_watering_helper)) | float(0) }}"
+  elapsed_minutes: >-
+    {% if last_watering_ts > 0 %}
+      {{ ((as_timestamp(now()) - last_watering_ts) / 60) | float(99999) }}
+    {% else %}
+      99999
+    {% endif %}
+
+condition: []
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: night_once
+          - condition: state
+            entity_id: sun.sun
+            state: below_horizon
+        sequence:
+          - sequence: !input irrigation_start_action
+          - delay:
+              seconds: "{{ night_duration | int(1) }}"
+          - sequence: !input irrigation_stop_action
+          - service: input_datetime.set_datetime
+            target:
+              entity_id: !input last_watering_helper
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+      - conditions:
+          - condition: trigger
+            id: day_check
+          - condition: state
+            entity_id: sun.sun
+            state: above_horizon
+          - condition: template
+            value_template: "{{ elapsed_minutes >= (required_day_interval | float(0)) }}"
+          - condition: template
+            value_template: "{{ elapsed_minutes >= (min_gap | float(0)) }}"
+        sequence:
+          - sequence: !input irrigation_start_action
+          - delay:
+              seconds: "{{ day_duration | int(1) }}"
+          - sequence: !input irrigation_stop_action
+          - service: input_datetime.set_datetime
+            target:
+              entity_id: !input last_watering_helper
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"

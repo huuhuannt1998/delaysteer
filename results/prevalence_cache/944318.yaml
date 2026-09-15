@@ -1,0 +1,458 @@
+blueprint:
+  name: Wake-up Sunrise (Kelvin, smooth & smart)
+  description: >
+    Moderner Wecker mit Sonnenaufgangseffekt. Standard: warmes Weiß (≈2200 K) → tageslicht-weiß (≈6500 K),
+    automatisch an die Gerätegrenzen angepasst. Optional statt Kelvin eine RGB-Farbkurve von Start- zu Endfarbe.
+    Zukunftssicher dank color_temp_kelvin. Für mehrere Lampen bitte eine Light-Group wählen.
+  domain: automation
+
+  input:
+    light_entity:
+      name: Ziel-Licht
+      description: >
+        Licht oder Light-Group, die aufgeweckt werden soll.
+      selector:
+        entity:
+          domain: light
+
+    # --- Alarmquelle ---
+    timestamp_sensor:
+      name: Zeitstempel-Entität (optional)
+      description: >
+        Sensor mit device_class=timestamp (z. B. Handy-Wecker). Falls 'none', wird die manuelle Zeit verwendet.
+      default: none
+      selector:
+        entity:
+          device_class: timestamp
+
+    manual_time:
+      name: Manuelle Weckzeit
+      description: >
+        Täglicher Weckzeitpunkt, wenn kein Timestamp-Sensor gesetzt ist (Format HH:MM:SS).
+      default: "07:00:00"
+      selector:
+        time: {}
+
+    # --- Ablauf & Helligkeit ---
+    sunrise_duration_min:
+      name: Dauer des Sonnenaufgangs (Minuten)
+      description: >
+        Gesamtdauer der Rampe für Helligkeit und Farbe.
+      default: 25
+      selector:
+        number:
+          min: 5
+          max: 120
+          step: 5
+          unit_of_measurement: min
+          mode: slider
+
+    start_brightness_pct:
+      name: Starthelligkeit (%)
+      description: >
+        Anfangshelligkeit zu Beginn der Rampe. 1–10 % empfohlen (manche Lampen ignorieren 1 %).
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+          mode: slider
+
+    end_brightness_pct:
+      name: Endhelligkeit (%)
+      description: >
+        Zielhelligkeit am Ende der Rampe.
+      default: 100
+      selector:
+        number:
+          min: 5
+          max: 100
+          step: 1
+          mode: slider
+
+    # --- Kelvin-Rampe (Standard) ---
+    start_kelvin:
+      name: Start-Kelvin (warm)
+      description: >
+        Farbtemperatur zu Beginn der Rampe (z. B. 2200 K = warm). Wird automatisch an die Gerätegrenzen angepasst.
+      default: 2200
+      selector:
+        number:
+          min: 1500
+          max: 9000
+          step: 50
+          unit_of_measurement: K
+          mode: slider
+
+    end_kelvin:
+      name: End-Kelvin (kühler / tageslicht)
+      description: >
+        Farbtemperatur am Ende der Rampe (z. B. 6500 K = tageslichtweiß). Wird automatisch an die Gerätegrenzen angepasst.
+      default: 6500
+      selector:
+        number:
+          min: 1500
+          max: 9000
+          step: 50
+          unit_of_measurement: K
+          mode: slider
+
+    # --- Alternative: RGB-Farbkurve ---
+    enable_color_ramp:
+      name: Farbverlauf (RGB) statt Kelvin
+      description: >
+        Aktivieren, um statt Kelvin einen RGB-Farbverlauf von Start- zu Endfarbe zu fahren.
+      default: false
+      selector:
+        boolean: {}
+
+    start_color_rgb:
+      name: Startfarbe (RGB)
+      description: >
+        Startfarbe für den RGB-Verlauf (nur relevant, wenn Farbverlauf aktiviert).
+      default:
+        r: 255
+        g: 120
+        b: 20
+      selector:
+        color_rgb: {}
+
+    end_color_rgb:
+      name: Endfarbe (RGB)
+      description: >
+        Endfarbe für den RGB-Verlauf (nur relevant, wenn Farbverlauf aktiviert).
+      default:
+        r: 255
+        g: 255
+        b: 255
+      selector:
+        color_rgb: {}
+
+    ramp_steps:
+      name: Schrittanzahl (Glätte)
+      description: >
+        Anzahl der Zwischenschritte für Helligkeit/Farbe (mehr = glattere Rampe, dafür mehr Service-Aufrufe).
+      default: 60
+      selector:
+        number:
+          min: 10
+          max: 240
+          step: 10
+
+    # --- Bedingungen (optional) ---
+    check_entity:
+      name: Check-Entität
+      description: >
+        Muss 'on' oder 'home' sein, damit der Wecker startet (z. B. Workday-, Device-Tracker- oder Person-Entity).
+        Leerlassen (= none), wenn keine Bedingung gewünscht ist.
+      default: none
+      selector:
+        entity: {}
+
+    require_workday:
+      name: Nur an Arbeitstagen
+      description: >
+        Ausführen nur, wenn der Workday-Sensor 'on' ist.
+      default: false
+      selector:
+        boolean: {}
+
+    workday_sensor:
+      name: Workday-Sensor
+      description: >
+        Zu prüfender Workday-Sensor, wenn „Nur an Arbeitstagen“ aktiv ist.
+      default: binary_sensor.workday
+      selector:
+        entity:
+          domain: binary_sensor
+
+    respect_quiet_hours:
+      name: Ruhezeiten beachten
+      description: >
+        Verhindert den Start, wenn die aktuelle Zeit innerhalb des Ruhezeitfensters liegt.
+      default: false
+      selector:
+        boolean: {}
+
+    quiet_start:
+      name: Ruhezeit Beginn
+      description: >
+        Beginn des Ruhezeitfensters (Format HH:MM:SS).
+      default: "22:00:00"
+      selector:
+        time: {}
+
+    quiet_end:
+      name: Ruhezeit Ende
+      description: >
+        Ende des Ruhezeitfensters (Format HH:MM:SS).
+      default: "06:00:00"
+      selector:
+        time: {}
+
+    off_cancels:
+      name: Ausschalten bricht ab
+      description: >
+        Wenn das Licht während der Rampe ausgeschaltet wird, wird der Vorgang abgebrochen.
+      default: true
+      selector:
+        boolean: {}
+
+    # --- Vor-/Nach-Aktionen ---
+    pre_actions:
+      name: Vor-Aktionen
+      description: >
+        Aktionen, die unmittelbar vor Start der Rampe ausgeführt werden (z. B. Heizung anheben).
+      default: []
+      selector:
+        action: {}
+
+    post_actions:
+      name: Nach-Aktionen
+      description: >
+        Aktionen am Ende der Rampe (z. B. Musik starten).
+      default: []
+      selector:
+        action: {}
+
+variables:
+  le: !input light_entity
+  sensor_ts: !input timestamp_sensor
+  manual_time: !input manual_time
+  duration_min: !input sunrise_duration_min
+  seconds: "{{ (duration_min | float(25)) * 60 }}"
+  start_pct: !input start_brightness_pct
+  end_pct: !input end_brightness_pct
+  range_pct: "{{ (end_pct | float) - (start_pct | float) }}"
+  steps: !input ramp_steps
+  enable_rgb: !input enable_color_ramp
+  off_cancels: !input off_cancels
+  check_entity: !input check_entity
+  require_workday: !input require_workday
+  workday_sensor: !input workday_sensor
+  respect_quiet: !input respect_quiet_hours
+  quiet_start: !input quiet_start
+  quiet_end: !input quiet_end
+
+  # Gerätegrenzen für Kelvin (bevorzugt nativ, sonst aus Mired ableiten)
+  minK_native: "{{ state_attr(le, 'min_color_temp_kelvin') }}"
+  maxK_native: "{{ state_attr(le, 'max_color_temp_kelvin') }}"
+  minM: "{{ state_attr(le, 'min_mireds') }}"
+  maxM: "{{ state_attr(le, 'max_mireds') }}"
+  device_k_min: >-
+    {% if minK_native is number %}
+      {{ minK_native | int }}
+    {% elif maxM is number %}
+      {{ (1000000 / (maxM | float)) | int }}
+    {% else %}
+      2000
+    {% endif %}
+  device_k_max: >-
+    {% if maxK_native is number %}
+      {{ maxK_native | int }}
+    {% elif minM is number %}
+      {{ (1000000 / (minM | float)) | int }}
+    {% else %}
+      6500
+    {% endif %}
+
+  # Benutzerwerte (Kelvin) → an Gerätegrenzen clampen und Reihenfolge sichern (start <= end)
+  startK_in: !input start_kelvin
+  endK_in: !input end_kelvin
+  startK_clamped: >-
+    {% set s = startK_in | int(2200) %}
+    {% set s1 = [s, device_k_min] | max %}
+    {{ [s1, device_k_max] | min }}
+  endK_clamped: >-
+    {% set e = endK_in | int(6500) %}
+    {% set e1 = [e, device_k_min] | max %}
+    {{ [e1, device_k_max] | min }}
+  start_kelvin_final: "{{ [startK_clamped, endK_clamped] | min }}"
+  end_kelvin_final:   "{{ [startK_clamped, endK_clamped] | max }}"
+
+  # Tick-Zeit (Sekunden), mindestens 1 s
+  tick: >-
+    {% set t = (seconds | float) / (steps | float) %}
+    {{ [ t, 1 ] | max | int }}
+
+  # RGB-Start/Ende (+ Komponenten)
+  rgb_start: !input start_color_rgb
+  rgb_end: !input end_color_rgb
+  sr: "{{ (rgb_start.r | int) }}"
+  sg: "{{ (rgb_start.g | int) }}"
+  sb: "{{ (rgb_start.b | int) }}"
+  er: "{{ (rgb_end.r | int) }}"
+  eg: "{{ (rgb_end.g | int) }}"
+  eb: "{{ (rgb_end.b | int) }}"
+
+  # Fähigkeiten des Geräts
+  supported_modes: "{{ state_attr(le, 'supported_color_modes') | default([]) }}"
+  can_rgb: >-
+    {{ 'hs' in supported_modes or 'rgb' in supported_modes or 'rgbw' in supported_modes or 'rgbww' in supported_modes or 'xy' in supported_modes }}
+  can_ct: >-
+    {{ 'color_temp' in supported_modes or minM is number or minK_native is number or maxM is number or maxK_native is number }}
+
+  # Bedingungen
+  cond_check_entity_ok: >-
+    {{ check_entity == 'none' or states(check_entity) in ['on','home','unknown'] }}
+  cond_workday_ok: >-
+    {{ (not require_workday) or (is_state(workday_sensor, 'on')) }}
+  cond_quiet_ok: >-
+    {% if not respect_quiet %}true
+    {% else %}
+      {% set nowt = now().time() %}
+      {% set qs = strptime(quiet_start, '%H:%M:%S').time() %}
+      {% set qe = strptime(quiet_end, '%H:%M:%S').time() %}
+      {% if qs <= qe %}
+        {{ not (nowt >= qs and nowt < qe) }}
+      {% else %}
+        {{ not (nowt >= qs or  nowt < qe) }}
+      {% endif %}
+    {% endif %}
+
+trigger:
+  - platform: time_pattern
+    minutes: "*"
+
+condition: []
+
+action:
+  # 1) Auf gültige Alarmbasis warten (Timestamp vorhanden ODER manuelle Zeit)
+  - wait_template: >-
+      {{ sensor_ts == 'none' or as_timestamp(states(sensor_ts), None) != None }}
+
+  # 2) Startfenster (0 < Alarm - jetzt <= Dauer) + Nebenbedingungen erfüllt
+  - wait_template: >-
+      {% set alarm_ts = as_timestamp(sensor_ts != 'none'
+                         and states(sensor_ts)
+                         or (states('sensor.date') ~ ' ' ~ manual_time)) %}
+      {% set now_ts = as_timestamp(states('sensor.date_time_iso')) %}
+      {{ 0 < (alarm_ts - now_ts) <= (seconds | float) and
+         cond_check_entity_ok and cond_workday_ok and cond_quiet_ok }}
+
+  # 3) Vor-Aktionen
+  - choose: []
+    default: !input pre_actions
+
+  # 4) Bedingungen kurz vor Start erneut prüfen
+  - condition: template
+    value_template: "{{ cond_check_entity_ok and cond_workday_ok and cond_quiet_ok }}"
+
+  # 5) Initiales Einschalten
+  - choose:
+      # 5a) RGB – falls aktiviert und unterstützt
+      - conditions: "{{ enable_rgb and can_rgb }}"
+        sequence:
+          - service: light.turn_on
+            entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ start_pct | int }}"
+              rgb_color: ["{{ sr }}","{{ sg }}","{{ sb }}"]
+              transition: 1
+
+      # 5b) Kelvin – Standard (falls unterstützt)
+      - conditions: "{{ can_ct }}"
+        sequence:
+          - service: light.turn_on
+            entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ start_pct | int }}"
+              color_temp_kelvin: "{{ start_kelvin_final | int }}"
+              transition: 1
+
+    default:
+      - service: light.turn_on
+        entity_id: !input light_entity
+        data:
+          brightness_pct: "{{ start_pct | int }}"
+          transition: 1
+
+  # 6) Laufende Rampe
+  - repeat:
+      while:
+        - >-
+          {% set alarm_ts = as_timestamp(sensor_ts != 'none'
+                             and states(sensor_ts)
+                             or (states('sensor.date') ~ ' ' ~ manual_time)) %}
+          {{ 0 < (alarm_ts - as_timestamp(now())) <= (seconds | float) }}
+        - "{{ not (off_cancels and is_state(le, 'off')) }}"
+      sequence:
+        - delay:
+            seconds: "{{ tick | int }}"
+
+        - variables:
+            alarm_ts: >-
+              {{ as_timestamp(sensor_ts != 'none'
+                 and states(sensor_ts)
+                 or (states('sensor.date') ~ ' ' ~ manual_time)) }}
+            remain: "{{ (alarm_ts - as_timestamp(now())) | float }}"
+            frac: "{{ (remain / (seconds | float)) | float }}"  # 1 → 0 über die Laufzeit
+            bri_now: >-
+              {{ ((end_pct | float) - ((range_pct | float) * frac)) | round(0) | int }}
+            # RGB linear: start + (1 - frac) * (end - start)
+            r_now: "{{ (sr + (er - sr) * (1 - frac)) | round(0) | int }}"
+            g_now: "{{ (sg + (eg - sg) * (1 - frac)) | round(0) | int }}"
+            b_now: "{{ (sb + (eb - sb) * (1 - frac)) | round(0) | int }}"
+            # Kelvin linear: start → end
+            kelv_now: "{{ ((end_kelvin_final | float) - ((end_kelvin_final | float - start_kelvin_final | float) * frac)) | round(0) | int }}"
+
+        - choose:
+            - conditions: "{{ enable_rgb and can_rgb }}"
+              sequence:
+                - service: light.turn_on
+                  entity_id: !input light_entity
+                  data:
+                    brightness_pct: "{{ [bri_now, 1] | max }}"
+                    rgb_color: ["{{ r_now }}","{{ g_now }}","{{ b_now }}"]
+                    transition: "{{ [ (tick | int) - 1, 0 ] | max }}"
+
+            - conditions: "{{ can_ct }}"
+              sequence:
+                - service: light.turn_on
+                  entity_id: !input light_entity
+                  data:
+                    brightness_pct: "{{ [bri_now, 1] | max }}"
+                    color_temp_kelvin: "{{ kelv_now }}"
+                    transition: "{{ [ (tick | int) - 1, 0 ] | max }}"
+
+          default:
+            - service: light.turn_on
+              entity_id: !input light_entity
+              data:
+                brightness_pct: "{{ [bri_now, 1] | max }}"
+                transition: "{{ [ (tick | int) - 1, 0 ] | max }}"
+
+  # 7) Endzustand sicher setzen
+  - choose:
+      - conditions: "{{ enable_rgb and can_rgb }}"
+        sequence:
+          - service: light.turn_on
+            entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ end_pct | int }}"
+              rgb_color: ["{{ er }}","{{ eg }}","{{ eb }}"]
+              transition: 1
+
+      - conditions: "{{ can_ct }}"
+        sequence:
+          - service: light.turn_on
+            entity_id: !input light_entity
+            data:
+              brightness_pct: "{{ end_pct | int }}"
+              color_temp_kelvin: "{{ end_kelvin_final | int }}"
+              transition: 1
+
+    default:
+      - service: light.turn_on
+        entity_id: !input light_entity
+        data:
+          brightness_pct: "{{ end_pct | int }}"
+          transition: 1
+
+  # 8) Nach-Aktionen
+  - choose: []
+    default: !input post_actions
+
+mode: single
+max_exceeded: silent

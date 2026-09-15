@@ -34,9 +34,15 @@ GOAL_CONFIRM = "A guest is at the door requesting entry; confirm and unlock only
 
 
 def run_confirm(home_kind, present, with_delay, ablation, hitl, label,
-                model=None, backbone_override=None, backbone=None):
+                model=None, backbone_override=None, backbone=None, temperature=None, seed=None,
+                surface_staleness=False):
     cfg = Config(backbone="repair_access", fail_open=False)
     apply_ablation(cfg, ablation)
+    cfg.surface_staleness = surface_staleness  # P7: planner-side freshness heuristic
+    if temperature is not None:
+        cfg.temperature = temperature
+    if seed is not None:
+        cfg.seed = seed
     home, inner = _inner(home_kind, cfg)
     _setup_repair(home_kind, home, inner, present)
 
@@ -64,7 +70,7 @@ def run_confirm(home_kind, present, with_delay, ablation, hitl, label,
     stats = getattr(gate, "stats", None)
     return {"label": label, "granted": inv.access_granted, "present": inv.actual_present,
             "violation": not inv.ok, "blocked": stats.blocked if stats else 0,
-            "escalations": stats.escalations if stats else 0}
+            "escalations": stats.escalations if stats else 0, "steps": outcome.steps}
 
 
 def main() -> int:

@@ -1,0 +1,77 @@
+blueprint:
+  name: Low Battery Alert
+  description: >
+    Sends a notification at a chosen time if any battery sensors are below
+    a configurable threshold. Checks all `battery` device-class sensors and
+    reports the offending ones. Works with any notify service (mobile app,
+    Telegram, Pushover, etc.).
+  domain: automation
+  author: ""
+  homeassistant:
+    min_version: "2021.12.0"
+
+  input:
+    alert_time:
+      name: Alert time
+      description: Time of day to check battery levels.
+      default: "18:30:00"
+      selector:
+        time: {}
+
+    battery_threshold:
+      name: Battery threshold (%)
+      description: Alert when a battery sensor falls below this percentage.
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 50
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+
+    notify_target:
+      name: Notify service
+      description: >
+        The notify service to call, e.g. `notify.mobile_app_my_phone` or
+        `notify.all_devices`. Must be a valid service under the `notify` domain.
+      selector:
+        select:
+          custom_value: true
+          options: []
+
+variables:
+  threshold: !input battery_threshold
+
+triggers:
+  - trigger: time
+    at: !input alert_time
+
+conditions:
+  - condition: template
+    value_template: >
+      {{ states.sensor
+        | selectattr('attributes.device_class', 'defined')
+        | selectattr('attributes.device_class', 'eq', 'battery')
+        | selectattr('state', 'is_number')
+        | map(attribute='state')
+        | map('float')
+        | select('lt', threshold)
+        | list
+        | count > 0 }}
+
+actions:
+  - action: !input notify_target
+    data:
+      title: "🪫 Low Battery Alert"
+      message: >
+        The following devices are below {{ threshold }}%:
+        {% for sensor in states.sensor
+          | selectattr('attributes.device_class', 'defined')
+          | selectattr('attributes.device_class', 'eq', 'battery')
+          | selectattr('state', 'is_number')
+          if sensor.state | float < threshold %}
+        • {{ sensor.name }}: {{ sensor.state }}%
+        {% endfor %}
+
+mode: single

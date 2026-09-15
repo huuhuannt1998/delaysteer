@@ -1,0 +1,20 @@
+blueprint:
+  name: Presence simulation
+  description: This Home Assistant blueprint implements a presence simulation.
+    It turns the specified light entities on for a random duration between the given minimum and maximum times,
+    then waits a random interval between another minimum and maximum before turning the light on again.
+    The specified lights are handled separately and independently; each light’s on/off switching is calculated
+    based on the time elapsed since its previous state change (except for the very first time,
+    because in that case all lights could be turned on at once if a long time has passed
+    since a given light’s last state change). It is possible to add additional conditions to the automation,
+    for example to activate it only after sunset and randomly switch the lights until midnight.
+  domain: automation
+  input:
+    lights:
+      name: Lights
+      description: Lights involved in the presence simulation.
+      default: []
+      selector:
+        entity:
+          domain:
+            - light

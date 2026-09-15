@@ -1,0 +1,167 @@
+blueprint:
+  name: Open Cover on Door Open
+  description: >-
+    Opens a cover (e.g. a roller shutter) when a door is opened — for
+    example a balcony door whose shutter must never stay down in front of
+    an open door. The cover is only opened on the door's closed-to-open
+    transition and only if it is not already fully open; while the door
+    stays open the automation never interferes, so manually moving the
+    cover (even fully down) with the door open is always respected.
+    Optionally the cover's previous position is memorized and restored
+    after the door has been closed again — but only if the cover is still
+    fully open at that moment, so a manual change always wins. No helper
+    entities required.
+  domain: automation
+  author: Steffen Wagner
+  homeassistant:
+    min_version: 2024.10.0
+  # Points at the latest GitHub release asset, so re-importing the blueprint
+  # always fetches the newest released version.
+  source_url: https://github.com/wagnst/ha-blueprints/releases/latest/download/open_cover_on_door_open.yaml
+  input:
+    door_sensor:
+      name: Door sensor
+      description: >-
+        Binary sensor of the door ('on' means open), typically a contact
+        sensor with device class door, window or opening.
+      selector:
+        entity:
+          filter:
+            domain: binary_sensor
+    cover:
+      name: Cover
+      description: The cover to open when the door opens.
+      selector:
+        entity:
+          filter:
+            domain: cover
+    restore_on_close:
+      name: Restore the cover when the door is closed again
+      description: >-
+        Memorize the cover's position at the moment the door opens and
+        restore it after the door has been closed — but only if the cover
+        is still fully open at that moment. If the cover was moved while
+        the door was open, the manual choice wins and nothing is restored.
+        The memory lives inside the running automation: reloading
+        automations or restarting Home Assistant while the door is open
+        forgets it (the cover then simply stays open).
+      default: false
+      selector:
+        boolean: {}
+    grace_period:
+      name: Door-closed grace period
+      description: >-
+        How long the door must stay closed before the cover is restored.
+        Reopening the door within this period keeps the cover open, so
+        briefly stepping inside does not cycle the cover. Only used when
+        restoring is enabled.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 600
+          unit_of_measurement: seconds
+          mode: box
+
+# One run handles a whole door-open "session" (open cover, wait for the
+# door to be closed, restore). While a session runs, new door-open events
+# are part of that session and handled by its waits, so additional
+# triggers are silently ignored instead of restarting the run — a restart
+# would lose the memorized position.
+mode: single
+max_exceeded: silent
+
+triggers:
+  # Strictly closed -> open. Recoveries from unavailable/unknown (e.g.
+  # Home Assistant restarts while the door is open) never trigger.
+  - trigger: state
+    entity_id: !input door_sensor
+    from: "off"
+    to: "on"
+
+variables:
+  door: !input door_sensor
+  cover: !input cover
+  restore_on_close: !input restore_on_close
+  # Snapshot of the cover before it is opened, used for the restore.
+  memorized_position: "{{ state_attr(cover, 'current_position') }}"
+  memorized_state: "{{ states(cover) }}"
+
+conditions:
+  # Act only when the cover is available and not already (fully) open:
+  # position below 99 for position-capable covers (some report 99 when
+  # fully open), any state but 'open' for covers without position.
+  - condition: template
+    value_template: >-
+      {{ memorized_state not in ['unavailable', 'unknown']
+         and ((memorized_position is not none and memorized_position < 99)
+              or (memorized_position is none and memorized_state != 'open')) }}
+
+actions:
+  - alias: Open the cover
+    action: cover.open_cover
+    target:
+      entity_id: "{{ cover }}"
+
+  - alias: Stop here unless the previous position should be restored
+    condition: template
+    value_template: "{{ restore_on_close }}"
+
+  - alias: Wait until the door has been closed and stayed closed
+    repeat:
+      sequence:
+        - repeat:
+            sequence:
+              - alias: Wait for the door to be closed
+                wait_template: "{{ is_state(door, 'off') }}"
+              - alias: Grace period — was the door reopened?
+                wait_for_trigger:
+                  - trigger: state
+                    entity_id: !input door_sensor
+                    to: "on"
+                timeout:
+                  seconds: !input grace_period
+                continue_on_timeout: true
+            until:
+              # Timeout hit -> the door stayed closed for the grace period.
+              - condition: template
+                value_template: "{{ wait.trigger is none }}"
+        - alias: Let the cover finish any movement before checking it
+          wait_template: "{{ states(cover) not in ['opening', 'closing'] }}"
+          timeout:
+            seconds: 120
+          continue_on_timeout: true
+      until:
+        # If the door was reopened while the cover was still moving, go
+        # back to waiting instead of restoring against an open door.
+        - condition: template
+          value_template: "{{ is_state(door, 'off') }}"
+
+  - alias: Restore only if the cover is untouched (still fully open)
+    condition: template
+    value_template: >-
+      {{ is_state(door, 'off')
+         and states(cover) not in ['unavailable', 'unknown']
+         and ((state_attr(cover, 'current_position') is not none
+               and state_attr(cover, 'current_position') >= 99)
+              or (state_attr(cover, 'current_position') is none
+                  and is_state(cover, 'open'))) }}
+
+  - alias: Restore the memorized position
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ memorized_position is not none }}"
+        sequence:
+          - action: cover.set_cover_position
+            target:
+              entity_id: "{{ cover }}"
+            data:
+              position: "{{ memorized_position }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ memorized_state in ['closed', 'closing'] }}"
+        sequence:
+          - action: cover.close_cover
+            target:
+              entity_id: "{{ cover }}"

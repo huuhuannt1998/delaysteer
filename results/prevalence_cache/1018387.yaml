@@ -1,0 +1,253 @@
+blueprint:
+  name: Zone-Based List Reminder RC2
+  description: Dynamically trigger aggregated list notifications based on shared labels between zones and lists. Designed for ONE person per instance.
+  domain: automation
+  input:
+    # ----------------------------------------
+    # 1. PERSON & DELAYS
+    # ----------------------------------------
+    target_person:
+      name: Person to Track (Required)
+      description: >
+        Select the individual person to track.
+        * Create additional instances of this automation to track other people.
+      selector:
+        entity:
+          filter:
+            - domain: person
+    notify_device:
+      name: Notification Device (Required)
+      description: Select the mobile app device for this person.
+      selector:
+        device:
+          integration: mobile_app
+    trigger_delay:
+      name: Entry Delay (Time in zone)
+      description: >
+        How long must the person be inside a zone before the initial notification?
+        Set all to 0 for instant delivery.
+      default:
+        minutes: 0
+      selector:
+        duration: {}
+
+    # ----------------------------------------
+    # 2. CONDITIONS
+    # ----------------------------------------
+    custom_conditions:
+      name: Additional Conditions
+      description: >
+        Optional conditions to check before running
+        (e.g., block during certain hours).
+      default: []
+      selector:
+        condition: {}
+
+    # ----------------------------------------
+    # 3. DYNAMIC LABEL MAPPING
+    # ----------------------------------------
+    target_labels:
+      name: Zone & List Labels (Optional)
+      description: >
+        Select specific label(s) to restrict this automation to. 
+        * Leave this blank to make it global: it will check EVERY zone you enter, see what labels it has, and dynamically pull and aggregate lists sharing those same labels.
+      default: []
+      selector:
+        label:
+          multiple: true
+
+    # ----------------------------------------
+    # 4. OPTIONAL EXIT REMINDER
+    # ----------------------------------------
+    enable_exit_reminder:
+      name: Enable Exit Reminder
+      description: Send a follow-up notification to update the list when the person leaves the zone.
+      default: false
+      selector:
+        boolean: {}
+    exit_delay:
+      name: Exit Delay (Time after leaving)
+      description: How long to wait after the person leaves the zone before sending the exit reminder? Set all to 0 for instant delivery.
+      default:
+        minutes: 0
+      selector:
+        duration: {}
+    reminder_title:
+      name: Reminder Notification Title
+      description: This will be sent when the person exits the zone, unless there is only one item on the list, in which case an interactive prompt would be sent.
+      default: "Got everything?"
+      selector:
+        text: {}
+    reminder_message:
+      name: Reminder Notification Message
+      default: "Please remember to update the shopping list."
+      selector:
+        text:
+          multiline: true
+
+mode: parallel
+max: 10
+
+trigger:
+  - platform: state
+    entity_id: !input target_person
+    not_from:
+      - "unknown"
+      - "unavailable"
+    not_to:
+      - "home"
+      - "not_home"
+    for: !input trigger_delay
+
+condition: !input custom_conditions
+
+action:
+  # 1. Match zone to labels and safely extract corresponding to-do lists
+  - variables:
+      trigger_zone_name: "{{ trigger.to_state.state }}"
+      target_person: !input target_person
+      input_labels: !input target_labels
+      reminder_enabled: !input enable_exit_reminder
+      
+      # Hybrid Lookup: Try native GPS 'in_zones' first. If missing (Dev Tools testing), do a case-insensitive fallback search.
+      zone_entity: >-
+        {% if trigger.to_state.attributes.in_zones is defined and trigger.to_state.attributes.in_zones | length > 0 %}
+          {{ trigger.to_state.attributes.in_zones[0] }}
+        {% else %}
+          {% set ns = namespace(found='none') %}
+          {% for z in states.zone if z.name | lower == trigger_zone_name | lower %}
+            {% set ns.found = z.entity_id %}
+          {% endfor %}
+          {{ ns.found }}
+        {% endif %}
+        
+      zone_labels: "{{ labels(zone_entity) if zone_entity != 'none' else [] }}"
+      
+      # If user provided labels, filter zone's labels to match. If blank, use all of the zone's labels.
+      matched_labels: "{{ zone_labels | select('in', input_labels) | list if input_labels | length > 0 else zone_labels }}"
+      
+      target_lists: "{{ matched_labels | map('label_entities') | sum(start=[]) | select('match', '^todo') | unique | list }}"
+
+  # 2. Stop if the zone didn't have any labels (or didn't match the filtered labels)
+  - condition: template
+    value_template: "{{ matched_labels | length > 0 }}"
+
+  # 3. Stop if no to-do lists were found with those labels
+  - condition: template
+    value_template: "{{ target_lists | length > 0 }}"
+
+  # 4. Fetch the incomplete items from ALL matched to-do lists simultaneously
+  - action: todo.get_items
+    target:
+      entity_id: "{{ target_lists }}"
+    data:
+      status: needs_action
+    response_variable: loop_list_data
+
+  # 5. Merge response data and count the total items found across all lists
+  - variables:
+      loop_list_merged: "{{ merge_response(loop_list_data) }}"
+      item_count: "{{ loop_list_merged | count }}"
+
+  # 6. Stop if all matched lists are completely empty
+  - condition: template
+    value_template: "{{ item_count | int > 0 }}"
+
+  # 7. Send the initial store list notification (using native device action)
+  - device_id: !input notify_device
+    domain: mobile_app
+    type: notify
+    title: "{{ trigger_zone_name | title }} List"
+    message: |
+      {% for item in loop_list_merged | map(attribute='summary') | unique | list %}
+      - {{ item }}
+      {% endfor %}
+
+  # 8. Dynamic Exit Reminder Function
+  - if:
+      - condition: template
+        value_template: "{{ reminder_enabled }}"
+    then:
+      - wait_for_trigger:
+          - platform: template
+            value_template: >-
+              {{ states(target_person) != trigger_zone_name and 
+                 states(target_person) not in ['unknown', 'unavailable'] }}
+            for: !input exit_delay
+        timeout:
+          hours: 3
+        continue_on_timeout: false
+      
+      # Re-fetch the items to get an updated count upon exit
+      - action: todo.get_items
+        target:
+          entity_id: "{{ target_lists }}"
+        data:
+          status: needs_action
+        response_variable: exit_list_data
+        
+      - variables:
+          exit_list_merged: "{{ merge_response(exit_list_data) }}"
+          exit_count: "{{ exit_list_merged | count }}"
+          
+      - choose:
+          # A: Exactly 1 item left - Interactive Notification
+          - conditions:
+              - condition: template
+                value_template: "{{ exit_count | int == 1 }}"
+            sequence:
+              - variables:
+                  single_item_summary: "{{ exit_list_merged[0].summary }}"
+                  single_item_list: "{{ exit_list_merged[0].entity_id }}"
+                  action_yes: "MARK_DONE_{{ context.id }}"
+                  action_no: "NO_{{ context.id }}"
+                  
+              - device_id: !input notify_device
+                domain: mobile_app
+                type: notify
+                title: !input reminder_title
+                message: "Did you get {{ single_item_summary }}? I can check it off for you."
+                data:
+                  actions:
+                    - action: "{{ action_yes }}"
+                      title: "Yes"
+                    - action: "{{ action_no }}"
+                      title: "No"
+                        
+              # Wait for either response, or timeout after 2 hours
+              - wait_for_trigger:
+                  - platform: event
+                    event_type: mobile_app_notification_action
+                    event_data:
+                      action: "{{ action_yes }}"
+                  - platform: event
+                    event_type: mobile_app_notification_action
+                    event_data:
+                      action: "{{ action_no }}"
+                timeout:
+                  hours: 2
+                continue_on_timeout: false
+                
+              # Fail-safe: ONLY proceed if the "Yes" action was explicitly triggered
+              - condition: template
+                value_template: "{{ wait.trigger.event.data.action == action_yes }}"
+                
+              # Mark completed in the correct source list
+              - action: todo.update_item
+                target:
+                  entity_id: "{{ single_item_list }}"
+                data:
+                  item: "{{ single_item_summary }}"
+                  status: completed
+                  
+          # B: More than 1 item left - Standard Notification
+          - conditions:
+              - condition: template
+                value_template: "{{ exit_count | int > 1 }}"
+            sequence:
+              - device_id: !input notify_device
+                domain: mobile_app
+                type: notify
+                title: !input reminder_title
+                message: !input reminder_message
+

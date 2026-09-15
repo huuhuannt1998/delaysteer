@@ -1,0 +1,100 @@
+blueprint:
+  name: ZWaveJS - Heatit Z-Push Button 8 scene controller
+  description: |
+    Perform actions when a Heatit Z-Push Button is pressed.
+
+    You can also assign actions to long pressing a button and an action when you release the button.
+
+  domain: automation
+  input:
+    zwavejs_device:
+      name: ZWaveJS Device
+      description: The Heatit Z-Push Button 8 to listen for events on.
+      selector:
+        device:
+          integration: zwave_js
+          manufacturer: Sunricher
+          model: Heatit Z-Push Button 8
+    button_selector:
+      name: Selected button
+      description: The button to assign an action to.
+      selector: 
+        number:
+          min: 1
+          max: 8
+          step: 1
+          mode: box
+      default: 1
+    button_pressed_actions:
+      name: Button pressed Actions
+      description: The actions to perform when the button is pressed.
+      selector:
+        action: null
+      default: []
+    button_hold_actions:
+      name: Button hold Actions
+      description: The actions to perform when the button is hold.
+      selector:
+        action: null
+      default: []
+    button_release_actions:
+      name: Button release Actions
+      description: The actions to perform when the button is released.
+      selector:
+        action: null
+      default: []
+
+mode: single
+
+# If you haven't upgraded to 2021.4.0 or newer yet, you'll need to use this trigger code instead
+#trigger:
+#  - platform: event
+#    event_type: zwave_js_event
+#    event_data:
+#      type: value_notification
+
+trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+
+variables:
+  logger: blueprint.zwavejs_scene_activation
+  zwavejs_device: !input zwavejs_device
+  button_selector: !input button_selector
+  button: 'Scene 00{{button_selector}}'
+
+action:
+  - choose:
+      # IF triggered device_id is zwavejs_device
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.device_id == zwavejs_device }}"
+          - condition: template
+            value_template: "{{ trigger.event.data.command_class_name == 'Central Scene' }}"
+        sequence:
+          - choose:
+              # IF button pressed
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.label == button and trigger.event.data.value == 'KeyPressed' }}"
+                sequence: !input button_pressed_actions
+              # IF button hold
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.label == button and trigger.event.data.value == 'KeyHeldDown' }}"
+                sequence: !input button_hold_actions 
+              # IF button release
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.event.data.label == button and trigger.event.data.value == 'KeyReleased' }}"
+                sequence: !input button_release_actions 
+                  
+            # ELSE: unhandled scene label/value
+            default:
+              - service: system_log.write
+                data:
+                  level: debug
+                  logger: "{{ logger }}"
+                  message: "Activated scene '{{ trigger.event.data.label }}' with value '{{ trigger.event.data.value }}' for node '{{ zwavejs_device }}' ({{ trigger.event.data.node_id }})"
+    # ELSE: unhandled ozw event
+    default: []

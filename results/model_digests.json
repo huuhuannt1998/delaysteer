@@ -1,0 +1,13 @@
+{
+  "captured_at_utc": "2026-08-17",
+  "note": "Digests of the Ollama model blobs present when the reported runs were produced. Exact byte-for-byte reproduction of temperature-0 rows is conditional on these; an upstream re-pull changes the blob and may change the bytes. Captured post-hoc from `ollama list` on the run host, not recorded per-row at run time.",
+  "models": {
+    "gemma2:9b": "ff02c3702f32",
+    "granite3.1-dense:8b": "34d3be74ec54",
+    "llama3.1:8b": "46e0c10c039e",
+    "mistral-nemo:12b": "e7e06d107c6c",
+    "qwen2.5:7b": "845dbda0ea48",
+    "qwen3.6:27b": "a50eda8ed977",
+    "qwen3:14b": "bdbd181c33f2"
+  }
+}

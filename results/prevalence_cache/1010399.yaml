@@ -1,0 +1,119 @@
+blueprint:
+  name: Z2M - Aqara Wireless mini switch (any, single, double, triple, quadruple, hold, release)
+  description: Control anything you want with Aqara Wireless mini Switch.
+  author: TheBigNeo
+  domain: automation
+  input:
+    device_selection:
+      name: Select the device you want to configure
+      description: Aqara switch to use
+      selector:
+        device:
+          filter:
+            - integration: mqtt
+              model: Wireless mini switch
+          multiple: false
+
+    button_any:
+      name: Any click
+      description: Action to run on any click
+      default: [ ]
+      selector:
+        action: { }
+    button_single:
+      name: Single click
+      description: Action to run on single click
+      default: [ ]
+      selector:
+        action: { }
+    button_double:
+      name: Double click
+      description: Action to run on double click
+      default: [ ]
+      selector:
+        action: { }
+    button_triple:
+      name: Triple click
+      description: Action to run on triple click
+      default: [ ]
+      selector:
+        action: { }
+    button_quadruple:
+      name: Quadruple click
+      description: Action to run on quadruple click
+      default: [ ]
+      selector:
+        action: { }
+    button_hold:
+      name: Hold button
+      description: Action to run on hold
+      default: [ ]
+      selector:
+        action: { }
+    button_release:
+      name: Release button
+      description: Action to run after hold then release
+      default: [ ]
+      selector:
+        action: { }
+
+mode: queued
+max_exceeded: silent
+trigger:
+  - domain: mqtt
+    device_id: !input device_selection
+    type: action
+    subtype: single
+    trigger: device
+  - domain: mqtt
+    device_id: !input device_selection
+    type: action
+    subtype: double
+    trigger: device
+  - domain: mqtt
+    device_id: !input device_selection
+    type: action
+    subtype: triple
+    trigger: device
+  - domain: mqtt
+    device_id: !input device_selection
+    type: action
+    subtype: quadruple
+    trigger: device
+  - domain: mqtt
+    device_id: !input device_selection
+    type: action
+    subtype: hold
+    trigger: device
+  - domain: mqtt
+    device_id: !input device_selection
+    type: action
+    subtype: release
+    trigger: device
+
+action:
+  - sequence: !input button_any
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.payload == ''single'' }}'
+        sequence: !input button_single
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.payload == ''double'' }}'
+        sequence: !input button_double
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.payload == ''triple'' }}'
+        sequence: !input button_triple
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.payload == ''hold'' }}'
+        sequence: !input button_hold
+      - conditions:
+          - condition: template
+            value_template: '{{ trigger.payload == ''release'' }}'
+        sequence: !input button_release
+
+

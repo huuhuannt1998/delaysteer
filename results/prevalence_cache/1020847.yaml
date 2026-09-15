@@ -1,0 +1,1003 @@
+###############################################################################
+#
+# Adaptive Cover Controller
+#
+# Version          : 2.0.0
+# Author           : Waleed Gumaa
+# Home Assistant   : 2025.7+
+#
+# Description
+# ===========
+#
+# Automatically protects curtains, blinds and shutters from direct sunlight
+# using the sun's position.
+#
+# Optional weather, cloud cover, occupancy and schedule validation modules
+# are available.
+#
+# Create one automation per cover.
+#
+# Features
+# ========
+#
+# - Sun azimuth and elevation protection.
+# - Optional weather validation.
+# - Optional cloud cover validation with hysteresis.
+# - Optional occupancy validation.
+# - Night lock and scheduled morning opening.
+# - Manual override state machine.
+# - Automatic/manual movement detection.
+# - Prevent repeated movement commands while the cover is moving.
+# - Automatic recovery after Home Assistant restart.
+# - Periodic recovery to protect against missed events.
+#
+# Changelog
+# =========
+#
+# 2.0.0
+# - Initial public release.
+#
+###############################################################################
+
+blueprint:
+  name: Adaptive Cover Controller
+  description: >
+    Automatically protects curtains, blinds and shutters from direct sunlight
+    using the sun's position.
+
+    Optional weather, cloud cover, occupancy and schedule validation modules
+    are available.
+
+    Create one automation per cover.
+
+  domain: automation
+  author: Waleed Gumaa
+
+  homeassistant:
+    min_version: 2025.7.0
+
+  input:
+
+
+    # COVER
+
+
+    cover:
+      name: Cover
+      description: Select the curtain, blind or shutter.
+      selector:
+        entity:
+          filter:
+            - domain: cover
+
+    # SUN PROTECTION
+
+
+    sun_protection:
+      name: Sun Protection
+      icon: mdi:white-balance-sunny
+      input:
+
+        azimuth_start:
+          name: Start azimuth
+          description: Begin protecting the cover when the sun reaches this azimuth.
+          default: 90
+          selector:
+            number:
+              min: 0
+              max: 360
+              step: 1
+              unit_of_measurement: "°"
+              mode: slider
+
+        azimuth_end:
+          name: End azimuth
+          description: Stop protecting the cover after this azimuth.
+          default: 180
+          selector:
+            number:
+              min: 0
+              max: 360
+              step: 1
+              unit_of_measurement: "°"
+              mode: slider
+
+        minimum_elevation:
+          name: Minimum elevation
+          description: Ignore the sun below this elevation.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 1
+              unit_of_measurement: "°"
+              mode: slider
+
+
+  # POSITIONS
+
+    positions:
+      name: Positions
+      icon: mdi:curtains
+
+      input:
+
+        protection_position:
+          name: Sun protection position
+          description: Position used while protecting the room from sunlight.
+          default: 50
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        normal_position:
+          name: Normal position
+          description: Position used when protection is no longer required.
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        auto_return:
+          name: Automatically return
+          description: Return to the normal position when protection is no longer required.
+          default: true
+          selector:
+            boolean: {}
+
+  # SCHEDULE
+
+    schedule:
+      name: Schedule
+      icon: mdi:clock-outline
+
+      input:
+
+        night_lock:
+          name: Night lock
+          description: Prevent automatic opening after this time.
+          default: "22:00:00"
+          selector:
+            time: {}
+
+        weekday_open:
+          name: Weekday opening time
+          default: "07:00:00"
+          selector:
+            time: {}
+
+        weekend_open:
+          name: Weekend opening time
+          default: "09:00:00"
+          selector:
+            time: {}
+
+        weekdays:
+          name: Weekdays
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+
+        weekends:
+          name: Weekends
+          default:
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Monday
+                  value: mon
+                - label: Tuesday
+                  value: tue
+                - label: Wednesday
+                  value: wed
+                - label: Thursday
+                  value: thu
+                - label: Friday
+                  value: fri
+                - label: Saturday
+                  value: sat
+                - label: Sunday
+                  value: sun
+
+  # MANUAL OVERRIDE
+
+    manual_override:
+      name: Manual Override
+      icon: mdi:hand-back-right
+
+      input:
+
+        enable_manual_override:
+          name: Enable manual override
+          description: >
+            Ignore automatic movement after a manual position change until the
+            controller regains control.
+          default: false
+          selector:
+            boolean: {}
+
+        controller_state_helper:
+          name: Controller state helper
+          description: >
+            Required only when Manual Override is enabled.
+
+            Create one Input Select helper per cover with the
+            following options:
+
+            - normal
+            - automation
+            - manual
+
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: input_select
+
+  # OCCUPANCY
+
+    occupancy:
+      name: Occupancy (Optional)
+      icon: mdi:account-group
+      collapsed: true
+
+      input:
+
+        use_occupancy:
+          name: Enable occupancy validation
+          default: false
+          selector:
+            boolean: {}
+
+        people:
+          name: People
+          description: >
+            At least one selected person must be home before the cover is allowed
+            to move.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: person
+
+  # WEATHER VALIDATION
+
+    weather:
+      name: Weather Validation (Optional)
+      icon: mdi:weather-partly-cloudy
+      collapsed: true
+
+      input:
+
+        use_weather:
+          name: Enable weather validation
+          default: false
+          selector:
+            boolean: {}
+
+        weather_entity:
+          name: Weather entity
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: weather
+
+        allowed_conditions:
+          name: Allowed weather conditions
+          description: >
+            Sun protection is only activated when the current weather matches one of these conditions.
+          default:
+            - sunny
+            - partlycloudy
+          selector:
+            select:
+              multiple: true
+              options:
+                - clear-night
+                - cloudy
+                - exceptional
+                - fog
+                - hail
+                - lightning
+                - lightning-rainy
+                - partlycloudy
+                - pouring
+                - rainy
+                - snowy
+                - snowy-rainy
+                - sunny
+                - windy
+                - windy-variant
+
+  # CLOUD COVER
+
+    cloud_cover:
+      name: Cloud Cover (Optional)
+      icon: mdi:weather-cloudy
+      collapsed: true
+
+      input:
+
+        use_cloud_cover:
+          name: Enable cloud cover validation
+          default: false
+          selector:
+            boolean: {}
+
+        cloud_cover_sensor:
+          name: Cloud cover sensor
+          description: >
+            Select a sensor that reports cloud cover as a percentage (0–100).
+          default: {}
+          selector:
+            entity:
+              filter:
+                - domain: sensor
+
+        close_below:
+          name: Close below
+          description: >
+            Protection becomes active when cloud cover is below this percentage.
+          default: 40
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        open_above:
+          name: Open above
+          description: >
+            Protection is removed when cloud cover rises above this percentage.
+          default: 60
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+  # BLIND FEATURES
+
+    blind_features:
+      name: Blind Features (Optional)
+      icon: mdi:blinds-horizontal
+      collapsed: true
+
+      input:
+
+        use_tilt:
+          name: Enable tilt control
+          default: false
+          selector:
+            boolean: {}
+
+        protection_tilt:
+          name: Protection tilt position
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        normal_tilt:
+          name: Normal tilt position
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+  # ADVANCED
+
+    advanced:
+      name: Advanced
+      icon: mdi:cog
+      collapsed: true
+
+      input:
+
+        recheck_interval:
+          name: Recheck interval
+          description: >
+            Periodically re-evaluate the automation to recover from missed events
+            or Home Assistant restarts.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 30
+              step: 1
+              unit_of_measurement: min
+              mode: slider
+
+# TRIGGER VARIABLES
+
+trigger_variables:
+
+  cfg_recheck_interval: !input recheck_interval
+
+# TRIGGERS
+
+trigger:
+
+# HOME ASSISTANT
+
+  - trigger: homeassistant
+    event: start
+    id: startup
+
+# SUN
+
+  - trigger: state
+    entity_id: sun.sun
+    attribute: azimuth
+    id: sun_changed
+
+  - trigger: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: !input minimum_elevation
+    id: elevation_above
+
+  - trigger: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: !input minimum_elevation
+    id: elevation_below
+
+# COVER
+
+  - trigger: state
+    entity_id: !input cover
+    id: cover_changed
+
+# PRESENCE
+
+  - trigger: state
+    entity_id: !input people
+    id: presence_changed
+
+# WEATHER
+
+  - trigger: state
+    entity_id: !input weather_entity
+    id: weather_changed
+
+# CLOUD COVER
+
+  - trigger: state
+    entity_id: !input cloud_cover_sensor
+    id: cloud_cover_changed
+
+# PERIODIC RECOVERY
+
+  - trigger: template
+    value_template: >
+      {{ now().minute % (cfg_recheck_interval | int(5)) == 0
+         and now().second == 0 }}
+    id: periodic
+
+# VARIABLES
+
+variables:
+
+# CONFIGURATION
+
+  cfg_cover: !input cover
+
+  cfg_protection_position: !input protection_position
+  cfg_normal_position: !input normal_position
+  cfg_auto_return: !input auto_return
+
+  cfg_use_weather: !input use_weather
+  cfg_weather_entity: !input weather_entity
+  cfg_allowed_conditions: !input allowed_conditions
+
+  cfg_use_cloud_cover: !input use_cloud_cover
+  cfg_cloud_sensor: !input cloud_cover_sensor
+  cfg_close_below: !input close_below
+  cfg_open_above: !input open_above
+
+  cfg_use_occupancy: !input use_occupancy
+  cfg_people: !input people
+
+  cfg_use_tilt: !input use_tilt
+  cfg_protection_tilt: !input protection_tilt
+  cfg_normal_tilt: !input normal_tilt
+
+# MANUAL OVERRIDE
+
+  cfg_manual_override: !input enable_manual_override
+  cfg_controller_state: !input controller_state_helper
+
+# SUN PROTECTION
+
+  cfg_sun_start: !input azimuth_start
+  cfg_sun_end: !input azimuth_end
+  cfg_min_elevation: !input minimum_elevation
+
+# SCHEDULE CONFIGURATION
+
+  cfg_night_lock: !input night_lock
+
+  cfg_weekday_open: !input weekday_open
+  cfg_weekend_open: !input weekend_open
+
+  cfg_weekdays: !input weekdays
+  cfg_weekends: !input weekends
+
+# CONTEXT
+
+  ctx_cover_position: >
+    {% set p = state_attr(cfg_cover, 'current_position') %}
+    {% if p is not none %}
+      {{ p | int }}
+    {% else %}
+      {{ state_attr(cfg_cover, 'position') | int(-1) }}
+    {% endif %}
+
+  ctx_cover_tilt: >
+    {{ state_attr(cfg_cover, 'current_tilt_position') | int(-1) }}
+
+  ctx_cover_state: >
+    {{ states(cfg_cover) }}
+
+# COVER STATUS
+
+  calc_cover_idle: >
+    {{ ctx_cover_state not in ['opening', 'closing'] }}
+
+  calc_currently_protecting: >
+    {{ (ctx_cover_position | int) == (cfg_protection_position | int) }}
+
+  ctx_sun_azimuth: >
+    {% if trigger is defined
+          and trigger.to_state is not none
+          and trigger.entity_id == 'sun.sun'
+          and trigger.attribute == 'azimuth' %}
+      {{ trigger.to_state.attributes.azimuth | float(0) }}
+    {% else %}
+      {{ state_attr('sun.sun', 'azimuth') | float(0) }}
+    {% endif %}
+
+  ctx_sun_elevation: >
+    {{ state_attr('sun.sun', 'elevation') | float(-90) }}
+
+  ctx_weather: >
+    {% if cfg_use_weather %}
+      {{ states(cfg_weather_entity) }}
+    {% else %}
+      disabled
+    {% endif %}
+
+  ctx_cloud_cover: >
+    {% if cfg_use_cloud_cover %}
+      {{ states(cfg_cloud_sensor) | float(100) }}
+    {% else %}
+      -1
+    {% endif %}
+
+# SUN VALIDATION
+
+  calc_sun_in_window: >
+    {% set start = cfg_sun_start | float %}
+    {% set finish = cfg_sun_end | float %}
+    {% set az = ctx_sun_azimuth | float %}
+
+    {% if start <= finish %}
+      {{ start <= az <= finish }}
+    {% else %}
+      {{ az >= start or az <= finish }}
+    {% endif %}
+
+  calc_sun_ok: >
+    {{
+      calc_sun_in_window
+      and
+      (ctx_sun_elevation|float >= cfg_min_elevation|float)
+    }}
+
+# VALIDATION MODULES
+
+  calc_weather_ok: >
+    {% if not cfg_use_weather %}
+      true
+    {% else %}
+      {{ ctx_weather in cfg_allowed_conditions }}
+    {% endif %}
+
+# CLOUD COVER VALIDATION
+
+  calc_cloud_allows_protection: >
+    {% if not cfg_use_cloud_cover %}
+
+      true
+
+    {% elif calc_currently_protecting %}
+
+      {{ (ctx_cloud_cover | float) < (cfg_open_above | float) }}
+
+    {% else %}
+
+      {{ (ctx_cloud_cover | float) <= (cfg_close_below | float) }}
+
+    {% endif %}
+
+# OCCUPANCY VALIDATION
+
+  calc_someone_home: >
+    {% if not cfg_use_occupancy %}
+      true
+    {% else %}
+      {{
+        expand(cfg_people)
+        | selectattr('state','eq','home')
+        | list
+        | count > 0
+      }}
+    {% endif %}
+
+# SCHEDULE
+
+  calc_today: >
+    {{ ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] }}
+
+  calc_open_time: >
+    {% if calc_today in cfg_weekdays %}
+      {{ cfg_weekday_open }}
+    {% elif calc_today in cfg_weekends %}
+      {{ cfg_weekend_open }}
+    {% else %}
+      disabled
+    {% endif %}
+
+  calc_can_auto_open: >
+    {% if calc_open_time == 'disabled' %}
+      false
+    {% else %}
+      {% set now_time = now() %}
+      {% set night = today_at(cfg_night_lock) %}
+      {% set open = today_at(calc_open_time) %}
+
+      {{ not (now_time >= night or now_time < open) }}
+
+    {% endif %}
+
+# PROTECTION DECISION
+
+  calc_should_protect: >
+    {{
+      calc_sun_ok
+      and
+      calc_weather_ok
+      and
+      calc_cloud_allows_protection
+      and
+      calc_someone_home
+    }}
+
+# CONTROLLER STATE
+
+  calc_controller_manual: >
+    {{ is_state(cfg_controller_state, 'manual') }}
+
+  calc_controller_automatic: >
+    {{ is_state(cfg_controller_state, 'automation') }}
+
+  calc_controller_ready: >
+    {{ is_state(cfg_controller_state, 'normal') }}
+
+# MANUAL OVERRIDE
+
+  restriction_manual_override: >
+    {% if not cfg_manual_override %}
+      false
+    {% else %}
+      {{ calc_controller_manual }}
+    {% endif %}
+
+# MOVEMENT RESTRICTIONS
+
+  calc_movement_allowed: >
+    {{ not restriction_manual_override }}
+
+
+# STATE ENGINE
+#
+# Determines what the controller wants to do.
+#
+# PROTECT   = Move to the protection position.
+# RETURN    = Return to the normal position.
+# OVERRIDDEN = User has taken manual control.
+# IDLE      = No movement required.
+
+  result_state: >
+    {% if restriction_manual_override %}
+
+      OVERRIDDEN
+
+    {% elif calc_should_protect %}
+
+      PROTECT
+
+    {% elif cfg_auto_return and calc_can_auto_open %}
+
+      RETURN
+
+    {% else %}
+
+      IDLE
+
+    {% endif %}
+  
+# OUTPUTS
+
+  result_desired_position: >
+    {% if result_state == 'PROTECT' %}
+      {{ cfg_protection_position }}
+
+    {% elif result_state == 'RETURN' %}
+      {{ cfg_normal_position }}
+
+    {% else %}
+      {{ ctx_cover_position }}
+
+    {% endif %}
+
+  result_desired_tilt: >
+    {% if not cfg_use_tilt %}
+      -1
+
+    {% elif result_state == 'PROTECT' %}
+      {{ cfg_protection_tilt }}
+
+    {% elif result_state == 'RETURN' %}
+      {{ cfg_normal_tilt }}
+
+    {% else %}
+      {{ ctx_cover_tilt }}
+
+    {% endif %}
+
+# MOVEMENT DECISION
+
+  result_move_cover: >
+    {{
+      calc_movement_allowed
+      and
+      calc_cover_idle
+      and
+      (result_desired_position | int != ctx_cover_position | int)
+    }}
+
+  result_move_tilt: >
+    {{
+      cfg_use_tilt
+      and
+      calc_cover_idle
+      and
+      (result_desired_tilt | int != ctx_cover_tilt | int)
+    }}
+
+# CONDITIONS
+
+conditions: []
+
+# ACTIONS
+
+actions:
+
+# ACTIVATE MANUAL OVERRIDE
+
+  - if:
+      - condition: trigger
+        id: cover_changed
+
+      - condition: template
+        value_template: >
+          {{ cfg_manual_override }}
+
+      - condition: template
+        value_template: >
+          {{ calc_controller_ready }}
+
+      - condition: template
+        value_template: >
+          {{ calc_cover_idle }}
+
+      - condition: template
+        value_template: >
+          {{ result_desired_position | int != ctx_cover_position | int }}
+
+    then:
+
+      - action: input_select.select_option
+        target:
+          entity_id: !input controller_state_helper
+
+        data:
+          option: manual
+
+      - stop: Manual override activated.
+
+# CLEAR MANUAL OVERRIDE
+
+  #
+  # Automation movement completed
+  #
+  - if:
+      - condition: trigger
+        id: cover_changed
+
+      - condition: template
+        value_template: >
+          {{ calc_controller_automatic }}
+
+      - condition: template
+        value_template: >
+          {{ calc_cover_idle }}
+
+      - condition: template
+        value_template: >
+          {{ ctx_cover_position | int == result_desired_position | int }}
+
+    then:
+
+      - action: input_select.select_option
+        target:
+          entity_id: !input controller_state_helper
+
+        data:
+          option: normal
+
+      - stop: Automation movement completed.
+
+  #
+  # Manual override cleared
+  #
+  - if:
+      - condition: trigger
+        id: cover_changed
+
+      - condition: template
+        value_template: >
+          {{ calc_controller_manual }}
+
+      - condition: template
+        value_template: >
+          {{ calc_cover_idle }}
+
+      - condition: template
+        value_template: >
+          {{ ctx_cover_position | int == result_desired_position | int }}
+
+    then:
+
+      - action: input_select.select_option
+        target:
+          entity_id: !input controller_state_helper
+
+        data:
+          option: normal
+
+      - stop: Manual override cleared.
+
+  #
+  # Ignore remaining cover state updates
+  #
+  - if:
+      - condition: trigger
+        id: cover_changed
+
+    then:
+      - stop: Cover change processed.
+
+# EXIT IF NO MOVEMENT IS REQUIRED
+
+  - if:
+      - condition: template
+        value_template: >
+          {{
+            not result_move_cover
+            and
+            not result_move_tilt
+          }}
+    then:
+      - stop: Cover already in desired state.
+
+# MOVE COVER
+
+  - if:
+      - condition: template
+        value_template: >
+          {{ result_move_cover }}
+
+    then:
+
+      - if:
+          - condition: template
+            value_template: >
+              {{ cfg_manual_override }}
+
+        then:
+
+          - action: input_select.select_option
+            target:
+              entity_id: !input controller_state_helper
+
+            data:
+              option: automation
+
+      - action: cover.set_cover_position
+        target:
+          entity_id: !input cover
+
+        data:
+          position: >
+            {{ result_desired_position }}
+
+# MOVE TILT
+
+  - if:
+      - condition: template
+        value_template: >
+          {{ result_move_tilt }}
+    then:
+
+      - action: cover.set_cover_tilt_position
+
+        target:
+          entity_id: !input cover
+
+        data:
+          tilt_position: >
+            {{ result_desired_tilt }}
+
+mode: single
+
+max_exceeded: silent

@@ -1,0 +1,98 @@
+blueprint:
+  name: Roller control with dual button device (Open/Close/Stop) + 50% aperture with double click in any button)
+  description: >
+    Single click: If roller/cover/blind is moving → stop, otherwise → open / close.
+    Double click (any button): 50% position.
+  domain: automation
+  input:
+    buttondevice:
+      name: Dual button device
+      selector:
+        device:
+          integration: mqtt
+    roller:
+      name: Roller_Cover_Blind
+      selector:
+        entity:
+          domain: cover
+
+trigger:
+  - platform: device
+    domain: mqtt
+    device_id: !input buttondevice
+    type: action
+    subtype: button_1_single
+    id: open
+  - platform: device
+    domain: mqtt
+    device_id: !input buttondevice
+    type: action
+    subtype: button_2_single
+    id: close
+  - platform: device
+    domain: mqtt
+    device_id: !input buttondevice
+    type: action
+    subtype: button_1_double
+    id: halfopen
+  - platform: device
+    domain: mqtt
+    device_id: !input buttondevice
+    type: action
+    subtype: button_2_double
+    id: halfopen
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: halfopen
+        sequence:
+          - service: cover.set_cover_position
+            target:
+              entity_id: !input roller
+            data:
+              position: 50
+      - conditions:
+          - condition: trigger
+            id: open
+        sequence:
+          - if:
+              - condition: or
+                conditions:
+                  - condition: state
+                    entity_id: !input roller
+                    state: opening
+                  - condition: state
+                    entity_id: !input roller
+                    state: closing
+            then:
+              - service: cover.stop_cover
+                target:
+                  entity_id: !input roller
+            else:
+              - service: cover.open_cover
+                target:
+                  entity_id: !input roller
+      - conditions:
+          - condition: trigger
+            id: close
+        sequence:
+          - if:
+              - condition: or
+                conditions:
+                  - condition: state
+                    entity_id: !input roller
+                    state: opening
+                  - condition: state
+                    entity_id: !input roller
+                    state: closing
+            then:
+              - service: cover.stop_cover
+                target:
+                  entity_id: !input roller
+            else:
+              - service: cover.close_cover
+                target:
+                  entity_id: !input roller
+mode: single

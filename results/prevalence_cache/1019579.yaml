@@ -1,0 +1,254 @@
+blueprint:
+  name: ZHA_zigbee_wheel_RSH-SC20_aka_TuyaTS004F_LightControl
+  description: >
+    Rotate = brightness, Click = On/Off, Press+Rotate = color temperature,
+    Long-press = next Hue scene. Define a custom action per gesture below to
+    override the default behavior for that gesture.
+  domain: automation
+  input:
+    light_entity:
+      name: Light
+      description: Optional – only needed if at least one gesture should use its default action instead of a custom one
+      default: ""
+      selector:
+        entity:
+          domain: light
+    wheel_device:
+      name: Wheel
+      description: The Zigbee wheel/knob device
+      selector:
+        device:
+          integration: zha
+    custom_actions_section:
+      name: Custom actions per gesture
+      description: Leave a gesture empty to use its default light behavior
+      icon: mdi:gesture-tap-hold
+      collapsed: false
+      input:
+        custom_click_action:
+          name: Custom action - Click
+          description: Leave empty to use the default (toggle light on/off)
+          default: []
+          selector:
+            action: {}
+        custom_rotate_right_action:
+          name: Custom action - Rotate right
+          description: Leave empty to use the default (brightness up)
+          default: []
+          selector:
+            action: {}
+        custom_rotate_left_action:
+          name: Custom action - Rotate left
+          description: Leave empty to use the default (brightness down, floor 15%)
+          default: []
+          selector:
+            action: {}
+        custom_press_rotate_right_action:
+          name: Custom action - Press + rotate right
+          description: Leave empty to use the default (cooler color temp)
+          default: []
+          selector:
+            action: {}
+        custom_press_rotate_left_action:
+          name: Custom action - Press + rotate left
+          description: Leave empty to use the default (warmer color temp)
+          default: []
+          selector:
+            action: {}
+        custom_long_click_action:
+          name: Custom action - Long-press
+          description: Leave empty to use the default (next Hue scene)
+          default: []
+          selector:
+            action: {}
+
+variables:
+  light_entity: !input light_entity
+
+triggers:
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: !input wheel_device
+      command: step
+    id: rotate
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: !input wheel_device
+      command: toggle
+    id: click
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: !input wheel_device
+      command: move_saturation
+    id: long_click
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: !input wheel_device
+      command: step_color_temp
+    id: rotate_pressed
+
+conditions: []
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'click' }}"
+        sequence:
+          - variables:
+              custom_actions: !input custom_click_action
+          - if:
+              - condition: template
+                value_template: "{{ custom_actions | count > 0 }}"
+            then: !input custom_click_action
+            else:
+              - action: light.toggle
+                target:
+                  entity_id: "{{ light_entity }}"
+                data: {}
+        alias: "Option: Click"
+
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'rotate' and trigger.event.data.params.step_mode
+              == 0 }}
+        sequence:
+          - variables:
+              custom_actions: !input custom_rotate_right_action
+          - if:
+              - condition: template
+                value_template: "{{ custom_actions | count > 0 }}"
+            then: !input custom_rotate_right_action
+            else:
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ light_entity }}"
+                data:
+                  brightness_step_pct: 5
+          - delay:
+              milliseconds: 200
+        alias: "Option: Rotate right (brighter)"
+
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'rotate' and trigger.event.data.params.step_mode
+              == 1 }}
+        sequence:
+          - variables:
+              custom_actions: !input custom_rotate_left_action
+          - if:
+              - condition: template
+                value_template: "{{ custom_actions | count > 0 }}"
+            then: !input custom_rotate_left_action
+            else:
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ (state_attr(light_entity,'brightness') | int(0)) / 255
+                      * 100 >= 15 }}
+                then:
+                  - action: light.turn_on
+                    target:
+                      entity_id: "{{ light_entity }}"
+                    data:
+                      brightness_step_pct: -5
+          - delay:
+              milliseconds: 200
+        alias: "Option: Rotate left (dimmer, floor 15% for default action)"
+
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'rotate_pressed' and
+              trigger.event.data.params.step_mode == 1 }}
+        sequence:
+          - variables:
+              custom_actions: !input custom_press_rotate_right_action
+          - if:
+              - condition: template
+                value_template: "{{ custom_actions | count > 0 }}"
+            then: !input custom_press_rotate_right_action
+            else:
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ light_entity }}"
+                data:
+                  color_temp_kelvin: >
+                    {{ [state_attr(light_entity,'color_temp_kelvin') | int(3000)
+                    + 100, state_attr(light_entity,'max_color_temp_kelvin') |
+                    int(6500)] | min }}
+          - delay:
+              milliseconds: 200
+        alias: "Option: Press + rotate right (cooler light)"
+
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ trigger.id == 'rotate_pressed' and
+              trigger.event.data.params.step_mode == 3 }}
+        sequence:
+          - variables:
+              custom_actions: !input custom_press_rotate_left_action
+          - if:
+              - condition: template
+                value_template: "{{ custom_actions | count > 0 }}"
+            then: !input custom_press_rotate_left_action
+            else:
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ light_entity }}"
+                data:
+                  color_temp_kelvin: >
+                    {{ [state_attr(light_entity,'color_temp_kelvin') | int(3000)
+                    - 100, state_attr(light_entity,'min_color_temp_kelvin') |
+                    int(2000)] | max }}
+          - delay:
+              milliseconds: 200
+        alias: "Option: Press + rotate left (warmer light)"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'long_click' }}"
+        sequence:
+          - variables:
+              custom_actions: !input custom_long_click_action
+          - if:
+              - condition: template
+                value_template: "{{ custom_actions | count > 0 }}"
+            then: !input custom_long_click_action
+            else:
+              - variables:
+                  hue_scenes: "{{ state_attr(light_entity, 'hue_scenes') | default([]) }}"
+                  scene_base: "{{ light_entity | replace('light.', 'scene.') }}"
+                  scene_entities: >-
+                    {%- set ns = namespace(lst=[]) -%}
+                    {%- for s in hue_scenes -%}
+                      {%- set ns.lst = ns.lst + [scene_base ~ '_' ~ (s | lower)] -%}
+                    {%- endfor -%}
+                    {{ ns.lst }}
+                  scene_count: "{{ scene_entities | length }}"
+                  next_index: >-
+                    {%- set ns = namespace(idx=-1, latest='0000-00-00T00:00:00+00:00') -%}
+                    {%- for e in scene_entities -%}
+                      {%- set st = states(e) -%}
+                      {%- if st not in ['unknown','unavailable'] and st > ns.latest -%}
+                        {%- set ns.latest = st -%}
+                        {%- set ns.idx = loop.index0 -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {{ (ns.idx + 1) % scene_count if scene_count > 0 else 0 }}
+                  scene_entity: "{{ scene_entities[next_index | int] if scene_count > 0 else '' }}"
+              - condition: template
+                value_template: "{{ scene_count | int > 0 }}"
+              - action: scene.turn_on
+                target:
+                  entity_id: "{{ scene_entity }}"
+        alias: "Option: Long-press (next Hue scene / custom)"
+
+mode: single

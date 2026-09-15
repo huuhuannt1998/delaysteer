@@ -1,0 +1,494 @@
+blueprint:
+  name: Philips Hue Tap Dial - Custom Controls
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  source_url: https://gist.github.com/gtunes-dev/c87168d84292004e760ce697ba1ae6af
+  description: |
+    # Philips Hue Tap Dial - Custom Controls
+
+    This blueprint enables comprehensive configuration of a Philips Hue Tap Dial.
+
+    If you plan to use your Hue Tap Dial as a media controller, there is another
+    blueprint available which simplifies volume and transport control. You may want
+    to use that in preference to this one. That blueprint can be found here:
+    https://community.home-assistant.io/t/zha-philips-hue-tap-switch-media-controls-rdm002/789650
+
+    ## Key Features
+
+    * Velocity-sensitive rotational Controls
+    * Actions for Single, Double, Triple, Quadruple, and Quintuple press events for each button
+
+    ## Velocity-Sensitive Rotational Controls
+
+    This blueprint allows actions to be invoked when the controller's dial is rotated
+    either clockwise or counterclockwise. The user can specify the following actions:
+
+    * Small Clockwise Rotation
+    * Small Counterclockwise Rotation
+    * Medium Clockwise Rotation
+    * Medium Counterclockwise Rotation
+    * Large Clockwise Rotation
+    * Large Counterclockwise Rotation
+
+    As the dial is rotated, it generates "step" events with numbers indicating how
+    far the dial turned. These numbers do not correspond directly to the detents
+    on the dial, but they are consistent and they indicate the speed of rotation.
+
+    Within this template, you specify the "windows" for small, medium, and large events.
+
+    You additionally specify the actions to take for each type of event for both
+    clockwise and counterclockwise rotations. If you are, for example, using the dial
+    to control a light dimmer or a volume output, you will create actions that
+    make small, medium, and large changes to the light, volume, or whatever as appropriate.
+
+    The default window sizes will work for most scenarios. It is up to the user of this
+    template to implement the actions.
+
+    ## Button Actions
+
+    Button actions will be self-explanatory. Simply create the actions you want
+    to execute for the appropriate press, release, or multi-press event.
+
+    ## Logbook Logging
+
+    When Logbook Logging is enabled, a logbook event will be generated each time an event is
+    received. In the case of a rotation event, a second event will be generated which describes
+    which rotation window the event maps to.
+
+    Version History:
+      1.00 (Nov-02-2024) : Initial Release
+      1.01 (Nov-22-2024) : Fixed multi-press events
+      1.02 (Jan-16-2024) : Ignore spurious rotation events. Fix log errors caused by reading non-existent params
+  input:
+    remote:
+      name: Philips Hue Tap Dial
+      selector:
+        device:
+          integration: zha
+          manufacturer: Signify Netherlands B.V.
+          model: RDM002
+          multiple: false
+    logbook_enabled:
+      name: Enable logging to Logbook
+      default: false
+      selector:
+        boolean: {}
+    rotation_controls:
+      name: Rotation Controls
+      icon: mdi:rotate-360
+      collapsed: true
+      input:
+        small_rotation_max:
+          name: Small Rotation Maximum
+          description: "The maximum \"Step Size\" of a \"Small Rotation\".\nA rotation
+            event with a step size between 1 and this value (inclusively) \nwill cause
+            either the clockwise or counterclockwise \"small\" rotation action\nto
+            run\n"
+          default: 13
+          selector:
+            number:
+              min: 1.0
+              max: 100.0
+              step: 1.0
+              mode: box
+        medium_rotation_max:
+          name: Medium Rotation Maximum
+          description: "The maximum \"Step Size\" of a \"Medium Rotation\".\nA rotation
+            event with a \"Step Size\" greater than the \"Small Rotation Maximum\",\nand
+            less than or equal to this value (inclusively) will cause either the\nclockwise
+            or counterclockwise \"medium\" rotation action to run\n\n** A rotation
+            event with a \"Step Size\" greater than this value will be treated \nas
+            a \"Large Rotation\" **\n"
+          default: 24
+          selector:
+            number:
+              min: 1.0
+              max: 100.0
+              step: 1.0
+              mode: box
+        clockwise_rotation_small:
+          name: Clockwise Rotation - Small
+          description: Action to run when a small clockwise rotation occurs
+          default: []
+          selector:
+            action: {}
+        clockwise_rotation_medium:
+          name: Clockwise Rotation - Medium
+          description: Action to run when a medium clockwise rotation occurs
+          default: []
+          selector:
+            action: {}
+        clockwise_rotation_large:
+          name: Clockwise Rotation - Large
+          description: Action to run when a large clockwise rotation occurs
+          default: []
+          selector:
+            action: {}
+        counter_clockwise_rotation_small:
+          name: Counterclockwise Rotation - Small
+          description: Action to run when a small counterclockwise rotation occurs
+          default: []
+          selector:
+            action: {}
+        counter_clockwise_rotation_medium:
+          name: Counterclockwise Rotation - Medium
+          description: Action to run when a medium counterclockwise rotation occurs
+          default: []
+          selector:
+            action: {}
+        counter_clockwise_rotation_large:
+          name: Counterclockwise Rotation - Large
+          description: Action to run when a large counterclockwise rotation occurs
+          default: []
+          selector:
+            action: {}
+    button_1_custom:
+      name: Button 1 - Custom Actions
+      icon: mdi:numeric-1-circle-outline
+      collapsed: true
+      input:
+        button_1_short:
+          name: Button 1 (Short Press)
+          description: Action to run on a short press of Button 1
+          default: []
+          selector:
+            action: {}
+        button_1_short_release:
+          name: Button 1 (Short Release)
+          description: Action to run on a release of Button 1 after a short press
+          default: []
+          selector:
+            action: {}
+        button_1_long:
+          name: Button 1 (Long Press)
+          description: Action to run on a long press of Button 1. Will repeat while
+            the button is held
+          default: []
+          selector:
+            action: {}
+        button_1_long_release:
+          name: Button 1 (Long Release)
+          description: Action to run when Button 1 is released after a long press
+          default: []
+          selector:
+            action: {}
+        button_1_double:
+          name: Button 1 (Double Press)
+          description: Action to run on a double press of Button 1
+          default: []
+          selector:
+            action: {}
+        button_1_triple:
+          name: Button 1 (Triple Press)
+          description: Action to run on a triple press of Button 1
+          default: []
+          selector:
+            action: {}
+        button_1_quadruple:
+          name: Button 1 (Quadruple Press)
+          description: Action to run on a quadruple press of Button 1
+          default: []
+          selector:
+            action: {}
+        button_1_quintuple:
+          name: Button 1 (Quintuple Press)
+          description: Action to run on a quintuple press of Button 1
+          default: []
+          selector:
+            action: {}
+    button_2_custom:
+      name: Button 2 - Custom Actions
+      icon: mdi:numeric-2-circle-outline
+      collapsed: true
+      input:
+        button_2_short:
+          name: Button 2 (Short Press)
+          description: Action to run on a short press of Button 2
+          default: []
+          selector:
+            action: {}
+        button_2_short_release:
+          name: Button 2 (Short Release)
+          description: Action to run on a release of Button 2 after a short press
+          default: []
+          selector:
+            action: {}
+        button_2_long:
+          name: Button 2 (Long Press)
+          description: Action to run on a long press of Button 2. Will repeat while
+            the button is held
+          default: []
+          selector:
+            action: {}
+        button_2_long_release:
+          name: Button 2 (Long Release)
+          description: Action to run when Button 2 is released after a long press
+          default: []
+          selector:
+            action: {}
+        button_2_double:
+          name: Button 2 (Double Press)
+          description: Action to run on a double press of Button 2
+          default: []
+          selector:
+            action: {}
+        button_2_triple:
+          name: Button 2 (Triple Press)
+          description: Action to run on a triple press of Button 2
+          default: []
+          selector:
+            action: {}
+        button_2_quadruple:
+          name: Button 2 (Quadruple Press)
+          description: Action to run on a quadruple press of Button 2
+          default: []
+          selector:
+            action: {}
+        button_2_quintuple:
+          name: Button 2 (Quintuple Press)
+          description: Action to run on a quintuple press of Button 2
+          default: []
+          selector:
+            action: {}
+    button_3_custom:
+      name: Button 3 - Custom Actions
+      icon: mdi:numeric-3-circle-outline
+      collapsed: true
+      input:
+        button_3_short:
+          name: Button 3 (Short Press)
+          description: Action to run on a short press of Button 3
+          default: []
+          selector:
+            action: {}
+        button_3_short_release:
+          name: Button 3 (Short Release)
+          description: Action to run on a release of Button 3 after a short press
+          default: []
+          selector:
+            action: {}
+        button_3_long:
+          name: Button 3 (Long Press)
+          description: Action to run on a long press of Button 3. Will repeat while
+            the button is held
+          default: []
+          selector:
+            action: {}
+        button_3_long_release:
+          name: Button 3 (Long Release)
+          description: Action to run when Button 3 is released after a long press
+          default: []
+          selector:
+            action: {}
+        button_3_double:
+          name: Button 3 (Double Press)
+          description: Action to run on a double press of Button 3
+          default: []
+          selector:
+            action: {}
+        button_3_triple:
+          name: Button 3 (Triple Press)
+          description: Action to run on a triple press of Button 3
+          default: []
+          selector:
+            action: {}
+        button_3_quadruple:
+          name: Button 3 (Quadruple Press)
+          description: Action to run on a quadruple press of Button 3
+          default: []
+          selector:
+            action: {}
+        button_3_quintuple:
+          name: Button 3 (Quintuple Press)
+          description: Action to run on a quintuple press of Button 3
+          default: []
+          selector:
+            action: {}
+    button_4_custom:
+      name: Button 4 - Custom Actions
+      icon: mdi:numeric-4-circle-outline
+      collapsed: true
+      input:
+        button_4_short:
+          name: Button 4 (Short Press)
+          description: Action to run on a short press of Button 4
+          default: []
+          selector:
+            action: {}
+        button_4_short_release:
+          name: Button 4 (Short Release)
+          description: Action to run on a release of Button 4 after a short press
+          default: []
+          selector:
+            action: {}
+        button_4_long:
+          name: Button 4 (Long Press)
+          description: Action to run on a long press of Button 4. Will repeat while
+            the button is held
+          default: []
+          selector:
+            action: {}
+        button_4_long_release:
+          name: Button 4 (Long Release)
+          description: Action to run when Button 4 is released after a long press
+          default: []
+          selector:
+            action: {}
+        button_4_double:
+          name: Button 4 (Double Press)
+          description: Action to run on a double press of Button 4
+          default: []
+          selector:
+            action: {}
+        button_4_triple:
+          name: Button 4 (Triple Press)
+          description: Action to run on a triple press of Button 4
+          default: []
+          selector:
+            action: {}
+        button_4_quadruple:
+          name: Button 4 (Quadruple Press)
+          description: Action to run on a quadruple press of Button 4
+          default: []
+          selector:
+            action: {}
+        button_4_quintuple:
+          name: Button 4 (Quintuple Press)
+          description: Action to run on a quintuple press of Button 4
+          default: []
+          selector:
+            action: {}
+mode: restart
+max_exceeded: silent
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input remote
+action:
+- variables:
+    command: '{{ trigger.event.data.command }}'
+    step_mode: '{{ trigger.event.data.params.step_mode if command == ''step_with_on_off'' }}'
+    step_size: '{{ trigger.event.data.params.step_size if command == ''step_with_on_off'' }}'
+    # As of Jan 15 2025, the RDM002 quick will generate a spurious step_with_on_off when a button is
+    # long pressed. We detect the pattern of these spurious events and ignore them 
+    bad_step_event: '{{ command == ''step_with_on_off'' and trigger.event.data.params.transition_time == 8 }}'
+    logbook_enabled: !input logbook_enabled
+    small_rotation_max: !input small_rotation_max
+    medium_rotation_max: !input medium_rotation_max
+    remote: !input remote
+- choose:
+  - conditions: '{{ logbook_enabled and not bad_step_event }}'
+    sequence:
+    - service: logbook.log
+      data:
+        name: Hue Tap Dial
+        message: "Dial: {{ remote }}, Player: {{ player_friendly_name }}, Command:
+          {{ command }}  {% if command == 'step_with_on_off' %} , Step Mode: {{ step_mode}},
+          Step Size: {{ step_size }}  {% endif %} - \n"
+- choose:
+  - conditions: '{{ command == ''button_1_press'' }}'
+    sequence: !input button_1_short
+  - conditions: '{{ command == ''button_1_short_release'' }}'
+    sequence: !input button_1_short_release
+  - conditions: '{{ command == ''button_1_hold'' }}'
+    sequence: !input button_1_long
+  - conditions: '{{ command == ''button_1_long_release'' }}'
+    sequence: !input button_1_long_release
+  - conditions: '{{ command == ''button_1_double_press'' }}'
+    sequence: !input button_1_double
+  - conditions: '{{ command == ''button_1_triple_press'' }}'
+    sequence: !input button_1_triple
+  - conditions: '{{ command == ''button_1_quadruple_press'' }}'
+    sequence: !input button_1_quadruple
+  - conditions: '{{ command == ''button_1_quintuple_press'' }}'
+    sequence: !input button_1_quintuple
+  - conditions: '{{ command == ''button_2_press'' }}'
+    sequence: !input button_2_short
+  - conditions: '{{ command == ''button_2_short_release'' }}'
+    sequence: !input button_2_short_release
+  - conditions: '{{ command == ''button_2_hold'' }}'
+    sequence: !input button_2_long
+  - conditions: '{{ command == ''button_2_long_release'' }}'
+    sequence: !input button_2_long_release
+  - conditions: '{{ command == ''button_2_double_press'' }}'
+    sequence: !input button_2_double
+  - conditions: '{{ command == ''button_2_triple_press'' }}'
+    sequence: !input button_2_triple
+  - conditions: '{{ command == ''button_2_quadruple_press'' }}'
+    sequence: !input button_2_quadruple
+  - conditions: '{{ command == ''button_2_quintuple_press'' }}'
+    sequence: !input button_2_quintuple
+  - conditions: '{{ command == ''button_3_press'' }}'
+    sequence: !input button_3_short
+  - conditions: '{{ command == ''button_3_short_release'' }}'
+    sequence: !input button_3_short_release
+  - conditions: '{{ command == ''button_3_hold'' }}'
+    sequence: !input button_3_long
+  - conditions: '{{ command == ''button_3_long_release'' }}'
+    sequence: !input button_3_long_release
+  - conditions: '{{ command == ''button_3_double_press'' }}'
+    sequence: !input button_3_double
+  - conditions: '{{ command == ''button_3_triple_press'' }}'
+    sequence: !input button_3_triple
+  - conditions: '{{ command == ''button_3_quadruple_press'' }}'
+    sequence: !input button_3_quadruple
+  - conditions: '{{ command == ''button_3_quintuple_press'' }}'
+    sequence: !input button_3_quintuple
+  - conditions: '{{ command == ''button_4_press'' }}'
+    sequence: !input button_4_short
+  - conditions: '{{ command == ''button_4_short_release'' }}'
+    sequence: !input button_4_short_release
+  - conditions: '{{ command == ''button_4_hold'' }}'
+    sequence: !input button_4_long
+  - conditions: '{{ command == ''button_4_long_release'' }}'
+    sequence: !input button_4_long_release
+  - conditions: '{{ command == ''button_4_double_press'' }}'
+    sequence: !input button_4_double
+  - conditions: '{{ command == ''button_4_triple_press'' }}'
+    sequence: !input button_4_triple
+  - conditions: '{{ command == ''button_4_quadruple_press'' }}'
+    sequence: !input button_4_quadruple
+  - conditions: '{{ command == ''button_4_quintuple_press'' }}'
+    sequence: !input button_4_quintuple
+    
+  - conditions: '{{ command == ''step_with_on_off'' and not bad_step_event }}'
+    sequence:
+    - variables:
+        step_size_name: "{% if step_size <= small_rotation_max %}\n  {{ \"Small\"
+          }}\n{% elif step_size <= medium_rotation_max %}\n  {{ \"Medium\" }}\n{%
+          else %}\n  {{ \"Large\" }}\n{% endif %}              \n"
+    - choose:
+      - conditions: '{{ step_mode == ''StepMode.Up'' }}'
+        sequence:
+        - choose:
+          - conditions: '{{ step_size_name == ''Small'' }}'
+            sequence: !input clockwise_rotation_small
+          - conditions: '{{ step_size_name == ''Medium'' }}'
+            sequence: !input clockwise_rotation_medium
+          - conditions: '{{ step_size_name == ''Large'' }}'
+            sequence: !input clockwise_rotation_large
+        - choose:
+          - conditions: '{{ logbook_enabled }}'
+            sequence:
+            - service: logbook.log
+              data:
+                name: Hue Tap Dial
+                message: '{{ step_size_name}} clockwise rotation event'
+      - conditions: '{{ step_mode == ''StepMode.Down'' }}'
+        sequence:
+        - choose:
+          - conditions: '{{ step_size_name == ''Small'' }}'
+            sequence: !input counter_clockwise_rotation_small
+          - conditions: '{{ step_size_name == ''Medium'' }}'
+            sequence: !input counter_clockwise_rotation_medium
+          - conditions: '{{ step_size_name == ''Large'' }}'
+            sequence: !input counter_clockwise_rotation_large
+        - choose:
+          - conditions: '{{ logbook_enabled }}'
+            sequence:
+            - service: logbook.log
+              data:
+                name: Hue Tap Dial
+                message: '{{ step_size_name}} counterclockwise rotation event'

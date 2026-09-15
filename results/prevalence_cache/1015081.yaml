@@ -1,0 +1,112 @@
+blueprint:
+  name: Third Reality Button - 3RSB01085Z Multi-Button Multi-Action
+  description: >
+    Trigger three configurable actions from a three button ZHA device based on
+    single press, double press, hold, and release actions. Originally designed for Third Reality Smart Button Model: 3RSB01085Z set up in ZHA.
+  domain: automation
+  input:
+    smart_button_zb2:
+      name: Smart Button ZB2
+      description: The ZHA device for your Smart buttons.
+      selector:
+        device:
+          integration: zha
+          manufacturer: Third Reality, Inc
+          model: 3RSB01085Z
+          multiple: false
+    button_one_short_press:
+      name: Button 1, single press
+      description: Action to run on button 1 single press
+      default: []
+      selector:
+        action: {}
+    button_one_double_press:
+      name: Button 1, double press
+      description: Action to run on button 1 double press
+      default: []
+      selector:
+        action: {}
+    button_one_long_press:
+      name: Button 1, long press
+      description: Action to run on button 1 long press
+      default: []
+      selector:
+        action: {}
+    button_two_short_press:
+      name: Button 2, single press
+      description: Action to run on button 2 single press
+      default: []
+      selector:
+        action: {}
+    button_two_double_press:
+      name: Button 2, double press
+      description: Action to run on button 2 double press
+      default: []
+      selector:
+        action: {}
+    button_two_long_press:
+      name: Button 2, long press
+      description: Action to run on button 2 long press
+      default: []
+      selector:
+        action: {}
+    button_three_short_press:
+      name: Button 3, single press
+      description: Action to run on button 3 single press
+      default: []
+      selector:
+        action: {}
+    button_three_double_press:
+      name: Button 3, double press
+      description: Action to run on button 3 double press
+      default: []
+      selector:
+        action: {}
+    button_three_long_press:
+      name: Button 3, long press
+      description: Action to run on button 3 long press
+      default: []
+      selector:
+        action: {}
+  source_url: https://gist.github.com/Rodney-Smith/b09398bef9883f38c84eedbd03ad422d
+  author: Rodney Smith
+mode: restart
+max_exceeded: silent
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input smart_button_zb2
+conditions: []
+action:
+- variables:
+    command: '{{ trigger.event.data.command }}'
+    endpoint_id: '{{ trigger.event.data.endpoint_id }}'
+- choose:
+  - conditions: '{{ command == ''single'' }}'
+    sequence:
+    - choose:
+      - conditions: '{{ endpoint_id == 1 }}'
+        sequence: !input button_one_short_press
+      - conditions: '{{ endpoint_id == 2 }}'
+        sequence: !input button_two_short_press
+      - conditions: '{{ endpoint_id == 3 }}'
+        sequence: !input button_three_short_press
+  - conditions: '{{ command == ''double'' }}'
+    sequence:
+    - choose:
+      - conditions: '{{ endpoint_id == 1 }}'
+        sequence: !input button_one_double_press
+      - conditions: '{{ endpoint_id == 2 }}'
+        sequence: !input button_two_double_press
+      - conditions: '{{ endpoint_id == 3 }}'
+        sequence: !input button_three_double_press
+  - conditions: '{{ command == ''release'' }}'
+    sequence:
+    - choose:
+      - conditions: '{{ endpoint_id == 1 }}'
+        sequence: !input button_one_long_press
+      - conditions: '{{ endpoint_id == 2 }}'
+        sequence: !input button_two_long_press
+      - conditions: '{{ endpoint_id == 3 }}'
+        sequence: !input button_three_long_press
