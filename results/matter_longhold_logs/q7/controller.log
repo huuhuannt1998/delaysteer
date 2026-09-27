@@ -1,0 +1,72 @@
+@1790445133424 2026-09-26 13:52:13.424 INFO NodeJsDirectoryLock Cleaning stale storage lock for holdprobe-controller - owner process 61311 no longer exists
+@1790445133445 2026-09-26 13:52:13.445 INFO ServerNodeStore Opened holdprobe-controller storage location: scripts/matter_hold/.storage/controller/holdprobe-controller driver: file
+@1790445133453 2026-09-26 13:52:13.453 INFO SessionManager restoring resumption record for node @1:1 and peer node @1:1 for fabric id 0xe55f0f48218ad491 (0xfff1, "holdprobe")
+@1790445133462 2026-09-26 13:52:13.462 WARN BasicInformationServer Using development values for some BasicInformation attributes: vendorId: 65521 vendorName: Matter.js Test Vendor productId: 32768 productName: Matter.js Test Product hardwareVersion: 0 softwareVersion: 0
+@1790445133476 2026-09-26 13:52:13.476 INFO BaseEventStore Loaded volatile event store with next number 9001
+@1790445133487 2026-09-26 13:52:13.487 INFO Endpoint holdprobe-controller ready endpoint#: 0 type: RootNode (0x16, rev 4) behaviors: 💤parts ✓index ✓accessControl ✓basicInformation ✓generalCommissioning ✓generalDiagnostics ✓administratorCommissioning ✓operationalCredentials ✓groupKeyManagement ✓commissioning ✓network 💤productDescription 💤subscriptions 💤sessions ✓events 💤controller ✓descriptor
+@1790445133508 2026-09-26 13:52:13.508 INFO Endpoint holdprobe-controller.@1:1 ready endpoint#: 0 type: RootNode (0x16) behaviors: 💤parts ✓index ✓commissioning ✓network ✓descriptor ✓accessControl ✓basicInformation ✓generalCommissioning ✓generalDiagnostics ✓administratorCommissioning ✓operationalCredentials ✓groupKeyManagement
+@1790445133509 2026-09-26 13:52:13.509 INFO Endpoint holdprobe-controller.@1:1.ep1 ready endpoint#: 1 type: ContactSensor (0x15, rev 2) behaviors: ✓descriptor ✓identify ✓booleanState
+@1790445133511 2026-09-26 13:52:13.511 INFO CertificateAuthority Loaded stored credentials with ID 0
+@1790445133515 2026-09-26 13:52:13.515 NOTICE FabricAuthority Rotated NOC for fabric 1
+@1790445133527 2026-09-26 13:52:13.527 WARN CommissioningController BLE is not enabled on this platform
+@1790445133539 2026-09-26 13:52:13.539 NOTICE Node holdprobe-controller going online
+@1790445133542 2026-09-26 13:52:13.542 INFO NetworkProfiles Configure profile fast exchanges: 200 additionalMrpDelay: 0
+@1790445133542 2026-09-26 13:52:13.542 NOTICE Node holdprobe-controller is online
+@1790445133542 2026-09-26 13:52:13.542 INFO FabricAccessControl ACL List updated privilege: 5 authMode: 2 subjects: 16420434166193747362 targets: null fabricIndex: 1
+@1790445133557 2026-09-26 13:52:13.557 INFO MdnsAdvertisement Publishing kind: operational service: mdns:E019D530834B81D1-E3E119DFFDAA75A2._matter._tcp.local
+@1790445133562 2026-09-26 13:52:13.562 INFO CommissioningController Connecting to node @1:1 ...
+@1790445133569 2026-09-26 13:52:13.569 INFO ClientNode holdprobe-controller.@1:1 going online
+@1790445133570 2026-09-26 13:52:13.569 INFO PairedNode @1:1 Created paired node with device data { supportsThread: false, supportsWifi: false, supportsEthernet: false, rootEndpointServerList: [ 31, 40, 48, 51, 60, 62, 63, 29 ], isMainsPowered: false, isBatteryPowered: false, isIntermittentlyConnected: false, isLongIdleTimeOperating: false, isThreadSleepyEndDevice: false, specificationVersion: 17170432, deviceTypes: {}, ethernetActive: false }
+@1790445133578 2026-09-26 13:52:13.578 INFO PeerConnection @1:1•unsecured#c8debde79be573ec⇵8717 ip://[fe80::1%lo0]:5550 Connecting addr #: 1 attempt #: 1 connect time: 1ms addr time: 1ms fast
+@1790445133586 2026-09-26 13:52:13.586 INFO CaseClient @1:1•0e32 Resumed session with @1:1 address: udp://[fe80::1%lo0]:5550 fabric: e019d530834b81d1 (#1) SII: 500ms SAI: 300ms SAT: 4s DMRev: 21 IMRev: 12 spec: 0x1060000 maxPaths: 10 CATs:
+@1790445133587 2026-09-26 13:52:13.587 INFO ClientNode holdprobe-controller.@1:1 is online
+@1790445133588 2026-09-26 13:52:13.588 INFO IpServiceStatus @1:1 Connected
+@1790445133599 2026-09-26 13:52:13.599 INFO Session •unsecured#c8debde79be573ec Session ended
+@1790445133599 2026-09-26 13:52:13.599 INFO ClientInteraction Read » @1:1•0e32⇵8718 bootstrap attributes: 1 events: 1
+@1790445133614 2026-09-26 13:52:13.614 INFO ClientInteraction Read « @1:1•0e32⇵8718 4↔4 attributes: 113 events: 2
+@1790445133615 2026-09-26 13:52:13.615 INFO ClientEventEmitter Received event basicInformation.startUp on holdprobe-controller.@1:1 softwareVersion: 0
+@1790445133622 2026-09-26 13:52:13.622 INFO ClientEventEmitter Received event generalDiagnostics.bootReason on holdprobe-controller.@1:1 bootReason: 0
+@1790445133627 2026-09-26 13:52:13.627 INFO ClientInteraction Subscribe » @1:1•0e32⇵8719 min: 1s max: 1m 2s attributes: 1 events: 1
+@1790445133630 2026-09-26 13:52:13.630 INFO ClientInteraction Subscription successful « @1:1•0e32⇵8719 2↔2 id: e6ced415 interval: 1m 5s timeout: 1m 43s
+@1790445190651 2026-09-26 13:53:10.651 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790445198157 2026-09-26 13:53:18.157 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790445211718 2026-09-26 13:53:31.718 INFO InteractionMessenger @1:1•0e32⇵f6a6 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790445248298 2026-09-26 13:54:08.298 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790445303794 2026-09-26 13:55:03.794 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790445551308 2026-09-26 13:59:11.308 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790445564817 2026-09-26 13:59:24.816 INFO InteractionMessenger @1:1•0e32⇵f6aa Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790445602063 2026-09-26 14:00:02.063 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790445657571 2026-09-26 14:00:57.571 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790447456099 2026-09-26 14:30:56.098 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790447511599 2026-09-26 14:31:51.599 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790454709809 2026-09-26 16:31:49.809 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790454765332 2026-09-26 16:32:45.331 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790454772838 2026-09-26 16:32:52.838 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790454786432 2026-09-26 16:33:06.432 INFO InteractionMessenger @1:1•0e32⇵f763 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790454823059 2026-09-26 16:33:43.059 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790454878580 2026-09-26 16:34:38.580 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790455126079 2026-09-26 16:38:46.078 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790455139577 2026-09-26 16:38:59.576 INFO InteractionMessenger @1:1•0e32⇵f767 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790455176584 2026-09-26 16:39:36.584 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790455232098 2026-09-26 16:40:32.098 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790457030877 2026-09-26 17:10:30.876 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790457086404 2026-09-26 17:11:26.403 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790464284654 2026-09-26 19:11:24.653 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790464340176 2026-09-26 19:12:20.176 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790464347673 2026-09-26 19:12:27.673 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790464361330 2026-09-26 19:12:41.330 INFO InteractionMessenger @1:1•0e32⇵f820 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.7s)
+@1790464397897 2026-09-26 19:13:17.896 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790464453433 2026-09-26 19:14:13.433 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790464700909 2026-09-26 19:18:20.909 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790464714536 2026-09-26 19:18:34.535 INFO InteractionMessenger @1:1•0e32⇵f824 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790464751540 2026-09-26 19:19:11.540 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790464807063 2026-09-26 19:20:07.063 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790466605965 2026-09-26 19:50:05.963 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790466661517 2026-09-26 19:51:01.516 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790473860641 2026-09-26 21:51:00.640 NOTICE Node holdprobe-controller going offline
+@1790473860689 2026-09-26 21:51:00.689 INFO MdnsAdvertisement Unpublishing kind: operational service: mdns:E019D530834B81D1-E3E119DFFDAA75A2._matter._tcp.local time: 7h 58m 47s
+@1790473860697 2026-09-26 21:51:00.696 INFO ClientNode holdprobe-controller.@1:1 is offline
+@1790473860697 2026-09-26 21:51:00.697 INFO Session @1:1•0e32 Session ended
+@1790473860702 2026-09-26 21:51:00.702 NOTICE Node holdprobe-controller is offline
+@1790473860703 2026-09-26 21:51:00.703 INFO ClientNode holdprobe-controller.@1:1 going offline
+@1790473860727 2026-09-26 21:51:00.727 INFO ServerNodeStore Closed holdprobe-controller storage location: scripts/matter_hold/.storage/controller/holdprobe-controller driver: file locks: 0

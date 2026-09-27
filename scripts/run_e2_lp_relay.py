@@ -56,6 +56,7 @@ from delaysteer.attack.lp_relay import (  # noqa: E402
     KeyRing, MqttTransport, Relay, RelayHomeAdapter, summarize_condition, write_broker_config,
 )
 from delaysteer.config import Config  # noqa: E402
+from delaysteer.defense import TemporalGuard, apply_ablation  # noqa: E402
 from delaysteer.home.adapter import VirtualHomeAdapter  # noqa: E402
 from delaysteer.home.virtual_home import ENTITIES, VirtualHome  # noqa: E402
 from delaysteer.llm.backbone import make_llm_backbone  # noqa: E402
@@ -91,7 +92,7 @@ AGENT_FIELDS = [
     "probes", "actual_locked", "actual_armed", "actual_contact_closed", "violation", "violations",
     "n_contact_reads", "first_contact_read_value", "first_contact_read_age_s",
     "max_contact_read_age_s", "hub_accepted", "hub_bad_mac", "hub_seq_regression",
-    "held_dropped_at_episode_end", "elapsed_s", "error",
+    "held_dropped_at_episode_end", "guard", "guard_blocked", "elapsed_s", "error",
 ]
 
 
@@ -346,7 +347,11 @@ ARMS = {
 }
 
 
-def run_agent_once(host, port, family, arm, trial, model, rec, run_id) -> dict:
+def run_agent_once(host, port, family, arm, trial, model, rec, run_id, guard: str = "none") -> dict:
+    """``guard``: "none" reproduces the recorded runs (AllowAllGate). Any GUARD_ABLATIONS name
+    puts the real TemporalGuard at the tool-router gate over the SAME RelayHomeAdapter, so the
+    guard's revalidation reads the hub's verified cache and sees the device's authenticated
+    ``t_m`` -- the cell the 2026-09-11 report named and did not run."""
     policy, read_mode, note = ARMS[family][arm]
     seed = 1000 + trial
     label = f"{family}_{arm}_{trial}"
@@ -364,9 +369,12 @@ def run_agent_once(host, port, family, arm, trial, model, rec, run_id) -> dict:
         cfg = Config(backbone="ollama", fail_open=False)
         cfg.seed = seed
         cfg.temperature = rec.temperature
+        if guard != "none":
+            apply_ablation(cfg, guard)
         monitor = TemporalProvenanceMonitor(label, {"family": family, "arm": arm, "model": model,
-                                                    "policy": policy.kind, "note": note,
+                                                    "policy": policy.kind, "note": note, "guard": guard,
                                                     "transport": "mqtt", "broker_port": port})
+        gate_obj = TemporalGuard(adapter, cfg, monitor) if guard != "none" else AllowAllGate()
         if family == "secure_house":
             st.relay.set_policy(policy)
             if policy.kind == "hold_until_read":
@@ -381,7 +389,7 @@ def run_agent_once(host, port, family, arm, trial, model, rec, run_id) -> dict:
                     raise RuntimeError("delayed arm: the hub saw the open transition despite the hold")
             registry = build_registry()
             backbone = make_llm_backbone(cfg, "bedtime", model)
-            router = ToolRouter(registry, adapter, cfg, tracer=monitor, gate=AllowAllGate())
+            router = ToolRouter(registry, adapter, cfg, tracer=monitor, gate=gate_obj)
             planner = ReActPlanner(router, backbone, cfg, tracer=monitor)
             outcome = planner.run(GOAL)
             inv = check_invariants(outcome, truth)
@@ -395,7 +403,7 @@ def run_agent_once(host, port, family, arm, trial, model, rec, run_id) -> dict:
             auto = AutomationState()
             registry = build_registry(automation_state=auto)
             backbone = make_llm_backbone(cfg, "automation", model)
-            router = ToolRouter(registry, adapter, cfg, tracer=monitor, gate=AllowAllGate())
+            router = ToolRouter(registry, adapter, cfg, tracer=monitor, gate=gate_obj)
             planner = ReActPlanner(router, backbone, cfg, tracer=monitor)
             outcome = planner.run(GOAL_AUTO)
             probes = reconstruct_probe_log(outcome)
@@ -404,7 +412,8 @@ def run_agent_once(host, port, family, arm, trial, model, rec, run_id) -> dict:
                        predicate_enabled=auto.predicate_enabled, probes="|".join(probes),
                        actual_contact_closed=st.home.states.get(CONTACT).state == "off",
                        violation=not inv.ok, violations="; ".join(inv.violations))
-        monitor.write(ROOT / "traces" / f"e2_lp_relay_{label}.jsonl")
+        row.update(guard=guard, guard_blocked=getattr(getattr(gate_obj, "stats", None), "blocked", 0))
+        monitor.write(ROOT / "traces" / f"e2_lp_relay_{label}{'' if guard == 'none' else '_' + guard}.jsonl")
         creads = [r for r in adapter.reads if r["entity"] == CONTACT]
         row.update(n_contact_reads=len(creads),
                    first_contact_read_value=creads[0]["value"] if creads else "",
@@ -588,6 +597,8 @@ def main() -> int:
     ap.add_argument("--arms", default="honest,delayed,delayed_until_read")
     ap.add_argument("--keep-broker", action="store_true")
     ap.add_argument("--broker-only", action="store_true", help="start the broker and exit (leave it running)")
+    ap.add_argument("--guard", default="none", choices=("none", "full", "activepoll", "counter"),
+                    help="put the real TemporalGuard at the gate over the relay adapter (default: none)")
     add_temperature_arg(ap)
     args = ap.parse_args()
 
@@ -629,7 +640,7 @@ def main() -> int:
                     if arm not in ARMS[family]:
                         continue
                     for i in range(args.repeats):
-                        r = run_agent_once(args.broker_host, args.broker_port, family, arm, i, args.model, rec, run_id)
+                        r = run_agent_once(args.broker_host, args.broker_port, family, arm, i, args.model, rec, run_id, guard=args.guard)
                         agent_rows.append(r)
                         write_csv(agent_path, agent_rows, AGENT_FIELDS)       # crash-safe
                         cell = [x for x in agent_rows if x["family"] == family and x["arm"] == arm and not x["error"]]

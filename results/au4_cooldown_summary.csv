@@ -1,0 +1,4 @@
+arm,n,suppressed,wilson95,hold_s,reopen_s,e1_forwarded_after_s_max
+attack,20,20,84-100,28.0,40.0,28.02
+benign,20,0,0-16,0.0,40.0,0.0
+natural,20,20,84-100,0.0,10.0,0.0

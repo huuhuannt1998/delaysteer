@@ -1,0 +1,500 @@
+@1790318291016 2026-09-25 02:38:11.016 INFO NodeJsDirectoryLock Cleaning stale storage lock for holdprobe-controller - owner process 24247 no longer exists
+@1790318291040 2026-09-25 02:38:11.040 INFO ServerNodeStore Opened holdprobe-controller storage location: scripts/matter_hold/.storage/controller/holdprobe-controller driver: file
+@1790318291049 2026-09-25 02:38:11.049 INFO SessionManager restoring resumption record for node @1:1 and peer node @1:1 for fabric id 0xe55f0f48218ad491 (0xfff1, "holdprobe")
+@1790318291058 2026-09-25 02:38:11.058 WARN BasicInformationServer Using development values for some BasicInformation attributes: vendorId: 65521 vendorName: Matter.js Test Vendor productId: 32768 productName: Matter.js Test Product hardwareVersion: 0 softwareVersion: 0
+@1790318291073 2026-09-25 02:38:11.073 INFO BaseEventStore Loaded volatile event store with next number 4001
+@1790318291084 2026-09-25 02:38:11.083 INFO Endpoint holdprobe-controller ready endpoint#: 0 type: RootNode (0x16, rev 4) behaviors: 💤parts ✓index ✓accessControl ✓basicInformation ✓generalCommissioning ✓generalDiagnostics ✓administratorCommissioning ✓operationalCredentials ✓groupKeyManagement ✓commissioning ✓network 💤productDescription 💤subscriptions 💤sessions ✓events 💤controller ✓descriptor
+@1790318291106 2026-09-25 02:38:11.106 INFO Endpoint holdprobe-controller.@1:1 ready endpoint#: 0 type: RootNode (0x16) behaviors: 💤parts ✓index ✓commissioning ✓network ✓descriptor ✓accessControl ✓basicInformation ✓generalCommissioning ✓generalDiagnostics ✓administratorCommissioning ✓operationalCredentials ✓groupKeyManagement
+@1790318291108 2026-09-25 02:38:11.108 INFO Endpoint holdprobe-controller.@1:1.ep1 ready endpoint#: 1 type: ContactSensor (0x15, rev 2) behaviors: ✓descriptor ✓identify ✓booleanState
+@1790318291109 2026-09-25 02:38:11.109 INFO CertificateAuthority Loaded stored credentials with ID 0
+@1790318291123 2026-09-25 02:38:11.123 NOTICE FabricAuthority Rotated NOC for fabric 1
+@1790318291134 2026-09-25 02:38:11.134 WARN CommissioningController BLE is not enabled on this platform
+@1790318291148 2026-09-25 02:38:11.148 NOTICE Node holdprobe-controller going online
+@1790318291152 2026-09-25 02:38:11.152 INFO NetworkProfiles Configure profile fast exchanges: 200 additionalMrpDelay: 0
+@1790318291152 2026-09-25 02:38:11.152 NOTICE Node holdprobe-controller is online
+@1790318291152 2026-09-25 02:38:11.152 INFO FabricAccessControl ACL List updated privilege: 5 authMode: 2 subjects: 16420434166193747362 targets: null fabricIndex: 1
+@1790318291166 2026-09-25 02:38:11.166 INFO MdnsAdvertisement Publishing kind: operational service: mdns:E019D530834B81D1-E3E119DFFDAA75A2._matter._tcp.local
+@1790318291170 2026-09-25 02:38:11.170 INFO CommissioningController Connecting to node @1:1 ...
+@1790318291176 2026-09-25 02:38:11.176 INFO ClientNode holdprobe-controller.@1:1 going online
+@1790318291177 2026-09-25 02:38:11.176 INFO PairedNode @1:1 Created paired node with device data { supportsThread: false, supportsWifi: false, supportsEthernet: false, rootEndpointServerList: [ 31, 40, 48, 51, 60, 62, 63, 29 ], isMainsPowered: false, isBatteryPowered: false, isIntermittentlyConnected: false, isLongIdleTimeOperating: false, isThreadSleepyEndDevice: false, specificationVersion: 17170432, deviceTypes: {}, ethernetActive: false }
+@1790318291185 2026-09-25 02:38:11.185 INFO PeerConnection @1:1•unsecured#9c5edc39fb658cbc⇵9cfc ip://[fe80::1%lo0]:5550 Connecting addr #: 1 attempt #: 1 connect time: 2ms addr time: 1ms fast
+@1790318291208 2026-09-25 02:38:11.208 INFO CaseClient @1:1•4969 New session with @1:1 2↔2 address: udp://[fe80::1%lo0]:5550 fabric: e019d530834b81d1 (#1) SII: 500ms SAI: 300ms SAT: 4s DMRev: 21 IMRev: 12 spec: 0x1060000 maxPaths: 10 CATs:
+@1790318291209 2026-09-25 02:38:11.209 INFO ClientNode holdprobe-controller.@1:1 is online
+@1790318291210 2026-09-25 02:38:11.210 INFO IpServiceStatus @1:1 Connected
+@1790318291221 2026-09-25 02:38:11.221 INFO Session •unsecured#9c5edc39fb658cbc Session ended
+@1790318291221 2026-09-25 02:38:11.221 INFO ClientInteraction Read » @1:1•4969⇵9cfd bootstrap attributes: 1 events: 1
+@1790318291240 2026-09-25 02:38:11.240 INFO ClientInteraction Read « @1:1•4969⇵9cfd 4↔4 attributes: 113 events: 2
+@1790318291241 2026-09-25 02:38:11.241 INFO ClientEventEmitter Received event basicInformation.startUp on holdprobe-controller.@1:1 softwareVersion: 0
+@1790318291247 2026-09-25 02:38:11.247 INFO ClientEventEmitter Received event generalDiagnostics.bootReason on holdprobe-controller.@1:1 bootReason: 0
+@1790318291253 2026-09-25 02:38:11.253 INFO ClientInteraction Subscribe » @1:1•4969⇵9cfe min: 1s max: 1m 3s attributes: 1 events: 1
+@1790318291257 2026-09-25 02:38:11.257 INFO ClientInteraction Subscription successful « @1:1•4969⇵9cfe 2↔2 id: 35d8ec13 interval: 1m 6s timeout: 1m 44s
+@1790318296819 2026-09-25 02:38:16.819 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318300923 2026-09-25 02:38:20.922 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318308959 2026-09-25 02:38:28.959 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318313078 2026-09-25 02:38:33.078 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318326120 2026-09-25 02:38:46.120 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318330231 2026-09-25 02:38:50.231 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318353255 2026-09-25 02:39:13.255 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318357362 2026-09-25 02:39:17.362 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318357363 2026-09-25 02:39:17.363 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318366870 2026-09-25 02:39:26.870 INFO InteractionMessenger @1:1•4969⇵b4ff Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790318390414 2026-09-25 02:39:50.413 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318394497 2026-09-25 02:39:54.497 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318394497 2026-09-25 02:39:54.497 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318398531 2026-09-25 02:39:58.530 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318402637 2026-09-25 02:40:02.636 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318404032 2026-09-25 02:40:04.032 INFO InteractionMessenger @1:1•4969⇵b501 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790318410689 2026-09-25 02:40:10.688 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318414796 2026-09-25 02:40:14.796 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318427834 2026-09-25 02:40:27.834 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318431946 2026-09-25 02:40:31.946 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318454996 2026-09-25 02:40:54.996 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318459082 2026-09-25 02:40:59.082 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318459083 2026-09-25 02:40:59.083 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318468470 2026-09-25 02:41:08.470 INFO InteractionMessenger @1:1•4969⇵b509 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318492118 2026-09-25 02:41:32.117 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318496223 2026-09-25 02:41:36.223 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318496224 2026-09-25 02:41:36.224 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318500241 2026-09-25 02:41:40.241 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318504339 2026-09-25 02:41:44.339 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318505587 2026-09-25 02:41:45.587 INFO InteractionMessenger @1:1•4969⇵b50b Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318512367 2026-09-25 02:41:52.367 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318516471 2026-09-25 02:41:56.471 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318529500 2026-09-25 02:42:09.500 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318533608 2026-09-25 02:42:13.607 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318556643 2026-09-25 02:42:36.643 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318560727 2026-09-25 02:42:40.727 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318560729 2026-09-25 02:42:40.729 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318570147 2026-09-25 02:42:50.146 INFO InteractionMessenger @1:1•4969⇵b513 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318593772 2026-09-25 02:43:13.772 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318597875 2026-09-25 02:43:17.873 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318597878 2026-09-25 02:43:17.878 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318601899 2026-09-25 02:43:21.899 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318606004 2026-09-25 02:43:26.003 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318607371 2026-09-25 02:43:27.370 INFO InteractionMessenger @1:1•4969⇵b515 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790318614033 2026-09-25 02:43:34.033 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318618158 2026-09-25 02:43:38.158 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318631214 2026-09-25 02:43:51.214 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318635303 2026-09-25 02:43:55.303 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318658334 2026-09-25 02:44:18.334 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318662418 2026-09-25 02:44:22.418 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318662418 2026-09-25 02:44:22.418 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318671867 2026-09-25 02:44:31.867 INFO InteractionMessenger @1:1•4969⇵b51d Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318695418 2026-09-25 02:44:55.418 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318699500 2026-09-25 02:44:59.500 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318699501 2026-09-25 02:44:59.501 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318703526 2026-09-25 02:45:03.525 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318707647 2026-09-25 02:45:07.646 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318709057 2026-09-25 02:45:09.057 INFO InteractionMessenger @1:1•4969⇵b51f Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790318715682 2026-09-25 02:45:15.682 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318719782 2026-09-25 02:45:19.782 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318732813 2026-09-25 02:45:32.813 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318736923 2026-09-25 02:45:36.923 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318759950 2026-09-25 02:45:59.949 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318764060 2026-09-25 02:46:04.060 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318764061 2026-09-25 02:46:04.061 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318773536 2026-09-25 02:46:13.536 INFO InteractionMessenger @1:1•4969⇵b527 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790318797100 2026-09-25 02:46:37.100 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318801182 2026-09-25 02:46:41.182 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318801185 2026-09-25 02:46:41.185 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318810762 2026-09-25 02:46:50.761 INFO InteractionMessenger @1:1•4969⇵b529 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.7s)
+@1790318829229 2026-09-25 02:47:09.229 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318833339 2026-09-25 02:47:13.339 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318833340 2026-09-25 02:47:13.340 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318842739 2026-09-25 02:47:22.738 INFO InteractionMessenger @1:1•4969⇵b52b Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318861374 2026-09-25 02:47:41.373 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318865477 2026-09-25 02:47:45.477 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318865478 2026-09-25 02:47:45.478 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318874854 2026-09-25 02:47:54.854 INFO InteractionMessenger @1:1•4969⇵b52d Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318893531 2026-09-25 02:48:13.531 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318897624 2026-09-25 02:48:17.624 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318897625 2026-09-25 02:48:17.625 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318907027 2026-09-25 02:48:27.027 INFO InteractionMessenger @1:1•4969⇵b52f Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318925660 2026-09-25 02:48:45.660 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318929753 2026-09-25 02:48:49.753 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318929754 2026-09-25 02:48:49.754 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318939277 2026-09-25 02:48:59.277 INFO InteractionMessenger @1:1•4969⇵b531 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790318957780 2026-09-25 02:49:17.779 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318961860 2026-09-25 02:49:21.860 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318961865 2026-09-25 02:49:21.865 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318966895 2026-09-25 02:49:26.894 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318966908 2026-09-25 02:49:26.908 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790318966909 2026-09-25 02:49:26.909 INFO Transaction Tx ◦offline#8b waiting on ◦offline#8a
+@1790318971329 2026-09-25 02:49:31.328 INFO InteractionMessenger @1:1•4969⇵b533 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790318987943 2026-09-25 02:49:47.941 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790318987975 2026-09-25 02:49:47.975 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319014104 2026-09-25 02:50:14.104 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319014123 2026-09-25 02:50:14.123 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319018984 2026-09-25 02:50:18.984 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319032674 2026-09-25 02:50:32.673 INFO InteractionMessenger @1:1•4969⇵b539 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.7s)
+@1790319055191 2026-09-25 02:50:55.190 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319055195 2026-09-25 02:50:55.195 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319080156 2026-09-25 02:51:20.156 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319080177 2026-09-25 02:51:20.177 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319080177 2026-09-25 02:51:20.177 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319093189 2026-09-25 02:51:33.189 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319093191 2026-09-25 02:51:33.191 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319093191 2026-09-25 02:51:33.191 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319093200 2026-09-25 02:51:33.200 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319093201 2026-09-25 02:51:33.201 INFO Transaction Tx ◦offline#99 waiting on ◦offline#98
+@1790319093635 2026-09-25 02:51:33.635 INFO InteractionMessenger @1:1•4969⇵b53c Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319114238 2026-09-25 02:51:54.237 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319114270 2026-09-25 02:51:54.270 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319140620 2026-09-25 02:52:20.620 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319140640 2026-09-25 02:52:20.640 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319145272 2026-09-25 02:52:25.272 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319158756 2026-09-25 02:52:38.755 INFO InteractionMessenger @1:1•4969⇵b542 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319181474 2026-09-25 02:53:01.474 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319181475 2026-09-25 02:53:01.475 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319206443 2026-09-25 02:53:26.443 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319206461 2026-09-25 02:53:26.461 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319206462 2026-09-25 02:53:26.462 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319219490 2026-09-25 02:53:39.489 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319219491 2026-09-25 02:53:39.491 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319219491 2026-09-25 02:53:39.491 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319219496 2026-09-25 02:53:39.496 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319219501 2026-09-25 02:53:39.501 INFO Transaction Tx ◦offline#a8 waiting on ◦offline#a7
+@1790319219957 2026-09-25 02:53:39.957 INFO InteractionMessenger @1:1•4969⇵b545 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319240532 2026-09-25 02:54:00.532 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319240556 2026-09-25 02:54:00.556 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319266720 2026-09-25 02:54:26.719 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319266741 2026-09-25 02:54:26.741 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319271572 2026-09-25 02:54:31.572 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319285044 2026-09-25 02:54:45.044 INFO InteractionMessenger @1:1•4969⇵b54b Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319307765 2026-09-25 02:55:07.765 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319307768 2026-09-25 02:55:07.768 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319332684 2026-09-25 02:55:32.683 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319332698 2026-09-25 02:55:32.698 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319332698 2026-09-25 02:55:32.698 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319345721 2026-09-25 02:55:45.721 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319345725 2026-09-25 02:55:45.725 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319345725 2026-09-25 02:55:45.725 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319345738 2026-09-25 02:55:45.738 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319345738 2026-09-25 02:55:45.738 INFO Transaction Tx ◦offline#b6 waiting on ◦offline#b5
+@1790319346195 2026-09-25 02:55:46.195 INFO InteractionMessenger @1:1•4969⇵b54e Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319366760 2026-09-25 02:56:06.760 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319366773 2026-09-25 02:56:06.773 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319366774 2026-09-25 02:56:06.774 INFO Transaction Tx ◦offline#b8 waiting on ◦offline#b7
+@1790319392736 2026-09-25 02:56:32.735 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319392743 2026-09-25 02:56:32.743 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319397809 2026-09-25 02:56:37.809 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319411452 2026-09-25 02:56:51.451 INFO InteractionMessenger @1:1•4969⇵b554 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790319433994 2026-09-25 02:57:13.994 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319433995 2026-09-25 02:57:13.995 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319458893 2026-09-25 02:57:38.893 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319458906 2026-09-25 02:57:38.906 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319458906 2026-09-25 02:57:38.906 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319471916 2026-09-25 02:57:51.915 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319471919 2026-09-25 02:57:51.919 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319471919 2026-09-25 02:57:51.919 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319471927 2026-09-25 02:57:51.927 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319471927 2026-09-25 02:57:51.927 INFO Transaction Tx ◦offline#c4 waiting on ◦offline#c3
+@1790319472361 2026-09-25 02:57:52.361 INFO InteractionMessenger @1:1•4969⇵b557 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319492940 2026-09-25 02:58:12.940 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319492944 2026-09-25 02:58:12.944 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319492945 2026-09-25 02:58:12.945 INFO Transaction Tx ◦offline#c7 waiting on ◦offline#c6
+@1790319519044 2026-09-25 02:58:39.044 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319519059 2026-09-25 02:58:39.059 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319523988 2026-09-25 02:58:43.988 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319537615 2026-09-25 02:58:57.615 INFO InteractionMessenger @1:1•4969⇵b55d Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+@1790319560160 2026-09-25 02:59:20.160 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319560162 2026-09-25 02:59:20.162 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319585093 2026-09-25 02:59:45.092 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319585101 2026-09-25 02:59:45.101 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319585102 2026-09-25 02:59:45.102 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319593133 2026-09-25 02:59:53.133 INFO ClientInteraction Read » @1:1•4969⇵9cff bootstrap attributes: 1 events: 1
+@1790319593160 2026-09-25 02:59:53.160 INFO ClientInteraction Read « @1:1•4969⇵9cff attributes: 11 events: 0
+@1790319593195 2026-09-25 02:59:53.195 INFO ClientInteraction Subscribe » @1:1•4969⇵9d00 min: 1s max: 18s attributes: 1 events: 1
+@1790319593213 2026-09-25 02:59:53.213 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d00 2↔2 id: 35d8ec14 interval: 21s timeout: 59.5s
+@1790319597803 2026-09-25 02:59:57.803 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319598625 2026-09-25 02:59:58.625 INFO InteractionMessenger @1:1•4969⇵b560 Error sending success after final data report chunk [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+@1790319657286 2026-09-25 03:00:57.285 INFO ClientSubscription Subscription 35d8ec14 to peer @1:1 timed out after 59.5s
+@1790319657300 2026-09-25 03:00:57.300 INFO ClientSubscriptionHandler @1:1•4969⇵b563 Ignoring data report for unknown subscription ID 35d8ec14
+@1790319657301 2026-09-25 03:00:57.301 INFO ClientSubscriptionHandler @1:1•4969⇵b564 Ignoring data report for unknown subscription ID 35d8ec14
+@1790319657301 2026-09-25 03:00:57.301 INFO ClientSubscriptionHandler @1:1•4969⇵b565 Ignoring data report for unknown subscription ID 35d8ec14
+@1790319657308 2026-09-25 03:00:57.308 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790319657313 2026-09-25 03:00:57.313 INFO ClientInteraction Probe » @1:1•4969⇵9d01
+@1790319657330 2026-09-25 03:00:57.330 INFO ClientInteraction Probe « @1:1•4969⇵9d01 (success)
+@1790319657331 2026-09-25 03:00:57.331 INFO ClientInteraction Subscribe » @1:1•4969⇵9d02 min: 1s max: 18s attributes: 1 events: 1
+@1790319657337 2026-09-25 03:00:57.337 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319657351 2026-09-25 03:00:57.351 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d02 2↔2 id: 35d8ec15 interval: 21s timeout: 59.5s
+@1790319670833 2026-09-25 03:01:10.827 WARN ExchangeManager @1:1•4969⇵b565✉05e8c070 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319670895 2026-09-25 03:01:10.895 WARN ExchangeManager @1:1•4969⇵b564✉05e8c06f Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319670990 2026-09-25 03:01:10.990 WARN ExchangeManager @1:1•4969⇵b563✉05e8c06e Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.7s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319683439 2026-09-25 03:01:23.438 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319742919 2026-09-25 03:02:22.918 INFO ClientSubscription Subscription 35d8ec15 to peer @1:1 timed out after 59.5s
+@1790319742932 2026-09-25 03:02:22.932 INFO ClientSubscriptionHandler @1:1•4969⇵b568 Ignoring data report for unknown subscription ID 35d8ec15
+@1790319742932 2026-09-25 03:02:22.932 INFO ClientSubscriptionHandler @1:1•4969⇵b569 Ignoring data report for unknown subscription ID 35d8ec15
+@1790319742932 2026-09-25 03:02:22.932 INFO ClientSubscriptionHandler @1:1•4969⇵b56a Ignoring data report for unknown subscription ID 35d8ec15
+@1790319742934 2026-09-25 03:02:22.934 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790319742935 2026-09-25 03:02:22.935 INFO ClientInteraction Probe » @1:1•4969⇵9d03
+@1790319742945 2026-09-25 03:02:22.945 INFO ClientInteraction Probe « @1:1•4969⇵9d03 (success)
+@1790319742946 2026-09-25 03:02:22.946 INFO ClientInteraction Subscribe » @1:1•4969⇵9d04 min: 1s max: 18s attributes: 1 events: 1
+@1790319742952 2026-09-25 03:02:22.952 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319742972 2026-09-25 03:02:22.972 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d04 2↔2 id: 35d8ec16 interval: 25s timeout: 1m 3s
+@1790319756493 2026-09-25 03:02:36.492 WARN ExchangeManager @1:1•4969⇵b569✉05e8c087 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319756518 2026-09-25 03:02:36.518 WARN ExchangeManager @1:1•4969⇵b56a✉05e8c088 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319756619 2026-09-25 03:02:36.618 WARN ExchangeManager @1:1•4969⇵b568✉05e8c086 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.7s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319769054 2026-09-25 03:02:49.054 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319832537 2026-09-25 03:03:52.537 INFO ClientSubscription Subscription 35d8ec16 to peer @1:1 timed out after 1m 3s
+@1790319832553 2026-09-25 03:03:52.553 INFO ClientSubscriptionHandler @1:1•4969⇵b56d Ignoring data report for unknown subscription ID 35d8ec16
+@1790319832554 2026-09-25 03:03:52.554 INFO ClientSubscriptionHandler @1:1•4969⇵b56e Ignoring data report for unknown subscription ID 35d8ec16
+@1790319832554 2026-09-25 03:03:52.554 INFO ClientSubscriptionHandler @1:1•4969⇵b56f Ignoring data report for unknown subscription ID 35d8ec16
+@1790319832555 2026-09-25 03:03:52.555 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790319832556 2026-09-25 03:03:52.556 INFO ClientInteraction Probe » @1:1•4969⇵9d05
+@1790319832578 2026-09-25 03:03:52.578 INFO ClientInteraction Probe « @1:1•4969⇵9d05 (success)
+@1790319832585 2026-09-25 03:03:52.585 INFO ClientInteraction Subscribe » @1:1•4969⇵9d06 min: 1s max: 18s attributes: 1 events: 1
+@1790319832621 2026-09-25 03:03:52.621 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319832634 2026-09-25 03:03:52.634 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d06 2↔2 id: 35d8ec17 interval: 24s timeout: 1m 2s
+@1790319846037 2026-09-25 03:04:06.036 WARN ExchangeManager @1:1•4969⇵b56e✉05e8c09f Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319846038 2026-09-25 03:04:06.038 WARN ExchangeManager @1:1•4969⇵b56d✉05e8c09e Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319846130 2026-09-25 03:04:06.129 WARN ExchangeManager @1:1•4969⇵b56f✉05e8c0a0 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319858770 2026-09-25 03:04:18.770 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790319921256 2026-09-25 03:05:21.255 INFO ClientSubscription Subscription 35d8ec17 to peer @1:1 timed out after 1m 2s
+@1790319921284 2026-09-25 03:05:21.283 INFO ClientSubscriptionHandler @1:1•4969⇵b572 Ignoring data report for unknown subscription ID 35d8ec17
+@1790319921284 2026-09-25 03:05:21.284 INFO ClientSubscriptionHandler @1:1•4969⇵b573 Ignoring data report for unknown subscription ID 35d8ec17
+@1790319921284 2026-09-25 03:05:21.284 INFO ClientSubscriptionHandler @1:1•4969⇵b574 Ignoring data report for unknown subscription ID 35d8ec17
+@1790319921286 2026-09-25 03:05:21.286 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790319921287 2026-09-25 03:05:21.287 INFO ClientInteraction Probe » @1:1•4969⇵9d07
+@1790319921303 2026-09-25 03:05:21.303 INFO ClientInteraction Probe « @1:1•4969⇵9d07 (success)
+@1790319921304 2026-09-25 03:05:21.304 INFO ClientInteraction Subscribe » @1:1•4969⇵9d08 min: 1s max: 18s attributes: 1 events: 1
+@1790319921312 2026-09-25 03:05:21.312 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790319921328 2026-09-25 03:05:21.328 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d08 2↔2 id: 35d8ec18 interval: 25s timeout: 1m 3s
+@1790319934789 2026-09-25 03:05:34.788 WARN ExchangeManager @1:1•4969⇵b573✉05e8c0b7 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319934790 2026-09-25 03:05:34.790 WARN ExchangeManager @1:1•4969⇵b574✉05e8c0b8 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319934861 2026-09-25 03:05:34.861 WARN ExchangeManager @1:1•4969⇵b572✉05e8c0b6 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790319947425 2026-09-25 03:05:47.425 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790320010910 2026-09-25 03:06:50.909 INFO ClientSubscription Subscription 35d8ec18 to peer @1:1 timed out after 1m 3s
+@1790320010930 2026-09-25 03:06:50.930 INFO ClientSubscriptionHandler @1:1•4969⇵b577 Ignoring data report for unknown subscription ID 35d8ec18
+@1790320010932 2026-09-25 03:06:50.932 INFO ClientSubscriptionHandler @1:1•4969⇵b578 Ignoring data report for unknown subscription ID 35d8ec18
+@1790320010932 2026-09-25 03:06:50.932 INFO ClientSubscriptionHandler @1:1•4969⇵b579 Ignoring data report for unknown subscription ID 35d8ec18
+@1790320010937 2026-09-25 03:06:50.937 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790320010938 2026-09-25 03:06:50.938 INFO ClientInteraction Probe » @1:1•4969⇵9d09
+@1790320010956 2026-09-25 03:06:50.956 INFO ClientInteraction Probe « @1:1•4969⇵9d09 (success)
+@1790320010958 2026-09-25 03:06:50.958 INFO ClientInteraction Subscribe » @1:1•4969⇵9d0a min: 1s max: 18s attributes: 1 events: 1
+@1790320010963 2026-09-25 03:06:50.963 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790320010978 2026-09-25 03:06:50.978 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d0a 2↔2 id: 35d8ec19 interval: 21s timeout: 59.5s
+@1790320024355 2026-09-25 03:07:04.354 WARN ExchangeManager @1:1•4969⇵b579✉05e8c0d0 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.4s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320024566 2026-09-25 03:07:04.566 WARN ExchangeManager @1:1•4969⇵b578✉05e8c0cf Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320024613 2026-09-25 03:07:04.612 WARN ExchangeManager @1:1•4969⇵b577✉05e8c0ce Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.7s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320034003 2026-09-25 03:07:14.002 INFO ClientInteraction Read » @1:1•4969⇵9d0b bootstrap attributes: 1 events: 1
+@1790320034014 2026-09-25 03:07:14.014 INFO ClientInteraction Read « @1:1•4969⇵9d0b (empty)
+@1790320034015 2026-09-25 03:07:14.015 INFO ClientInteraction Subscribe » @1:1•4969⇵9d0c min: 1s max: 1m attributes: 1 events: 1
+@1790320034024 2026-09-25 03:07:14.024 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d0c 2↔2 id: 35d8ec1a interval: 1m 9s timeout: 1m 47s
+@1790320038612 2026-09-25 03:07:18.612 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790320146090 2026-09-25 03:09:06.089 INFO ClientSubscription Subscription 35d8ec1a to peer @1:1 timed out after 1m 47s
+@1790320146108 2026-09-25 03:09:06.108 INFO ClientSubscriptionHandler @1:1•4969⇵b57c Ignoring data report for unknown subscription ID 35d8ec1a
+@1790320146108 2026-09-25 03:09:06.108 INFO ClientSubscriptionHandler @1:1•4969⇵b57d Ignoring data report for unknown subscription ID 35d8ec1a
+@1790320146109 2026-09-25 03:09:06.109 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790320146109 2026-09-25 03:09:06.109 INFO ClientInteraction Probe » @1:1•4969⇵9d0d
+@1790320146128 2026-09-25 03:09:06.128 INFO ClientInteraction Probe « @1:1•4969⇵9d0d (success)
+@1790320146129 2026-09-25 03:09:06.129 INFO ClientInteraction Subscribe » @1:1•4969⇵9d0e min: 1s max: 1m attributes: 1 events: 1
+@1790320146176 2026-09-25 03:09:06.176 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790320146185 2026-09-25 03:09:06.185 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d0e 2↔2 id: 35d8ec1b interval: 1m 1s timeout: 1m 39s
+@1790320159717 2026-09-25 03:09:19.716 WARN ExchangeManager @1:1•4969⇵b57c✉05e8c0e9 Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320159719 2026-09-25 03:09:19.718 WARN ExchangeManager @1:1•4969⇵b57d✉05e8c0ea Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320172270 2026-09-25 03:09:32.270 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790320271750 2026-09-25 03:11:11.748 INFO ClientSubscription Subscription 35d8ec1b to peer @1:1 timed out after 1m 39s
+@1790320271771 2026-09-25 03:11:11.771 INFO ClientSubscriptionHandler @1:1•4969⇵b57f Ignoring data report for unknown subscription ID 35d8ec1b
+@1790320271773 2026-09-25 03:11:11.772 INFO ClientSubscriptionHandler @1:1•4969⇵b580 Ignoring data report for unknown subscription ID 35d8ec1b
+@1790320271774 2026-09-25 03:11:11.774 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790320271775 2026-09-25 03:11:11.775 INFO ClientInteraction Probe » @1:1•4969⇵9d0f
+@1790320271781 2026-09-25 03:11:11.781 INFO ClientInteraction Probe « @1:1•4969⇵9d0f (success)
+@1790320271782 2026-09-25 03:11:11.782 INFO ClientInteraction Subscribe » @1:1•4969⇵9d10 min: 1s max: 1m attributes: 1 events: 1
+@1790320271794 2026-09-25 03:11:11.794 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790320271813 2026-09-25 03:11:11.813 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d10 2↔2 id: 35d8ec1c interval: 1m 4s timeout: 1m 42s
+@1790320285334 2026-09-25 03:11:25.332 WARN ExchangeManager @1:1•4969⇵b580✉05e8c0fb Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320285337 2026-09-25 03:11:25.337 WARN ExchangeManager @1:1•4969⇵b57f✉05e8c0fa Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320297897 2026-09-25 03:11:37.897 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790320400378 2026-09-25 03:13:20.376 INFO ClientSubscription Subscription 35d8ec1c to peer @1:1 timed out after 1m 42s
+@1790320400396 2026-09-25 03:13:20.396 INFO ClientSubscriptionHandler @1:1•4969⇵b582 Ignoring data report for unknown subscription ID 35d8ec1c
+@1790320400396 2026-09-25 03:13:20.396 INFO ClientSubscriptionHandler @1:1•4969⇵b583 Ignoring data report for unknown subscription ID 35d8ec1c
+@1790320400397 2026-09-25 03:13:20.397 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790320400397 2026-09-25 03:13:20.397 INFO ClientInteraction Probe » @1:1•4969⇵9d11
+@1790320400402 2026-09-25 03:13:20.402 INFO ClientInteraction Probe « @1:1•4969⇵9d11 (success)
+@1790320400403 2026-09-25 03:13:20.403 INFO ClientInteraction Subscribe » @1:1•4969⇵9d12 min: 1s max: 1m attributes: 1 events: 1
+@1790320400412 2026-09-25 03:13:20.411 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790320400426 2026-09-25 03:13:20.426 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d12 2↔2 id: 35d8ec1d interval: 1m 4s timeout: 1m 42s
+@1790320413859 2026-09-25 03:13:33.858 WARN ExchangeManager @1:1•4969⇵b583✉05e8c10c Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320413940 2026-09-25 03:13:33.940 WARN ExchangeManager @1:1•4969⇵b582✉05e8c10b Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320426521 2026-09-25 03:13:46.521 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790320529000 2026-09-25 03:15:29.000 INFO ClientSubscription Subscription 35d8ec1d to peer @1:1 timed out after 1m 42s
+@1790320529010 2026-09-25 03:15:29.010 INFO ClientSubscriptionHandler @1:1•4969⇵b585 Ignoring data report for unknown subscription ID 35d8ec1d
+@1790320529010 2026-09-25 03:15:29.010 INFO ClientSubscriptionHandler @1:1•4969⇵b586 Ignoring data report for unknown subscription ID 35d8ec1d
+@1790320529012 2026-09-25 03:15:29.012 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790320529013 2026-09-25 03:15:29.013 INFO ClientInteraction Probe » @1:1•4969⇵9d13
+@1790320529022 2026-09-25 03:15:29.022 INFO ClientInteraction Probe « @1:1•4969⇵9d13 (success)
+@1790320529023 2026-09-25 03:15:29.023 INFO ClientInteraction Subscribe » @1:1•4969⇵9d14 min: 1s max: 1m attributes: 1 events: 1
+@1790320529032 2026-09-25 03:15:29.032 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790320529053 2026-09-25 03:15:29.053 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d14 2↔2 id: 35d8ec1e interval: 1m 2s timeout: 1m 40s
+@1790320542532 2026-09-25 03:15:42.531 WARN ExchangeManager @1:1•4969⇵b586✉05e8c11d Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.5s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320542662 2026-09-25 03:15:42.661 WARN ExchangeManager @1:1•4969⇵b585✉05e8c11c Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320555124 2026-09-25 03:15:55.124 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: false
+@1790320655597 2026-09-25 03:17:35.596 INFO ClientSubscription Subscription 35d8ec1e to peer @1:1 timed out after 1m 40s
+@1790320655625 2026-09-25 03:17:35.625 INFO ClientSubscriptionHandler @1:1•4969⇵b588 Ignoring data report for unknown subscription ID 35d8ec1e
+@1790320655625 2026-09-25 03:17:35.625 INFO ClientSubscriptionHandler @1:1•4969⇵b589 Ignoring data report for unknown subscription ID 35d8ec1e
+@1790320655627 2026-09-25 03:17:35.627 INFO ClientSubscription Replacing subscription to @1:1 after loss
+@1790320655629 2026-09-25 03:17:35.629 INFO ClientInteraction Probe » @1:1•4969⇵9d15
+@1790320655640 2026-09-25 03:17:35.640 INFO ClientInteraction Probe « @1:1•4969⇵9d15 (success)
+@1790320655641 2026-09-25 03:17:35.641 INFO ClientInteraction Subscribe » @1:1•4969⇵9d16 min: 1s max: 1m attributes: 1 events: 1
+@1790320655647 2026-09-25 03:17:35.647 INFO ClientEventEmitter Received event booleanState.stateChange on holdprobe-controller.@1:1.ep1 stateValue: true
+@1790320655664 2026-09-25 03:17:35.664 INFO ClientInteraction Subscription successful « @1:1•4969⇵9d16 2↔2 id: 35d8ec1f interval: 1m 3s timeout: 1m 41s
+@1790320669185 2026-09-25 03:17:49.184 WARN ExchangeManager @1:1•4969⇵b589✉05e8c12e Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320669230 2026-09-25 03:17:49.230 WARN ExchangeManager @1:1•4969⇵b588✉05e8c12d Unhandled error handling incoming message: [peer-unresponsive] Peer is no longer responding to active session (timed out after 13.6s)
+  at #sentMessageAckFailure (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:583:23)
+  at #retransmitMessage (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:726:36)
+  at StandardTimer.callback (scripts/matter_hold/node_modules/@matter/protocol/dist/esm/protocol/MessageExchange.js:719:42)
+  at Timeout.<anonymous> (scripts/matter_hold/node_modules/@matter/general/dist/esm/time/StandardTime.js:144:14)
+  at listOnTimeout (node:internal/timers:605:17)
+  at process.processTimers (node:internal/timers:541:7)
+@1790320678679 2026-09-25 03:17:58.679 NOTICE Node holdprobe-controller going offline
+@1790320678716 2026-09-25 03:17:58.715 INFO MdnsAdvertisement Unpublishing kind: operational service: mdns:E019D530834B81D1-E3E119DFFDAA75A2._matter._tcp.local time: 39m 47s
+@1790320678719 2026-09-25 03:17:58.719 INFO ClientNode holdprobe-controller.@1:1 is offline
+@1790320678719 2026-09-25 03:17:58.719 INFO Session @1:1•4969 Session ended
+@1790320678721 2026-09-25 03:17:58.721 NOTICE Node holdprobe-controller is offline
+@1790320678721 2026-09-25 03:17:58.721 INFO ClientNode holdprobe-controller.@1:1 going offline
+@1790320678729 2026-09-25 03:17:58.729 INFO ServerNodeStore Closed holdprobe-controller storage location: scripts/matter_hold/.storage/controller/holdprobe-controller driver: file locks: 0

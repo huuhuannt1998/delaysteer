@@ -27,6 +27,16 @@ class DelaySpec:
 
 
 class DelayingAdapter(HomeAdapter):
+    # TemporalGuard requests a commit-time refresh by setting `active_poll` on the adapter it holds,
+    # which is this wrapper when a delay layer is present. Nothing forwarded it, so a live adapter
+    # behind the wrapper never refreshed. Off by default so every recorded run reproduces as it was.
+    forward_active_poll = False
+
+    def __setattr__(self, name, value):
+        if name == "active_poll" and self.forward_active_poll:
+            setattr(self.inner, name, value)
+        object.__setattr__(self, name, value)
+
     def __init__(self, inner: HomeAdapter, specs: list[DelaySpec], monitor=None) -> None:
         self.inner = inner
         self.specs = specs

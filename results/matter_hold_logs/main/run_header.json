@@ -1,0 +1,22 @@
+{
+  "run_id": "main",
+  "matterjs_version": "0.17.9",
+  "node_version": "v26.3.0",
+  "params": {
+    "mrp": {
+      "maxTransmissions": 5,
+      "backoffBase": 1.6,
+      "backoffMargin": 1.1,
+      "backoffJitter": 0.25,
+      "backoffThreshold": 1,
+      "standaloneAckTimeoutMs": 200
+    },
+    "sessionIntervals": {
+      "idleIntervalMs": 500,
+      "activeIntervalMs": 300,
+      "activeThresholdMs": 4000
+    }
+  },
+  "platform": "darwin",
+  "arch": "arm64"
+}

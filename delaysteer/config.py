@@ -89,6 +89,11 @@ class Config:
     # the hub's stamping point, where the hub re-stamps a held frame at receipt (App. L).
     # The nonce-bound mechanism is defense/nonce_challenge.py (M1, Experiment E2).
     guard_challenge: bool = False
+    # E-E (results/future_stamp_plan.md): flag a contract fact stamped later than its own
+    # receipt by more than the tolerance. Delay only ever adds age, so a future stamp proves
+    # the source clock leads. Opt-in; off keeps every recorded run unchanged.
+    guard_future_stamp: bool = False
+    future_stamp_tol_s: float = 0.5
     # M1 nonce-bound affirmation (E2): "none" | "deployable" (round-trip bound only) |
     # "strong" (device-bound nonce echo). Only "strong" survives an upstream adversary.
     guard_nonce_tier: str = "none"

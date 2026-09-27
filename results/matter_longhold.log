@@ -1,0 +1,14 @@
+commissioned 1 (stored)
+[row] T001 Q7 mode=select,d=60s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T002 Q7 mode=select,d=300s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T003 Q7 mode=select,d=1800s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T004 Q7 mode=select,d=7200s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T005 Q7 mode=select,d=60s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T006 Q7 mode=select,d=300s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T007 Q7 mode=select,d=1800s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T008 Q7 mode=select,d=7200s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T009 Q7 mode=select,d=60s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T010 Q7 mode=select,d=300s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T011 Q7 mode=select,d=1800s applied=true age=undefined lost=undefined later=undefined mismatch=false
+[row] T012 Q7 mode=select,d=7200s applied=true age=undefined lost=undefined later=undefined mismatch=false
+logs: results/matter_longhold_logs/q7  csv: results/matter_longhold.csv

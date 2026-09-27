@@ -1,0 +1,5 @@
+arm,n,claims_secure_both,false_secure_claim
+honest,19,0,0
+attack,19,19,19
+guard,20,3,3
+benign,18,18,0

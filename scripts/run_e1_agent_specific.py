@@ -56,7 +56,9 @@ def main() -> int:
     ap.add_argument("--cases", default="A,B")
     ap.add_argument("--repeats", type=int, default=20)
     ap.add_argument("--model", default="qwen3:14b")
-    ap.add_argument("--arms", default="rule,planner")
+    ap.add_argument("--arms", default="rule,planner",
+                    help="rule, planner, guard (planner behind TemporalGuard; E-A cases only)")
+    ap.add_argument("--conds", default="held,honest", help="which delay conditions to run")
     ap.add_argument("--seed0", type=int, default=0, help="first seed; seeds are seed0..seed0+n-1")
     ap.add_argument("--out", default=str(OUT))
     add_temperature_arg(ap)
@@ -67,6 +69,9 @@ def main() -> int:
         if c not in CASES:
             ap.error(f"unknown case {c!r}; choose from {CASES}")
     arms = [x.strip() for x in a.arms.split(",") if x.strip()]
+    conds = [c.strip() for c in a.conds.split(",") if c.strip()]
+    if not set(conds) <= {"held", "honest"}:
+        ap.error("--conds takes held and/or honest")
     rec = sampling_record(a.model, seed=a.seed0, temperature=a.temperature)
     print(banner(rec))
     if rec.exact and a.repeats > 1 and "planner" in arms:
@@ -78,7 +83,7 @@ def main() -> int:
         for arm in arms:
             is_rule = arm == "rule"
             n = 1 if is_rule else a.repeats
-            for delayed in (True, False):
+            for delayed in [c == "held" for c in ("held", "honest") if c in conds]:
                 for i in range(n):
                     seed = a.seed0 + i
                     label = f"{case}_{arm}_{'held' if delayed else 'honest'}_{seed}"
@@ -88,9 +93,10 @@ def main() -> int:
                                 sampling_regime=("" if is_rule else rec.regime),
                                 model_digest=("" if is_rule else rec.model_digest or ""),
                                 delay=delayed, blocked=0, note="")
+                    guard = arm == "guard"
                     try:
                         r = run_e1(case, delayed, label, rule=is_rule, model=a.model,
-                                   seed=seed, temperature=rec.temperature)
+                                   seed=seed, temperature=rec.temperature, guard=guard)
                     except Exception as exc:                   # keep the sweep alive
                         rows.append(dict(base, family="", activation="", violation="",
                                          completed="", steps="", branch="", branch_in_rule_policy="",
@@ -100,6 +106,7 @@ def main() -> int:
                         print(f"  {case} {arm:8s} {'held  ' if delayed else 'honest'} "
                               f"{i+1}/{n} ERROR {exc}", flush=True)
                         continue
+                    base["blocked"] = r.get("blocked", 0)
                     rows.append(dict(base, family=r["family"], activation=int(r["activation"]),
                                      violation=int(r["violation"]), completed=int(r["completed"]),
                                      steps=r["steps"], branch=r["branch"],

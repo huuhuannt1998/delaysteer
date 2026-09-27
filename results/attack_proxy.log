@@ -1157,3 +1157,950 @@
 2026-08-22T18:41:59.143  ARM           /api/states/binary_sensor.st_contact  attack armed: stale re-serve ON
 2026-08-22T19:30:18.537  STALE-RESERVE /api/states/binary_sensor.st_contact  served state=off (stale) while armed  [agent reads out-of-date value]
 2026-08-22T19:35:09.233  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T20:45:45.788  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T20:45:45.827  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T20:45:45.832  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:05:42.809  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:05:42.835  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:05:42.841  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:08:46.558  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:09:41.244  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:09:41.297  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:09:41.301  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:10:39.243  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:13:21.783  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:14:02.704  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:14:02.744  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:14:02.748  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:15:05.253  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:17:12.812  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:17:17.447  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:17:17.499  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:17:17.504  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:18:12.323  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:20:27.864  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:20:31.337  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:20:31.379  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:20:31.384  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:21:12.966  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:27:06.693  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:27:10.206  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:27:10.293  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:27:10.300  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:28:00.468  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:28:11.741  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:28:11.830  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:28:11.835  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:28:53.384  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:33:35.777  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:33:39.228  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:33:39.270  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:33:39.275  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:34:32.648  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:36:19.231  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:36:22.730  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:36:22.788  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:36:22.808  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:43:38.464  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:43:41.749  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:43:41.784  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:43:41.788  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:45:29.719  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:48:37.090  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:48:40.738  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:48:40.776  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:48:40.781  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:51:26.994  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:51:30.774  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:51:30.822  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:51:30.828  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:56:39.243  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:56:42.542  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:56:42.590  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:56:42.596  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T21:58:03.760  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T21:59:53.642  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T21:59:56.939  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T21:59:56.970  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T21:59:56.976  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:03:50.464  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:03:53.747  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:03:53.777  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:03:53.781  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:04:38.516  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:10:01.085  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:10:04.487  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:10:04.587  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:10:04.592  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:10:42.118  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:12:29.183  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:12:32.509  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:12:32.551  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:12:32.555  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:16:59.460  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:18:42.133  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:18:45.377  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:18:45.413  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:18:45.420  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:24:22.971  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:24:26.258  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:24:26.294  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:24:26.299  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:25:36.074  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:27:31.275  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:27:35.396  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:27:35.745  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:27:35.756  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:31:19.553  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:31:23.321  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:31:23.378  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:31:23.410  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:33:11.969  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:35:08.075  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:35:11.482  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:35:11.557  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:35:11.570  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:35:40.635  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:37:24.038  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:37:27.373  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:37:27.415  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:37:27.428  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:38:51.009  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:40:30.334  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:40:33.633  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:40:33.726  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:40:33.739  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:42:57.516  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:43:05.387  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:43:05.482  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:43:05.487  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:43:07.060  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T22:47:06.894  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T22:52:39.120  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T22:58:20.144  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T22:58:23.741  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T22:58:23.789  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T22:58:23.794  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T22:58:25.329  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T22:59:00.664  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:00:01.113  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:02:28.213  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:02:31.518  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:02:31.551  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:02:31.556  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:02:33.099  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:03:11.982  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:04:32.464  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:07:43.798  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:07:47.081  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:07:47.107  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:07:47.111  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:07:48.644  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:08:36.427  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:10:05.160  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:11:03.274  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:11:06.512  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:11:06.832  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:11:06.840  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:11:08.427  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:16:06.135  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:17:49.221  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:19:37.036  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:23:32.019  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:25:51.698  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:25:51.736  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:25:51.747  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:25:53.281  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:30:31.395  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:31:51.258  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:35:39.899  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:35:43.085  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:35:43.124  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:35:43.129  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:35:44.663  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:37:27.994  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:38:58.950  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:42:48.428  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:42:51.591  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:42:51.642  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:42:51.647  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:42:53.187  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:48:06.248  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:48:09.420  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:48:09.453  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:48:09.457  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:48:11.009  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:51:50.292  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:51:53.450  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:51:53.474  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:51:53.484  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:51:55.015  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:52:53.365  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:54:10.337  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-24T23:57:56.144  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-24T23:57:59.264  RESET           proxy disarmed (attack + guard cleared)
+2026-09-24T23:57:59.282  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-24T23:57:59.289  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-24T23:58:00.854  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-24T23:58:47.039  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-24T23:59:40.580  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:06:39.753  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:06:42.924  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:06:42.970  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:06:42.979  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:06:44.513  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:07:31.765  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:09:11.538  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:10:34.273  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:10:37.510  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:10:37.538  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:10:37.547  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:10:39.084  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:11:12.653  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:12:26.462  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:17:07.238  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:17:10.362  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:17:10.446  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:17:10.453  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:17:11.987  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:20:50.191  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:22:17.946  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:24:43.531  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:24:46.687  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:24:46.760  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:24:46.788  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:24:48.338  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:29:08.843  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:29:12.015  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:29:12.062  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:29:12.070  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:29:13.602  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:30:30.553  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:33:24.319  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:33:27.533  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:33:27.559  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:33:27.563  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:33:29.084  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:39:16.711  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:39:19.849  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:39:19.868  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:39:19.874  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:39:21.422  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:41:05.952  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:42:34.185  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:45:17.466  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:45:20.591  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:45:20.617  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:45:20.625  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:45:22.159  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:46:16.483  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:47:42.214  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:51:04.003  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:51:07.133  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:51:07.173  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:51:07.181  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:51:08.716  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:52:23.164  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:55:53.718  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T00:57:28.211  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T00:57:31.359  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T00:57:31.396  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T00:57:31.405  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T00:57:32.948  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T00:57:56.325  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-25T00:59:27.427  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T01:03:52.411  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:03:56.314  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:06:44.853  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:06:48.025  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:09:44.051  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:09:47.195  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:14:04.008  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:14:07.127  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:16:06.994  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:16:10.158  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:23:08.691  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:23:12.061  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:26:04.483  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:26:07.666  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:30:03.509  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:30:06.725  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:32:51.144  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:32:54.292  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:36:16.994  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:36:20.167  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:39:40.897  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:39:44.074  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:42:02.500  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:42:05.635  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:45:51.467  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:45:54.611  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:50:48.320  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:50:51.471  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:54:27.696  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:54:30.842  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T01:56:27.909  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T01:56:31.027  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:11:04.571  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:11:07.807  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:14:00.157  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:14:03.375  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:20:12.447  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:20:15.576  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:25:10.596  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:25:13.732  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:30:18.705  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:30:22.315  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:32:34.895  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:32:38.061  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:38:54.447  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:38:57.582  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:41:50.449  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:41:53.602  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:45:20.673  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:45:23.829  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:49:53.755  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:49:56.939  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:53:54.454  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:53:57.612  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T02:58:19.203  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T02:58:22.357  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:00:35.166  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:00:38.318  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:03:18.972  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:03:22.108  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:06:24.690  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:06:27.871  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:09:12.786  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:09:15.974  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:11:13.761  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:11:16.910  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:15:51.618  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:15:54.734  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:21:01.320  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:21:04.457  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:26:50.664  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:26:53.817  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:29:50.597  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:29:53.771  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:34:13.889  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:34:17.032  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:37:23.111  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:37:26.279  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:41:00.486  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T03:41:03.620  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T03:43:40.200  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T04:43:49.231  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T04:43:49.275  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T04:43:49.283  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T04:48:06.575  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T04:48:09.713  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T04:48:09.756  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T04:48:09.766  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T04:51:15.268  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T04:51:18.448  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T04:51:18.487  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T04:51:18.495  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T04:57:37.999  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T04:57:41.220  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T04:57:41.254  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T04:57:41.279  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:02:32.817  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:02:35.951  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:02:36.020  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:02:36.035  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:06:29.742  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:06:32.867  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:06:32.887  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:06:32.894  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:09:26.309  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:09:29.481  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:09:29.503  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:09:29.508  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:12:28.776  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:12:31.896  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:12:31.927  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:12:31.938  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:18:32.772  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:18:35.906  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:18:35.930  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:18:35.934  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:20:00.181  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:20:03.358  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:20:03.386  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:20:03.390  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:25:38.977  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:25:42.123  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:25:42.149  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:25:42.163  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:31:30.967  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:31:34.090  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:31:34.113  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:31:34.120  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:35:37.014  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:35:40.182  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:35:40.200  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:35:40.207  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:38:52.388  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:38:55.562  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:38:55.594  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:38:55.603  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:41:11.156  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:41:14.269  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:41:14.336  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:41:14.346  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:44:57.959  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:45:01.078  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:45:01.102  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:45:01.108  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:49:53.947  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:49:57.208  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:49:57.242  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:49:57.251  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:53:42.532  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:53:45.705  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:53:45.726  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:53:45.731  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T05:57:49.128  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T05:57:52.266  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T05:57:52.296  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T05:57:52.304  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T06:00:01.712  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:00:04.872  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:00:04.904  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T06:00:04.947  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T06:02:33.446  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:02:37.111  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:06:36.266  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:06:39.402  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:09:56.781  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:09:59.979  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:13:29.262  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:13:32.424  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:15:50.076  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:15:53.216  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:18:41.876  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:18:45.078  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:21:37.263  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:21:40.422  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:26:23.783  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:26:26.965  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:32:27.979  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:32:31.105  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:33:55.471  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:33:58.647  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:39:03.311  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:39:06.459  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:49:01.300  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:49:04.443  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:53:09.426  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:53:12.709  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:55:49.933  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:55:53.535  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T06:58:32.826  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T06:58:36.146  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:02:57.161  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:03:00.690  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:13:52.014  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:13:55.439  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:18:25.594  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:18:28.901  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:22:45.416  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:22:48.898  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:25:21.025  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:25:24.269  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:28:30.025  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:28:34.678  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:28:34.708  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:28:34.713  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:28:36.268  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T07:32:19.420  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:32:22.670  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:32:22.705  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:32:22.712  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:32:24.252  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T07:35:28.800  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:35:32.192  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:35:32.230  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:35:32.255  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:35:33.791  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T07:38:09.106  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:38:12.262  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:38:12.319  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:38:12.332  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:38:14.009  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T07:44:01.874  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:44:05.404  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:44:05.491  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:44:05.497  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:44:07.066  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T07:51:16.449  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:51:19.790  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:51:19.841  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:51:19.849  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:51:21.394  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T07:54:34.969  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T07:54:38.253  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T07:54:38.306  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T07:54:38.316  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T07:54:39.866  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:00:04.053  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:00:07.255  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:00:07.300  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:00:07.309  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:00:09.783  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:06:31.880  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:06:35.127  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:06:35.218  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:06:35.229  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:06:36.770  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:08:01.556  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:08:04.764  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:08:04.791  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:08:04.797  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:08:06.339  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:10:56.615  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_away  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-25T08:13:31.991  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:13:35.168  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:13:35.202  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:13:35.214  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:13:36.765  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:15:30.630  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:15:33.820  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:15:33.857  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:15:33.862  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:15:35.404  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:21:58.369  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:22:01.649  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:22:01.704  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:22:01.710  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:22:03.287  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:26:09.461  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:26:12.659  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:26:12.703  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:26:12.714  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:26:14.271  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:28:32.220  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:28:35.470  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:28:35.496  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:28:35.504  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:28:37.043  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:32:25.985  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:32:29.265  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:32:29.303  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:32:29.315  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:32:30.868  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:35:39.275  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:35:42.496  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:35:42.595  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:35:42.603  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:35:44.157  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:41:07.852  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:41:11.074  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:41:11.109  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:41:11.115  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:41:12.681  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:45:21.218  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:45:24.401  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:45:24.447  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:45:24.454  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:45:26.005  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:49:06.972  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:49:10.201  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:49:10.234  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-25T08:49:10.241  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-25T08:49:11.775  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-25T08:51:43.636  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:51:47.747  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:54:09.155  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:54:12.311  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T08:57:35.242  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T08:57:38.400  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:00:37.410  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:00:40.639  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:04:34.069  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:04:37.242  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:07:04.899  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:07:08.121  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:10:07.579  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:10:10.779  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:12:57.207  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:13:00.421  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:19:09.210  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:19:12.403  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:20:37.908  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:20:41.069  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:25:21.006  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:25:24.168  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:32:06.219  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:32:09.436  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:40:52.197  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:40:55.397  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:43:31.062  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:43:34.268  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:48:11.070  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:48:14.215  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:53:59.979  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:54:03.329  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T09:58:17.511  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T09:58:20.953  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T10:05:41.391  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T10:05:44.695  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T10:10:17.929  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T10:10:21.179  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T10:14:11.658  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-25T10:14:14.856  RESET           proxy disarmed (attack + guard cleared)
+2026-09-25T10:16:49.068  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T14:02:16.039  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T14:03:33.333  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T14:03:55.920  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T14:08:21.719  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:56:24.003  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:56:51.970  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:56:55.312  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:57:13.137  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:57:16.517  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:57:35.193  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:57:38.632  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:58:02.748  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:58:06.279  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:58:19.587  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:58:23.038  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:58:35.875  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:58:39.457  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T15:59:20.069  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T15:59:25.136  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T16:01:04.427  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T16:01:10.789  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T16:01:58.948  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T16:02:05.601  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T16:06:34.178  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T16:06:37.647  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T16:08:48.336  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T16:08:51.711  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T16:11:47.576  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T16:11:50.995  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T16:14:45.600  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T16:14:48.755  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:00:04.616  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:00:07.752  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:03:24.386  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:03:27.495  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:06:12.747  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:06:15.850  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:11:12.017  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:11:15.133  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:15:52.667  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:15:55.768  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:18:09.085  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:18:12.250  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:22:20.881  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:22:24.020  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:24:58.106  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:25:01.224  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:28:11.324  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:28:14.453  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:32:23.748  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:32:26.875  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:35:57.565  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:36:00.715  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T17:37:11.949  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T17:37:15.094  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:24:20.542  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:24:23.744  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:28:56.330  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:28:59.488  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:31:42.360  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:31:45.501  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:34:23.036  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:34:26.156  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:41:36.396  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:41:39.540  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:43:24.687  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:43:27.860  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:49:07.389  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:49:11.038  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:52:42.121  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:52:45.286  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:55:52.491  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:55:55.578  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T19:59:25.202  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T19:59:28.335  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:02:29.416  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:02:32.529  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:06:31.400  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:06:34.490  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:13:14.954  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:13:18.112  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:15:24.437  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:15:27.540  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:19:26.907  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:19:30.021  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:33:34.394  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:33:37.579  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:35:03.587  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:35:06.703  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:39:46.822  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:39:49.958  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:43:55.544  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:43:58.666  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:46:18.764  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:46:21.880  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:53:03.075  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:53:06.233  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T20:58:56.976  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T20:59:00.113  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T21:01:11.044  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T21:01:14.197  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T21:05:16.486  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T21:05:19.590  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T22:56:50.119  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T22:56:53.353  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T22:58:47.861  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T22:58:50.977  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T23:02:54.750  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T23:02:58.478  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T23:02:58.503  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-26T23:02:58.514  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-26T23:04:36.667  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-26T23:05:33.702  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T23:05:36.827  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T23:05:36.859  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-26T23:05:36.866  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-26T23:07:04.786  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-26T23:08:07.977  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T23:08:11.103  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T23:08:11.128  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-26T23:08:11.133  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-26T23:09:25.491  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-26T23:11:38.425  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-26T23:11:41.619  RESET           proxy disarmed (attack + guard cleared)
+2026-09-26T23:11:41.638  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-26T23:11:41.643  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-26T23:14:21.341  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T00:54:17.487  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T00:54:20.589  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T00:54:20.605  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T00:54:20.610  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T00:57:06.279  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T00:58:50.391  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T00:58:53.543  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T00:58:53.566  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T00:58:53.571  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:01:02.156  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:02:07.056  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:02:10.164  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:02:10.198  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:02:10.204  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:04:21.147  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:05:08.457  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:05:11.576  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:05:11.600  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:05:11.605  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:06:29.384  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:10:02.382  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:10:05.500  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:10:05.530  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:10:05.542  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:11:24.889  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:15:17.237  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:15:20.331  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:15:20.353  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:15:20.361  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:18:12.633  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:19:44.187  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:19:47.422  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:19:47.441  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:19:47.453  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:20:32.997  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:21:22.744  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:21:25.859  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:21:25.890  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:21:25.895  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:23:45.078  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:24:14.372  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:24:31.978  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:24:35.101  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:24:35.152  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:24:35.164  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:25:16.309  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:28:49.089  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:28:52.241  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:28:52.263  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:28:52.270  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:30:16.201  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:31:58.137  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:32:01.276  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:32:01.313  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:32:01.323  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:32:56.981  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:34:05.400  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:34:08.582  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:34:08.607  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:34:08.614  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:34:48.188  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:39:01.124  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:39:04.268  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:39:04.295  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:39:04.303  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:40:48.233  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:41:50.825  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:41:53.943  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:41:53.969  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:41:53.974  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:42:16.135  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:45:04.871  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:45:08.031  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:45:08.093  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:45:08.098  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:45:33.955  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:47:45.195  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:47:48.300  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:47:48.347  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:47:48.355  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:48:28.721  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:50:29.271  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:50:32.762  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:50:32.787  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:50:32.795  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:50:34.327  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T01:52:11.012  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:52:36.337  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T01:53:12.738  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:53:16.020  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:53:16.048  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:53:16.057  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:53:17.587  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T01:54:41.621  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T01:56:35.066  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T01:57:07.506  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T01:57:10.691  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T01:57:10.751  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T01:57:10.765  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T01:57:12.311  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T01:59:16.866  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:00:58.925  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:01:26.750  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:01:29.848  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:01:29.866  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:01:29.871  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:01:31.405  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:01:55.166  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:02:45.318  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:03:19.023  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:03:22.137  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:03:22.177  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:03:22.185  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:03:23.713  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:05:53.855  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:07:55.388  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:09:38.591  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:09:41.729  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:09:41.774  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:09:41.785  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:09:43.317  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:11:50.639  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:12:45.798  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:13:25.579  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:13:28.695  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:13:28.710  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:13:28.715  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:13:30.251  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:15:37.609  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:15:58.612  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:17:12.785  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:17:15.942  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:17:15.970  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:17:15.977  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:17:17.585  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:18:28.788  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:20:53.818  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:22:36.781  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:22:39.943  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:22:39.969  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:22:39.976  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:22:41.503  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:23:58.655  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:26:09.717  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:29:11.138  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:30:11.282  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:30:37.586  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:30:40.700  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:30:40.728  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:30:40.734  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:30:42.260  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:33:34.189  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:36:29.019  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:37:44.707  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:37:47.860  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:37:47.880  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:37:47.885  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:37:49.414  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:38:33.328  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:40:10.827  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:41:33.791  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:41:36.990  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:41:37.022  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:41:37.029  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:41:38.564  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:43:55.223  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:48:07.177  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:51:39.853  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:51:42.941  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:51:42.960  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:51:42.967  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:51:44.498  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:52:23.944  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T02:55:05.221  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T02:56:28.004  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T02:56:31.181  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T02:56:31.233  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T02:56:31.242  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T02:56:32.777  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T02:57:55.151  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:00:30.637  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:01:10.400  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T03:01:13.590  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T03:01:13.624  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T03:01:13.628  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T03:01:15.146  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T03:02:09.772  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:04:37.281  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:05:51.569  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:06:31.372  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T03:06:34.480  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T03:06:34.507  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T03:06:34.516  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T03:06:36.048  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T03:07:13.974  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:09:21.724  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:09:52.717  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T03:09:55.823  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T03:09:55.874  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T03:09:55.882  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T03:09:57.416  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T03:11:42.333  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:12:40.416  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:13:06.351  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T03:13:09.571  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T03:13:09.603  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T03:13:09.610  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T03:13:11.155  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T03:13:31.722  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:15:07.796  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:15:33.064  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:16:23.097  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T03:16:26.197  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T03:16:26.226  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T03:16:26.232  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T03:16:27.768  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T03:16:54.441  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:19:16.415  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:20:51.158  DISARM          run finished; proxy disarmed, outcome left standing
+2026-09-27T03:20:54.313  RESET           proxy disarmed (attack + guard cleared)
+2026-09-27T03:20:54.332  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-09-27T03:20:54.339  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-09-27T03:20:55.865  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-09-27T03:21:34.182  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-09-27T03:32:09.565  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-09-27T03:33:25.211  DISARM          run finished; proxy disarmed, outcome left standing

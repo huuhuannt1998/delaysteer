@@ -169,6 +169,10 @@ class TemporalGuard:
                 age = max(0.0, age - self.deliberation_s)
             threshold = self.config.freshness_s.get(sem, 5.0)
 
+            tol = getattr(self.config, "future_stamp_tol_s", 0.5)
+            if getattr(self.config, "guard_future_stamp", False) and age < -tol:
+                problems.append(f"{key} FUTURE-STAMPED (age {age:.2f}s < -{tol:.2f}s): source clock leads")
+                continue
             if self.config.guard_freshness and age > threshold:
                 problems.append(f"{key} STALE (age {age:.1f}s > {threshold:.1f}s)")
                 continue  # stale evidence can't be trusted for the value check

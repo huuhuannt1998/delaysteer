@@ -448,8 +448,12 @@ class DevicePublisher:
     """
 
     def __init__(self, home: VirtualHome, transport: Transport, keys: KeyRing,
-                 heartbeat_s: float = 1.0, entities: dict[str, str] | None = None) -> None:
+                 heartbeat_s: float = 1.0, entities: dict[str, str] | None = None,
+                 clock_offset_s: float = 0.0) -> None:
         self.home = home
+        # Device clock minus hub clock. >0 leads the hub, <0 lags it. Only the skew sweep
+        # (scripts/run_skew_sweep.py) sets it; 0 keeps every earlier campaign unchanged.
+        self.clock_offset_s = clock_offset_s
         self.tp = transport
         self.keys = keys
         self.heartbeat_s = heartbeat_s
@@ -480,7 +484,7 @@ class DevicePublisher:
                 raise KeyError(entity)
             value = st.state
         seq = self._next_seq(entity)
-        t_m = time.time()
+        t_m = time.time() + self.clock_offset_s
         payload = encode_message(self.keys, entity, value, seq, t_m, kind=kind, req=req)
         res = self.tp.publish(DEV_PREFIX + entity, payload)
         self.sent[(entity, seq)] = {"sha256": res.sha256, "t_send": res.t_send, "value": value,

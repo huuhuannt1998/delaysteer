@@ -1,0 +1,12 @@
+{
+  "name": "matter-hold-probe",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Delay-only hold probe on a matter.js device/controller pair",
+  "dependencies": {
+    "@matter/main": "0.17.9",
+    "@matter/nodejs": "0.17.9",
+    "@project-chip/matter.js": "0.17.9"
+  }
+}

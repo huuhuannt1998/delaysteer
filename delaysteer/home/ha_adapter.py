@@ -14,6 +14,7 @@ is the natural place to inject delayed sensor observations).
 from __future__ import annotations
 
 import json
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +24,7 @@ from .adapter import HomeAdapter, Observation, semantic_type_of
 from .virtual_home import ENTITIES
 
 CREDENTIALS_PATH = Path(__file__).resolve().parents[2] / "config" / "ha_credentials.json"
+_ENTITY_ID = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 
 
 class _EpochClock:
@@ -40,6 +42,13 @@ def _parse_ha_time(s: str | None) -> float:
 
 
 class HomeAssistantAdapter(HomeAdapter):
+    # Where the freshness stamp comes from. "rest" (every frozen result) takes last_reported from
+    # GET /api/states, whose cached JSON HA 2026.8.3 does not invalidate on a same-value write
+    # (HA issue #181392), so it moves only on a change. "template" reads the live State object's
+    # last_reported through POST /api/template, which advances on every write, update_entity
+    # included (results/ha_readpath_2026_8_3.csv).
+    stamp_source = "rest"
+
     def __init__(self, base_url: str, refresh_token: str, client_id: str) -> None:
         import httpx  # lazy
 
@@ -101,7 +110,10 @@ class HomeAssistantAdapter(HomeAdapter):
         # Freshness must key off last_reported (heartbeat — when the platform last
         # AFFIRMED the value), not last_updated (last CHANGE). Otherwise an
         # unchanged-but-fresh sensor looks stale (finding jrn_01KSTYV7MMPG87AFZZJN1XSZY3).
-        gen = _parse_ha_time(data.get("last_reported") or data.get("last_updated"))
+        stamp = data.get("last_reported") or data.get("last_updated")
+        if self.stamp_source == "template":
+            stamp = self._live_last_reported(entity_id, data["state"]) or stamp
+        gen = _parse_ha_time(stamp)
         return Observation(
             semantic_type=semantic_type_of(entity_id),
             value=data["state"],
@@ -111,6 +123,26 @@ class HomeAssistantAdapter(HomeAdapter):
             generation_time=gen,
             arrival_time=time.time(),
         )
+
+    def _live_last_reported(self, entity_id: str, rest_value: str) -> str | None:
+        """The live object's last_reported, or None to keep the REST stamp.
+
+        None whenever the live read cannot be trusted to describe the value we return: an
+        entity id that is not a plain domain.object_id (it is interpolated into a template), a
+        failed call, or a live value that differs from the REST value. The REST stamp is never
+        newer, so every fallback errs toward blocking.
+        """
+        if not _ENTITY_ID.match(entity_id):
+            return None
+        tpl = f"{{{{ states.{entity_id}.state }}}}|{{{{ states.{entity_id}.last_reported.isoformat() }}}}"
+        try:
+            resp = self._http.post(f"{self.base_url}/api/template", headers=self._headers(),
+                                   content=json.dumps({"template": tpl}))
+            resp.raise_for_status()
+            value, _, stamp = resp.text.strip().rpartition("|")
+        except Exception:  # noqa: BLE001 - fall back to the REST stamp
+            return None
+        return stamp if value == rest_value and stamp else None
 
     def call_service(
         self, domain: str, service: str, data: dict[str, Any] | None = None

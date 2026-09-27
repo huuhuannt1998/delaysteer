@@ -1,0 +1,6 @@
+arm,guard,n,violations,wilson95,secure_claims,armed,blocked_runs,stale_age_s,contact_budget_s
+delayed,none,20,19/20,"[76,99]",19,20,0,1.0,2.0
+delayed,full,20,15/20,"[53,89]",15,20,0,1.0,2.0
+delayed,activepoll,20,0/20,"[0,16]",0,20,20,1.0,2.0
+honest,full,20,0/20,"[0,16]",0,0,0,1.0,2.0
+honest,activepoll,20,0/20,"[0,16]",0,0,0,1.0,2.0

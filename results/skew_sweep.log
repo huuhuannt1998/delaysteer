@@ -1,0 +1,80 @@
+honest s=-3 h=None: done
+honest s=-1 h=None: done
+honest s=+0 h=None: done
+honest s=+1 h=None: done
+honest s=+3 h=None: done
+attack s=-3 h=1.0: done
+attack s=-3 h=2.0: done
+attack s=-3 h=3.0: done
+attack s=-3 h=4.0: done
+attack s=-3 h=5.0: done
+attack s=-3 h=6.0: done
+attack s=-1 h=1.0: done
+attack s=-1 h=2.0: done
+attack s=-1 h=3.0: done
+attack s=-1 h=4.0: done
+attack s=-1 h=5.0: done
+attack s=-1 h=6.0: done
+attack s=+0 h=1.0: done
+attack s=+0 h=2.0: done
+attack s=+0 h=3.0: done
+attack s=+0 h=4.0: done
+attack s=+0 h=5.0: done
+attack s=+0 h=6.0: done
+attack s=+1 h=1.0: done
+attack s=+1 h=2.0: done
+attack s=+1 h=3.0: done
+attack s=+1 h=4.0: done
+attack s=+1 h=5.0: done
+attack s=+1 h=6.0: done
+attack s=+3 h=1.0: done
+attack s=+3 h=2.0: done
+attack s=+3 h=3.0: done
+attack s=+3 h=4.0: done
+attack s=+3 h=5.0: done
+attack s=+3 h=6.0: done
+attack s=-3 h= 1.0  admitted  0/10  [0-28]  age +4.04..+4.83
+attack s=-3 h= 2.0  admitted  0/10  [0-28]  age +5.01..+5.94
+attack s=-3 h= 3.0  admitted  0/10  [0-28]  age +6.21..+6.94
+attack s=-3 h= 4.0  admitted  0/10  [0-28]  age +7.09..+8.00
+attack s=-3 h= 5.0  admitted  0/10  [0-28]  age +8.02..+8.97
+attack s=-3 h= 6.0  admitted  0/10  [0-28]  age +9.12..+9.87
+attack s=-1 h= 1.0  admitted  0/10  [0-28]  age +2.02..+2.86
+attack s=-1 h= 2.0  admitted  0/10  [0-28]  age +3.07..+4.00
+attack s=-1 h= 3.0  admitted  0/10  [0-28]  age +4.30..+4.94
+attack s=-1 h= 4.0  admitted  0/10  [0-28]  age +5.04..+5.84
+attack s=-1 h= 5.0  admitted  0/10  [0-28]  age +6.22..+6.96
+attack s=-1 h= 6.0  admitted  0/10  [0-28]  age +7.04..+7.87
+attack s=+0 h= 1.0  admitted 10/10  [72-100]  age +1.08..+2.00
+attack s=+0 h= 2.0  admitted  0/10  [0-28]  age +2.05..+2.93
+attack s=+0 h= 3.0  admitted  0/10  [0-28]  age +3.35..+3.91
+attack s=+0 h= 4.0  admitted  0/10  [0-28]  age +4.02..+4.57
+attack s=+0 h= 5.0  admitted  0/10  [0-28]  age +5.07..+5.96
+attack s=+0 h= 6.0  admitted  0/10  [0-28]  age +6.08..+7.00
+attack s=+1 h= 1.0  admitted 10/10  [72-100]  age +0.09..+0.83
+attack s=+1 h= 2.0  admitted 10/10  [72-100]  age +1.01..+1.84
+attack s=+1 h= 3.0  admitted  0/10  [0-28]  age +2.01..+2.90
+attack s=+1 h= 4.0  admitted  0/10  [0-28]  age +3.10..+3.97
+attack s=+1 h= 5.0  admitted  0/10  [0-28]  age +4.14..+4.88
+attack s=+1 h= 6.0  admitted  0/10  [0-28]  age +5.15..+5.82
+attack s=+3 h= 1.0  admitted 10/10  [72-100]  age -1.81..-1.08
+attack s=+3 h= 2.0  admitted 10/10  [72-100]  age -0.83..-0.11
+attack s=+3 h= 3.0  admitted 10/10  [72-100]  age +0.07..+0.83
+attack s=+3 h= 4.0  admitted 10/10  [72-100]  age +1.01..+1.88
+attack s=+3 h= 5.0  admitted  0/10  [0-28]  age +2.01..+3.00
+attack s=+3 h= 6.0  admitted  0/10  [0-28]  age +3.06..+3.75
+honest s=-3 h=      admitted  0/10  [0-28]  age +3.01..+4.00
+honest s=-1 h=      admitted 10/10  [72-100]  age +1.00..+1.96
+honest s=+0 h=      admitted 10/10  [72-100]  age +0.17..+0.77
+honest s=+1 h=      admitted 10/10  [72-100]  age -0.94..-0.13
+honest s=+3 h=      admitted 10/10  [72-100]  age -2.96..-2.05
+
+boundary (attack): largest admitted hold / smallest blocked hold, prediction Delta+s
+  s=-3: max admitted None  min blocked 1.002  Delta+s = -1.0
+  s=-1: max admitted None  min blocked 1.002  Delta+s = +1.0
+  s=+0: max admitted 1.01  min blocked 2.001  Delta+s = +2.0
+  s=+1: max admitted 2.005  min blocked 3.0  Delta+s = +3.0
+  s=+3: max admitted 4.01  min blocked 5.0  Delta+s = +5.0
+
+soundness violations (admitted with t_c - t_x >= Delta + s + 0.1): 0
+honest reads admitted with a negative (future-dated) age: 20

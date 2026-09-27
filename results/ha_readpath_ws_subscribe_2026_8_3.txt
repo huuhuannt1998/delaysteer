@@ -1,0 +1,4 @@
+auth auth_ok
+subscribe state_reported -> {'id': 1, 'type': 'result', 'success': False, 'error': {'code': 'home_assistant_error', 'message': 'Event filter is required for event state_reported'}}
+subscribe ALL -> {'id': 2, 'type': 'result', 'success': True, 'result': None}
+events received: none for the probe entity
