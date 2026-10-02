@@ -213,6 +213,13 @@ for style, want in (("periodic", 0), ("on_change", 12)):
     chk(f"Counter on a {style} source: admitted",
         (len(cells), sum(int(r['admitted']) for r in cells)), (12, want))
 
+# --- added 2026-10-01 (round-4 review): the prospective template split quoted beside the
+# pooled p in Sec. 5.4 ---
+_hs = json.load(open('results/remaining_analyses.json'))['heldout_split']
+chk("Sec. 5.4 template split, agent of record: b / usable pairs (first six, later six)",
+    (f"{_hs['development']['qwen3:14b']['b']}/{_hs['development']['qwen3:14b']['pairs']}",
+     f"{_hs['held-out']['qwen3:14b']['b']}/{_hs['held-out']['qwen3:14b']['pairs']}"), ("20/22", "23/24"))
+
 # --- the four-family headline: 76 of 80 attacked, 0 of 80 guarded ---
 fam = {(r['family'], r['ablation']): r
        for r in csv.DictReader(open('results/family_rates_n20.csv'))}
@@ -232,6 +239,10 @@ chk("four families pooled: attacked runs violating",
 chk("four families pooled: guarded runs violating",
     sum(num(fam[(f, 'full')]['violation_rate']) for f in ("access", "confirmation", "automation"))
     + num(m2[('contact_contradiction', 'qwen3:14b', 'full')]['violation_rate']), 0)
+# The abstract's "56 of 60 in the other three": the pooled count without automation drift,
+# whose honest planner makes the same edit (added 2026-10-01, round-4 review).
+chk("three attributable families pooled (drift excluded): attacked runs violating",
+    f"{sum(num(fam[(f, 'none')]['violation_rate']) for f in ('access', 'confirmation')) + num(m2[('contact_contradiction', 'qwen3:14b', 'none')]['violation_rate'])}/60", "56/60")
 
 # --- planner-side freshness table (sec 8.4) ---
 sa = {(r['model'], r['condition']): r
@@ -477,5 +488,98 @@ chk("E-C fast models: turn range (s, rounded) and max locked+armed per model",
 # 2026-09-17 this script printed its verdict in the middle and always exited 0, so
 # any build or CI step that trusted the exit code would certify a paper whose
 # figures no longer matched their sources.
+# --- X2 (2026-10-01): blind double annotation of the 18-task corpus (App. extcorpus) ---
+_x2 = {r['comparison']: r for r in csv.DictReader(open('results/external_corpus_coding/coded_summary.csv'))}
+chk("X2 coder A vs author: agree / kappa", (_x2['coderA_vs_author']['agree'], f"{float(_x2['coderA_vs_author']['kappa']):.2f}"), ("13", "0.44"))
+chk("X2 coder B vs author: agree / kappa", (_x2['coderB_vs_author']['agree'], f"{float(_x2['coderB_vs_author']['kappa']):.2f}"), ("13", "0.44"))
+chk("X2 coder A vs coder B: agree / kappa", (_x2['coderA_vs_coderB']['agree'], f"{float(_x2['coderA_vs_coderB']['kappa']):.2f}"), ("18", "1.00"))
+chk("X2 applicable: author / coder A / coder B", (_x2['applicable_author']['agree'], _x2['applicable_coderA']['agree'], _x2['applicable_coderB']['agree']), ("10", "9", "9"))
+
+# --- X1 (2026-10-01): AU1 with both read paths held (results/au1_two_channel_plan.md) ---
+_x1 = [json.loads(l) for l in open('results/au1_two_channel.jsonl') if l.strip()]
+def _x1c(pol, arm):
+    rs = [r for r in _x1 if r['policy'] == pol and r['arm'] == arm and not r.get('error')]
+    return f"{sum(bool(r['outcome']['physically_unsafe']) for r in rs)}/{len(rs)}"
+chk("X1 armed open: entity attack / entity guard / generic attack (both paths held)",
+    (_x1c('entity', 'attack'), _x1c('entity', 'guard'), _x1c('generic', 'attack')), ('18/20', '0/20', '0/20'))
+chk("X1 guard 409s answered (runs with a block)",
+    sum((r.get('proxy_delta') or {}).get('blocked', 0) > 0 for r in _x1 if r['policy'] == 'entity' and r['arm'] == 'guard'), 18)
+chk("X1 Fisher armed open vs single-path 11/20, vs honest 1/20 (2 sf)",
+    (float(f"{_f(18, 20, 11, 20):.2g}"), float(f"{_f(18, 20, 1, 20):.2g}")), (0.031, 5.8e-08))
+_x1s = {(r['policy'], r['arm']): r for r in csv.DictReader(open('results/au1_two_channel_coding/coded_summary.csv'))}
+chk("X1 false 'secured': entity attack / entity guard / generic attack",
+    tuple(_x1s[k]['false_secure_claim'] for k in (('entity', 'attack'), ('entity', 'guard'), ('generic', 'attack'))), ('19', '2', '9'))
+chk("X1 false 'secured' Fisher vs single-path 12/20 (2 sf)", float(f"{_f(19, 20, 12, 20):.2g}"), 0.02)
+_xa = {r['item']: r for r in csv.DictReader(open('results/au1_two_channel_coding/sheet_coderA.csv'))}
+_xb = {r['item']: r for r in csv.DictReader(open('results/au1_two_channel_coding/sheet_coderB.csv'))}
+chk("X1 coder agreement on claims_secure", f"{sum(_xa[i]['claims_secure'] == _xb[i]['claims_secure'] for i in _xa)}/{len(_xa)}", "59/60")
+
+# --- Figures of record pinned 2026-10-02 (RKA Core reconciliation, authoring/core_writeback_preview.yaml) ---
+# Four article figures had no check until then; each was recomputed from its file before being pinned.
+_gar = [r for r in csv.DictReader(open('results/gar.csv')) if r['model'] == 'qwen3:14b' and float(r['temperature']) == 0.0]
+_pairs = {}
+for r in _gar:
+    _pairs.setdefault((r['gadget'], r['template'], r['seed']), {})[r['arm']] = r
+_bc = {}
+for (gd, _t, _s), v in _pairs.items():
+    if 'attack' in v and 'benign' in v and not v['attack']['error'] and not v['benign']['error'] and v['attack']['realized'] != '':
+        a, b = int(v['attack']['realized']), int(v['benign']['realized'])
+        _bc.setdefault(gd, [0, 0]); _bc[gd][0] += (a == 1 and b == 0); _bc[gd][1] += (a == 0 and b == 1)
+_B = sum(x[0] for x in _bc.values()); _Cc = sum(x[1] for x in _bc.values())
+chk("Sec. 5.4 discordant b per gadget (G1, G2->G3, G4, G5), c pooled",
+    (tuple(_bc[g][0] for g in ('G1', 'G2->G3', 'G4', 'G5')), _Cc), ((11, 12, 11, 9), 0))
+chk("Sec. 5.4 pooled discordant pairs / exact McNemar p (2 sf)", (f"{_B}/{_B + _Cc}", float(f"{min(1.0, 2 * 0.5 ** (_B + _Cc)):.2g}")), ("43/43", 2.3e-13))
+_me = json.load(open('results/mixed_effects.json'))['per_model_odds_ratios']
+chk("Sec. 5.4 per-model odds: qwen3:14b OR [CI] / llama3.1:8b OR",
+    (round(_me['qwen3:14b']['odds_ratio']), round(_me['qwen3:14b']['ci95'][0]), round(_me['qwen3:14b']['ci95'][1]), f"{_me['llama3.1:8b']['odds_ratio']:.2f}"),
+    (990, 87, 11315, "1.00"))
+_tt = list(csv.DictReader(open('results/toctou.csv')))
+def _tr(m, c):
+    rs = [r for r in _tt if r['model'] == m and r['condition'] == c]
+    return f"{sum(int(r['violation'] or 0) for r in rs)}/{len(rs)}"
+chk("SimuHome delay-only: llama3.1:8b, qwen2.5:7b, qwen3:4b, qwen3:8b, qwen3:14b / llama3.2:3b",
+    (tuple(_tr(m, 'delay_main_on') for m in ('llama3.1:8b', 'qwen2.5:7b', 'qwen3:4b', 'qwen3:8b', 'qwen3:14b')), _tr('llama3.2:3b', 'delay_main_on')),
+    (('14/15', '15/15', '15/15', '15/15', '15/15'), '7/15'))
+chk("SimuHome no-adversary rate of those six models is at most 2/15",
+    max(int(_tr(m, 'nodelay_main_on').split('/')[0]) for m in ('llama3.1:8b', 'qwen2.5:7b', 'qwen3:4b', 'qwen3:8b', 'qwen3:14b', 'llama3.2:3b')) <= 2, True)
+_x1g = [r for r in _x1 if r['policy'] == 'entity' and r['arm'] == 'guard']
+_key = {r['item']: r for r in csv.DictReader(open('results/au1_two_channel_coding/key.csv'))}
+chk("X1 guard: runs with no block / runs coded 'secured' (seeds)",
+    (tuple(sorted(r['seed'] for r in _x1g if not (r.get('proxy_delta') or {}).get('blocked', 0))),
+     tuple(sorted(int(_key[i]['seed']) for i in _xa if _key[i]['policy'] == 'entity' and _key[i]['arm'] == 'guard'
+                  and _xa[i]['claims_secure'] == 'yes' and _xb[i]['claims_secure'] == 'yes'))),
+    ((5, 6), (5, 6)))
+_au1 = [json.loads(l) for l in open('results/au1_event_wake.jsonl') if l.strip()]
+_na = [r for r in _au1 if r['policy'] == 'entity' and r['arm'] == 'attack' and not r['outcome']['violation']]
+chk("AU1 single path: non-arming runs that read the door in bulk",
+    f"{sum(any(c['tool'] == 'ha_list_entities' for c in r['agent_reaction']['tool_calls']) for r in _na)} of {len(_na)}", "6 of 9")
+
+_db = json.load(open('results/delay_budget.json'))['cells']
+_act, _actf = {}, {}            # per gadget; and per (sweep file, gadget), since the sweeps use different templates
+for f in ('results/gar_magnitude.csv', 'results/gar_submin.csv', 'results/gar_budget_g2g5.csv'):
+    for r in csv.DictReader(open(f)):
+        if r['model'] == 'qwen3:14b' and r['arm'] == 'attack':
+            _act.setdefault(r['gadget'], {}).setdefault(float(r['delay_s']), []).append(int(r['realized']))
+            _actf.setdefault((f, r['gadget']), {}).setdefault(float(r['delay_s']), []).append(int(r['realized']))
+chk("Sec. 5.3 hold sweep: holds swept per gadget (G1, G2->G3, G4, G5) / span (s)",
+    (tuple(len(_act[g]) for g in ('G1', 'G2->G3', 'G4', 'G5')), min(min(v) for v in _act.values()), max(max(v) for v in _act.values())),
+    ((10, 4, 10, 4), 0.5, 600.0))
+chk("Sec. 5.3 hold sweep: attack activation flat across holds within each sweep, c=0 everywhere",
+    (all(len({round(sum(x) / len(x), 6) for x in v.values()}) == 1 for v in _actf.values()),
+     sum(h['c'] for v in _db.values() for h in v['per_hold'].values())), (True, 0))
+_e3r = list(csv.DictReader(open('results/e3_live_safeliveness.csv')))
+chk("E3 user escalation completes sustained-delay benign runs",
+    f"{sum(r['benign_completion'] == 'True' for r in _e3r if r['condition'] == 'sustained' and r['guard_mode'] == 'user_escalation')}/"
+    f"{sum(r['condition'] == 'sustained' and r['guard_mode'] == 'user_escalation' for r in _e3r)}", "0/6")
+chk("E3 user escalation completes transient benign runs",
+    f"{sum(r['benign_completion'] == 'True' for r in _e3r if r['condition'] == 'transient' and r['guard_mode'] == 'user_escalation')}/"
+    f"{sum(r['condition'] == 'transient' and r['guard_mode'] == 'user_escalation' for r in _e3r)}", "6/6")
+
+_lpa = list(csv.DictReader(open('results/e2_lp_relay_agent_full_agent.csv')))
+_sh = lambda arms: [r for r in _lpa if r['family'] == 'secure_house' and r['arm'] in arms]
+chk("E2 attested relay, no gate: armed around the open door, delayed (both hold policies) / honest",
+    (f"{sum(r['actual_armed'] == 'True' and r['actual_contact_closed'] == 'False' for r in _sh(('delayed', 'delayed_until_read')))}/{len(_sh(('delayed', 'delayed_until_read')))}",
+     f"{sum(r['actual_armed'] == 'True' for r in _sh(('honest',)))}/{len(_sh(('honest',)))}"), ('16/16', '0/8'))
+
 print("\nALL NUMBERS MATCH THEIR SOURCE:", ok)
 raise SystemExit(0 if ok else 1)

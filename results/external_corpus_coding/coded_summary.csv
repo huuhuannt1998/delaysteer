@@ -1,0 +1,8 @@
+comparison,agree,n,kappa
+coderA_vs_author,13,18,0.444
+coderB_vs_author,13,18,0.444
+coderA_vs_coderB,18,18,1.0
+applicable_author,10,18,
+applicable_coderA,9,18,
+applicable_coderB,9,18,
+applicable_both_coders,9,18,

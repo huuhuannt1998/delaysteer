@@ -22,7 +22,12 @@ config/dashboards/*
 !config/dashboards/rooms.yaml
 
 # Regenerable run traces (deterministic ones reproduce from the harness)
-traces/
+traces/*
+# Except the 16 E2 relay traces the number gate reads (scripts/verify_sep10_numbers.py:
+# what the undefended planner read and said); without them a fresh clone cannot check
+# two printed figures.
+!traces/e2_lp_relay_secure_house_delayed_[0-7].jsonl
+!traces/e2_lp_relay_secure_house_delayed_until_read_[0-7].jsonl
 
 # LaTeX build artifacts
 *.aux

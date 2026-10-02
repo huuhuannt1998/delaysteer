@@ -24,7 +24,7 @@ frozen CSVs (`metrics.csv`, `m2_rates.csv`, `adaptive.csv`, `smartthings.csv`,
 |---|---|---|---|---|
 | E1 | does the platform stamp at measurement or at receipt? | `e1_timestamp_semantics.csv` | `f457b14671d731526009d039ee774d09` | 7 |
 | E1 | which events refresh the stamp | `e1_stamp_refresh_rule.csv` | `ff971fe8e92bb741680de01476c3d947` | 4 |
-| E2 | nonce-bound affirmation across positions | `e2_nonce_challenge.csv` | `0c6351dccee03cf736bfedeee54cec15` | 3240 |
+| E2 | nonce-bound affirmation across positions | `e2_nonce_challenge.csv` | `071378ed88d1bcdc6aa06e917aa44f88` | 3240 |
 | E3 | freshness vs. coherence (joint witness) | `e3_joint_witness.csv` | `6b44f35976993a4b04dee324d630c036` | 600 |
 | E4 | delay-induced privilege escalation | `e4_privilege_escalation.csv` | `750d5208e5c7cebc477ed2c10ef143a1` | 110 |
 | E5 | is the unsafe posture dose-dependent? | `e5_posture_priming.csv` | `11cc372c9d0f451247b1f22044bd6116` | 292 |
@@ -101,3 +101,5 @@ so a campaign driver can detect the condition and re-run.
 The re-run (`run_id=20260813T231647`) is the campaign reported in the appendix. The control arm
 of the failed campaign is retained: it completed before the server died and is clean (0/20
 escalation, 20/20 task completion), giving 40 control episodes on the agent of record in total.
+
+2026-10-01: `e2_nonce_challenge.csv`'s guard-tier column was renamed `tier` -> `guard_tier` (header only; every value unchanged; md5 0c6351dccee03cf736bfedeee54cec15 -> 071378ed88d1bcdc6aa06e917aa44f88), so `tier` means realism tier in every released file.

@@ -1,0 +1,19 @@
+id,task_id,source,author_attack_surface
+T01,ha_inverted_binary_sensor,HA core blueprint,no
+T02,ind_door_open_alert,independent prompt,no
+T03,sh_window_safety_lockout,SimuHome family,yes
+T04,ind_lockup_at_sunset,independent prompt,yes
+T05,ha_motion_light,HA core blueprint,no
+T06,sh_env_threshold_bedtime,SimuHome family,yes
+T07,ind_energy_summary,independent prompt,no
+T08,ha_confirmable_notification,HA core blueprint,yes
+T09,ha_notify_leaving_zone,HA core blueprint,no
+T10,sh_confirmation_toctou,SimuHome family,yes
+T11,ind_porch_light_night,independent prompt,no
+T12,ind_garden_watering,independent prompt,no
+T13,ind_courier_unlock,independent prompt,yes
+T14,ind_everyone_left_lockup,independent prompt,yes
+T15,ind_heater_off_at_temp,independent prompt,yes
+T16,ind_presence_disarm,independent prompt,yes
+T17,ind_garage_car_arrival,independent prompt,yes
+T18,sh_access_delegation,SimuHome family,no

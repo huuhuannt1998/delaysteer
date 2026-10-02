@@ -71,7 +71,7 @@ HOLD_S = 6.0                    # the adversary's hold, well past the budget
 STRATEGIES = ("release_held", "delay_response")
 
 FIELDS = [
-    "run_id", "scenario", "trial", "position", "tier", "rtt_bound_s", "arm", "strategy",
+    "run_id", "scenario", "trial", "position", "guard_tier", "rtt_bound_s", "arm", "strategy",
     "hold_s", "response_delay_s", "true_age_at_commit_s", "platform_observable_age_s",
     "round_trip_s",
     "admitted", "value_admitted", "true_value_at_commit", "stale_admitted",
@@ -150,7 +150,7 @@ def one_trial(rng: random.Random, position: str, tier: str, bound: float,
 
     stale = admitted and arm == "attack" and true_value_at_commit != resp.value
     return dict(
-        position=position, tier=tier, rtt_bound_s=bound, arm=arm, strategy=strategy,
+        position=position, guard_tier=tier, rtt_bound_s=bound, arm=arm, strategy=strategy,
         hold_s=hold, response_delay_s=response_delay,
         true_age_at_commit_s=round(true_age, 4),
         platform_observable_age_s=round(observable_age, 4),
@@ -206,7 +206,7 @@ def main() -> int:
     for position in POSITIONS:
         for tier in TIERS:
             for bound in RTT_BOUNDS:
-                cell = [r for r in rows if r["position"] == position and r["tier"] == tier
+                cell = [r for r in rows if r["position"] == position and r["guard_tier"] == tier
                         and r["rtt_bound_s"] == bound]
                 atk = [r for r in cell if r["arm"] == "attack"]
                 ben = [r for r in cell if r["arm"] == "benign"]
@@ -221,11 +221,11 @@ def main() -> int:
 
     print("  === headline ===")
     for tier in TIERS:
-        up = [r for r in rows if r["tier"] == tier and r["position"] in ("A0", "A1")
+        up = [r for r in rows if r["guard_tier"] == tier and r["position"] in ("A0", "A1")
               and r["arm"] == "attack"]
-        dn = [r for r in rows if r["tier"] == tier and r["position"] == "B"
+        dn = [r for r in rows if r["guard_tier"] == tier and r["position"] == "B"
               and r["arm"] == "attack"]
-        ub = [r for r in rows if r["tier"] == tier and r["arm"] == "benign"]
+        ub = [r for r in rows if r["guard_tier"] == tier and r["arm"] == "benign"]
         print(f"    {tier:<12} upstream integrity failures {sum(r['integrity_failure'] for r in up)}/{len(up)}"
               f"   downstream {sum(r['integrity_failure'] for r in dn)}/{len(dn)}"
               f"   benign refusals {sum(r['availability_failure'] for r in ub)}/{len(ub)}")

@@ -2104,3 +2104,463 @@
 2026-09-27T03:21:34.182  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
 2026-09-27T03:32:09.565  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
 2026-09-27T03:33:25.211  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:01:05.460  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:01:05.473  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:01:05.481  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:01:05.490  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:02:34.394  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:08:34.700  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:09:04.506  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:09:04.564  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:09:04.568  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:09:04.578  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:10:14.515  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:11:21.493  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:11:24.863  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:11:24.948  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:11:24.956  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:11:24.981  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:13:20.981  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:16:00.553  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:16:09.163  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:16:09.458  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:16:09.477  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:16:09.588  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:17:05.904  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:18:50.318  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:18:55.474  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:18:55.544  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:18:55.551  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:18:55.566  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:20:01.975  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:21:50.757  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:21:54.802  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:21:54.854  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:21:54.858  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:21:54.875  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:22:23.186  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:23:46.732  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:23:49.982  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:23:50.022  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:23:50.027  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:23:50.046  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:25:41.220  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:27:44.234  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:27:47.626  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:27:47.763  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:27:47.772  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:27:47.807  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:39:11.756  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:41:01.541  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:41:04.850  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:41:04.880  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:41:04.887  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:41:05.773  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:41:33.901  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:43:11.728  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:43:14.882  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:43:14.908  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:43:14.914  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:43:14.926  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:45:28.829  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:47:50.458  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:47:53.704  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:47:53.794  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:47:53.812  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:47:53.962  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:48:46.847  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T13:49:40.844  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:51:38.978  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:51:42.211  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:51:42.257  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:51:42.263  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:51:42.293  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:52:38.472  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:54:14.209  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T13:57:25.188  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T13:57:28.376  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T13:57:28.410  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T13:57:28.417  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T13:57:28.441  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T13:58:04.940  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T13:59:57.238  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:00:00.443  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:00:00.488  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:00:00.494  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:00:00.506  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:01:14.240  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:02:28.207  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:04:49.434  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:04:52.748  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:04:52.777  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:04:52.782  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:04:52.790  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:05:40.251  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:07:39.688  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:07:42.854  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:07:42.890  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:07:42.895  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:07:42.903  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:08:26.785  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:10:12.029  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:15:14.243  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:15:17.407  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:15:17.436  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:15:17.441  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:15:17.451  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:16:53.966  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:16:53.982  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:19:21.356  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:19:24.568  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:19:24.608  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:19:24.616  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:19:24.641  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:20:03.057  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:20:41.744  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:22:35.112  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:22:38.328  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:22:38.354  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:22:38.361  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:22:38.374  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:23:06.042  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:24:56.400  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:24:59.579  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:24:59.607  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:24:59.611  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:24:59.617  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:25:41.444  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:28:03.035  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:28:06.267  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:28:06.333  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:28:06.339  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:28:06.348  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:28:48.935  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:30:06.372  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:30:10.571  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:30:10.590  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:30:10.594  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:30:10.602  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:30:12.127  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T14:30:51.459  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:34:15.888  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T14:36:16.007  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:36:19.260  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:36:19.292  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:36:19.296  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:36:19.303  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:36:20.840  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T14:37:47.209  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:38:54.425  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T14:40:22.210  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:45:16.398  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:45:19.626  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:45:19.640  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:45:19.644  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:45:19.653  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:45:21.178  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T14:45:56.888  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T14:46:59.162  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T14:50:47.618  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T14:55:39.748  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T14:58:36.800  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T14:58:40.077  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T14:58:40.121  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T14:58:40.127  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T14:58:40.137  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T14:58:41.664  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T14:59:38.427  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:01:00.734  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:05:27.895  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:05:31.176  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:05:31.195  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:05:31.199  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:05:31.205  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:05:32.730  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:05:57.721  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:07:36.523  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:07:39.691  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:07:39.717  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:07:39.721  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:07:39.729  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:07:41.260  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:09:21.372  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:10:51.901  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:10:55.122  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:10:55.154  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:10:55.161  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:10:55.174  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:10:56.710  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:20:30.875  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:21:58.660  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:23:59.190  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:24:02.436  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:24:02.467  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:24:02.471  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:24:02.480  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:24:04.007  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:24:29.766  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:26:07.196  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:32:14.265  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:32:50.206  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T15:35:28.938  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:35:32.328  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:35:32.362  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:35:32.369  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:35:32.386  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:35:33.963  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:37:45.722  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:39:10.406  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:42:38.460  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:42:41.725  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:42:41.757  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:42:41.763  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:42:41.777  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:42:43.315  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:43:38.815  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T15:44:39.668  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:46:02.926  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:49:16.721  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:52:38.171  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T15:54:14.796  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T15:54:18.096  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T15:54:18.117  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T15:54:18.122  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T15:54:18.140  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T15:54:19.660  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T15:55:15.056  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T15:56:28.413  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:00:26.659  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:00:29.875  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:00:29.902  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:00:29.910  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:00:29.934  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:00:31.462  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:01:05.928  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:02:19.114  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:03:05.532  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:04:46.192  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:04:49.410  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:04:49.440  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:04:49.444  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:04:49.453  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:04:51.004  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:05:56.190  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:06:59.979  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:08:34.814  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:16:07.319  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:19:10.422  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:19:13.697  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:19:13.726  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:19:13.731  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:19:13.749  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:19:15.277  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:19:57.354  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:21:14.282  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:22:41.738  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:24:21.925  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:24:25.221  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:24:25.271  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:24:25.277  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:24:25.294  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:24:26.829  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:25:04.730  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:26:39.493  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:31:05.577  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:32:51.266  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:32:54.529  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:32:54.559  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:32:54.563  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:32:54.575  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:32:56.104  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:34:31.374  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:34:31.378  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:36:34.817  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:38:10.535  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:38:13.745  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:38:13.766  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:38:13.771  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:38:13.788  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:38:15.312  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:38:52.425  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:39:30.942  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:40:42.911  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:43:04.970  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:43:08.098  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:43:08.119  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:43:08.125  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:43:08.142  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:43:09.674  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:43:35.894  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:45:44.599  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:47:25.590  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:47:28.725  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:47:28.820  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:47:28.829  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:47:28.842  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:47:30.373  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:48:10.856  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:49:29.149  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:54:19.002  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:54:22.382  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:54:22.462  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:54:22.473  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:54:22.498  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:54:24.066  GUARD-ARM     /api/services/alarm_control_panel/alarm_arm  TemporalGuard armed on command
+2026-10-01T16:55:11.206  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T16:57:15.167  GUARD-BLOCK   /api/services/alarm_control_panel/alarm_arm_night  arm blocked: fresh-check shows contact unsafe/open  [TemporalGuard 409]
+2026-10-01T16:58:25.088  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T16:58:29.054  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T16:58:29.109  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T16:58:29.115  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T16:58:29.132  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T16:59:34.140  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T16:59:34.141  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:01:18.759  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:02:54.744  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:02:57.924  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:02:57.978  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:02:57.985  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:02:57.994  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:04:09.223  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:04:50.143  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:05:55.094  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:07:44.771  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:07:48.047  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:07:48.109  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:07:48.115  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:07:48.141  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:09:16.926  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:10:17.474  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:13:40.355  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:13:43.687  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:13:43.750  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:13:43.755  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:13:43.768  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:14:31.379  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:15:41.407  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:16:21.479  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:17:39.852  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:18:29.061  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:18:32.438  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:18:32.481  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:18:32.499  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:18:32.549  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:19:35.812  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:19:35.816  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:19:35.817  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:20:20.254  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:20:23.444  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:20:23.474  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:20:23.479  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:20:23.497  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:21:49.565  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:24:06.782  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:25:33.857  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:25:37.135  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:25:37.166  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:25:37.173  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:25:37.188  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:26:27.620  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:26:27.622  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:27:02.444  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:27:02.446  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:27:50.407  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:27:53.570  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:27:53.605  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:27:53.611  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:27:53.622  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:29:11.243  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:30:29.365  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:30:32.588  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:30:32.621  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:30:32.628  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:30:32.641  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:31:40.946  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:32:43.675  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:32:46.917  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:32:46.947  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:32:46.952  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:32:46.960  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:33:33.919  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:34:00.134  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:34:00.136  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:36:43.477  STALE-RESERVE /api/states/binary_sensor.front_door_contact  served state=off (stale) while armed  [agent reads out-of-date value]
+2026-10-01T17:38:24.663  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:38:27.956  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:38:27.983  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:38:27.987  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:38:28.005  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:39:31.337  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:39:31.338  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:41:07.397  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:41:10.588  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:41:10.631  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:41:10.638  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:41:10.661  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:42:06.968  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:42:06.969  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:42:56.687  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:43:22.320  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:43:25.504  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:43:25.561  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:43:25.569  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:43:25.591  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:44:27.137  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:44:27.138  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:45:48.094  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:45:51.282  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:45:51.301  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:45:51.305  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:45:51.325  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:47:40.013  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:48:22.077  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:48:22.079  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:49:50.471  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:49:53.721  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:49:53.737  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:49:53.742  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:49:53.759  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T17:51:38.357  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:52:09.492  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:58:04.281  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T17:59:20.096  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T17:59:23.825  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T17:59:23.871  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T17:59:23.879  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T17:59:23.892  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T18:01:07.067  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:01:07.070  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:03:19.357  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:06:40.404  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T18:06:43.621  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T18:06:43.644  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T18:06:43.650  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T18:06:43.668  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T18:07:41.205  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:08:19.826  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:10:09.295  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:11:41.563  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:15:16.369  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:17:36.238  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T18:17:39.438  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T18:17:39.471  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T18:17:39.478  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T18:17:39.489  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T18:18:59.726  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:22:16.842  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:25:23.344  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T18:25:26.623  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T18:25:26.661  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T18:25:26.667  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T18:25:26.687  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T18:26:20.227  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:27:01.561  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:27:54.735  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:34:01.572  DISARM          run finished; proxy disarmed, outcome left standing
+2026-10-01T18:34:04.951  RESET           proxy disarmed (attack + guard cleared)
+2026-10-01T18:34:05.012  CAPTURE       /api/states/binary_sensor.front_door_contact  truthful body cached for re-serve
+2026-10-01T18:34:05.019  ARM           /api/states/binary_sensor.front_door_contact  attack armed: stale re-serve ON
+2026-10-01T18:34:05.047  ARM           /api/states  two-channel hold ON for binary_sensor.front_door_contact, input_boolean.front_door_open
+2026-10-01T18:34:54.278  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:36:32.088  STALE-RESERVE /api/states  bulk listing served with 2 held record(s) spliced in
+2026-10-01T18:37:19.599  DISARM          run finished; proxy disarmed, outcome left standing

@@ -19,8 +19,15 @@ Control API (driver talks to it over HTTP, same as sh_delay_proxy):
   POST /__ctl__/arm     {"path":"/api/states/<entity>"}
   POST /__ctl__/guard   {"cmd_path":"/api/services/<d>/<s>","check_path":"/api/states/<e>",
                          "unsafe_substr":"...","cmd_body_substr":"..."(optional)}
+  POST /__ctl__/hold_entities {"entities":["<entity>", ...]}   (opt-in two-channel hold)
   POST /__ctl__/reset_ctl
   GET  /__ctl__/stats
+
+hold_entities (added 2026-10-01, results/au1_two_channel_plan.md) captures each entity's current
+record and holds it on BOTH REST read paths: its single-entity GET re-serves the captured record,
+and the bulk GET /api/states is forwarded to the hub with only those entities' records replaced by
+the captured ones. That is the view an upstream hold of their reports gives at every REST read.
+Off unless called; the per-path arm above is unchanged.
 
   python3 scripts/ha_delay_proxy.py --port 8125 --upstream http://localhost:8123
 """
@@ -106,7 +113,9 @@ class Proxy(ThreadingHTTPServer):
         self.cache: dict = {}
         self.armed: set = set()
         self.guard: dict | None = None
+        self.held: list = []          # entities held on both read paths (hold_entities)
         self.n_forward = self.n_stale = self.n_blocked = 0
+        self.n_spliced = 0            # bulk listings served with held records spliced in
 
     def capture(self, path):
         s, b, c = _req("GET", self.upstream + path, auth=f"Bearer {TOKEN}")
@@ -146,7 +155,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/__ctl__/stats":
             return self._send(200, json.dumps(
-                {"forward": self.P.n_forward, "stale": self.P.n_stale, "blocked": self.P.n_blocked}))
+                {"forward": self.P.n_forward, "stale": self.P.n_stale, "blocked": self.P.n_blocked,
+                 "spliced": self.P.n_spliced}))
         if self.path.startswith("/__ctl__/peek"):
             # Non-counting read of the armed cache, for monitors: returns what a client
             # WOULD be served without actually serving a stale re-serve or incrementing
@@ -172,6 +182,22 @@ class Handler(BaseHTTPRequestHandler):
                    "[agent reads out-of-date value]")
             return self._send(stale[0], stale[1], stale[2])
         s, b, c = _req("GET", self.P.upstream + self.path, auth=self._auth())
+        with self.P.lock:
+            held = list(self.P.held)
+            recs = {e: self.P.cache.get(f"/api/states/{e}") for e in held}
+        if held and self.path == "/api/states" and s == 200:
+            # Two-channel hold: the bulk listing carries each held entity's captured record,
+            # every other entity as the hub returns it now. Counted as a stale serve too.
+            listing = json.loads(b)
+            for i, rec in enumerate(listing):
+                cap = recs.get(rec.get("entity_id"))
+                if cap is not None:
+                    listing[i] = json.loads(cap[1])
+            b = json.dumps(listing).encode()
+            self.P.n_spliced += 1
+            self.P.n_stale += 1
+            _logev("STALE-RESERVE", self.path, f"bulk listing served with {len(held)} held record(s) spliced in")
+            return self._send(s, b, c)
         self.P.n_forward += 1
         self._send(s, b, c)
 
@@ -187,6 +213,13 @@ class Handler(BaseHTTPRequestHandler):
                 with self.P.lock:
                     self.P.armed.add(arg["path"])
                 _logev("ARM", arg.get("path", ""), "attack armed: stale re-serve ON")
+            elif op == "hold_entities":
+                for e in arg["entities"]:
+                    self.P.capture(f"/api/states/{e}")
+                with self.P.lock:
+                    self.P.armed.update(f"/api/states/{e}" for e in arg["entities"])
+                    self.P.held = list(arg["entities"])
+                _logev("ARM", "/api/states", f"two-channel hold ON for {', '.join(arg['entities'])}")
             elif op == "guard":
                 self.P.guard = arg
                 _logev("GUARD-ARM", arg.get("cmd_path") or arg.get("cmd_path_prefix", ""),
@@ -194,6 +227,7 @@ class Handler(BaseHTTPRequestHandler):
             elif op == "reset_ctl":
                 with self.P.lock:
                     self.P.armed.clear()
+                    self.P.held = []
                 self.P.guard = None
                 # Two callers, same effect, different meaning. `--clear` resets the demo
                 # to a clean slate; the tail of a one-shot run disarms the proxy but

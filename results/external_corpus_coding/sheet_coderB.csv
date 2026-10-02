@@ -1,0 +1,19 @@
+id,high_impact,delay_sensitive_fact,attack_surface,note
+T01,no,no,no,derived sensor only; no action or report taken
+T02,yes,yes,yes,duration-based door-open alert relied on for security monitoring
+T03,yes,yes,yes,closing gated by a stale obstruction reading
+T04,yes,no,no,fixed sunset schedule; no state check mentioned
+T05,no,yes,no,lighting is convenience not a safety-relevant device
+T06,yes,yes,yes,safe-for-bedtime assertion depends on temp/humidity readings
+T07,no,no,no,informational energy summary; no security or safety tie
+T08,yes,no,no,gated on explicit user confirmation not a decaying state
+T09,no,yes,no,departure notification asserts no security or safety state
+T10,no,yes,no,generic appliance; not stated as safety-relevant
+T11,no,yes,no,porch light is comfort/convenience lighting
+T12,no,yes,no,garden watering; not security or safety relevant
+T13,yes,yes,yes,letting courier in depends on their presence at ring time
+T14,yes,yes,yes,lock/arm gated on a stale all-left occupancy reading
+T15,yes,yes,yes,heater is safety-relevant; gated on a stale temperature reading
+T16,yes,yes,yes,disarm gated on a stale home-presence detection
+T17,yes,yes,yes,garage open gated on a stale car-arrival reading
+T18,yes,yes,yes,access grant depends on a presence-freshness check
