@@ -581,5 +581,18 @@ chk("E2 attested relay, no gate: armed around the open door, delayed (both hold 
     (f"{sum(r['actual_armed'] == 'True' and r['actual_contact_closed'] == 'False' for r in _sh(('delayed', 'delayed_until_read')))}/{len(_sh(('delayed', 'delayed_until_read')))}",
      f"{sum(r['actual_armed'] == 'True' for r in _sh(('honest',)))}/{len(_sh(('honest',)))}"), ('16/16', '0/8'))
 
+# Table 7 honest column, bedtime row: the attacked cell rerun with the delay removed (2026-10-27,
+# results/bedtime_honest_n20.csv; delaysteer/run_bedtime_honest.py)
+_bh = list(csv.DictReader(open('results/bedtime_honest_n20.csv')))
+chk("Table 7 bedtime honest arm: violations / secure claims / armed",
+    (f"{sum(r['violation'] == '1' for r in _bh)}/{len(_bh)}", f"{sum(r['secure_claim'] == '1' for r in _bh)}/{len(_bh)}",
+     f"{sum(r['armed'] == '1' for r in _bh)}/{len(_bh)}"), ('0/20', '0/20', '0/20'))
+# Table 7 caption: all 20 attacked bedtime runs arm around the open door (traces/m2_r_virtual_qwen3_14b_con_none_*)
+_arm = 0
+for _i in range(20):
+    _ev = [json.loads(l) for l in open(f'traces/m2_r_virtual_qwen3_14b_con_none_{_i}.jsonl')]
+    _arm += any(e.get('kind') == 'tool_call' and e.get('payload', {}).get('tool') == 'arm_alarm' for e in _ev)
+chk("Table 7 bedtime attack: runs that arm around the open door", f"{_arm}/20", "20/20")
+
 print("\nALL NUMBERS MATCH THEIR SOURCE:", ok)
 raise SystemExit(0 if ok else 1)

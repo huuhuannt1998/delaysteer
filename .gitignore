@@ -28,6 +28,9 @@ traces/*
 # two printed figures.
 !traces/e2_lp_relay_secure_house_delayed_[0-7].jsonl
 !traces/e2_lp_relay_secure_house_delayed_until_read_[0-7].jsonl
+# and the 20 attacked bedtime traces it reads for Table 7's caption (all 20 arm around the open door)
+!traces/m2_r_virtual_qwen3_14b_con_none_[0-9].jsonl
+!traces/m2_r_virtual_qwen3_14b_con_none_1[0-9].jsonl
 
 # LaTeX build artifacts
 *.aux

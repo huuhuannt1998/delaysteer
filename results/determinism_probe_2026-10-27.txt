@@ -1,0 +1,61 @@
+# determinism probe, 2026-10-27T15:59Z, ollama {"version":"0.40.3"}
+qwen2.5:7b                               845dbda0ea48    4.7 GB    4 months ago    
+qwen3:14b                                bdbd181c33f2    9.3 GB    5 months ago    
+determinism probe: model=qwen2.5:7b seed=1234 T=0 reps=4
+
+  1. same prompt, same seed, back to back
+    4 runs -> 2 distinct output(s): ['18ba8c6be2735a2d', '35f469750c8c90c4']
+    first divergence at char 185:
+      A: ... the door is still closed. Since the door is securely closed[' ']and there have been no recent changes, ...
+      B: ... the door is still closed. Since the door is securely closed[','] arming the alarm at this time would be...
+    -> NONDETERMINISTIC
+
+  2. same prompt, same seed, interleaved with other traffic
+    4 runs -> 2 distinct output(s): ['18ba8c6be2735a2d', '35f469750c8c90c4']
+    first divergence at char 185:
+      A: ... the door is still closed. Since the door is securely closed[','] arming the alarm at this time would be...
+      B: ... the door is still closed. Since the door is securely closed[' ']and there have been no recent changes, ...
+    -> NONDETERMINISTIC
+
+  3. same prompt (long context), same seed
+    4 runs -> 1 distinct output(s): ['0ce24239892a771d']
+    -> DETERMINISTIC
+
+  4. same prompt, DIFFERENT seeds at T=0 (should still be identical)
+    4 runs -> 1 distinct output(s): ['35f469750c8c90c4']
+    -> DETERMINISTIC
+
+  === verdict ===
+    back_to_back       FAILS
+    interleaved        FAILS
+    long_context       ok
+    seed_invariance    ok
+
+  Byte-identity is NOT achievable here. The honest fallback is
+  pi_sec equality (trace.security_projection), which is what the
+  reachability claims actually require. Record that as a decision.
+determinism probe: model=qwen3:14b seed=1234 T=0 reps=3
+
+  1. same prompt, same seed, back to back
+    3 runs -> 1 distinct output(s): ['1ea2436ff3b665ed']
+    -> DETERMINISTIC
+
+  2. same prompt, same seed, interleaved with other traffic
+    3 runs -> 1 distinct output(s): ['1ea2436ff3b665ed']
+    -> DETERMINISTIC
+
+  3. same prompt (long context), same seed
+    3 runs -> 1 distinct output(s): ['3ca61f9f91a2c367']
+    -> DETERMINISTIC
+
+  4. same prompt, DIFFERENT seeds at T=0 (should still be identical)
+    3 runs -> 1 distinct output(s): ['1ea2436ff3b665ed']
+    -> DETERMINISTIC
+
+  === verdict ===
+    back_to_back       ok
+    interleaved        ok
+    long_context       ok
+    seed_invariance    ok
+
+  Stage 0 byte-identity is achievable on this substrate.
